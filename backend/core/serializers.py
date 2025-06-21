@@ -70,8 +70,8 @@ class GigSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gig
         fields = [
-            'id', 'teacher', 'title', 'description', 'subject', 'created_at', 'contact_info',
-            'is_premium', 'is_verified', 'trust_score', 'subjects'
+            'id', 'teacher', 'teacher_username', 'title', 'description', 'subject', 'created_at', 'contact_info',
+            'is_premium', 'is_verified', 'trust_score', 'subjects', 'subject_ids'
         ]
         read_only_fields = ['id', 'teacher', 'created_at']
 
@@ -206,3 +206,7 @@ class AbuseReportSerializer(serializers.ModelSerializer):
     def get_target_id(self, obj):
         return obj.target_id
 
+class TutorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone', 'trust_score', 'credit_balance']

@@ -7,6 +7,7 @@ from .views import (
     AdminViewSet,  # Add this import if not already there
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView
 )
+from .views import TutorListAPIView
 
 router = DefaultRouter()
 router.register(r'admin-tools', AdminViewSet, basename='admin-tools')
@@ -26,6 +27,7 @@ router.register(r'subjects', SubjectViewSet, basename='subject')
 urlpatterns = [
     # Custom text search for tutors
     path('tutors/search/', UserViewSet.as_view({'get': 'search'}), name='tutor-search'),
+     path('tutors/', TutorListAPIView.as_view(), name='tutor-list'),
 
     # Auth & account endpoints (JWT/session-based, email/password)
     path('auth/register/', RegisterView.as_view(), name='register'),

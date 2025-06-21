@@ -26,9 +26,14 @@ from .serializers import (
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
 )
+from .serializers import TutorSerializer
+from rest_framework import generics
 
 from .payments import SSLCommerzPayment
-
+class TutorListAPIView(generics.ListAPIView):
+    queryset = User.objects.filter(user_type='tutor')
+    serializer_class = TutorSerializer
+    permission_classes = [AllowAny] 
 # --- UserViewSet ---
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
