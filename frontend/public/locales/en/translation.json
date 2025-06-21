@@ -1,0 +1,12 @@
+{
+  "welcome": "Welcome",
+  "login": "Login",
+  "signup": "Sign Up",
+  "logout": "Logout",
+  "dashboard": "Dashboard",
+  "profile": "Profile",
+  "settings": "Settings",
+  "error": "Error",
+  "submit": "Submit",
+  "cancel": "Cancel"
+}

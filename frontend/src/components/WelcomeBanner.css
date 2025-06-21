@@ -1,0 +1,13 @@
+.welcome-banner {
+  background: #e8fff3;
+  color: #19a974;
+  padding: 18px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 2px 12px 0 rgba(16,158,109,.09);
+}

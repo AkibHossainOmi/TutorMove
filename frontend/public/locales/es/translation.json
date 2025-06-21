@@ -1,0 +1,12 @@
+{
+  "welcome": "Bienvenido",
+  "login": "Iniciar Sesión",
+  "signup": "Registrarse",
+  "logout": "Cerrar Sesión",
+  "dashboard": "Panel",
+  "profile": "Perfil",
+  "settings": "Configuración",
+  "error": "Error",
+  "submit": "Enviar",
+  "cancel": "Cancelar"
+}

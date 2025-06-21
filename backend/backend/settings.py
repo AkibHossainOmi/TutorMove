@@ -1,0 +1,186 @@
+"""
+Django settings for tutorclone_backend project.
+"""
+
+from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Quick-start development settings - unsuitable for production
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dswq$mer#l$f2p%b8eydalez%(%e_e*su9itll(9+yvvpsqwf@')
+
+DEBUG = True
+
+ALLOWED_HOSTS = []
+
+# Application definition
+INSTALLED_APPS = [
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    'phonenumber_field',
+    "corsheaders",
+
+    'accounts',
+
+    # Third party apps
+    "rest_framework",
+    "rest_framework.authtoken",
+    "channels",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "drf_yasg",
+    "django_redis",
+
+    # Local apps
+    "core",
+]
+
+
+MIDDLEWARE = [
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "corsheaders.middleware.CorsMiddleware",  
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "allauth.account.middleware.AccountMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+
+ROOT_URLCONF = "backend.urls"
+
+# Channels
+ASGI_APPLICATION = "backend.asgi.application"
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    }
+}
+
+# CORS
+CORS_ALLOW_ALL_ORIGINS = True
+
+# Authentication backends
+AUTHENTICATION_BACKENDS = [
+    "django.contrib.auth.backends.ModelBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
+]
+
+# Site ID for django-allauth
+SITE_ID = 1
+
+# # Google OAuth2 settings
+# SOCIALACCOUNT_PROVIDERS = {
+#     "google": {
+#         "APP": {
+#             "client_id": os.getenv('GOOGLE_CLIENT_ID'),
+#             "secret": os.getenv('GOOGLE_CLIENT_SECRET'),
+#             "key": "",
+#         }
+#     }
+# }
+
+# SSLCommerz settings
+SSL_COMMERZ = {
+    'STORE_ID': os.getenv('SSL_COMMERZ_STORE_ID'),
+    'STORE_PASSWORD': os.getenv('SSL_COMMERZ_STORE_PASSWORD'),
+    'STORE_NAME': os.getenv('SSL_COMMERZ_STORE_NAME'),
+    'REGISTERED_URL': os.getenv('SSL_COMMERZ_REGISTERED_URL'),
+    'SESSION_API': os.getenv('SSL_COMMERZ_SESSION_API'),
+    'VALIDATION_API': os.getenv('SSL_COMMERZ_VALIDATION_API'),
+}
+
+# Custom user model
+AUTH_USER_MODEL = "core.User"
+
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "tutormove.com@gmail.com")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "btwc wjvr dfek uabp")
+FROM_EMAIL = os.getenv("FROM_EMAIL", "tutormove.com@gmail.com")
+FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL", "http://localhost:3000")
+TEMPLATES = [
+    {
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = "backend.wsgi.application"
+
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
+
+LANGUAGES = [
+    ('en', 'English'),
+    ('zh-hans', 'Chinese (Simplified)'),
+    ('hi', 'Hindi'),
+    ('es', 'Spanish'),
+    ('fr', 'French'),
+    ('ar', 'Arabic'),
+    ('bn', 'Bengali'),
+    ('pt', 'Portuguese'),
+    ('ru', 'Russian'),
+    ('ur', 'Urdu'),
+]
+LANGUAGE_CODE = 'en'
+USE_I18N = True
+USE_L10N = True
+
+
+STATIC_URL = "static/"
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication',
+    ),
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+}
