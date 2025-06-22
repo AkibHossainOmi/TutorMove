@@ -34,8 +34,10 @@ import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 
+
 // Map Search (if needed)
 import MapSearch from './pages/MapSearch'; // adjust import if you have
+
 
 // Additional Policy Pages
 const RefundPolicy = () => (
