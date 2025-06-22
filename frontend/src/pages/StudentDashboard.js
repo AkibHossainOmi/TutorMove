@@ -14,7 +14,7 @@ import WelcomeBanner from '../components/WelcomeBanner';
 const StudentDashboard = () => {
   const { t } = useTranslation();
   const { user, refreshUser } = useAuth(); // refreshUser to refetch after upgrading
-  const { showNotification, notifications } = useNotification();
+  const { addNotification: showNotification, notifications } = useNotification();
   const { openChat, unreadCount } = useChat();
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
@@ -246,7 +246,7 @@ const StudentDashboard = () => {
         marginBottom: '30px'
       }}>
         <h1 style={{ margin: 0, color: '#212529' }}>
-          Student Dashboard - Welcome, {user.username}!
+          Student Dashboard - Welcome, {user?.username}!
         </h1>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {/* Notification Button */}
@@ -400,7 +400,7 @@ const StudentDashboard = () => {
           </button>
 
           {/* Show "Become a Teacher" button only for students */}
-          {user.user_type === 'student' && (
+          {user?.user_type === 'student' && (
             <button
               onClick={() => setShowBecomeTeacher(true)}
               style={{
@@ -416,7 +416,7 @@ const StudentDashboard = () => {
             </button>
           )}
           {/* Show "Request Verification" button only for teachers who aren't verified */}
-          {user.user_type === 'teacher' && !isVerified && !verificationRequested && (
+          {user?.user_type === 'teacher' && !isVerified && !verificationRequested && (
             <button
               onClick={() => setShowRequestVerification(true)}
               style={{

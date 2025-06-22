@@ -61,11 +61,12 @@ const ChatIntegration = () => {
   );
 };
 
-// Dashboard redirect component
 const DashboardRedirect = () => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" />;
-  return <Navigate to={user.user_type === 'teacher' ? '/teacher-dashboard' : '/student-dashboard'} />;
+  console.log(user.user_type);
+  const isTeacher = user.user_type === 'tutor' || user.user_type === 'teacher';
+  return <Navigate to={isTeacher ? '/teacher-dashboard' : '/student-dashboard'} />;
 };
 
 function App() {

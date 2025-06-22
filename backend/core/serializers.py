@@ -12,20 +12,27 @@ User = get_user_model()
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
+    user_type = serializers.CharField(required=False)
+
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'password', 'user_type']
 
     def create(self, validated_data):
+        user_type = validated_data.get('user_type', 'student')
+        if user_type == 'teacher':  # Normalize
+            user_type = 'tutor'
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            user_type=validated_data.get('user_type', 'student'),
-            is_active=False,  # Inactive until email verified!
+            user_type=user_type,
+            is_active=False,
         )
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()

@@ -36,9 +36,9 @@ const Login = () => {
         });
         userType = userRes.data.user_type;
       }
-
+      console.log(userType);
       // 3. Redirect based on user type
-      if (userType === 'teacher') {
+      if (userType === 'tutor') {
         navigate('/teacher-dashboard');
       } else {
         navigate('/student-dashboard');
