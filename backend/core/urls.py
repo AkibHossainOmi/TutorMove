@@ -8,6 +8,7 @@ from .views import (
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView
 )
 from .views import TutorListAPIView
+from .views import JobListAPIView
 
 router = DefaultRouter()
 router.register(r'admin-tools', AdminViewSet, basename='admin-tools')
@@ -27,7 +28,8 @@ router.register(r'subjects', SubjectViewSet, basename='subject')
 urlpatterns = [
     # Custom text search for tutors
     path('tutors/search/', UserViewSet.as_view({'get': 'search'}), name='tutor-search'),
-     path('tutors/', TutorListAPIView.as_view(), name='tutor-list'),
+    path('tutors/', TutorListAPIView.as_view(), name='tutor-list'),
+    path('jobs/', JobListAPIView.as_view(), name='job-list'),
 
     # Auth & account endpoints (JWT/session-based, email/password)
     path('auth/register/', RegisterView.as_view(), name='register'),

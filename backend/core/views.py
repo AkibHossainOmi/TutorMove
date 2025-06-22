@@ -24,12 +24,28 @@ from .serializers import (
     UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
     ApplicationSerializer, NotificationSerializer, MessageSerializer, UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
-    RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, TutorSerializer, JobListSerializer,
 )
-from .serializers import TutorSerializer
 from rest_framework import generics
 
 from .payments import SSLCommerzPayment
+
+class JobListAPIView(generics.ListAPIView):
+    """
+    Simple list view for active jobs with basic student verification
+    """
+    serializer_class = JobListSerializer
+    permission_classes = [AllowAny] 
+    def get_queryset(self):
+        return Job.objects.filter(
+            is_active=True
+        ).select_related(
+            'student', 'subject'
+        ).prefetch_related(
+            'subjects'
+        ).order_by('-created_at')
+
+
 class TutorListAPIView(generics.ListAPIView):
     queryset = User.objects.filter(user_type='tutor')
     serializer_class = TutorSerializer

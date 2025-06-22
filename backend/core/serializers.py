@@ -210,3 +210,30 @@ class TutorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone', 'trust_score', 'credit_balance']
+
+class JobListSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+    subject = serializers.PrimaryKeyRelatedField(queryset=Subject.objects.all())
+    subjects = serializers.PrimaryKeyRelatedField(many=True, queryset=Subject.objects.all())
+
+    class Meta:
+        model = Job
+        fields = [
+            'id',
+            'student',
+            'title',
+            'description',
+            'subject',
+            'subjects',
+            'latitude',
+            'longitude',
+            'created_at',
+            'is_active',
+        ]
+        read_only_fields = ['id', 'student', 'created_at']
+
+    def validate(self, data):
+        """Ensure student can't set is_active via API"""
+        if 'is_active' in data:
+            raise serializers.ValidationError("Cannot modify is_active directly")
+        return data
