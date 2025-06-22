@@ -7,11 +7,11 @@ import React, { useState, useEffect } from 'react';
 // import { useNotification } from '../contexts/NotificationContext';
 // import { useChat } from '../contexts/ChatContext';
 // import { jobAPI, tutorAPI } from '../utils/apiService';
-// import GigPostForm from '../components/GigPostForm';
-// import JobCard from '../components/JobCard';
-// import TutorCard from '../components/TutorCard';
-// import LoadingSpinner from '../components/LoadingSpinner';
-// import WelcomeBanner from '../components/WelcomeBanner';
+import GigPostForm from '../components/GigPostForm';
+import JobCard from '../components/JobCard';
+import TutorCard from '../components/TutorCard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import WelcomeBanner from '../components/WelcomeBanner';
 // import TeacherVerificationButton from '../components/TeacherVerificationButton';
 
 // Mock implementations for demonstration purposes
@@ -55,72 +55,6 @@ const tutorAPI = {
   ]}})
 };
 
-// Mock components for demonstration
-const GigPostForm = ({ onClose, onGigCreated }) => (
-  <div style={{
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-    justifyContent: 'center', alignItems: 'center', zIndex: 1000
-  }}>
-    <div style={{ backgroundColor: 'white', padding: '30px', borderRadius: '8px', width: '500px', maxWidth: '90%' }}>
-      <h3>Create New Gig</h3>
-      <p>Form content would go here...</p>
-      <button onClick={() => { onGigCreated({ id: Date.now().toString(), title: 'New Mock Gig', description: 'A gig just created', rate: 30, status: 'active' }); onClose(); }}>
-        Submit Gig
-      </button>
-      <button onClick={onClose} style={{ marginLeft: '10px' }}>Close</button>
-    </div>
-  </div>
-);
-
-const JobCard = ({ job }) => (
-  <div style={{
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    padding: '15px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    marginBottom: '10px'
-  }}>
-    <h4>{job.title}</h4>
-    <p style={{ fontSize: '14px', color: '#6c757d' }}>{job.description}</p>
-    <p style={{ fontWeight: 'bold' }}>Budget: ${job.budget}</p>
-  </div>
-);
-
-const TutorCard = ({ tutor }) => (
-  <div style={{
-    backgroundColor: 'white',
-    borderRadius: '8px',
-    padding: '15px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    marginBottom: '10px'
-  }}>
-    <h4>{tutor.title}</h4>
-    <p style={{ fontSize: '14px', color: '#6c757d' }}>{tutor.description}</p>
-    <p style={{ fontWeight: 'bold' }}>Rate: ${tutor.rate}/hr</p>
-    <p style={{ fontSize: '12px', color: '#6c757d' }}>Status: {tutor.status}</p>
-  </div>
-);
-
-const LoadingSpinner = () => (
-  <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-    <p>Loading...</p> {/* Replace with an actual spinner animation */}
-  </div>
-);
-
-const WelcomeBanner = () => (
-  <div style={{
-    backgroundColor: '#e9f7ef',
-    padding: '20px',
-    borderRadius: '8px',
-    marginBottom: '30px',
-    textAlign: 'center',
-    color: '#28a745'
-  }}>
-    <h2>Welcome to your Teacher Dashboard!</h2>
-    <p>Manage your gigs, find jobs, and track your earnings.</p>
-  </div>
-);
 
 const TeacherVerificationButton = () => (
   <button
