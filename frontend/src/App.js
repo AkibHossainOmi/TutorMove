@@ -111,8 +111,8 @@ function App() {
                     <Route path="/credits" element={<CreditPurchase />} />
                     
                     {/* Payment Status Routes */}
-                    <Route path="/:type/payment/success" element={<PaymentSuccess />} />
-                    <Route path="/:type/payment/fail" element={<PaymentFail />} />
+                    <Route path="/api/payments/success/" element={<PaymentSuccess />} />
+                    <Route path="/api/payments/fail/" element={<PaymentFail />} />
                     <Route path="/:type/payment/cancel" element={<PaymentCancel />} />
                     
                     {/* Policy Pages */}
