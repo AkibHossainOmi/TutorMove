@@ -24,7 +24,7 @@ from decimal import Decimal
 import uuid
 from django.http import JsonResponse
 
-
+from urllib.parse import urlencode
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message, UserSettings, Review, Subject, EscrowPayment,
     Order, Payment
@@ -769,31 +769,31 @@ class EscrowPaymentViewSet(viewsets.ModelViewSet):
 def payment_success_view(request):
     """
     Handles successful payment callbacks from SSLCommerz.
-    This view should perform validation to ensure the payment is legitimate.
+    Validates the transaction, updates records, and redirects to frontend with payment details.
     """
     data = request.POST if request.method == 'POST' else request.GET
 
     tran_id = data.get('tran_id')
     val_id = data.get('val_id')
-    
     user_id_str = data.get('value_a')
     payment_type = data.get('value_b')
     order_id_str = data.get('value_c')
 
     if not tran_id or not val_id:
-        return render(request, 'core/payment_fail.html', {'error': 'Missing transaction or validation ID.', 'frontend_url': settings.FRONTEND_SITE_URL})
+        query = urlencode({'tran_id': tran_id or '', 'reason': 'Missing transaction or validation ID'})
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
     try:
         order = Order.objects.get(id=order_id_str)
         payment = Payment.objects.get(order=order, transaction_id=tran_id)
         user = order.user
-    except (Order.DoesNotExist, Payment.DoesNotExist, User.DoesNotExist) as e:
-        print(f"Payment Success Callback: Associated order, payment, or user record not found for tran_id: {tran_id}, order_id: {order_id_str}")
-        return render(request, 'core/payment_fail.html', {'error': 'Associated payment record not found or invalid.', 'frontend_url': settings.FRONTEND_SITE_URL})
+    except (Order.DoesNotExist, Payment.DoesNotExist, User.DoesNotExist):
+        query = urlencode({'tran_id': tran_id, 'reason': 'Order or payment not found'})
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
     except Exception as e:
-        print(f"Payment Success Callback: Error retrieving records: {e}")
-        return render(request, 'core/payment_fail.html', {'error': 'An unexpected error occurred processing your payment.', 'frontend_url': settings.FRONTEND_SITE_URL})
-
+        print(f"Unexpected error retrieving records: {e}")
+        query = urlencode({'tran_id': tran_id, 'reason': 'Unexpected error occurred'})
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
     sslcommerz = SSLCommerzPayment()
     validation_response = sslcommerz.validate_transaction(val_id)
@@ -801,9 +801,10 @@ def payment_success_view(request):
     if validation_response and validation_response.get('status') == 'VALID':
         validated_amount = Decimal(validation_response.get('amount', '0.00'))
         validated_currency = validation_response.get('currency', '')
-        
-        if payment.status == 'PENDING' or payment.status == 'FAILED':
+
+        if payment.status in ['PENDING', 'FAILED']:
             if validated_amount == payment.amount and validated_currency == payment.currency:
+                # Mark payment success
                 payment.status = 'SUCCESS'
                 payment.bank_transaction_id = validation_response.get('bank_tran_id', payment.bank_transaction_id)
                 payment.validation_status = 'VALIDATED'
@@ -819,8 +820,9 @@ def payment_success_view(request):
                     credit_obj.save()
                     Notification.objects.create(
                         user=user,
-                        message=f"💰 Your purchase of {credits_to_add} credits was successful! Your new balance is {credit_obj.balance}."
+                        message=f"💰 Your purchase of {credits_to_add} credits was successful! New balance: {credit_obj.balance}"
                     )
+
                 elif payment_type == 'premium_upgrade':
                     user_settings, _ = UserSettings.objects.get_or_create(user=user)
                     now = timezone.now()
@@ -832,29 +834,45 @@ def payment_success_view(request):
                     user_settings.save()
                     Notification.objects.create(
                         user=user,
-                        message=f"✨ Your premium upgrade was successful! Expires on {user_settings.premium_expires.strftime('%Y-%m-%d')}."
+                        message=f"✨ Premium upgraded! Expires on {user_settings.premium_expires.strftime('%Y-%m-%d')}."
                     )
-                return render(request, 'core/payment_success.html', {'payment': payment, 'order': order, 'frontend_url': settings.FRONTEND_SITE_URL})
+
+                # Redirect to frontend with details
+                query = urlencode({
+                    'tran_id': tran_id,
+                    'val_id': val_id,
+                    'amount': str(validated_amount),
+                    'status': 'SUCCESS',
+                    'type': payment_type,
+                })
+                return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
             else:
-                error_message = "Payment amount/currency mismatch."
                 payment.status = 'FAILED'
                 payment.validation_status = 'AMOUNT_MISMATCH'
-                payment.error_message = error_message
+                payment.error_message = 'Amount/currency mismatch'
                 payment.save()
-                print(f"Payment Success Callback: Amount/currency mismatch for tran_id: {tran_id}. Expected {payment.amount} {payment.currency}, Got {validated_amount} {validated_currency}")
-                return render(request, 'core/payment_fail.html', {'error': error_message, 'frontend_url': settings.FRONTEND_SITE_URL})
+                query = urlencode({'tran_id': tran_id, 'reason': 'Amount/currency mismatch'})
+                return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
         else:
-            print(f"Payment Success Callback: Payment already processed for tran_id: {tran_id}. Current status: {payment.status}")
-            return render(request, 'core/payment_success.html', {'payment': payment, 'order': order, 'frontend_url': settings.FRONTEND_SITE_URL})
+            # Already processed
+            query = urlencode({
+                'tran_id': tran_id,
+                'val_id': val_id,
+                'amount': str(payment.amount),
+                'status': payment.status,
+                'type': payment_type,
+            })
+            return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
     else:
+        # Validation failed
         error_message = validation_response.get('failedreason', 'Payment validation failed.')
         if payment.status == 'PENDING':
             payment.status = 'FAILED'
             payment.validation_status = 'NOT_VALIDATED'
             payment.error_message = error_message
             payment.save()
-        print(f"Payment Success Callback: Validation API returned non-VALID status for tran_id: {tran_id}. Response: {validation_response}")
-        return render(request, 'core/payment_fail.html', {'error': error_message, 'frontend_url': settings.FRONTEND_SITE_URL})
+        query = urlencode({'tran_id': tran_id, 'reason': error_message})
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
 
 @csrf_exempt
@@ -863,28 +881,42 @@ def payment_success_view(request):
 def payment_fail_view(request):
     """
     Handles failed payment callbacks from SSLCommerz.
-    Updates the payment status to 'FAILED'.
+    Updates payment status to 'FAILED' and redirects to frontend with error details.
     """
     data = request.POST if request.method == 'POST' else request.GET
+
     tran_id = data.get('tran_id')
-    
     order_id_str = data.get('value_c')
+    fail_reason = data.get('failedreason', 'Payment failed or was cancelled.')
 
     if tran_id and order_id_str:
         try:
             order = Order.objects.get(id=order_id_str)
             payment = Payment.objects.get(order=order, transaction_id=tran_id)
+
             if payment.status == 'PENDING':
                 payment.status = 'FAILED'
-                payment.error_message = data.get('failedreason', 'Payment failed.')
+                payment.error_message = fail_reason
                 payment.save()
+
         except (Order.DoesNotExist, Payment.DoesNotExist):
-            print(f"Payment fail callback: Order or Payment record not found for tran_id: {tran_id}, order_id: {order_id_str}")
+            print(f"[FAIL] Order or Payment not found (tran_id: {tran_id}, order_id: {order_id_str})")
+            fail_reason = 'Associated order or payment not found.'
+
         except Exception as e:
-            print(f"Payment fail callback: Unexpected error processing fail for tran_id: {tran_id}, error: {e}")
+            print(f"[FAIL] Unexpected error for tran_id: {tran_id} → {e}")
+            fail_reason = 'An unexpected error occurred.'
 
-    return render(request, 'core/payment_fail.html', {'error': data.get('failedreason', 'Payment failed. Please try again.'), 'frontend_url': settings.FRONTEND_SITE_URL})
+    else:
+        fail_reason = 'Missing transaction ID or order ID.'
 
+    # Redirect to frontend with query params
+    query = urlencode({
+        'tran_id': tran_id or '',
+        'status': 'FAILED',
+        'reason': fail_reason,
+    })
+    return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
 @csrf_exempt
 @api_view(['POST', 'GET'])
@@ -892,28 +924,42 @@ def payment_fail_view(request):
 def payment_cancel_view(request):
     """
     Handles cancelled payment callbacks from SSLCommerz.
-    Updates the payment status to 'CANCELED'.
+    Updates the payment status to 'CANCELED' and redirects to frontend with details.
     """
     data = request.POST if request.method == 'POST' else request.GET
+
     tran_id = data.get('tran_id')
-    
     order_id_str = data.get('value_c')
+    cancel_reason = 'User cancelled the payment.'
 
     if tran_id and order_id_str:
         try:
             order = Order.objects.get(id=order_id_str)
             payment = Payment.objects.get(order=order, transaction_id=tran_id)
+
             if payment.status == 'PENDING':
                 payment.status = 'CANCELED'
-                payment.error_message = 'User cancelled the payment.'
+                payment.error_message = cancel_reason
                 payment.save()
+
         except (Order.DoesNotExist, Payment.DoesNotExist):
-            print(f"Payment cancel callback: Order or Payment record not found for tran_id: {tran_id}, order_id: {order_id_str}")
+            print(f"[CANCEL] Order or Payment not found (tran_id: {tran_id}, order_id: {order_id_str})")
+            cancel_reason = 'Associated order or payment not found.'
+
         except Exception as e:
-            print(f"Payment cancel callback: Unexpected error processing cancel for tran_id: {tran_id}, error: {e}")
+            print(f"[CANCEL] Unexpected error for tran_id: {tran_id} → {e}")
+            cancel_reason = 'An unexpected error occurred during cancellation.'
 
-    return render(request, 'core/payment_cancel.html', {'message': 'Payment cancelled.', 'frontend_url': settings.FRONTEND_SITE_URL})
+    else:
+        cancel_reason = 'Missing transaction ID or order ID.'
 
+    # Redirect to frontend with query parameters
+    query = urlencode({
+        'tran_id': tran_id or '',
+        'status': 'CANCELED',
+        'reason': cancel_reason,
+    })
+    return redirect(f"{settings.FRONTEND_SITE_URL}/payments/cancel?{query}")
 
 @csrf_exempt
 @api_view(['POST'])
