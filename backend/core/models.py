@@ -1,9 +1,11 @@
+# backend/core/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
 import re
 from phonenumber_field.modelfields import PhoneNumberField
-# from django.contrib.gis.db import models as geomodels
+import uuid
+
 class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ("student", "Student"),
@@ -20,16 +22,134 @@ class User(AbstractUser):
     phone_otp_expires = models.DateTimeField(blank=True, null=True)
     trust_score = models.FloatField(default=1.0)
     is_verified = models.BooleanField(default=False)
-    is_verified = models.BooleanField(default=False)
+    is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
     verification_requested = models.BooleanField(default=False)
     verification_doc = models.FileField(upload_to='verification_docs/', blank=True, null=True)
-    verification_requested = models.BooleanField(default=False)
-    is_verified = models.BooleanField(default=False)
+    verification_requested = models.BooleanField(default=False) # Reverted: Original duplicate field
+    is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
 
 
+# ADDED: Order and Payment Models (These are new and remain as part of payment integration)
+class Order(models.Model):
+    """
+    Represents an order in your system. This model will hold the total amount
+    and link to the user. You should extend this with more specific order
+    details like items, quantity, shipping address, etc., as per your application's needs.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="The user who placed the order. Can be null for guest orders."
+    )
+    total_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="The total amount of the order, including tax and shipping."
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when the order was created."
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        help_text="Timestamp when the order was last updated."
+    )
+    is_paid = models.BooleanField(
+        default=False,
+        help_text="Indicates if the order has been successfully paid for."
+    )
+    # You can add more fields here relevant to your specific order system
+    # e.g., 'items_json', 'shipping_address', 'order_status'
 
+    class Meta:
+        verbose_name = "Order"
+        verbose_name_plural = "Orders"
+        ordering = ['-created_at'] # Order by most recent by default
 
-# core/models.py
+    def __str__(self):
+        """String representation of the Order."""
+        return f"Order {self.id} (User: {self.user.username if self.user else 'Guest'}) - Amount: {self.total_amount} - Paid: {self.is_paid}"
+
+class Payment(models.Model):
+    """
+    Records a payment transaction associated with an Order.
+    This stores details about the payment attempt, its status,
+    and references from the payment gateway.
+    """
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='payments',
+        help_text="The order associated with this payment."
+    )
+    transaction_id = models.CharField(
+        max_length=100,
+        unique=True,
+        null=True,
+        blank=True,
+        help_text="Your internal unique transaction ID for this payment attempt."
+    )
+    bank_transaction_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        help_text="The transaction ID returned by SSLCommerz (or other payment gateway)."
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        help_text="The amount processed in this payment transaction."
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=[
+            ('PENDING', 'Pending'),
+            ('SUCCESS', 'Success'),
+            ('FAILED', 'Failed'),
+            ('CANCELED', 'Canceled by User'),
+            ('VALIDATED', 'Validated by API'), # Payment confirmed via validation API
+            ('RISK', 'Risk Payment'), # Flagged as risky by SSLCommerz
+        ],
+        default='PENDING',
+        help_text="Current status of the payment transaction."
+    )
+    payment_method = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Method used for payment (e.g., 'VISA', 'Mastercard', 'Bkash')."
+    )
+    currency = models.CharField(
+        max_length=10,
+        default='BDT', # Default to Bangladeshi Taka, change if your primary currency differs
+        help_text="Currency of the payment (e.g., BDT, USD)."
+    )
+    payment_date = models.DateTimeField(
+        auto_now_add=True,
+        help_text="Timestamp when the payment record was created."
+    )
+    validation_status = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Detailed validation status from the payment gateway."
+    )
+    error_message = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Any error message associated with a failed payment."
+    )
+
+    class Meta:
+        verbose_name = "Payment"
+        verbose_name_plural = "Payments"
+        ordering = ['-payment_date'] # Order by most recent payment
+
+    def __str__(self):
+        """String representation of the Payment."""
+        return f"Payment for Order {self.order.id} - Amount: {self.amount} - Status: {self.status}"
 
 class Subject(models.Model):
     name = models.CharField(max_length=100, unique=True)

@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // ADDED: Import axios for making API requests
+
 // The following imports are commented out to prevent redeclaration errors
 // when using the mock implementations provided below.
 // In a full application, uncomment these and remove the mock implementations.
@@ -20,7 +22,7 @@ const useTranslation = () => ({
   t: (key) => key // Simple mock translator
 });
 const useAuth = () => ({
-  user: { id: 'teacher123', username: 'Professor Smith' } // Mock user
+  user: { id: 'teacher123', username: 'Professor Smith', email: 'professor.smith@example.com' } // Mock user with email
 });
 const useNotification = () => {
   const [notifications, setNotifications] = useState([
@@ -100,6 +102,23 @@ const TeacherDashboard = () => {
     }
   });
 
+  // IMPORTANT: Replace with your actual Django backend URL and API endpoint
+  // This should match the settings in your Django project
+  // const DJANGO_BASE_URL = 'http://localhost:8000'; // Or your deployed backend URL
+  const CREDIT_PURCHASE_ENDPOINT = `/api/credits/purchase/`;
+  const PREMIUM_UPGRADE_ENDPOINT = `/api/premium/upgrade/`;
+
+  // IMPORTANT: For testing with `AllowAny` on backend, you can use a mock user ID
+  // In a real application with bypassed auth, you'd send a real user's ID
+  // For production, this should be replaced with a proper token as discussed
+  const MOCK_USER_ID = '1'; // Replace with an actual user ID from your Django DB for testing purposes
+                               // E.g., if you created a superuser, their ID is usually 1.
+
+  // AUTH_TOKEN is not strictly needed for this specific test if backend allows `AllowAny`
+  // but it's good practice to keep it for when you re-enable authentication.
+  // const AUTH_TOKEN = 'YOUR_AUTH_TOKEN_HERE'; // Placeholder, replace with actual token in real app
+
+
   useEffect(() => {
     loadDashboardData();
   }, []);
@@ -120,23 +139,24 @@ const TeacherDashboard = () => {
       // Load teacher's applications
       const applicationsResponse = await jobAPI.getMyApplications();
 
-      setDashboardData({
+      setDashboardData(prev => ({
+        ...prev, // Keep existing properties
         myGigs: gigsResponse.data.results || [],
         matchedJobs: matchedJobsResponse.data.results || [],
         applications: applicationsResponse.data.results || [],
         // Example data for earnings and stats - replace with actual API data if available
         earnings: {
-          total: 8500,
-          pending: 2100,
-          completed: 6400
+          total: prev.earnings.total || 8500, // Keep existing if loaded, else use mock
+          pending: prev.earnings.pending || 2100,
+          completed: prev.earnings.completed || 6400
         },
         stats: {
-          totalViews: 320,
+          totalViews: prev.stats.totalViews || 320,
           activeGigs: gigsResponse.data.results?.filter(gig => gig.status === 'active').length || 0,
           completedJobs: applicationsResponse.data.results?.filter(app => app.status === 'completed').length || 0,
-          totalStudents: 45
+          totalStudents: prev.stats.totalStudents || 45
         }
-      });
+      }));
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       showNotification(
@@ -202,6 +222,109 @@ const TeacherDashboard = () => {
       </div>
     </div>
   );
+
+  // Helper functions for UI feedback (loading, status messages)
+  const [statusMessage, setStatusMessage] = useState('');
+  const [showSpinner, setShowSpinner] = useState(false);
+
+  function showLoading(message = 'Processing payment...') {
+      setShowSpinner(true);
+      setStatusMessage(message);
+  }
+
+  function hideLoading() {
+      setShowSpinner(false);
+      setStatusMessage('');
+  }
+
+  function showStatus(message, isError = false) {
+      setStatusMessage(message);
+      // You might want to style this differently for errors in your actual CSS
+      console.log(isError ? `ERROR: ${message}` : `SUCCESS: ${message}`);
+  }
+
+
+  /**
+   * Handles the "Buy Credits" button click event.
+   * Makes an API call to the backend to initiate payment for credits.
+   */
+  const handleBuyCredits = async () => {
+    showLoading('Initiating credit purchase...');
+    try {
+      // Data to send to your Django backend
+      const purchaseData = {
+        credits: 10,  // Amount of credits to buy
+        amount: 100.00, // Corresponding financial amount (e.g., BDT)
+        user_id: MOCK_USER_ID // Pass user_id explicitly since token is bypassed
+      };
+
+      const response = await axios.post(
+        CREDIT_PURCHASE_ENDPOINT,
+        purchaseData,
+        {
+          headers: {
+            // 'Authorization': `Token ${AUTH_TOKEN}`, // Commented out for bypass testing
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      hideLoading();
+      if (response.data.status === 'SUCCESS' && response.data.payment_url) {
+        showStatus('Redirecting to SSLCommerz...', false);
+        window.location.href = response.data.payment_url; // Redirect the user to SSLCommerz
+      } else {
+        const errorMessage = response.data.error || 'Unknown error during payment initiation.';
+        showStatus(`Payment initiation failed: ${errorMessage}`, true);
+      }
+    } catch (error) {
+      hideLoading();
+      console.error('Error initiating credit purchase:', error.response ? error.response.data : error.message);
+      const userMessage = error.response?.data?.error || 'Could not initiate payment. Please try again.';
+      showStatus(`Error: ${userMessage}`, true);
+    }
+  };
+
+  /**
+   * Handles the "Upgrade to Premium" button click event.
+   * Makes an API call to the backend to initiate payment for premium.
+   */
+  const handleUpgradePremium = async () => {
+    showLoading('Initiating premium upgrade...');
+    try {
+      // Data to send to your Django backend
+      const upgradeData = {
+        plan: 'monthly', // Example plan
+        user_id: MOCK_USER_ID // Pass user_id explicitly since token is bypassed
+      };
+
+      const response = await axios.post(
+        PREMIUM_UPGRADE_ENDPOINT,
+        upgradeData,
+        {
+          headers: {
+            // 'Authorization': `Token ${AUTH_TOKEN}`, // Commented out for bypass testing
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      hideLoading();
+      if (response.data.status === 'SUCCESS' && response.data.payment_url) {
+        showStatus('Redirecting to SSLCommerz...', false);
+        window.location.href = response.data.payment_url; // Redirect the user to SSLCommerz
+      } else {
+        const errorMessage = response.data.error || 'Unknown error during premium initiation.';
+        showStatus(`Premium upgrade failed: ${errorMessage}`, true);
+      }
+    } catch (error) {
+      hideLoading();
+      console.error('Error initiating premium upgrade:', error.response ? error.response.data : error.message);
+      const userMessage = error.response?.data?.error || 'Could not initiate premium upgrade. Please try again.';
+      showStatus(`Error: ${userMessage}`, true);
+    }
+  };
+
 
   // Display loading spinner while data is being fetched
   if (isLoading) {
@@ -349,6 +472,8 @@ const TeacherDashboard = () => {
                       borderRadius: '4px',
                       cursor: 'pointer',
                       fontSize: '1em',
+                      fontWeight: '500',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
                       transition: 'background-color 0.3s ease'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
@@ -424,9 +549,9 @@ const TeacherDashboard = () => {
             ➕ Create a Gig
           </button>
 
-          {/* Buy Credits Button */}
+          {/* Buy Credits Button - MODIFIED FOR DIRECT PAYMENT INITIATION */}
           <button
-            onClick={() => window.location.href = '/credit-purchase'}
+            onClick={handleBuyCredits} // Call the new handler
             style={{
               padding: '10px 15px',
               backgroundColor: '#28a745',
@@ -446,6 +571,18 @@ const TeacherDashboard = () => {
           </button>
         </div>
       </div>
+
+      {/* Status/Loading Message Display */}
+      {showSpinner && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '15px 0', color: '#555' }}>
+          <div className="loading-spinner" style={{ display: 'block', marginRight: '10px' }}></div>
+          <span>{statusMessage}</span>
+        </div>
+      )}
+      {!showSpinner && statusMessage && (
+        <p className="status-message" style={{ textAlign: 'center', marginTop: '15px' }}>{statusMessage}</p>
+      )}
+
 
       {/* Stats Grid */}
       <div style={{
@@ -590,7 +727,7 @@ const TeacherDashboard = () => {
               <button
                 onClick={() => setIsGigFormOpen(true)}
                 style={{
-                  padding: '10px 20px',
+                  padding: '10px 15px',
                   backgroundColor: '#007bff',
                   color: 'white',
                   border: 'none',
@@ -635,7 +772,7 @@ const TeacherDashboard = () => {
               <p style={{ fontSize: '1em', marginBottom: '5px' }}>Pending: {dashboardData.earnings.pending}</p>
               <p style={{ fontSize: '1em' }}>Completed: {dashboardData.earnings.completed}</p>
               <button
-                onClick={() => window.location.href = '/credit-purchase'}
+                onClick={handleBuyCredits}
                 style={{
                   padding: '10px 20px',
                   backgroundColor: '#28a745',
@@ -666,6 +803,7 @@ const TeacherDashboard = () => {
               <p style={{ marginBottom: '10px' }}>Configure your payout account.</p>
               <p>Review your transaction history.</p>
               <button
+                onClick={() => alert('Navigate to payment history page!')} // Placeholder for navigation
                 style={{
                   padding: '10px 20px',
                   backgroundColor: '#6c757d',
@@ -695,6 +833,7 @@ const TeacherDashboard = () => {
               <h3 style={{ color: '#17a2b8', marginBottom: '15px' }}>Refer & Earn</h3>
               <p style={{ marginBottom: '10px' }}>Invite friends to the platform and earn free credits when they sign up and complete their first lesson!</p>
               <button
+                onClick={() => alert('Navigate to refer & earn page!')} // Placeholder for navigation
                 style={{
                   padding: '10px 20px',
                   backgroundColor: '#17a2b8',
@@ -826,10 +965,10 @@ const TeacherDashboard = () => {
               <li style={{ marginBottom: '15px' }}>📊 Advanced analytics and insights into your profile and gig performance.</li>
               <li style={{ marginBottom: '15px' }}>🚀 Unlimited gig postings to showcase all your expertise.</li>
               <li style={{ marginBottom: '15px' }}>✉️ Direct messaging with students for faster communication.</li>
-              <li style={{ marginBottom: '15px' }}>Profile verification badge to build trust.</li> {/* FIX: Removed problematic emoji */}
+              <li style={{ marginBottom: '15px' }}>Profile verification badge to build trust.</li>
             </ul>
             <button
-              onClick={() => window.location.href = '/credit-purchase'} // Assuming credit-purchase page handles premium upgrades
+              onClick={handleUpgradePremium} // Call the new handler
               style={{
                 padding: '18px 40px',
                 backgroundColor: '#ffc107',

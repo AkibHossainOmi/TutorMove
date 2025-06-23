@@ -2,7 +2,7 @@ from django.db.models import Q
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
-from rest_framework import viewsets, permissions, status, filters, views
+from rest_framework import viewsets, permissions, status, filters, views, generics
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.views.decorators.csrf import csrf_exempt
@@ -18,24 +18,40 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse
+from decimal import Decimal
+import uuid
+from django.http import JsonResponse
 
-from .models import User, Gig, Credit, Job, Application, Notification, Message, UserSettings, Review, Subject, EscrowPayment
+
+from .models import (
+    User, Gig, Credit, Job, Application, Notification, Message, UserSettings, Review, Subject, EscrowPayment,
+    Order, Payment
+)
 from .serializers import (
     UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
     ApplicationSerializer, NotificationSerializer, MessageSerializer, UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, TutorSerializer, JobListSerializer,
+    OrderSerializer,
+    PaymentSerializer,
 )
-from rest_framework import generics
 
 from .payments import SSLCommerzPayment
+
+
+def generate_transaction_id():
+    """Generates a unique transaction ID with a 'TRN-' prefix."""
+    return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+
 
 class JobListAPIView(generics.ListAPIView):
     """
     Simple list view for active jobs with basic student verification
     """
     serializer_class = JobListSerializer
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
     def get_queryset(self):
         return Job.objects.filter(
             is_active=True
@@ -49,7 +65,7 @@ class JobListAPIView(generics.ListAPIView):
 class TutorListAPIView(generics.ListAPIView):
     queryset = User.objects.filter(user_type='tutor')
     serializer_class = TutorSerializer
-    permission_classes = [AllowAny] 
+    permission_classes = [AllowAny]
 # --- UserViewSet ---
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -146,10 +162,10 @@ class UserViewSet(viewsets.ModelViewSet):
 def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a)) 
+    c = 2 * asin(sqrt(a))
     km = 6371 * c
     return km
 
@@ -228,50 +244,100 @@ class GigViewSet(viewsets.ModelViewSet):
         return Response({'contact_info': gig.contact_info})
 
 # --- CreditViewSet ---
-from uuid import uuid4
 class CreditViewSet(viewsets.ModelViewSet):
     serializer_class = CreditSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        # NOTE: For testing purposes, you might want to mock request.user here
+        # if not using actual authentication. For now, it relies on request.user.
         return Credit.objects.filter(user=self.request.user)
 
-    @action(detail=False, methods=['post'])
+    # TEMPORARY: Changed permission_classes to AllowAny for testing without authentication
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def purchase(self, request):
-        credits = int(request.data.get('credits', 0))
+        credits_to_add = int(request.data.get('credits', 0))
         amount = float(request.data.get('amount', 0))
-        if not credits or not amount:
+
+        # IMPORTANT: For unauthenticated testing, you NEED a user object.
+        # You could fetch a specific test user or create a temporary one if needed.
+        # For now, let's try to get user by ID passed from frontend or default to a mock user.
+        # This is a dangerous temporary bypass for testing purposes only!
+        user_id = request.data.get('user_id') # Expect user_id from frontend if no token
+        try:
+            if user_id:
+                user = User.objects.get(id=user_id)
+            else:
+                # Fallback for local testing without user_id or token: use an existing user
+                # Replace with a known user ID from your database for testing
+                user = User.objects.first() # DANGER: Do not do this in production!
+                if not user:
+                    return Response({'error': 'No user found for testing. Please create one.'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'error': 'Test user not found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Use the obtained 'user' object for Order creation
+        # All other logic remains the same
+        if not credits_to_add or not amount:
             return Response({'error': 'Both credits and amount are required.'}, status=status.HTTP_400_BAD_REQUEST)
-        sslcommerz = SSLCommerzPayment(
-            store_id="tutor68298baf61ba2",
-            store_password="tutor68298baf61ba2@ssl"
+
+        order = Order.objects.create(
+            user=user, # Use the acquired user object
+            total_amount=Decimal(amount),
+            is_paid=False
         )
-        transaction_id = f"CREDIT_{request.user.id}_{uuid4()}"
+
+        sslcommerz = SSLCommerzPayment()
+        transaction_id = generate_transaction_id()
+
+        payment = Payment.objects.create(
+            order=order,
+            transaction_id=transaction_id,
+            amount=Decimal(amount),
+            status='PENDING',
+            currency='BDT',
+        )
+
         payment_data = {
-            'total_amount': amount,
+            'total_amount': str(amount),
             'currency': "BDT",
             'tran_id': transaction_id,
-            'success_url': "http://localhost:3000/credit-purchase?success=1",
-            'fail_url': "http://localhost:3000/credit-purchase?success=0",
-            'cancel_url': "http://localhost:3000/credit-purchase?success=0",
-            'ipn_url': "http://localhost:8000/api/payments/sslcommerz-ipn/",
-            'cus_name': request.user.get_full_name() or request.user.username,
-            'cus_email': request.user.email,
-            'value_a': str(request.user.id),
-            'value_b': str(credits),
+            'success_url': request.build_absolute_uri(reverse('payment_success')),
+            'fail_url': request.build_absolute_uri(reverse('payment_fail')),
+            'cancel_url': request.build_absolute_uri(reverse('payment_cancel')),
+            'ipn_url': request.build_absolute_uri(reverse('sslcommerz_ipn')),
+            'cus_name': user.get_full_name() or user.username, # Use the acquired user object
+            'cus_email': user.email, # Use the acquired user object
+            'value_a': str(user.id),
+            'value_b': str(credits_to_add),
+            'value_c': str(order.id),
+            'product_name': f"Credits purchase for {credits_to_add}",
+            'product_category': 'Digital Goods',
+            'product_profile': 'general',
+            'shipping_method': 'NO',
+            'num_of_item': 1,
         }
-        response = sslcommerz.initiate_payment(payment_data)
-        if response.get('status') == 'SUCCESS':
+
+        response_data = sslcommerz.initiate_payment(payment_data)
+
+        if response_data and response_data.get('status') == 'SUCCESS':
+            payment.bank_transaction_id = response_data.get('tran_id')
+            payment.save()
+
             return Response({
                 'status': 'SUCCESS',
-                'payment_url': response.get('GatewayPageURL'),
-                'sessionkey': response.get('sessionkey'),
+                'payment_url': response_data.get('GatewayPageURL'),
+                'sessionkey': response_data.get('sessionkey'),
                 'transaction_id': transaction_id
             })
         else:
+            error_message = response_data.get('failedreason', 'Unknown error initiating payment.')
+            payment.status = 'FAILED'
+            payment.error_message = error_message
+            payment.save()
             return Response({
                 'status': 'FAILED',
-                'error': response.get('failedreason', 'Payment initiation failed')
+                'error': error_message
             }, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
@@ -295,7 +361,7 @@ class CreditViewSet(viewsets.ModelViewSet):
 # --- JobViewSet ---
 class JobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'subject', 'location']
 
@@ -339,7 +405,7 @@ class JobViewSet(viewsets.ModelViewSet):
 # --- ApplicationViewSet ---
 class ApplicationViewSet(viewsets.ModelViewSet):
     serializer_class = ApplicationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         if self.request.user.user_type == 'teacher':
@@ -426,7 +492,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 # --- NotificationViewSet ---
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return Notification.objects.filter(user=self.request.user)
@@ -445,7 +511,7 @@ class NotificationViewSet(viewsets.ModelViewSet):
 # --- MessageViewSet ---
 class MessageViewSet(viewsets.ModelViewSet):
     serializer_class = MessageSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -486,7 +552,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 # --- UserSettingsViewSet ---
 class UserSettingsViewSet(viewsets.ModelViewSet):
     serializer_class = UserSettingsSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         return UserSettings.objects.filter(user=self.request.user)
@@ -511,7 +577,7 @@ class UserSettingsViewSet(viewsets.ModelViewSet):
 # --- ReviewViewSet (with trust_score update hook) ---
 from core.utils import update_trust_score
 class ReviewViewSet(viewsets.ModelViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
 
     def get_queryset(self):
@@ -528,7 +594,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 # --- PremiumViewSet ---
 class PremiumViewSet(viewsets.ViewSet):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     @action(detail=False, methods=['get'])
     def status(self, request):
@@ -539,26 +605,91 @@ class PremiumViewSet(viewsets.ViewSet):
             'features': self.get_premium_features()
         })
 
-    @action(detail=False, methods=['post'])
+    # TEMPORARY: Changed permission_classes to AllowAny for testing without authentication
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def upgrade(self, request):
-        user_settings = UserSettings.objects.get(user=request.user)
+        # IMPORTANT: For unauthenticated testing, you NEED a user object.
+        # You could fetch a specific test user or create a temporary one if needed.
+        # For now, let's try to get user by ID passed from frontend or default to a mock user.
+        # This is a dangerous temporary bypass for testing purposes only!
+        user_id = request.data.get('user_id') # Expect user_id from frontend if no token
+        try:
+            if user_id:
+                user = User.objects.get(id=user_id)
+            else:
+                # Fallback for local testing without user_id or token: use an existing user
+                # Replace with a known user ID from your database for testing
+                user = User.objects.first() # DANGER: Do not do this in production!
+                if not user:
+                    return Response({'error': 'No user found for testing. Please create one.'}, status=status.HTTP_400_BAD_REQUEST)
+        except User.DoesNotExist:
+            return Response({'error': 'Test user not found.'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+        user_settings, _ = UserSettings.objects.get_or_create(user=user) # Use the acquired user object
         plan = request.data.get('plan')
-        sslcommerz = SSLCommerzPayment(
-            store_id="tutor68298baf61ba2",
-            store_password="tutor68298baf61ba2@ssl"
+        sslcommerz = SSLCommerzPayment()
+        
+        total_amount = self.get_plan_price(plan)
+        if not isinstance(total_amount, Decimal):
+            total_amount = Decimal(str(total_amount))
+        
+        transaction_id = f"PREMIUM_{user.id}_{timezone.now().strftime('%Y%m%d%H%M%S')}" # Use acquired user.id
+
+        order = Order.objects.create(
+            user=user, # Use the acquired user object
+            total_amount=total_amount,
+            is_paid=False,
         )
+        payment = Payment.objects.create(
+            order=order,
+            transaction_id=transaction_id,
+            amount=total_amount,
+            status='PENDING',
+            currency='BDT',
+            validation_status=f"PREMIUM_PLAN_{plan}"
+        )
+
         payment_data = {
-            'total_amount': self.get_plan_price(plan),
+            'total_amount': str(total_amount),
             'currency': "BDT",
-            'tran_id': f"PREMIUM_{request.user.id}_{timezone.now().timestamp()}",
-            'success_url': "http://localhost:3000/premium/payment/success/",
-            'fail_url': "http://localhost:3000/premium/payment/fail/",
-            'cancel_url': "http://localhost:3000/premium/payment/cancel/",
-            'cus_name': request.user.get_full_name(),
-            'cus_email': request.user.email,
+            'tran_id': transaction_id,
+            'success_url': request.build_absolute_uri(reverse('payment_success')),
+            'fail_url': request.build_absolute_uri(reverse('payment_fail')),
+            'cancel_url': request.build_absolute_uri(reverse('payment_cancel')),
+            'ipn_url': request.build_absolute_uri(reverse('sslcommerz_ipn')),
+            'cus_name': user.get_full_name() or user.username, # Use acquired user object
+            'cus_email': user.email, # Use acquired user object
+            'value_a': str(user.id),
+            'value_b': 'premium_upgrade',
+            'value_c': str(order.id),
+            'product_name': f"Premium plan ({plan})",
+            'product_category': 'Service',
+            'product_profile': 'general',
+            'shipping_method': 'NO',
+            'num_of_item': 1,
         }
         response = sslcommerz.initiate_payment(payment_data)
-        return Response(response)
+
+        if response and response.get('status') == 'SUCCESS':
+            payment.bank_transaction_id = response.get('tran_id')
+            payment.save()
+            return Response({
+                'status': 'SUCCESS',
+                'payment_url': response.get('GatewayPageURL'),
+                'sessionkey': response.get('sessionkey'),
+                'transaction_id': transaction_id
+            })
+        else:
+            error_message = response.get('failedreason', 'Unknown error initiating premium payment.')
+            payment.status = 'FAILED'
+            payment.error_message = error_message
+            payment.save()
+            return Response({
+                'status': 'FAILED',
+                'error': error_message
+            }, status=status.HTTP_400_BAD_REQUEST)
+
 
     def get_premium_features(self):
         return {
@@ -571,16 +702,16 @@ class PremiumViewSet(viewsets.ViewSet):
 
     def get_plan_price(self, plan):
         prices = {
-            'monthly': 1000,
-            'yearly': 10000
+            'monthly': Decimal('1000.00'),
+            'yearly': Decimal('10000.00')
         }
-        return prices.get(plan, 1000)
+        return prices.get(plan, Decimal('1000.00'))
 
 # --- SubjectViewSet ---
 class SubjectViewSet(viewsets.ModelViewSet):
     queryset = Subject.objects.all()
     serializer_class = SubjectSerializer
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
     filter_backends = [filters.SearchFilter]
     search_fields = ['name', 'aliases']
 
@@ -600,7 +731,7 @@ class SubjectViewSet(viewsets.ModelViewSet):
 class EscrowPaymentViewSet(viewsets.ModelViewSet):
     queryset = EscrowPayment.objects.all()
     serializer_class = EscrowPaymentSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
@@ -617,7 +748,7 @@ class EscrowPaymentViewSet(viewsets.ModelViewSet):
             return Response({'status': 'Already released'})
         if request.user != escrow.student:
             return Response({'error': 'Only the student can release funds.'}, status=status.HTTP_403_FORBIDDEN)
-        commission_pct = 0.10
+        commission_pct = Decimal('0.10')
         escrow.commission = escrow.amount * commission_pct
         tutor_payout = escrow.amount - escrow.commission
         escrow.is_released = True
@@ -631,40 +762,256 @@ class EscrowPaymentViewSet(viewsets.ModelViewSet):
 
 # --- AbuseReportSerializer not shown for brevity ---
 
-# --- SSLCommerz IPN ---
+# --- SSLCommerz IPN, Success, Fail, Cancel Views ---
+@csrf_exempt
+@api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
+def payment_success_view(request):
+    """
+    Handles successful payment callbacks from SSLCommerz.
+    This view should perform validation to ensure the payment is legitimate.
+    """
+    data = request.POST if request.method == 'POST' else request.GET
+
+    tran_id = data.get('tran_id')
+    val_id = data.get('val_id')
+    
+    user_id_str = data.get('value_a')
+    payment_type = data.get('value_b')
+    order_id_str = data.get('value_c')
+
+    if not tran_id or not val_id:
+        return render(request, 'core/payment_fail.html', {'error': 'Missing transaction or validation ID.', 'frontend_url': settings.FRONTEND_SITE_URL})
+
+    try:
+        order = Order.objects.get(id=order_id_str)
+        payment = Payment.objects.get(order=order, transaction_id=tran_id)
+        user = order.user
+    except (Order.DoesNotExist, Payment.DoesNotExist, User.DoesNotExist) as e:
+        print(f"Payment Success Callback: Associated order, payment, or user record not found for tran_id: {tran_id}, order_id: {order_id_str}")
+        return render(request, 'core/payment_fail.html', {'error': 'Associated payment record not found or invalid.', 'frontend_url': settings.FRONTEND_SITE_URL})
+    except Exception as e:
+        print(f"Payment Success Callback: Error retrieving records: {e}")
+        return render(request, 'core/payment_fail.html', {'error': 'An unexpected error occurred processing your payment.', 'frontend_url': settings.FRONTEND_SITE_URL})
+
+
+    sslcommerz = SSLCommerzPayment()
+    validation_response = sslcommerz.validate_transaction(val_id)
+
+    if validation_response and validation_response.get('status') == 'VALID':
+        validated_amount = Decimal(validation_response.get('amount', '0.00'))
+        validated_currency = validation_response.get('currency', '')
+        
+        if payment.status == 'PENDING' or payment.status == 'FAILED':
+            if validated_amount == payment.amount and validated_currency == payment.currency:
+                payment.status = 'SUCCESS'
+                payment.bank_transaction_id = validation_response.get('bank_tran_id', payment.bank_transaction_id)
+                payment.validation_status = 'VALIDATED'
+                payment.save()
+
+                order.is_paid = True
+                order.save()
+
+                if payment_type == 'credit_purchase':
+                    credits_to_add = int(data.get('value_b', 0))
+                    credit_obj, _ = Credit.objects.get_or_create(user=user)
+                    credit_obj.balance += credits_to_add
+                    credit_obj.save()
+                    Notification.objects.create(
+                        user=user,
+                        message=f"💰 Your purchase of {credits_to_add} credits was successful! Your new balance is {credit_obj.balance}."
+                    )
+                elif payment_type == 'premium_upgrade':
+                    user_settings, _ = UserSettings.objects.get_or_create(user=user)
+                    now = timezone.now()
+                    if not user_settings.premium_expires or user_settings.premium_expires < now:
+                        user_settings.premium_expires = now + timedelta(days=30)
+                    else:
+                        user_settings.premium_expires += timedelta(days=30)
+                    user_settings.is_premium = True
+                    user_settings.save()
+                    Notification.objects.create(
+                        user=user,
+                        message=f"✨ Your premium upgrade was successful! Expires on {user_settings.premium_expires.strftime('%Y-%m-%d')}."
+                    )
+                return render(request, 'core/payment_success.html', {'payment': payment, 'order': order, 'frontend_url': settings.FRONTEND_SITE_URL})
+            else:
+                error_message = "Payment amount/currency mismatch."
+                payment.status = 'FAILED'
+                payment.validation_status = 'AMOUNT_MISMATCH'
+                payment.error_message = error_message
+                payment.save()
+                print(f"Payment Success Callback: Amount/currency mismatch for tran_id: {tran_id}. Expected {payment.amount} {payment.currency}, Got {validated_amount} {validated_currency}")
+                return render(request, 'core/payment_fail.html', {'error': error_message, 'frontend_url': settings.FRONTEND_SITE_URL})
+        else:
+            print(f"Payment Success Callback: Payment already processed for tran_id: {tran_id}. Current status: {payment.status}")
+            return render(request, 'core/payment_success.html', {'payment': payment, 'order': order, 'frontend_url': settings.FRONTEND_SITE_URL})
+    else:
+        error_message = validation_response.get('failedreason', 'Payment validation failed.')
+        if payment.status == 'PENDING':
+            payment.status = 'FAILED'
+            payment.validation_status = 'NOT_VALIDATED'
+            payment.error_message = error_message
+            payment.save()
+        print(f"Payment Success Callback: Validation API returned non-VALID status for tran_id: {tran_id}. Response: {validation_response}")
+        return render(request, 'core/payment_fail.html', {'error': error_message, 'frontend_url': settings.FRONTEND_SITE_URL})
+
+
+@csrf_exempt
+@api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
+def payment_fail_view(request):
+    """
+    Handles failed payment callbacks from SSLCommerz.
+    Updates the payment status to 'FAILED'.
+    """
+    data = request.POST if request.method == 'POST' else request.GET
+    tran_id = data.get('tran_id')
+    
+    order_id_str = data.get('value_c')
+
+    if tran_id and order_id_str:
+        try:
+            order = Order.objects.get(id=order_id_str)
+            payment = Payment.objects.get(order=order, transaction_id=tran_id)
+            if payment.status == 'PENDING':
+                payment.status = 'FAILED'
+                payment.error_message = data.get('failedreason', 'Payment failed.')
+                payment.save()
+        except (Order.DoesNotExist, Payment.DoesNotExist):
+            print(f"Payment fail callback: Order or Payment record not found for tran_id: {tran_id}, order_id: {order_id_str}")
+        except Exception as e:
+            print(f"Payment fail callback: Unexpected error processing fail for tran_id: {tran_id}, error: {e}")
+
+    return render(request, 'core/payment_fail.html', {'error': data.get('failedreason', 'Payment failed. Please try again.'), 'frontend_url': settings.FRONTEND_SITE_URL})
+
+
+@csrf_exempt
+@api_view(['POST', 'GET'])
+@permission_classes([AllowAny])
+def payment_cancel_view(request):
+    """
+    Handles cancelled payment callbacks from SSLCommerz.
+    Updates the payment status to 'CANCELED'.
+    """
+    data = request.POST if request.method == 'POST' else request.GET
+    tran_id = data.get('tran_id')
+    
+    order_id_str = data.get('value_c')
+
+    if tran_id and order_id_str:
+        try:
+            order = Order.objects.get(id=order_id_str)
+            payment = Payment.objects.get(order=order, transaction_id=tran_id)
+            if payment.status == 'PENDING':
+                payment.status = 'CANCELED'
+                payment.error_message = 'User cancelled the payment.'
+                payment.save()
+        except (Order.DoesNotExist, Payment.DoesNotExist):
+            print(f"Payment cancel callback: Order or Payment record not found for tran_id: {tran_id}, order_id: {order_id_str}")
+        except Exception as e:
+            print(f"Payment cancel callback: Unexpected error processing cancel for tran_id: {tran_id}, error: {e}")
+
+    return render(request, 'core/payment_cancel.html', {'message': 'Payment cancelled.', 'frontend_url': settings.FRONTEND_SITE_URL})
+
+
 @csrf_exempt
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def sslcommerz_ipn(request):
-    from .payments import SSLCommerzPayment
-    val_id = request.data.get('val_id')
-    tran_id = request.data.get('tran_id')
-    value_a = request.data.get('value_a')  # user_id
-    value_b = request.data.get('value_b')  # credits (for credit purchase)
-    payment = SSLCommerzPayment()
-    result = payment.validate_transaction(val_id)
-    if result.get('status') == 'VALID' and value_a:
-        from .models import User, Credit, UserSettings
-        try:
-            user = User.objects.get(id=value_a)
-        except User.DoesNotExist:
-            return Response({'status': 'error', 'message': 'User not found'}, status=400)
-        if tran_id and tran_id.startswith('CREDIT_'):
-            credits = int(value_b) if value_b else 0
-            credit_obj, _ = Credit.objects.get_or_create(user=user)
-            credit_obj.balance += credits
-            credit_obj.save()
-        elif tran_id and tran_id.startswith('PREMIUM_'):
-            settings, _ = UserSettings.objects.get_or_create(user=user)
-            now = timezone.now()
-            if not settings.premium_expires or settings.premium_expires < now:
-                settings.premium_expires = now + timedelta(days=30)
+    """
+    Handles Instant Payment Notifications (IPN) from SSLCommerz.
+    This is a server-to-server communication to confirm payment status.
+    It should always validate the transaction with SSLCommerz.
+    """
+    data = request.POST.dict()
+
+    tran_id = data.get('tran_id')
+    val_id = data.get('val_id')
+    status_from_ipn = data.get('status')
+
+    user_id_str = data.get('value_a')
+    payment_type = data.get('value_b')
+    order_id_str = data.get('value_c')
+
+    if not tran_id or not val_id or not user_id_str or not order_id_str:
+        print(f"IPN: Missing essential data. Tran_id: {tran_id}, Val_id: {val_id}, User_id: {user_id_str}, Order_id: {order_id_str}")
+        return JsonResponse({'status': 'failed', 'message': 'Missing essential data'}, status=400)
+
+    try:
+        user = User.objects.get(id=user_id_str)
+        order = Order.objects.get(id=order_id_str, user=user)
+        payment = Payment.objects.get(order=order, transaction_id=tran_id)
+    except (User.DoesNotExist, Order.DoesNotExist, Payment.DoesNotExist) as e:
+        print(f"IPN: Object not found. Error: {e}")
+        return JsonResponse({'status': 'failed', 'message': 'User, Order or Payment record not found'}, status=404)
+    except Exception as e:
+        print(f"IPN: Unexpected error retrieving records: {e}")
+        return JsonResponse({'status': 'failed', 'message': 'An unexpected error occurred.'}, status=500)
+
+
+    sslcommerz = SSLCommerzPayment()
+    validation_response = sslcommerz.validate_transaction(val_id)
+
+    if validation_response and validation_response.get('status') == 'VALID':
+        validated_amount = Decimal(validation_response.get('amount', '0.00'))
+        validated_currency = validation_response.get('currency', '')
+
+        if payment.status == 'PENDING' or payment.status == 'FAILED':
+            if validated_amount == payment.amount and validated_currency == payment.currency:
+                payment.status = 'SUCCESS'
+                payment.bank_transaction_id = validation_response.get('bank_tran_id', payment.bank_transaction_id)
+                payment.validation_status = 'VALIDATED_BY_IPN'
+                payment.save()
+
+                order.is_paid = True
+                order.save()
+
+                if payment_type == 'credit_purchase':
+                    credits_to_add = int(data.get('value_b', 0))
+                    credit_obj, _ = Credit.objects.get_or_create(user=user)
+                    credit_obj.balance += credits_to_add
+                    credit_obj.save()
+                    Notification.objects.create(
+                        user=user,
+                        message=f"💰 Your purchase of {credits_to_add} credits was confirmed (IPN)! Your new balance is {credit_obj.balance}."
+                    )
+                elif payment_type == 'premium_upgrade':
+                    user_settings, _ = UserSettings.objects.get_or_create(user=user)
+                    now = timezone.now()
+                    if not user_settings.premium_expires or user_settings.premium_expires < now:
+                        user_settings.premium_expires = now + timedelta(days=30)
+                    else:
+                        user_settings.premium_expires += timedelta(days=30)
+                    user_settings.is_premium = True
+                    user_settings.save()
+                    Notification.objects.create(
+                        user=user,
+                        message=f"✨ Your premium upgrade was confirmed (IPN)! Expires on {user_settings.premium_expires.strftime('%Y-%m-%d')}."
+                    )
+                
+                return JsonResponse({'status': 'success', 'message': 'IPN processed successfully'})
             else:
-                settings.premium_expires += timedelta(days=30)
-            settings.is_premium = True
-            settings.save()
-        return Response({'status': 'success'})
-    return Response({'status': 'failed'}, status=400)
+                error_message = "IPN: Payment amount/currency mismatch."
+                payment.status = 'FAILED'
+                payment.validation_status = 'IPN_AMOUNT_MISMATCH'
+                payment.error_message = error_message
+                payment.save()
+                print(f"IPN: Amount/currency mismatch for tran_id: {tran_id}. Expected {payment.amount} {payment.currency}, Got {validated_amount} {validated_currency}")
+                return JsonResponse({'status': 'failed', 'message': error_message}, status=200)
+        else:
+            print(f"IPN: Payment already processed for tran_id: {tran_id}. Current status: {payment.status}")
+            return JsonResponse({'status': 'success', 'message': 'Payment already processed.'}, status=200)
+    else:
+        error_message = validation_response.get('failedreason', 'IPN validation failed or payment invalid.')
+        if payment.status == 'PENDING':
+            payment.status = 'FAILED'
+            payment.validation_status = f"IPN_VALIDATION_FAILED: {status_from_ipn}"
+            payment.error_message = error_message
+            payment.save()
+        print(f"IPN: Validation API returned non-VALID status for tran_id: {tran_id}. Response: {validation_response}")
+        return JsonResponse({'status': 'failed', 'message': error_message}, status=200)
+
 
 # --- AdminViewSet ---
 class AdminViewSet(viewsets.ViewSet):
@@ -678,6 +1025,10 @@ class AdminViewSet(viewsets.ViewSet):
             "pending_gigs": Gig.objects.filter(status='pending').count(),
             "jobs": Job.objects.count(),
             "reviews": Review.objects.count(),
+            "total_orders": Order.objects.count(),
+            "paid_orders": Order.objects.filter(is_paid=True).count(),
+            "total_payments": Payment.objects.count(),
+            "successful_payments": Payment.objects.filter(status='SUCCESS').count(),
         })
 
     @action(detail=False, methods=['get'])
@@ -715,7 +1066,7 @@ class AdminViewSet(viewsets.ViewSet):
 UserModel = get_user_model()
 
 class RegisterView(views.APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -735,7 +1086,7 @@ class RegisterView(views.APIView):
         return Response(serializer.errors, status=400)
 
 class EmailVerifyView(views.APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def get(self, request, uid, token):
         try:
@@ -750,7 +1101,7 @@ class EmailVerifyView(views.APIView):
         return Response({'error': 'Invalid or expired link.'}, status=400)
 
 class LoginView(views.APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         username = request.data.get('username')
@@ -761,15 +1112,15 @@ class LoginView(views.APIView):
                 return Response({'error': 'Email not verified.'}, status=400)
             token, created = Token.objects.get_or_create(user=user)
             return Response({
-                'token': token.key, 
-                'user_id': user.id, 
+                'token': token.key,
+                'user_id': user.id,
                 'username': user.username,
                 'user_type': user.user_type
             })
         return Response({'error': 'Invalid credentials.'}, status=400)
 
 class PasswordResetRequestView(views.APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -793,7 +1144,7 @@ class PasswordResetRequestView(views.APIView):
         return Response(serializer.errors, status=400)
 
 class PasswordResetConfirmView(views.APIView):
-    permission_classes = [permissions.AllowAny]
+    permission_classes = [AllowAny]
 
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
@@ -813,3 +1164,15 @@ class PasswordResetConfirmView(views.APIView):
             return Response({'error': 'Invalid or expired token.'}, status=400)
         return Response(serializer.errors, status=400)
 
+# NEW: Payment ViewSet to list payments
+class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    A read-only ViewSet for listing payments related to the authenticated user.
+    Students can see their own payments, and tutors can potentially see payments
+    made to them (if implemented).
+    """
+    serializer_class = PaymentSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Payment.objects.filter(order__user=self.request.user).order_by('-payment_date')

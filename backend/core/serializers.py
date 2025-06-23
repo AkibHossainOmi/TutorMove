@@ -1,9 +1,11 @@
+# backend/core/serializers.py
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message,
-    UserSettings, Review, Subject, EscrowPayment, AbuseReport
+    UserSettings, Review, Subject, EscrowPayment, AbuseReport,
+    Order, Payment
 )
 
 User = get_user_model()
@@ -20,7 +22,7 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user_type = validated_data.get('user_type', 'student')
-        if user_type == 'teacher':  # Normalize
+        if user_type == 'teacher':   # Normalize
             user_type = 'tutor'
         user = User.objects.create_user(
             username=validated_data['username'],
@@ -244,3 +246,28 @@ class JobListSerializer(serializers.ModelSerializer):
         if 'is_active' in data:
             raise serializers.ValidationError("Cannot modify is_active directly")
         return data
+
+
+# NEW: Serializers for Order and Payment models
+class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Order model.
+    """
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=False) # Or a nested UserSerializer if you want user details
+    
+    class Meta:
+        model = Order
+        fields = '__all__' # Adjust fields as per your API requirements
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_paid'] # These are set by the backend
+
+
+class PaymentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the Payment model.
+    """
+    order = serializers.PrimaryKeyRelatedField(queryset=Order.objects.all(), required=False) # Or nested OrderSerializer
+    
+    class Meta:
+        model = Payment
+        fields = '__all__' # Adjust fields as per your API requirements
+        read_only_fields = ['id', 'transaction_id', 'bank_transaction_id', 'status', 'payment_date', 'validation_status', 'error_message']
