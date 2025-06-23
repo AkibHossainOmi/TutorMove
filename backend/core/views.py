@@ -1117,19 +1117,9 @@ class RegisterView(views.APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            user = serializer.save()
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            verify_url = f"{settings.FRONTEND_SITE_URL}/verify-email/{uid}/{token}"
-            send_mail(
-                "Verify your TutorMove account",
-                f"Hi {user.username},\n\nPlease verify your email:\n{verify_url}\n\nThank you!",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-            return Response({'detail': 'Registered. Please check your email to verify.'}, status=201)
-        return Response(serializer.errors, status=400)
+            serializer.save()
+            return Response({'detail': 'Registered successfully. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class EmailVerifyView(views.APIView):
     permission_classes = [AllowAny]

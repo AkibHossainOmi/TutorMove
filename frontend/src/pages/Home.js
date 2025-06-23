@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import SearchBar from '../components/SearchBar'; // Assume SearchBar has its own modern styling
 import MapSearch from '../components/MapSearch'; // Assume MapSearch has its own modern styling
+import Navbar from '../components/Navbar';
 
 const Home = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -188,34 +189,8 @@ const Home = () => {
   };
 
   return (
-    <div style={pageContainerStyle}>
-      <h1 style={mainHeadingStyle}>
-        Connect with Expert Tutors, Anywhere.
-      </h1>
-      <p style={subheadingStyle}>
-        Find the perfect tutor for your needs, whether online or in-person. Explore by subject, location, or on the map.
-      </p>
-
-      {/* Tab UI to switch between Text and Map search */}
-      <div style={tabContainerStyle}>
-        <button
-          onClick={() => setTab('map')}
-          style={tab === 'map' ? activeTabButtonStyle : inactiveTabButtonStyle}
-          onMouseEnter={(e) => tab !== 'map' && Object.assign(e.currentTarget.style, inactiveTabButtonHoverStyle)}
-          onMouseLeave={(e) => tab !== 'map' && Object.assign(e.currentTarget.style, inactiveTabButtonStyle)}
-        >
-          📍 Search on Map
-        </button>
-        <button
-          onClick={() => setTab('text')}
-          style={tab === 'text' ? activeTabButtonStyle : inactiveTabButtonStyle}
-          onMouseEnter={(e) => tab !== 'text' && Object.assign(e.currentTarget.style, inactiveTabButtonHoverStyle)}
-          onMouseLeave={(e) => tab !== 'text' && Object.assign(e.currentTarget.style, inactiveTabButtonStyle)}
-        >
-          🔍 Search by Text
-        </button>
-      </div>
-
+    <div>
+      <Navbar />
       {/* --- Text Search UI --- */}
       {tab === 'text' && (
         <div style={resultsContainerStyle}>
@@ -255,10 +230,7 @@ const Home = () => {
 
       {/* --- Map Search UI --- */}
       {tab === 'map' && (
-        <div style={resultsContainerStyle}>
-          <h2 style={{ fontSize: '1.8em', color: '#444', marginBottom: '25px', textAlign: 'center' }}>
-            Explore Tutors Near You
-          </h2>
+        <div>
           {/* MapSearch component should internally handle its own loading/error states */}
           <MapSearch mode="gigs" radiusKm={20} />
         </div>

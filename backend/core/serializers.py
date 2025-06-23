@@ -13,24 +13,21 @@ User = get_user_model()
 # === AUTH & PASSWORD RESET SERIALIZERS ===
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=True, validators=[validate_password])
-    user_type = serializers.CharField(required=False)
+    password = serializers.CharField(write_only=True)
+    user_type = serializers.ChoiceField(choices=User.USER_TYPE_CHOICES)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'password', 'user_type']
+        fields = ['username', 'email', 'password', 'user_type']
 
     def create(self, validated_data):
-        user_type = validated_data.get('user_type', 'student')
-        if user_type == 'teacher':   # Normalize
-            user_type = 'tutor'
         user = User.objects.create_user(
             username=validated_data['username'],
             email=validated_data['email'],
-            user_type=user_type,
-            is_active=False,
+            password=validated_data['password'],
+            user_type=validated_data['user_type'],
         )
-        user.set_password(validated_data['password'])
+        user.is_active = True  # for email verification, or True if not needed
         user.save()
         return user
 

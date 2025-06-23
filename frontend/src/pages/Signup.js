@@ -28,7 +28,7 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('/api/users/register/', formData);
+      const response = await axios.post('http://localhost:8000/api/auth/register/', formData);
       // Backend typically sends an email verification link.
       // So, we don't usually log in or set token immediately here.
       setSuccess('Registration successful! Please check your email to verify your account.');
@@ -255,7 +255,7 @@ const Signup = () => {
               onBlur={(e) => Object.assign(e.currentTarget.style, selectStyle)} // Reset to original select style
             >
               <option value="student">Student</option>
-              <option value="teacher">Teacher</option>
+              <option value="tutor">Tutor</option>
             </select>
           </div>
 

@@ -1,8 +1,7 @@
 import React, { Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { NotificationProvider } from './contexts/NotificationContext';
-import { ChatProvider, useChat } from './contexts/ChatContext';
+import { useChat } from './contexts/ChatContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import LoadingSpinner from './components/LoadingSpinner';
@@ -37,6 +36,8 @@ import ResetPassword from './pages/ResetPassword';
 
 // Map Search (if needed)
 import MapSearch from './pages/MapSearch'; // adjust import if you have
+import ProtectedRoute from './contexts/ProtectedRoute';
+import { useAuth } from './contexts/UseAuth';
 
 
 // Additional Policy Pages
@@ -73,74 +74,55 @@ const DashboardRedirect = () => {
 
 function App() {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <ChatProvider>
-          <Router>
-            <Suspense fallback={<LoadingSpinner />}>
-              <div className="App" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-                <Navbar />
-                <main style={{ flex: 1 }}>
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/signup" element={<Signup />} />
-                    {/* Auth/account related */}
-                    <Route path="/verify-email/:uid/:token" element={<VerifyEmail />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
-                    <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+    <div className="font-roboto min-h-screen flex flex-col"> {/* Applying font-roboto and flex layout */}
+      <BrowserRouter>
+        <Routes>
+          {/* Public Routes - Accessible to all users */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} />
+          <Route path="/verify-email/:uid/:token" element={<VerifyEmail />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/refund-policy" element={<RefundPolicy />} />
+          {/* Fallback for unmatched public routes, redirects to Home */}
+          <Route path="*" element={<Navigate to="/" replace />} />
 
-                    {/* Dashboard logic: redirect based on user type */}
-                    <Route path="/dashboard" element={<DashboardRedirect />} />
-                    <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-                    <Route path="/student-dashboard" element={<StudentDashboard />} />
+          {/* Protected Routes - Accessible only after authentication, handled by ProtectedRoute */}
+          <Route element={<ProtectedRoute />}>
+            {/* Dashboard routes - A generic /dashboard path that redirects to a specific dashboard */}
+            <Route path="/dashboard" element={<Navigate to="/student-dashboard" replace />} />
+            <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
+            <Route path="/student-dashboard" element={<StudentDashboard />} />
 
-                    {/* Profile (Self) */}
-                    <Route path="/profile" element={<Profile />} />
-                    {/* Public Tutor Profile */}
-                    <Route path="/tutors" element={<TutorList />} />
-                    <Route path="/tutors/:id" element={<TutorProfile />} />
-                    
-                    {/* Gigs and Jobs */}
-                    <Route path="/gigs/:id" element={<GigDetails />} />
-                    <Route path="/jobs" element={<JobList />} />
-                    <Route path="/jobs/:id" element={<JobDetail />} />
+            {/* User Profile and Tutor Listings */}
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/tutors" element={<TutorList />} />
+            <Route path="/tutors/:id" element={<TutorProfile />} />
 
-                    {/* Messages and Credits */}
-                    <Route path="/messages" element={<Messages />} />
-                    <Route path="/credits" element={<CreditPurchase />} />
-                    
-                    {/* Payment Status Routes */}
-                    <Route path="/payments/success/" element={<PaymentSuccess />} />
-                    <Route path="/payments/fail/" element={<PaymentFail />} />
-                    <Route path="/payments/cancel" element={<PaymentCancel />} />
-                    
-                    {/* Policy Pages */}
-                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                    <Route path="/terms" element={<TermsOfService />} />
-                    <Route path="/refund-policy" element={<RefundPolicy />} />
-                    
-                    {/* Additional Static Pages */}
-                    <Route path="/about" element={<div style={{ padding: '40px 20px', textAlign: 'center' }}><h1>About Us</h1><p>Learn more about our platform.</p></div>} />
-                    <Route path="/contact" element={<div style={{ padding: '40px 20px', textAlign: 'center' }}><h1>Contact Us</h1><p>Get in touch with our team.</p></div>} />
-                    <Route path="/how-it-works" element={<div style={{ padding: '40px 20px', textAlign: 'center' }}><h1>How It Works</h1><p>Discover how our platform connects teachers and students.</p></div>} />
+            {/* Gigs and Job Listings */}
+            <Route path="/gigs/:id" element={<GigDetails />} />
+            <Route path="/jobs" element={<JobList />} />
+            <Route path="/jobs/:id" element={<JobDetail />} />
 
-                    {/* Map Search Routes (if needed) */}
-                    <Route path="/map-search" element={<MapSearch mode="gigs" radiusKm={20} />} />
-                    <Route path="/job-map" element={<MapSearch mode="jobs" radiusKm={20} />} />
+            {/* Messaging and Credit Management */}
+            <Route path="/messages" element={<Messages />} />
+            <Route path="/credits" element={<CreditPurchase />} />
 
-                    {/* Fallback */}
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Routes>
-                </main>
-                <Footer />
-                <ChatIntegration />
-              </div>
-            </Suspense>
-          </Router>
-        </ChatProvider>
-      </NotificationProvider>
-    </AuthProvider>
+            {/* Payment Status Pages */}
+            <Route path="/payments/success/" element={<PaymentSuccess />} />
+            <Route path="/payments/fail/" element={<PaymentFail />} />
+            <Route path="/payments/cancel" element={<PaymentCancel />} />
+
+            {/* Map Search functionality */}
+            <Route path="/map-search" element={<MapSearch mode="gigs" radiusKm={20} />} />
+            <Route path="/job-map" element={<MapSearch mode="jobs" radiusKm={20} />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </div>
   );
 }
 

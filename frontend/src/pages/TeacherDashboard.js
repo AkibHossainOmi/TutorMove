@@ -14,6 +14,7 @@ import JobCard from '../components/JobCard';
 import TutorCard from '../components/TutorCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import WelcomeBanner from '../components/WelcomeBanner';
+import Navbar from '../components/Navbar';
 // import TeacherVerificationButton from '../components/TeacherVerificationButton';
 
 // Mock implementations for demonstration purposes
@@ -332,6 +333,8 @@ const TeacherDashboard = () => {
   }
 
   return (
+    <>
+    <Navbar />
     <div className="teacher-dashboard-container" style={{
       padding: '30px',
       maxWidth: '1200px',
@@ -998,6 +1001,8 @@ const TeacherDashboard = () => {
         />
       )}
     </div>
+    </>
+  
   );
 };
 

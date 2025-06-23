@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, Navigate } from 'react-router-dom';
+import { useAuth } from '../contexts/UseAuth';
+import Navbar from '../components/Navbar';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -13,7 +15,7 @@ const Login = () => {
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
+  const isAuthenticated = useAuth();
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -21,7 +23,8 @@ const Login = () => {
       // 1. Login & save JWT token
       const response = await axios.post('/api/auth/login/', formData);
       localStorage.setItem('token', response.data.token);
-
+      localStorage.setItem('user', response.data.user);
+      console.log('Login successful:', response.data);
       // 2. Get user info (user_type) to redirect properly
       let userType = null;
 
@@ -51,7 +54,9 @@ const Login = () => {
     }
   };
 
-  return (
+  return !isAuthenticated ?(
+    <>
+    <Navbar />
     <div style={{
       display: 'flex',
       flexDirection: 'column',
@@ -182,7 +187,9 @@ const Login = () => {
         </div>
       </div>
     </div>
-  );
+    </>
+    
+  ): <Navigate to="/teacher-dashboard" />;;
 };
 
 export default Login;
