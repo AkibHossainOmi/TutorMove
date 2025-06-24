@@ -1,739 +1,358 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
-import { tutorAPI } from '../utils/apiService'; // Ensure this service is correctly implemented
-import { useNotification } from '../contexts/NotificationContext';
+// ../components/GigPostForm.js
+import React, { useState } from 'react';
 import axios from 'axios';
 
 const GigPostForm = ({ onClose, onGigCreated }) => {
-  const { t } = useTranslation();
-  const { addNotification: showNotification } = useNotification(); // Destructure correctly
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [subject, setSubject] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+    const [success, setSuccess] = useState(null);
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    subject_ids: [],
-    hourlyRate: '',
-    availability: {
-      monday: [],
-      tuesday: [],
-      wednesday: [],
-      thursday: [],
-      friday: [],
-      saturday: [],
-      sunday: []
-    },
-    teachingType: [],
-    levels: [],
-    location: '', // Only relevant if teachingType includes 'home' or 'both'
-    qualifications: '',
-    experience: ''
-  });
+    // Mock API endpoint for creating a gig. Replace with your actual Django endpoint.
+    // Ensure this matches your backend where gig posts are handled.
+    const GIG_CREATION_ENDPOINT = 'YOUR_DJANGO_BACKEND_URL/api/tutor/gigs/'; // <-- IMPORTANT: Update this URL!
 
-  const [subjectQuery, setSubjectQuery] = useState('');
-  const [subjectOptions, setSubjectOptions] = useState([]);
-  const [selectedSubjects, setSelectedSubjects] = useState([]); // To display names of selected subjects
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [subjectSearchLoading, setSubjectSearchLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false); // Controls subject suggestion dropdown visibility
-  const dropdownRef = useRef(); // Ref for click-outside to close dropdown
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setIsLoading(true);
+        setError(null);
+        setSuccess(null);
 
-  // Fetch subject suggestions as user types
-  useEffect(() => {
-    if (subjectQuery.length < 2) { // Start search after 2 characters
-      setSubjectOptions([]);
-      setSubjectSearchLoading(false);
-      return;
-    }
-    setSubjectSearchLoading(true);
-    const debounceTimer = setTimeout(() => {
-      axios
-        .get(`/api/subjects/suggest/?q=${encodeURIComponent(subjectQuery)}`)
-        .then((res) => {
-          // Filter out subjects already selected
-          const filteredOptions = res.data.filter(
-            (option) => !formData.subject_ids.includes(option.id)
-          );
-          setSubjectOptions(filteredOptions);
-          setShowDropdown(true); // Show dropdown if there are results
-        })
-        .catch((err) => {
-          console.error("Subject search error:", err);
-          setSubjectOptions([]);
-          showNotification('Failed to fetch subjects. Please try again.', 'error');
-        })
-        .finally(() => setSubjectSearchLoading(false));
-    }, 300); // Debounce for 300ms
-    return () => clearTimeout(debounceTimer);
-  }, [subjectQuery, formData.subject_ids, showNotification]);
+        // Basic validation
+        if (!title || !description || !subject) {
+            setError('Please fill in all required fields.');
+            setIsLoading(false);
+            return;
+        }
 
-  // Update selectedSubjects state with actual names when subject_ids change
-  useEffect(() => {
-    if (formData.subject_ids.length === 0) {
-      setSelectedSubjects([]);
-      return;
-    }
-    // Fetch full subject objects for display (e.g., to get names from IDs)
-    axios
-      .get('/api/subjects/') // Assuming this returns all subjects or can filter by IDs
-      .then((res) => {
-        const allSubjectsMap = {};
-        res.data.forEach((subj) => {
-          allSubjectsMap[subj.id] = subj;
-        });
-        const currentSelected = formData.subject_ids.map((id) => allSubjectsMap[id]).filter(Boolean);
-        setSelectedSubjects(currentSelected);
-      })
-      .catch((err) => {
-        console.error("Error fetching selected subjects' names:", err);
-        setSelectedSubjects([]); // Clear on error
-      });
-  }, [formData.subject_ids]);
+        try {
+            const storedUser = JSON.parse(localStorage.getItem('user'));
+            const teacherId = storedUser?.user_id; // Get dynamic user ID
 
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handler = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
-      }
+            if (!teacherId) {
+                setError('User not logged in or user ID not found. Please log in again.');
+                setIsLoading(false);
+                return;
+            }
+
+            const newGigData = {
+                title,
+                description,
+                subject,
+                teacher_id: teacherId, // Associate gig with the teacher
+                status: 'active' // Default status for a new gig
+                // Removed 'rate' field as requested
+            };
+
+            // --- REAL API CALL (UNCOMMENT AND CONFIGURE FOR PRODUCTION) ---
+            // const response = await axios.post(GIG_CREATION_ENDPOINT, newGigData, {
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //         // If you use token-based authentication (e.g., Django Rest Framework Token):
+            //         // 'Authorization': `Token ${storedUser.token}`, // Assuming token is stored in user object
+            //     },
+            // });
+            // const createdGig = response.data; // Assuming your API returns the created gig object
+
+            // --- MOCK API CALL (FOR DEMONSTRATION) ---
+            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
+            const createdGig = {
+                id: `mock-gig-${Date.now()}`, // Mock ID
+                ...newGigData,
+                created_at: new Date().toISOString()
+            };
+            // --- END MOCK API CALL ---
+
+            setSuccess('Gig created successfully!');
+            onGigCreated(createdGig); // Pass the new gig back to the dashboard
+            // Optionally, clear form or close after success
+            setTimeout(() => {
+                onClose();
+            }, 1000); // Close after a short delay to show success message
+
+        } catch (err) {
+            console.error('Error creating gig:', err.response ? err.response.data : err.message);
+            setError(err.response?.data?.detail || 'Failed to create gig. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
 
-  // Handlers for form input changes
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+    return (
+        <div style={modalOverlayStyle}>
+            <div style={modalContentStyle}>
+                <button onClick={onClose} style={closeButtonStyle}>&times;</button>
+                <h2 style={formTitleStyle}>Post a New Gig</h2>
+                <p style={formSubtitleStyle}>Showcase your expertise and connect with students.</p>
 
-  const handleLevelsChange = (e) => {
-    const value = Array.from(e.target.selectedOptions, (option) => option.value);
-    setFormData((prev) => ({ ...prev, levels: value }));
-  };
+                <form onSubmit={handleSubmit}>
+                    <div style={formGroupStyle}>
+                        <label htmlFor="gigTitle" style={labelStyle}>Gig Title <span style={{ color: 'red' }}>*</span></label>
+                        <input
+                            type="text"
+                            id="gigTitle"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            style={inputStyle}
+                            placeholder="e.g., Advanced Calculus Tutor, Conversational English"
+                            required
+                        />
+                    </div>
+                    <div style={formGroupStyle}>
+                        <label htmlFor="gigDescription" style={labelStyle}>Description <span style={{ color: 'red' }}>*</span></label>
+                        <textarea
+                            id="gigDescription"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
+                            placeholder="Describe your teaching style, experience, and what students will learn."
+                            required
+                        ></textarea>
+                    </div>
+                    <div style={formGroupStyle}>
+                        <label htmlFor="gigSubject" style={labelStyle}>Subject <span style={{ color: 'red' }}>*</span></label>
+                        <input
+                            type="text"
+                            id="gigSubject"
+                            value={subject}
+                            onChange={(e) => setSubject(e.target.value)}
+                            style={inputStyle}
+                            placeholder="e.g., Mathematics, English, Physics, Programming"
+                            required
+                        />
+                    </div>
 
-  const handleTeachingTypeChange = (e) => {
-    const value = Array.from(e.target.selectedOptions, (option) => option.value);
-    setFormData((prev) => ({ ...prev, teachingType: value }));
-  };
+                    {isLoading && (
+                        <div style={messageStyle}>
+                            <div className="loading-spinner" style={spinnerStyle}></div>
+                            <span>Creating gig...</span>
+                        </div>
+                    )}
+                    {error && <p style={errorStyle}>{error}</p>}
+                    {success && <p style={successStyle}>{success}</p>}
 
-  const handleAvailabilityChange = (day, timeSlot) => {
-    setFormData((prev) => ({
-      ...prev,
-      availability: {
-        ...prev.availability,
-        [day]: prev.availability[day].includes(timeSlot)
-          ? prev.availability[day].filter((slot) => slot !== timeSlot)
-          : [...prev.availability[day], timeSlot]
-      }
-    }));
-  };
+                    <div style={buttonGroupStyle}>
+                        <button type="submit" style={submitButtonStyle} disabled={isLoading}>
+                            Post Gig
+                        </button>
+                        <button type="button" onClick={onClose} style={cancelButtonStyle} disabled={isLoading}>
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+            {/* Simple global style for fade-in effect on modal */}
+            <style>
+                {`
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: translateY(-20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                .loading-spinner {
+                    border: 4px solid #f3f3f3;
+                    border-top: 4px solid #3498db;
+                    border-radius: 50%;
+                    width: 20px;
+                    height: 20px;
+                    animation: spin 1s linear infinite;
+                    display: inline-block;
+                    margin-right: 10px;
+                }
+                @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                }
+                `}
+            </style>
+        </div>
+    );
+};
 
-  // Subject management handlers
-  const handleSubjectInput = (e) => {
-    setSubjectQuery(e.target.value);
-    // showDropdown will be set by useEffect after debounce
-  };
-
-  const handleAddSubject = (subjectObj) => {
-    if (!formData.subject_ids.includes(subjectObj.id)) {
-      setFormData((prev) => ({
-        ...prev,
-        subject_ids: [...prev.subject_ids, subjectObj.id]
-      }));
-    }
-    setSubjectQuery(''); // Clear query after adding
-    setSubjectOptions([]); // Clear options
-    setShowDropdown(false); // Hide dropdown
-  };
-
-  const handleRemoveSubject = (id) => {
-    setFormData((prev) => ({
-      ...prev,
-      subject_ids: prev.subject_ids.filter((sid) => sid !== id)
-    }));
-  };
-
-  // Form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    try {
-      const payload = {
-        ...formData,
-        // Ensure availability is sent in a format your backend expects,
-        // e.g., converting array of slots to a string or specific structure.
-        // For now, sending as is, assuming backend handles it.
-        // If your backend needs, say, 'ONLINE' instead of ['online'], adjust here.
-        // Example: teaching_type: formData.teachingType.join(','),
-      };
-
-      const response = await tutorAPI.createGig(payload);
-      if (response.status === 201) {
-        showNotification('Gig posted successfully!', 'success');
-        onGigCreated && onGigCreated(response.data);
-        onClose(); // Close modal on success
-      }
-    } catch (error) {
-      console.error("Gig creation error:", error);
-      showNotification(
-        error.response?.data?.message || error.response?.data?.detail || 'Failed to post gig. Please check your inputs.',
-        'error'
-      );
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const timeSlots = [
-    'Morning (8AM-12PM)', 'Afternoon (12PM-4PM)', 'Evening (4PM-8PM)', 'Night (8PM-12AM)'
-  ];
-
-  // --- Inline Styles ---
-  const modalOverlayStyle = {
+// --- Updated and professionalized inline styles for the form ---
+const modalOverlayStyle = {
     position: 'fixed',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)', // Darker overlay
+    backgroundColor: 'rgba(0, 0, 0, 0.7)', // Darker overlay
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10000, // Higher z-index for modals
-  };
+    zIndex: 1000,
+    backdropFilter: 'blur(3px)' // Subtle blur for background
+};
 
-  const modalContentStyle = {
-    backgroundColor: 'white',
-    borderRadius: '12px', // More rounded
-    padding: '40px', // More padding
-    maxWidth: '850px', // Wider modal for more content
+const modalContentStyle = {
+    backgroundColor: '#ffffff',
+    padding: '40px',
+    borderRadius: '12px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.25)', // More pronounced shadow
     width: '90%',
-    maxHeight: '90vh',
-    overflowY: 'auto',
-    boxShadow: '0 10px 30px rgba(0,0,0,0.25)', // Stronger shadow
-    position: 'relative', // For close button positioning
-    fontFamily: '"Segoe UI", Arial, sans-serif',
-    color: '#333',
-  };
+    maxWidth: '550px', // Slightly wider
+    position: 'relative',
+    animation: 'fadeIn 0.3s ease-out',
+    borderTop: '5px solid #007bff' // Accent border
+};
 
-  const modalHeaderStyle = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '30px', // More space below header
-    borderBottom: '1px solid #eee', // Subtle separator
-    paddingBottom: '15px',
-  };
-
-  const modalTitleStyle = {
-    margin: 0,
-    color: '#2c3e50',
-    fontSize: '2em', // Larger title
-    fontWeight: '700',
-  };
-
-  const closeButtonStyle = {
+const closeButtonStyle = {
+    position: 'absolute',
+    top: '15px',
+    right: '15px',
     background: 'none',
     border: 'none',
-    fontSize: '32px', // Larger close icon
+    fontSize: '24px',
     cursor: 'pointer',
-    color: '#6c757d',
-    padding: '5px', // Make it easier to click
-    transition: 'color 0.2s ease',
-  };
+    color: '#666',
+    padding: '5px 10px',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s ease, color 0.2s ease',
+    outline: 'none'
+};
+closeButtonStyle[':hover'] = {
+    backgroundColor: '#f0f0f0',
+    color: '#333'
+}; // Pseudoclass for hover
 
-  const closeButtonHoverStyle = {
-    color: '#333',
-  };
+const formTitleStyle = {
+    marginBottom: '10px',
+    color: '#2c3e50',
+    fontSize: '2em',
+    fontWeight: '700',
+    textAlign: 'center'
+};
 
-  const formGroupStyle = {
-    marginBottom: '25px', // Consistent spacing between form groups
-  };
-
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '8px', // More space below label
-    fontWeight: '600', // Bolder labels
-    color: '#495057',
+const formSubtitleStyle = {
+    marginBottom: '30px',
+    color: '#7f8c8d',
     fontSize: '1em',
-  };
+    textAlign: 'center'
+};
 
-  const inputBaseStyle = {
-    width: '100%',
-    padding: '12px 15px', // More padding for inputs
-    border: '1px solid #ced4da', // Lighter border color
-    borderRadius: '8px', // More rounded inputs
-    fontSize: '16px',
-    outline: 'none',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-  };
+const formGroupStyle = {
+    marginBottom: '25px' // Increased spacing
+};
 
-  const inputFocusStyle = {
-    borderColor: '#007bff',
-    boxShadow: '0 0 0 3px rgba(0, 123, 255, 0.2)',
-  };
-
-  const selectBaseStyle = {
-    ...inputBaseStyle,
-    height: '120px', // Taller select for multiple options
-    appearance: 'none', // Remove default dropdown arrow for custom styling if needed
-    // You might add a custom arrow via background-image here if needed
-  };
-
-  const textareaStyle = {
-    ...inputBaseStyle,
-    resize: 'vertical', // Allow vertical resizing
-    minHeight: '80px',
-  };
-
-  const selectedSubjectBadgeContainerStyle = {
-    marginTop: '10px',
-    display: 'flex',
-    flexWrap: 'wrap',
-    gap: '8px', // Spacing between badges
-  };
-
-  const selectedSubjectBadgeStyle = {
-    display: 'inline-flex', // Align text and close icon
-    alignItems: 'center',
-    background: '#e9f5ff', // Light blue background
-    color: '#007bff', // Blue text
-    borderRadius: '20px', // Pill shape
-    padding: '6px 12px',
-    fontSize: '0.9em',
-    fontWeight: '500',
-    border: '1px solid #cce5ff', // Subtle border
-  };
-
-  const removeSubjectButtonStyle = {
-    marginLeft: '8px',
-    cursor: 'pointer',
-    color: '#dc3545', // Red close icon
-    fontWeight: 'bold',
-    fontSize: '1.1em', // Slightly larger X
-    lineHeight: 1, // Align vertically
-    backgroundColor: 'transparent',
-    border: 'none',
-    padding: 0,
-  };
-
-  const formSectionHeaderStyle = {
-    margin: '0 0 15px',
-    fontSize: '1.2em',
+const labelStyle = {
+    display: 'block',
+    marginBottom: '10px',
     fontWeight: '600',
     color: '#34495e',
-  };
+    fontSize: '0.95em'
+};
 
-  const availabilityGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', // Adjust for more columns
-    gap: '20px', // Spacing between day columns
-  };
-
-  const dayColumnStyle = {
-    backgroundColor: '#f9f9f9', // Light background for each day
+const inputStyle = {
+    width: '100%',
+    padding: '14px',
+    border: '1px solid #e0e0e0',
     borderRadius: '8px',
-    padding: '15px',
-    boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
-  };
-
-  const dayTitleStyle = {
-    margin: '0 0 12px',
-    textTransform: 'capitalize',
-    fontSize: '1.1em',
-    color: '#343a40',
-    borderBottom: '1px solid #eee',
-    paddingBottom: '8px',
-  };
-
-  const checkboxLabelStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px', // Space between checkbox and text
-    marginBottom: '8px',
-    fontSize: '0.95em',
-    color: '#555',
-    cursor: 'pointer',
-  };
-
-  const checkboxInputStyle = {
-    accentColor: '#007bff', // Custom checkbox color
-    width: '18px',
-    height: '18px',
-  };
-
-  const formActionsStyle = {
-    display: 'flex',
-    gap: '15px', // More space between buttons
-    justifyContent: 'flex-end',
-    marginTop: '30px', // More space above buttons
-    borderTop: '1px solid #eee',
-    paddingTop: '20px',
-  };
-
-  const buttonBaseStyle = {
-    padding: '12px 28px', // Generous padding
-    borderRadius: '8px', // Rounded buttons
-    border: 'none',
     fontSize: '1em',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease',
-    outline: 'none',
-  };
+    boxSizing: 'border-box',
+    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+    boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.05)'
+};
+inputStyle[':focus'] = {
+    borderColor: '#007bff',
+    boxShadow: '0 0 0 3px rgba(0,123,255,0.25)',
+    outline: 'none'
+}; // Pseudoclass for focus
 
-  const cancelButtonStyles = {
-    ...buttonBaseStyle,
-    backgroundColor: '#6c757d',
-    color: 'white',
-  };
-  const cancelButtonHoverStyles = {
-    backgroundColor: '#5a6268',
-    transform: 'translateY(-1px)',
-    boxShadow: '0 4px 10px rgba(0,0,0,0.15)',
-  };
+const buttonGroupStyle = {
+    display: 'flex',
+    justifyContent: 'center', // Center buttons
+    gap: '15px', // Increased gap
+    marginTop: '30px'
+};
 
-  const submitButtonStyles = {
-    ...buttonBaseStyle,
+const submitButtonStyle = {
+    padding: '14px 30px',
     backgroundColor: '#007bff',
     color: 'white',
-  };
-  const submitButtonHoverStyles = {
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1.05em',
+    fontWeight: '600',
+    transition: 'background-color 0.3s ease, transform 0.2s ease',
+    boxShadow: '0 4px 10px rgba(0,123,255,0.2)'
+};
+submitButtonStyle[':hover'] = {
     backgroundColor: '#0056b3',
-    transform: 'translateY(-1px)',
-    boxShadow: '0 4px 10px rgba(0,123,255,0.25)',
-  };
-  const submitButtonDisabledStyles = {
-    backgroundColor: '#a0d1ff', // Lighter blue when disabled
+    transform: 'translateY(-2px)'
+};
+submitButtonStyle[':disabled'] = {
+    backgroundColor: '#a0c8f5',
     cursor: 'not-allowed',
     transform: 'none',
-    boxShadow: 'none',
-  };
+    boxShadow: 'none'
+};
 
-  return (
-    <div style={modalOverlayStyle}>
-      <div style={modalContentStyle}>
-        <div style={modalHeaderStyle}>
-          <h2 style={modalTitleStyle}>Create a Teaching Gig</h2>
-          <button
-            onClick={onClose}
-            style={closeButtonStyle}
-            onMouseEnter={(e) => Object.assign(e.currentTarget.style, closeButtonHoverStyle)}
-            onMouseLeave={(e) => Object.assign(e.currentTarget.style, closeButtonStyle)}
-          >
-            ×
-          </button>
-        </div>
+const cancelButtonStyle = {
+    padding: '14px 30px',
+    backgroundColor: '#6c757d',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '1.05em',
+    fontWeight: '600',
+    transition: 'background-color 0.3s ease, transform 0.2s ease',
+    boxShadow: '0 4px 10px rgba(108,117,125,0.2)'
+};
+cancelButtonStyle[':hover'] = {
+    backgroundColor: '#5a6268',
+    transform: 'translateY(-2px)'
+};
+cancelButtonStyle[':disabled'] = {
+    backgroundColor: '#c0c8cf',
+    cursor: 'not-allowed',
+    transform: 'none',
+    boxShadow: 'none'
+};
 
-        <form onSubmit={handleSubmit}>
-          {/* Title */}
-          <div style={formGroupStyle}>
-            <label htmlFor="title" style={labelStyle}>
-              Gig Title <span style={{ color: '#dc3545' }}>*</span>
-            </label>
-            <input
-              type="text"
-              id="title"
-              name="title"
-              value={formData.title}
-              onChange={handleChange}
-              required
-              style={inputBaseStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
-              placeholder="e.g., Experienced Math Tutor for All Levels"
-            />
-          </div>
+const messageStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '15px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    fontSize: '0.95em',
+    backgroundColor: '#e9f7ef',
+    color: '#28a745',
+    border: '1px solid #d4edda'
+};
 
-          {/* Subject AutoSuggest */}
-          <div style={{ ...formGroupStyle, position: 'relative' }} ref={dropdownRef}>
-            <label htmlFor="subject-input" style={labelStyle}>
-              Subjects (type to search & select multiple) <span style={{ color: '#dc3545' }}>*</span>
-            </label>
-            <input
-              type="text"
-              id="subject-input"
-              value={subjectQuery}
-              onChange={handleSubjectInput}
-              onFocus={() => subjectQuery.length >= 2 && setShowDropdown(true)} // Only show on focus if query is long enough
-              placeholder="Start typing a subject (e.g., Physics, History)..."
-              style={inputBaseStyle}
-              onMouseEnter={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)} // Maintain focus style on mouse hover
-              onMouseLeave={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
-            />
-            {showDropdown && (subjectQuery.length >= 2 || subjectOptions.length > 0) && ( // Show if query is typed or options exist
-              <div style={{
-                position: 'absolute', top: 'calc(100% + 5px)', left: 0, right: 0,
-                background: '#fff', border: '1px solid #dee2e6',
-                borderRadius: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)', zIndex: 10001, // Higher z-index
-                maxHeight: '200px', overflowY: 'auto'
-              }}>
-                {subjectSearchLoading ? (
-                  <div style={{ padding: '12px', color: '#888', textAlign: 'center' }}>Loading subjects...</div>
-                ) : subjectOptions.length === 0 ? (
-                  <div style={{ padding: '12px', color: '#888', textAlign: 'center' }}>No subjects found. Try a different search.</div>
-                ) : (
-                  subjectOptions.map((subj) => (
-                    <div
-                      key={subj.id}
-                      style={{
-                        padding: '10px 15px', cursor: 'pointer',
-                        borderBottom: '1px solid #f2f2f2',
-                        transition: 'background-color 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f8ff'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'white'}
-                      onClick={() => handleAddSubject(subj)}
-                    >
-                      {subj.name}
-                      {subj.aliases && (
-                        <span style={{ color: '#888', fontSize: '0.85em', marginLeft: '5px' }}> ({subj.aliases})</span>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-            {/* Selected Subjects Badges */}
-            <div style={selectedSubjectBadgeContainerStyle}>
-              {selectedSubjects.map((subj) =>
-                <span key={subj.id} style={selectedSubjectBadgeStyle}>
-                  {subj.name}
-                  <button
-                    type="button" // Important for buttons inside forms not to submit
-                    style={removeSubjectButtonStyle}
-                    onClick={() => handleRemoveSubject(subj.id)}
-                  >
-                    ×
-                  </button>
-                </span>
-              )}
-            </div>
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Select all relevant subjects for your gig.
-            </small>
-          </div>
+const errorStyle = {
+    backgroundColor: '#f8d7da',
+    color: '#721c24',
+    padding: '15px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    border: '1px solid #f5c6cb'
+};
 
-          {/* Teaching Type & Levels */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
-            <div style={{ flex: 1, minWidth: 'calc(50% - 10px)' }}>
-              <label htmlFor="teachingType" style={labelStyle}>
-                Teaching Type <span style={{ color: '#dc3545' }}>*</span>
-              </label>
-              <select
-                multiple
-                id="teachingType"
-                name="teachingType"
-                value={formData.teachingType}
-                onChange={handleTeachingTypeChange}
-                required
-                style={selectBaseStyle}
-                onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-                onBlur={(e) => Object.assign(e.currentTarget.style, selectBaseStyle)}
-              >
-                <option value="online">Online Teaching</option>
-                <option value="home">Home Tutoring</option>
-                <option value="both">Both (Online & Home)</option>
-              </select>
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Hold Ctrl/Cmd to select multiple.
-              </small>
-            </div>
-            <div style={{ flex: 1, minWidth: 'calc(50% - 10px)' }}>
-              <label htmlFor="levels" style={labelStyle}>
-                Levels <span style={{ color: '#dc3545' }}>*</span>
-              </label>
-              <select
-                multiple
-                id="levels"
-                name="levels"
-                value={formData.levels}
-                onChange={handleLevelsChange}
-                required
-                style={selectBaseStyle}
-                onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-                onBlur={(e) => Object.assign(e.currentTarget.style, selectBaseStyle)}
-              >
-                <option value="elementary">Elementary</option>
-                <option value="middle-school">Middle School</option>
-                <option value="high-school">High School</option>
-                <option value="college">College</option>
-                <option value="university">University</option>
-                <option value="adult-learner">Adult Learner</option> {/* Added for completeness */}
-              </select>
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Hold Ctrl/Cmd to select multiple.
-              </small>
-            </div>
-          </div>
+const successStyle = {
+    backgroundColor: '#d4edda',
+    color: '#155724',
+    padding: '15px',
+    borderRadius: '8px',
+    marginBottom: '20px',
+    textAlign: 'center',
+    border: '1px solid #c3e6cb'
+};
 
-          {/* Description */}
-          <div style={formGroupStyle}>
-            <label htmlFor="description" style={labelStyle}>
-              Description <span style={{ color: '#dc3545' }}>*</span>
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              rows="5" // Increased rows for more content
-              style={textareaStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, textareaStyle)}
-              placeholder="Describe your teaching style, methods, qualifications, and what students can expect from your gig. Be detailed!"
-            />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Provide a comprehensive description of your gig.
-            </small>
-          </div>
-
-          {/* Hourly Rate */}
-          <div style={formGroupStyle}>
-            <label htmlFor="hourlyRate" style={labelStyle}>
-              Hourly Rate (Credits) <span style={{ color: '#dc3545' }}>*</span>
-            </label>
-            <input
-              type="number"
-              id="hourlyRate"
-              name="hourlyRate"
-              value={formData.hourlyRate}
-              onChange={handleChange}
-              required
-              min="1"
-              style={inputBaseStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
-              placeholder="e.g., 50 (credits per hour)"
-            />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Set your price in credits per hour.
-            </small>
-          </div>
-
-          {/* Availability */}
-          <div style={formGroupStyle}>
-            <h3 style={formSectionHeaderStyle}>Availability</h3>
-            <div style={availabilityGridStyle}>
-              {['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].map((day) => (
-                <div key={day} style={dayColumnStyle}>
-                  <h4 style={dayTitleStyle}>{day}</h4>
-                  {timeSlots.map((slot) => (
-                    <div key={slot} style={{ marginBottom: '8px' }}>
-                      <label style={checkboxLabelStyle}>
-                        <input
-                          type="checkbox"
-                          checked={formData.availability[day].includes(slot)}
-                          onChange={() => handleAvailabilityChange(day, slot)}
-                          style={checkboxInputStyle}
-                        />
-                        {slot}
-                      </label>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '10px' }}>
-              Select the time slots when you are generally available to teach.
-            </small>
-          </div>
-
-          {/* Location (conditional render) */}
-          {(formData.teachingType.includes('home') || formData.teachingType.includes('both')) && (
-            <div style={formGroupStyle}>
-              <label htmlFor="location" style={labelStyle}>
-                Location (for home tutoring)
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleChange}
-                style={inputBaseStyle}
-                onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-                onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
-                placeholder="e.g., Dhaka, Gulshan-1"
-              />
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Specify your preferred area for in-person tutoring.
-              </small>
-            </div>
-          )}
-
-          {/* Qualifications */}
-          <div style={formGroupStyle}>
-            <label htmlFor="qualifications" style={labelStyle}>
-              Qualifications
-            </label>
-            <textarea
-              id="qualifications"
-              name="qualifications"
-              value={formData.qualifications}
-              onChange={handleChange}
-              rows="3"
-              style={textareaStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, textareaStyle)}
-              placeholder="List your relevant qualifications, certifications, and degrees (e.g., Bachelor of Science in Physics, TEFL Certificate)..."
-            />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Highlight your academic and professional achievements.
-            </small>
-          </div>
-
-          {/* Experience */}
-          <div style={formGroupStyle}>
-            <label htmlFor="experience" style={labelStyle}>
-              Teaching Experience
-            </label>
-            <textarea
-              id="experience"
-              name="experience"
-              value={formData.experience}
-              onChange={handleChange}
-              rows="3"
-              style={textareaStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, textareaStyle)}
-              placeholder="Describe your teaching experience (e.g., 5 years teaching high school math, private tutor since 2020)..."
-            />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Detail your relevant teaching history and expertise.
-            </small>
-          </div>
-
-          {/* Buttons */}
-          <div style={formActionsStyle}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={cancelButtonStyles}
-              onMouseEnter={(e) => Object.assign(e.currentTarget.style, cancelButtonHoverStyles)}
-              onMouseLeave={(e) => Object.assign(e.currentTarget.style, cancelButtonStyles)}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              style={isSubmitting ? { ...submitButtonStyles, ...submitButtonDisabledStyles } : submitButtonStyles}
-              onMouseEnter={(e) => !isSubmitting && Object.assign(e.currentTarget.style, submitButtonHoverStyles)}
-              onMouseLeave={(e) => !isSubmitting && Object.assign(e.currentTarget.style, submitButtonStyles)}
-            >
-              {isSubmitting ? 'Creating Gig...' : 'Create Gig'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
+const spinnerStyle = {
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #007bff', // Spinner color matches primary button
+    borderRadius: '50%',
+    width: '24px',
+    height: '24px',
+    animation: 'spin 1s linear infinite',
+    marginRight: '10px'
 };
 
 export default GigPostForm;

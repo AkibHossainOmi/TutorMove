@@ -98,6 +98,8 @@ function App() {
             <Route path="/jobs" element={<JobList />} />
             <Route path="/jobs/:id" element={<JobDetail />} />
 
+            
+
             {/* Messaging and Credit Management */}
             <Route path="/messages" element={<Messages />} />
             <Route path="/credits" element={<CreditPurchase />} />
