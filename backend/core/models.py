@@ -27,6 +27,7 @@ class User(AbstractUser):
     verification_doc = models.FileField(upload_to='verification_docs/', blank=True, null=True)
     verification_requested = models.BooleanField(default=False) # Reverted: Original duplicate field
     is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
+    location = models.CharField(max_length=255, blank=True, null=True, help_text="e.g., City, Country or Region")
 
 
 # ADDED: Order and Payment Models (These are new and remain as part of payment integration)

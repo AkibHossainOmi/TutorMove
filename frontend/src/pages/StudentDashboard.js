@@ -194,7 +194,7 @@ const StudentDashboard = () => {
 
       setShowBecomeTeacher(false);
       console.log('Successfully upgraded to teacher!');
-      window.location.href = '/teacher-dashboard'; // Redirect to teacher dashboard
+      window.location.href = '/dashboard'; // Redirect to teacher dashboard
     } catch (err) {
       setBecomeTeacherError(err.message || 'Failed to upgrade. Please try again.');
       console.error('Failed to upgrade to teacher:', err);

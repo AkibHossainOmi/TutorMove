@@ -49,7 +49,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'user_type',
-            'trust_score', 'is_verified', 'verification_requested', 'verification_doc'
+            'trust_score', 'is_verified', 'verification_requested', 'verification_doc', 'location'
         ]
 
 

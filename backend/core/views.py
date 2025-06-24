@@ -1,3 +1,4 @@
+from rest_framework.views import APIView
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.utils import timezone
@@ -44,7 +45,74 @@ from .payments import SSLCommerzPayment
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+class UserProfileUpdateByIdView(APIView):
+    """
+    Allows updating a user's profile using a POST request by providing the user ID.
+    """
+    permission_classes = [permissions.AllowAny]  # ⚠️ Use proper permission in production
 
+    def post(self, request):
+        user_id = request.data.get('id')
+        if not user_id:
+            return Response({'id': 'User ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({'id': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = UserSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class UserProfileView(generics.RetrieveAPIView): # Changed base class from generics.RetrieveAPIView to APIView
+    """
+    API view to retrieve the profile of the currently authenticated user (GET).
+    Can also retrieve a user by ID provided in the request body (POST).
+    Access is restricted to authenticated users.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = UserSerializer # Still define for clarity and potential usage
+
+    def get(self, request, *args, **kwargs):
+        """
+        Retrieves the profile of the currently authenticated user.
+        GET /api/profile/
+        """
+        serializer = self.serializer_class(request.user)
+        return Response(serializer.data)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Retrieves a user's profile by ID provided in the request body.
+        POST /api/profile/
+        Body: {"id": 4}
+        """
+        user_id = request.data.get('id')
+        if not user_id:
+            return Response(
+                {"detail": "User ID not provided in request body."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            # Attempt to convert ID to integer, handle potential ValueError
+            user_id = int(user_id)
+            user = get_object_or_404(User, id=user_id)
+            serializer = self.serializer_class(user)
+            return Response(serializer.data)
+        except ValueError:
+            return Response(
+                {"detail": "Invalid User ID format. Must be an integer."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            # Catching more general exceptions for robust error handling
+            return Response(
+                {"detail": f"Error fetching user: {e}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 class JobListAPIView(generics.ListAPIView):
     """

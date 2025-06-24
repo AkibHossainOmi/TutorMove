@@ -7,7 +7,7 @@ from .views import (
     AdminViewSet,
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
-    payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn,
+    payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, UserProfileView, UserProfileUpdateByIdView
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -47,7 +47,8 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
-
+    path('profile/', UserProfileView.as_view(), name='user-profile'),
+    path('profile/edit/', UserProfileUpdateByIdView.as_view(), name='user-profile-edit'),
     # All other API endpoints handled by the router
     path('', include(router.urls)),
 

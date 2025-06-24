@@ -45,12 +45,7 @@ const Login = () => {
         userType = userRes.data.user_type;
       }
       console.log(userType);
-      // 3. Redirect based on user type
-      if (userType === 'tutor') {
-        navigate('/teacher-dashboard');
-      } else {
-        navigate('/student-dashboard');
-      }
+      navigate('/dashboard');
     } catch (err) {
       setError(
         err.response?.data?.error ||
@@ -196,7 +191,7 @@ const Login = () => {
     <Footer/>
     </>
     
-  ): <Navigate to="/teacher-dashboard" />;;
+  ): <Navigate to="/dashboard" />;;
 };
 
 export default Login;

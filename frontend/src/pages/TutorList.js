@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import TutorCard from '../components/TutorCard'; // Assuming TutorCard is already styled with modern inline CSS
 import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const PAGE_SIZE = 16;
 
@@ -120,22 +122,22 @@ const TutorList = () => {
   };
 
   const selectStyle = {
-    padding: '10px 16px', // More padding for selects
-    borderRadius: '8px', // More rounded
-    border: '1px solid #dee2e6', // Lighter border
-    backgroundColor: 'white',
-    fontSize: '15px',
-    color: '#495057',
-    appearance: 'none', // Remove default arrow
-    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 12px center',
-    backgroundSize: '12px',
-    cursor: 'pointer',
-    outline: 'none',
-    boxShadow: '0 2px 5px rgba(0,0,0,0.05)', // Subtle shadow
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-  };
+  padding: '10px 40px', // Increased right padding for arrow
+  borderRadius: '8px',
+  border: '1px solid #dee2e6',
+  backgroundColor: 'white',
+  fontSize: '15px',
+  color: '#495057',
+  appearance: 'none',
+  backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e")`,
+  backgroundRepeat: 'no-repeat',
+  backgroundPosition: 'right 12px center',
+  backgroundSize: '12px',
+  cursor: 'pointer',
+  outline: 'none',
+  boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+  transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
+};
 
   const selectHoverFocusStyle = {
     borderColor: '#007bff', // Primary blue on hover/focus
@@ -221,6 +223,9 @@ const TutorList = () => {
   };
 
   return (
+    <>
+    <Navbar/>
+    <div style={{ height: '100px' }}></div>
     <div style={pageContainerStyle}>
       <div style={headerAndFilterBar}>
         <h2 style={mainHeadingStyle}>Find Your Perfect Tutor</h2>
@@ -318,10 +323,9 @@ const TutorList = () => {
           </button>
         </div>
       )}
-      {!hasMore && !loading && !error && tutors.length > 0 && (
-          <p style={messageStyle}>You've reached the end of the list!</p>
-      )}
     </div>
+    <Footer/>
+    </>
   );
 };
 

@@ -38,6 +38,7 @@ import ResetPassword from './pages/ResetPassword';
 import MapSearch from './pages/MapSearch'; // adjust import if you have
 import ProtectedRoute from './contexts/ProtectedRoute';
 import { useAuth } from './contexts/UseAuth';
+import Dashboard from './pages/Dashboard';
 
 
 // Additional Policy Pages
@@ -64,14 +65,6 @@ const ChatIntegration = () => {
   );
 };
 
-const DashboardRedirect = () => {
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" />;
-  console.log(user.user_type);
-  const isTeacher = user.user_type === 'tutor' || user.user_type === 'teacher';
-  return <Navigate to={isTeacher ? '/teacher-dashboard' : '/student-dashboard'} />;
-};
-
 function App() {
   return (
     <div className="font-roboto min-h-screen flex flex-col"> {/* Applying font-roboto and flex layout */}
@@ -93,9 +86,7 @@ function App() {
           {/* Protected Routes - Accessible only after authentication, handled by ProtectedRoute */}
           <Route element={<ProtectedRoute />}>
             {/* Dashboard routes - A generic /dashboard path that redirects to a specific dashboard */}
-            <Route path="/dashboard" element={<Navigate to="/student-dashboard" replace />} />
-            <Route path="/teacher-dashboard" element={<TeacherDashboard />} />
-            <Route path="/student-dashboard" element={<StudentDashboard />} />
+            <Route path="/dashboard" element={<Dashboard />} />
 
             {/* User Profile and Tutor Listings */}
             <Route path="/profile" element={<Profile />} />

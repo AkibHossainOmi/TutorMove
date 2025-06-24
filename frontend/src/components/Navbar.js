@@ -1,272 +1,335 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
-import { useTranslation } from 'react-i18next';
-import { useChat } from '../contexts/ChatContext';
-import LanguageSwitcher from './LanguageSwitcher'; // Assuming this is already modernized
+import LanguageSwitcher from "./LanguageSwitcher";
 
+const ChevronDownIcon = () => (
+  <svg
+    className="ml-1 h-4 w-4"
+    viewBox="0 0 20 20"
+    fill="currentColor"
+    aria-hidden="true"
+  >
+    <path
+      fillRule="evenodd"
+      d="M5.23 7.21a.75.75 0 011.06.02L10 10.939l3.71-3.71a.75.75 0 011.08 1.04l-4.24 4.25a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z"
+      clipRule="evenodd"
+    />
+  </svg>
+);
 
-
-// Helper component for desktop navigation links
 const NavLink = ({ to, text }) => (
   <Link
     to={to}
-    className="text-gray-700 hover:text-blue-600 font-medium text-base py-2 relative transition-colors duration-200 ease-in-out"
+    className="text-gray-700 hover:text-blue-600 font-medium text-base py-2 transition"
   >
     {text}
   </Link>
 );
-const authButtonsContainerStyle = {
-  display: 'flex',
-  gap: '12px', // Space between auth buttons
-  alignItems: 'center',
-};
-// Helper component for dropdown links
+
 const DropdownLink = ({ to, text, onClick }) => (
   <Link
     to={to}
-    className="block px-5 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 text-sm font-normal transition-colors duration-200 ease-in-out border-b border-gray-100 last:border-b-0"
+    className="block px-5 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-600 text-sm border-b last:border-b-0 border-gray-100 transition"
     onClick={onClick}
   >
     {text}
   </Link>
 );
 
-// Main Navbar Component
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // State for mobile menu
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isTutorsDropdownOpen, setIsTutorsDropdownOpen] = useState(false);
   const [isJobsDropdownOpen, setIsJobsDropdownOpen] = useState(false);
+  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
   const navigate = useNavigate();
-  const isAuthenticated = useAuth(); // useAuth now returns a boolean
+  const isAuthenticated = useAuth();
 
-  // Refs for dropdowns and mobile menu to handle click-outside close
   const tutorsDropdownRef = useRef(null);
   const jobsDropdownRef = useRef(null);
+  const accountDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
-  const mobileMenuButtonRef = useRef(null); // Ref for the mobile menu toggle button
+  const mobileMenuButtonRef = useRef(null);
 
-  // Close dropdowns/mobile menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      // Close Tutors dropdown
-      if (tutorsDropdownRef.current && !tutorsDropdownRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (
+        tutorsDropdownRef.current &&
+        !tutorsDropdownRef.current.contains(e.target)
+      ) {
         setIsTutorsDropdownOpen(false);
       }
-      // Close Jobs dropdown
-      if (jobsDropdownRef.current && !jobsDropdownRef.current.contains(event.target)) {
+      if (
+        jobsDropdownRef.current &&
+        !jobsDropdownRef.current.contains(e.target)
+      ) {
         setIsJobsDropdownOpen(false);
       }
-      // Close Mobile Menu
+      if (
+        accountDropdownRef.current &&
+        !accountDropdownRef.current.contains(e.target)
+      ) {
+        setIsAccountDropdownOpen(false);
+      }
       if (
         mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(event.target) &&
+        !mobileMenuRef.current.contains(e.target) &&
         mobileMenuButtonRef.current &&
-        !mobileMenuButtonRef.current.contains(event.target)
+        !mobileMenuButtonRef.current.contains(e.target)
       ) {
         setIsMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const handleLogin = () => {
-    navigate('/login');
-    setIsMenuOpen(false); // Close mobile menu on navigation
+    navigate("/login");
+    setIsMenuOpen(false);
   };
 
   const handleLogout = () => {
-    // Reverted to original logout logic as useAuth no longer provides a logout function
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    console.log("Logged out successfully"); // Keep console log for debugging/info
-    navigate("/"); // Redirect to home or login after logout
-    setIsMenuOpen(false); // Close mobile menu on navigation
+    navigate("/");
+    setIsMenuOpen(false);
   };
 
   const handleRequestTutor = () => {
-    // Logic adapted for isAuthenticated
-    if (isAuthenticated) {
-      navigate('/dashboard'); // If logged in, go to dashboard
-    } else {
-      navigate('/signup'); // If not logged in, go to signup
-    }
-    setIsMenuOpen(false); // Close mobile menu on navigation
+    isAuthenticated ? navigate("/dashboard") : navigate("/signup");
+    setIsMenuOpen(false);
   };
+
+  const toggleTutorsDropdown = () =>
+    setIsTutorsDropdownOpen((prev) => !prev);
+
+  const toggleJobsDropdown = () => setIsJobsDropdownOpen((prev) => !prev);
+
+  const toggleAccountDropdown = () =>
+    setIsAccountDropdownOpen((prev) => !prev);
 
   return (
     <nav className="bg-white shadow-lg fixed top-0 left-0 right-0 z-50 px-6 border-b border-gray-200">
       <div className="max-w-7xl mx-auto flex justify-between items-center h-16 sm:h-[75px]">
-        {/* Logo */}
         <Link
           to="/"
-          className="flex items-center text-2xl sm:text-3xl font-bold text-blue-600 hover:text-blue-800 gap-2 tracking-tight transition-colors duration-200 ease-in-out"
+          className="text-2xl sm:text-3xl font-bold text-blue-600 hover:text-blue-800"
         >
           TutorMove
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Nav */}
         <div className="hidden lg:flex items-center space-x-8">
           <div className="flex items-center space-x-6">
-            {/* Find Tutors Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setIsTutorsDropdownOpen(true)}
-              onMouseLeave={() => setIsTutorsDropdownOpen(false)}
-              ref={tutorsDropdownRef}
-            >
-              <span className="text-gray-700 hover:text-blue-600 font-medium text-base py-2 relative cursor-pointer transition-colors duration-200 ease-in-out">
-                {'Find Tutors'} <span className="text-sm align-middle">▼</span>
-              </span>
+            {/* Tutors Dropdown */}
+            <div className="relative" ref={tutorsDropdownRef}>
+              <button
+                onClick={toggleTutorsDropdown}
+                className="cursor-pointer text-gray-700 hover:text-blue-600 font-medium inline-flex items-center select-none focus:outline-none"
+                aria-haspopup="true"
+                aria-expanded={isTutorsDropdownOpen}
+              >
+                Find Tutors <ChevronDownIcon />
+              </button>
 
               {isTutorsDropdownOpen && (
-                <div className="absolute top-full left-0 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-10 mt-2 overflow-hidden">
-                  <DropdownLink to="/tutors" text={'All Tutors'} onClick={() => setIsTutorsDropdownOpen(false)} />
-                  <DropdownLink to="/tutors?type=online" text={'Online Tutors'} onClick={() => setIsTutorsDropdownOpen(false)} />
-                  <DropdownLink to="/tutors?type=home" text={'Home Tutors'} onClick={() => setIsTutorsDropdownOpen(false)} />
+                <div className="absolute top-full left-0 bg-white border rounded-md shadow-md mt-2 z-20 min-w-[160px]">
+                  <DropdownLink
+                    to="/tutors"
+                    text="All Tutors"
+                    onClick={() => setIsTutorsDropdownOpen(false)}
+                  />
+                  <DropdownLink
+                    to="/tutors?type=online"
+                    text="Online Tutors"
+                    onClick={() => setIsTutorsDropdownOpen(false)}
+                  />
+                  <DropdownLink
+                    to="/tutors?type=home"
+                    text="Home Tutors"
+                    onClick={() => setIsTutorsDropdownOpen(false)}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Find Jobs Dropdown */}
-            <div
-              className="relative"
-              onMouseEnter={() => setIsJobsDropdownOpen(true)}
-              onMouseLeave={() => setIsJobsDropdownOpen(false)}
-              ref={jobsDropdownRef}
-            >
-              <span className="text-gray-700 hover:text-blue-600 font-medium text-base py-2 relative cursor-pointer transition-colors duration-200 ease-in-out">
-                {'Find Jobs'} <span className="text-sm align-middle">▼</span>
-              </span>
+            {/* Jobs Dropdown */}
+            <div className="relative" ref={jobsDropdownRef}>
+              <button
+                onClick={toggleJobsDropdown}
+                className="cursor-pointer text-gray-700 hover:text-blue-600 font-medium inline-flex items-center select-none focus:outline-none"
+                aria-haspopup="true"
+                aria-expanded={isJobsDropdownOpen}
+              >
+                Find Jobs <ChevronDownIcon />
+              </button>
 
               {isJobsDropdownOpen && (
-                <div className="absolute top-full left-0 bg-white border border-gray-200 rounded-lg shadow-lg min-w-[200px] z-10 mt-2 overflow-hidden">
-                  <DropdownLink to="/jobs" text={'Teaching Jobs'} onClick={() => setIsJobsDropdownOpen(false)} />
-                  <DropdownLink to="/jobs?type=online" text={'Online Teaching'} onClick={() => setIsJobsDropdownOpen(false)} />
-                  <DropdownLink to="/jobs?type=assignment" text={'Assignment Jobs'} onClick={() => setIsJobsDropdownOpen(false)} />
+                <div className="absolute top-full left-0 bg-white border rounded-md shadow-md mt-2 z-20 min-w-[160px]">
+                  <DropdownLink
+                    to="/jobs"
+                    text="Teaching Jobs"
+                    onClick={() => setIsJobsDropdownOpen(false)}
+                  />
+                  <DropdownLink
+                    to="/jobs?type=online"
+                    text="Online Teaching"
+                    onClick={() => setIsJobsDropdownOpen(false)}
+                  />
+                  <DropdownLink
+                    to="/jobs?type=assignment"
+                    text="Assignment Jobs"
+                    onClick={() => setIsJobsDropdownOpen(false)}
+                  />
                 </div>
               )}
             </div>
 
-            <NavLink to="/assignment-help" text={'Assignment Help'} />
+            <NavLink to="/assignment-help" text="Assignment Help" />
           </div>
 
           {/* Auth Buttons */}
-          <div style={authButtonsContainerStyle}>
+          <div className="flex items-center gap-4">
             <LanguageSwitcher />
 
             {isAuthenticated ? (
-              <>
+              <div className="relative" ref={accountDropdownRef}>
                 <button
-                  onClick={handleLogout}
-                  className="px-4 py-2 border border-transparent text-white bg-red-600 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 ease-in-out"
+                  onClick={toggleAccountDropdown}
+                  className="flex items-center px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200 transition focus:outline-none"
+                  aria-haspopup="true"
+                  aria-expanded={isAccountDropdownOpen}
+                  aria-label="User menu"
                 >
-                  {'Logout'}
+                  <img
+                    src="data:image/png;base64,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"
+                    alt="Profile"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  
+                  <ChevronDownIcon />
                 </button>
-              </>
+                {isAccountDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white border rounded-md shadow-md z-30">
+                    <DropdownLink
+                      to="/profile"
+                      text="Profile"
+                      onClick={() => setIsAccountDropdownOpen(false)}
+                    />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-5 py-3 text-sm text-red-600 hover:bg-red-50 border-t border-gray-100"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 <button
                   onClick={handleLogin}
-                  className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out"
+                  className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 transition"
                 >
-                  {'Login'}
+                  Login
                 </button>
                 <button
                   onClick={handleRequestTutor}
-                  className="px-4 py-2 border border-transparent text-white bg-green-600 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 ease-in-out"
+                  className="px-4 py-2 text-white bg-green-600 rounded-md text-sm font-medium hover:bg-green-700 transition"
                 >
-                  {'Signup'}
+                  Signup
                 </button>
               </>
             )}
           </div>
         </div>
 
-        {/* Mobile Menu Button (Hamburger) */}
+        {/* Mobile Menu Button */}
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="lg:hidden p-2 rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-100 focus:outline-none focus:bg-gray-100 focus:text-gray-800 text-3xl cursor-pointer"
+          className="lg:hidden p-2 text-gray-600 text-2xl"
           ref={mobileMenuButtonRef}
+          aria-label="Toggle menu"
+          aria-expanded={isMenuOpen}
         >
           ☰
         </button>
       </div>
 
-      {/* Mobile Menu Overlay and Content */}
-      {/* Overlay to dim background */}
+      {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ease-in-out ${
-          isMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        className={`fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity ${
+          isMenuOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
-      ></div>
+        aria-hidden={!isMenuOpen}
+      />
 
-      {/* Mobile Menu Content */}
+      {/* Mobile Menu Drawer */}
       <div
-        className={`fixed top-16 right-0 w-72 h-[calc(100vh-4rem)] bg-white shadow-xl z-50 transform transition-transform duration-300 ease-in-out flex flex-col p-5 ${
-          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
-        }`}
         ref={mobileMenuRef}
+        className={`fixed top-16 right-0 w-72 h-[calc(100vh-4rem)] bg-white shadow-xl z-50 transform transition-transform ${
+          isMenuOpen ? "translate-x-0" : "translate-x-full"
+        } p-5`}
       >
-        {/* Mobile Links */}
         <Link
           to="/tutors"
-          className="block py-3 px-0 text-gray-700 font-medium text-lg border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 ease-in-out"
+          className="block py-3 text-lg font-medium text-gray-700 border-b"
           onClick={() => setIsMenuOpen(false)}
         >
-          {'Find Tutors'}
+          Find Tutors
         </Link>
         <Link
           to="/jobs"
-          className="block py-3 px-0 text-gray-700 font-medium text-lg border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 ease-in-out"
+          className="block py-3 text-lg font-medium text-gray-700 border-b"
           onClick={() => setIsMenuOpen(false)}
         >
-          {'Find Jobs'}
+          Find Jobs
         </Link>
         <Link
           to="/assignment-help"
-          className="block py-3 px-0 text-gray-700 font-medium text-lg border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 ease-in-out"
+          className="block py-3 text-lg font-medium text-gray-700 border-b"
           onClick={() => setIsMenuOpen(false)}
         >
-          {'Assignment Help'}
+          Assignment Help
         </Link>
-
-        {/* LanguageSwitcher removed */}
 
         {isAuthenticated ? (
           <>
             <Link
               to="/dashboard"
-              className="block py-3 px-0 text-gray-700 font-medium text-lg border-b border-gray-200 hover:bg-gray-50 transition-colors duration-200 ease-in-out mt-5"
+              className="block py-3 mt-4 text-gray-700 font-medium border-b"
               onClick={() => setIsMenuOpen(false)}
             >
-              {'Dashboard'}
+              Dashboard
             </Link>
-            {/* Messages link and unread count removed */}
-            <span className="block py-3 px-0 text-gray-700 font-medium text-lg border-b border-gray-200 last:border-b-0 cursor-default">
-              {'Welcome'}! {/* Simplified as username is unavailable */}
-            </span>
+            <Link
+              to="/profile"
+              className="block py-3 text-gray-700 font-medium border-b"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Profile
+            </Link>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 border border-transparent text-white bg-red-600 rounded-md text-sm font-medium hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-all duration-200 ease-in-out self-start mt-5"
+              className="mt-4 w-full text-left text-red-600 px-4 py-2 hover:bg-red-50 rounded-md"
             >
-              {'Logout'}
+              Logout
             </button>
           </>
         ) : (
           <>
             <button
               onClick={handleLogin}
-              className="px-4 py-2 border border-blue-600 text-blue-600 rounded-md text-sm font-medium hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 ease-in-out self-start mt-5"
+              className="mt-4 w-full border border-blue-600 text-blue-600 px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-50"
             >
-              {'Login'}
+              Login
             </button>
             <button
               onClick={handleRequestTutor}
-              className="px-4 py-2 border border-transparent text-white bg-green-600 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 ease-in-out self-start mt-3"
+              className="mt-3 w-full bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700"
             >
-              {'Signup'}
+              Signup
             </button>
           </>
         )}
