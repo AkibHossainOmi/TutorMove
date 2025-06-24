@@ -22,7 +22,7 @@ const Login = () => {
     setError(null);
     try {
       // 1. Login & save JWT token
-      const response = await axios.post('/api/auth/login/', formData);
+      const response = await axios.post('http://localhost:8000/api/auth/login/', formData);
       localStorage.setItem('token', response.data.token);
       const user = {
           user_id: response.data.user_id,

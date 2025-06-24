@@ -203,6 +203,7 @@ class Job(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    location = models.CharField(max_length=255, null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} by {self.student.username}"
