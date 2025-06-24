@@ -1,3 +1,5 @@
+
+from geopy.geocoders import Nominatim
 from rest_framework.views import APIView
 from django.db.models import Q
 from django.core.mail import send_mail
@@ -227,16 +229,71 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'detail': 'Teacher has been verified.'})
 
 # --- Utility ---
-def haversine(lat1, lon1, lat2, lon2):
-    lat1, lon1, lat2, lon2 = map(float, [lat1, lon1, lat2, lon2])
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+import math
+
+def haversine(lon1, lat1, lon2, lat2):
+    """
+    Calculate the great-circle distance between two points
+    on the Earth specified by longitude and latitude in decimal degrees.
+    Returns distance in kilometers.
+    """
+    R = 6371  # Earth radius in km
+
+    lon1, lat1, lon2, lat2 = map(math.radians, [lon1, lat1, lon2, lat2])
+
     dlon = lon2 - lon1
     dlat = lat2 - lat1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a))
-    km = 6371 * c
-    return km
 
+    a = math.sin(dlat/2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon/2)**2
+    c = 2 * math.asin(math.sqrt(a))
+
+    return R * c
+class TutorSearchAPIView(APIView):
+    """
+    POST API that accepts 'location' (string),
+    returns tutors within 20 km radius of that location,
+    plus latitude and longitude of input location.
+    """
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        input_location = request.data.get("location", "")
+        if not input_location:
+            return Response({"error": "Location is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        geolocator = Nominatim(user_agent="your_app_name")
+        try:
+            loc = geolocator.geocode(input_location)
+            if not loc:
+                return Response({"error": "Could not geocode the provided location"}, status=status.HTTP_400_BAD_REQUEST)
+            input_lat, input_lon = loc.latitude, loc.longitude
+        except (GeocoderUnavailable, GeocoderTimedOut):
+            return Response({"error": "Geocoding service unavailable"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        tutors = User.objects.filter(user_type="tutor").exclude(location__isnull=True).exclude(location__exact="")
+
+        nearby_tutors = []
+        for tutor in tutors:
+            try:
+                tutor_loc = geolocator.geocode(tutor.location)
+                if not tutor_loc:
+                    continue
+                tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
+                distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
+                if distance_km <= 20:
+                    nearby_tutors.append(tutor)
+            except Exception:
+                # Skip tutor if geocoding fails
+                continue
+
+        serializer = UserSerializer(nearby_tutors, many=True)
+
+        return Response({
+            "count": len(nearby_tutors),
+            "longitude": input_lon,
+            "latitude": input_lat,
+            "results": serializer.data
+        })
 # --- GigViewSet ---
 class GigViewSet(viewsets.ModelViewSet):
     serializer_class = GigSerializer

@@ -110,7 +110,7 @@ const Navbar = () => {
     setIsAccountDropdownOpen((prev) => !prev);
 
   return (
-    <nav className="bg-white shadow-lg fixed top-0 left-0 right-0 z-50 px-6 border-b border-gray-200">
+    <nav className="bg-white shadow-lg fixed top-0 left-0 right-0  z-[1100] px-6 border-b border-gray-200">
       <div className="max-w-7xl mx-auto flex justify-between items-center h-16 sm:h-[75px]">
         <Link
           to="/"
@@ -187,6 +187,7 @@ const Navbar = () => {
             </div>
 
             <NavLink to="/assignment-help" text="Assignment Help" />
+             {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" />}
           </div>
 
           {/* Auth Buttons */}

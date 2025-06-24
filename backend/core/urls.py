@@ -7,7 +7,8 @@ from .views import (
     AdminViewSet,
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
-    payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, UserProfileView, UserProfileUpdateByIdView
+    payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, UserProfileView, UserProfileUpdateByIdView,
+    TutorSearchAPIView
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -40,6 +41,7 @@ urlpatterns = [
     path('tutors/search/', UserViewSet.as_view({'get': 'search'}), name='tutor-search'),
     path('tutors/', TutorListAPIView.as_view(), name='tutor-list'),
     path('jobs/', JobListAPIView.as_view(), name='job-list'),
+    path('search-tutors/', TutorSearchAPIView.as_view(), name='search-tutors'),
 
     # Auth & account endpoints (JWT/session-based, email/password)
     path('auth/register/', RegisterView.as_view(), name='register'),

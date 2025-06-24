@@ -1,17 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import MarkerClusterGroup from "@changey/react-leaflet-markercluster";
-import { Link } from "react-router-dom";
 import axios from "axios";
 import L from "leaflet";
-import "leaflet/dist/leaflet.css"; // Ensure Leaflet's base CSS is imported
-import "@changey/react-leaflet-markercluster/dist/styles.min.css"; // Marker cluster CSS
+import "leaflet/dist/leaflet.css";
+import "@changey/react-leaflet-markercluster/dist/styles.min.css";
 
 const DEFAULT_CENTER = [23.8103, 90.4125]; // Dhaka, Bangladesh
 const DEFAULT_ZOOM = 12;
-const DEFAULT_RADIUS = 20; // km
+const SEARCH_RADIUS_KM = 20;
 
-// Fix for default Leaflet icons (required for Webpack/CRA setups)
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
@@ -19,134 +17,136 @@ L.Icon.Default.mergeOptions({
   shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
 });
 
-// Geocoder Input Component
-const GeocoderInput = ({ onSelect }) => {
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false); // More descriptive name
-
-  // Ref to close suggestions when clicking outside
+const LocationSearch = ({
+  query,
+  setQuery,
+  suggestions,
+  setSuggestions,
+  showSuggestions,
+  setShowSuggestions,
+  onSelectSuggestion,
+}) => {
   const wrapperRef = useRef(null);
 
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
         setShowSuggestions(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [setShowSuggestions]);
 
-  const handleSearch = async (e) => {
-    const value = e.target.value;
-    setQuery(value);
-    if (value.length < 3) {
+  const handleChange = async (e) => {
+    const val = e.target.value;
+    setQuery(val);
+    if (val.length < 3) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
     try {
       const res = await axios.get("https://nominatim.openstreetmap.org/search", {
-        params: {
-          q: value,
-          format: "json",
-          addressdetails: 1,
-          limit: 5,
-        },
+        params: { q: val, format: "json", limit: 5 },
       });
       setSuggestions(res.data);
       setShowSuggestions(true);
-    } catch (err) {
-      console.error("Geocoder error:", err);
+    } catch {
       setSuggestions([]);
       setShowSuggestions(false);
     }
   };
 
-  // Inline styles for GeocoderInput
-  const inputContainerStyle = {
-    position: "relative",
-    zIndex: 1500, // Ensure it's above map but below modals
-    width: "100%", // Take full width of its parent flex item
-    maxWidth: "350px", // Limit max width
-  };
-
-  const inputStyle = {
-    width: "100%",
-    padding: "12px 15px",
-    fontSize: "16px",
-    border: "1.5px solid #007bff",
-    borderRadius: "8px", // Slightly more rounded
-    outline: "none",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.05)", // Subtle shadow
-    transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-  };
-
-  const inputFocusStyle = {
-    borderColor: "#0056b3",
-    boxShadow: "0 0 0 3px rgba(0, 123, 255, 0.2)",
-  };
-
-  const suggestionsListStyle = {
-    position: "absolute",
-    top: "calc(100% + 5px)", // Position below input
-    left: 0,
-    right: 0,
-    backgroundColor: "#fff",
-    border: "1px solid #ddd",
-    borderRadius: "8px", // Consistent rounding
-    boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-    maxHeight: "200px",
-    overflowY: "auto",
-    listStyle: "none",
-    padding: 0,
-    margin: 0,
-  };
-
-  const suggestionItemStyle = {
-    padding: "12px 15px",
-    cursor: "pointer",
-    borderBottom: "1px solid #eee",
-    transition: "background-color 0.2s ease",
-    fontSize: "15px",
-    color: "#333",
-  };
-
-  const suggestionItemHoverStyle = {
-    backgroundColor: "#f0f8ff", // Light blue on hover
-    color: '#007bff',
-  };
-
   return (
-    <div ref={wrapperRef} style={inputContainerStyle}>
+    <div
+      ref={wrapperRef}
+      style={{
+        position: "relative",
+        flexGrow: 1,
+        maxWidth: "100%",
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+      }}
+    >
       <input
         type="text"
-        placeholder="Search by city, area, or address..."
+        placeholder="Enter location..."
         value={query}
-        onChange={handleSearch}
-        onFocus={() => setShowSuggestions(true)} // Show on focus
-        style={inputStyle}
-        onMouseEnter={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-        onMouseLeave={(e) => Object.assign(e.currentTarget.style, inputStyle)}
+        onChange={handleChange}
+        onFocus={() => setShowSuggestions(true)}
+        aria-label="Search location"
+        style={{
+          width: "100%",
+          padding: "12px 14px",
+          fontSize: 16,
+          borderRadius: 6,
+          border: "1.5px solid #ccc",
+          outline: "none",
+          boxSizing: "border-box",
+          transition: "border-color 0.25s ease",
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && suggestions.length > 0) {
+            e.preventDefault();
+            onSelectSuggestion(suggestions[0]);
+            setShowSuggestions(false);
+          }
+        }}
       />
       {showSuggestions && suggestions.length > 0 && (
-        <ul style={suggestionsListStyle}>
-          {suggestions.map((s, i) => (
+        <ul
+          role="listbox"
+          aria-label="Location suggestions"
+          style={{
+            position: "absolute",
+            top: "calc(100% + 4px)",
+            left: 0,
+            right: 0,
+            backgroundColor: "#fff",
+            border: "1.5px solid #ddd",
+            borderRadius: 6,
+            maxHeight: 180,
+            overflowY: "auto",
+            margin: 0,
+            padding: 0,
+            listStyle: "none",
+            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
+            zIndex: 1000,
+          }}
+        >
+          {suggestions.map((loc) => (
             <li
-              key={s.place_id} // Use unique place_id if available, fallback to index
+              key={loc.place_id}
               onClick={() => {
-                onSelect(s);
+                onSelectSuggestion(loc);
+                setQuery(loc.display_name);
                 setShowSuggestions(false);
-                setQuery(s.display_name); // Set input to full name
               }}
-              style={suggestionItemStyle}
-              onMouseEnter={(e) => Object.assign(e.currentTarget.style, suggestionItemHoverStyle)}
-              onMouseLeave={(e) => Object.assign(e.currentTarget.style, suggestionItemStyle)}
+              role="option"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  onSelectSuggestion(loc);
+                  setQuery(loc.display_name);
+                  setShowSuggestions(false);
+                }
+              }}
+              style={{
+                padding: "10px 12px",
+                cursor: "pointer",
+                borderBottom: "1px solid #eee",
+                fontSize: 14,
+                color: "#333",
+                userSelect: "none",
+              }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#f5faff")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "transparent")
+              }
             >
-              {s.display_name}
+              {loc.display_name}
             </li>
           ))}
         </ul>
@@ -155,277 +155,170 @@ const GeocoderInput = ({ onSelect }) => {
   );
 };
 
-// Map Move Events Hook
-const MapMoveEvents = ({ onMove }) => {
-  useMapEvents({
-    moveend: (e) => {
-      const map = e.target;
-      const center = map.getCenter();
-      onMove(center.lat, center.lng, map.getZoom());
-    },
-    // Optionally add zoomend if you want to react to zoom changes separately
-    // zoomend: (e) => { ... }
-  });
-  return null;
+const StarRating = ({ rating = 5 }) => {
+  // Just show filled stars up to rating (max 5)
+  const stars = Array(5)
+    .fill(0)
+    .map((_, i) => (
+      <svg
+        key={i}
+        width="16"
+        height="16"
+        viewBox="0 0 24 24"
+        fill={i < rating ? "#ffb400" : "#ddd"}
+        stroke="#ffb400"
+        strokeWidth="1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ marginRight: 2 }}
+        aria-hidden="true"
+      >
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ));
+  return <div style={{ display: "flex" }}>{stars}</div>;
 };
 
-// Main MapSearch Component
-export default function MapSearch({
-  mode = "gigs", // or "jobs"
-  radiusKm = DEFAULT_RADIUS,
-}) {
+export default function TutorMapSearch() {
+  const [query, setQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const [center, setCenter] = useState(DEFAULT_CENTER);
   const [zoom, setZoom] = useState(DEFAULT_ZOOM);
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // State for error messages
+  const [tutors, setTutors] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false);
 
-  // Load gigs or jobs by map position
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null); // Clear previous errors
-      let url = mode === "jobs" ? "/api/jobs/" : "/api/gigs/";
-      try {
-        const res = await axios.get(url, {
-          params: {
-            lat: center[0],
-            lng: center[1],
-            radius_km: radiusKm,
-            // Include pagination params if your API supports them, e.g.:
-            // page: 1,
-            // page_size: 100 // Fetch a reasonable number for map display
-          },
-        });
-        // Ensure data is always an array
-        setItems(Array.isArray(res.data) ? res.data : res.data.results || []);
-      } catch (err) {
-        console.error("API fetch error:", err);
-        setError(`Failed to load ${mode}. Please try again.`);
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [center, radiusKm, mode]); // Re-fetch when center, radius, or mode changes
-
-  // On location search selection (from GeocoderInput)
-  const handleSelectLocation = (location) => {
-    setCenter([parseFloat(location.lat), parseFloat(location.lon)]);
-    setZoom(14); // Zoom in closer on selected location
+  const handleSearch = async () => {
+    if (!selectedLocation) {
+      setError("Please select a location from suggestions.");
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await axios.post("http://localhost:8000/api/search-tutors/", {
+        location: selectedLocation.display_name,
+        radius_km: SEARCH_RADIUS_KM,
+      });
+      setTutors(res.data.results || []);
+      setCenter([parseFloat(selectedLocation.lat), parseFloat(selectedLocation.lon)]);
+      setZoom(14);
+    } catch {
+      setError("Failed to load tutors.");
+      setTutors([]);
+    } finally {
+      setLoading(false);
+      setHasSearched(true);
+    }
   };
 
-  // On map movement (from MapMoveEvents)
-  const handleMapMove = (lat, lng, newZoom) => {
-    // Only update center if it significantly changes to avoid excessive API calls
-    // You might want a debounce here for heavy API usage
-    setCenter([lat, lng]);
-    setZoom(newZoom);
-  };
-
-  // Inline styles for the main component
-  const mainContainerStyle = {
-    padding: "30px",
-    maxWidth: "1000px", // Slightly larger max-width
-    margin: "0 auto",
-    backgroundColor: "#fcfcfc", // A very light almost-white background
-    borderRadius: "15px", // More prominent rounding
-    boxShadow: "0 8px 30px rgba(0, 0, 0, 0.1)", // Deeper shadow
-    fontFamily: '"Segoe UI", Arial, sans-serif',
-    color: "#333",
-    boxSizing: 'border-box', // Include padding in width calculation
-  };
-
-  const controlsContainerStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "15px", // More spacing
-    marginBottom: "25px",
-    flexWrap: "wrap", // Allow controls to wrap on smaller screens
-    justifyContent: 'center', // Center controls when wrapped
-  };
-
-  const mapFrameStyle = {
-    width: "100%",
-    height: "500px", // Taller map for better viewing
-    borderRadius: "12px", // Consistent rounding
-    overflow: "hidden", // Ensures map content stays within bounds
-    border: "2px solid #007bff", // Primary color border
-    marginBottom: "30px",
-    boxShadow: "0 4px 15px rgba(0, 123, 255, 0.15)", // Shadow matching primary color
-  };
-
-  const loadingMessageStyle = {
-    textAlign: "center",
-    color: "#007bff", // Primary blue color
-    fontWeight: "bold",
-    padding: "20px",
-    fontSize: "1.1em",
-    backgroundColor: '#e6f2ff', // Light blue background
-    borderRadius: '8px',
-    margin: '20px 0',
-  };
-
-  const errorMessageStyle = {
-    textAlign: "center",
-    color: "#dc3545", // Red for errors
-    padding: "20px",
-    fontSize: "1.1em",
-    backgroundColor: '#f8d7da', // Light red background
-    border: '1px solid #f5c6cb',
-    borderRadius: '8px',
-    margin: '20px 0',
-  };
-
-  const noResultsStyle = {
-    textAlign: "center",
-    color: "#6c757d", // Gray for no results
-    padding: "20px",
-    fontSize: "1.1em",
-    backgroundColor: '#f0f2f5', // Light gray background
-    borderRadius: '8px',
-    margin: '20px 0',
-  };
-
-  const resultsListContainerStyle = {
-    marginTop: '30px',
-    borderTop: '1px solid #eee',
-    paddingTop: '20px',
-  };
-
-  const resultsListHeadingStyle = {
-    fontSize: '2em',
-    color: '#2c3e50',
-    fontWeight: '700',
-    marginBottom: '25px',
-    textAlign: 'center',
-  };
-
-  const resultGridStyle = {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', // Responsive grid
-    gap: '25px', // Spacing between cards
-    padding: '10px 0',
-  };
-
-  const resultCardStyle = {
-    backgroundColor: '#fff',
-    borderRadius: '12px',
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
-    overflow: 'hidden',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-    cursor: 'pointer',
-    border: '1px solid #e0e0e0',
-  };
-
-  const resultCardHoverStyle = {
-    transform: 'translateY(-5px)',
-    boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
-  };
-
-  const cardContentStyle = {
-    padding: '20px',
-    flexGrow: 1, // Allows content to fill space
-  };
-
-  const cardTitleStyle = {
-    fontSize: '1.4em',
-    fontWeight: '600',
-    color: '#34495e',
-    marginBottom: '10px',
-    lineHeight: '1.3em',
-  };
-
-  const cardDetailStyle = {
-    fontSize: '0.95em',
-    color: '#6c757d',
-    marginBottom: '5px',
-  };
-
-  const viewLinkStyle = {
-    display: 'inline-block',
-    marginTop: '15px',
-    padding: '8px 15px',
-    backgroundColor: '#007bff',
-    color: 'white',
-    textDecoration: 'none',
-    borderRadius: '6px',
-    fontSize: '0.9em',
-    fontWeight: '500',
-    transition: 'background-color 0.2s ease',
-  };
-
-  const viewLinkHoverStyle = {
-    backgroundColor: '#0056b3',
+  const handleSelectSuggestion = (loc) => {
+    setSelectedLocation(loc);
+    setQuery(loc.display_name);
+    setShowSuggestions(false);
   };
 
   return (
-    <div style={mainContainerStyle}>
-      <h2 style={{ fontSize: '2.5em', fontWeight: '700', color: '#2c3e50', marginBottom: '25px', textAlign: 'center' }}>
-        {mode === "jobs" ? "Discover Teaching Jobs on Map" : "Explore Tutors by Location"}
-      </h2>
+    <div
+      style={{
+        maxWidth: 960,
+        margin: "40px auto",
+        padding: 24,
+        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+        color: "#222",
+      }}
+    >
+      <h1
+        style={{
+          textAlign: "center",
+          marginBottom: 32,
+          fontWeight: 700,
+          fontSize: "2rem",
+          color: "#111",
+        }}
+      >
+        Find Tutors Within {SEARCH_RADIUS_KM} km
+      </h1>
 
-      <div style={controlsContainerStyle}>
-        <GeocoderInput onSelect={handleSelectLocation} />
-        <span style={{ color: "#555", fontSize: "1.1em", fontWeight: "500" }}>
-          Showing {mode === "jobs" ? "jobs" : "tutors"} within <strong style={{ color: '#007bff' }}>{radiusKm} km</strong> of the map center.
-        </span>
+      {/* Search row */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          maxWidth: 600,
+          margin: "0 auto",
+          alignItems: "center",
+        }}
+      >
+        <LocationSearch
+          query={query}
+          setQuery={setQuery}
+          suggestions={suggestions}
+          setSuggestions={setSuggestions}
+          showSuggestions={showSuggestions}
+          setShowSuggestions={setShowSuggestions}
+          onSelectSuggestion={handleSelectSuggestion}
+        />
+        <button
+          onClick={handleSearch}
+          disabled={loading || !selectedLocation}
+          style={{
+            padding: "12px 28px",
+            backgroundColor: loading || !selectedLocation ? "#ccc" : "#007bff",
+            color: loading || !selectedLocation ? "#666" : "#fff",
+            fontWeight: 600,
+            fontSize: 16,
+            borderRadius: 6,
+            border: "none",
+            cursor: loading || !selectedLocation ? "not-allowed" : "pointer",
+            boxShadow: loading || !selectedLocation ? "none" : "0 2px 8px rgb(0 123 255 / 0.6)",
+            transition: "background-color 0.3s ease",
+          }}
+          aria-disabled={loading || !selectedLocation}
+        >
+          {loading ? "Searching..." : "Search"}
+        </button>
       </div>
 
-      <div style={mapFrameStyle}>
+      {/* Map */}
+      <div
+        style={{
+          height: 400,
+          marginTop: 30,
+          borderRadius: 10,
+          overflow: "hidden",
+          boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
+        }}
+      >
         <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
           <TileLayer
+            attribution="&copy; OpenStreetMap contributors"
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-            attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           />
-          <MapMoveEvents onMove={handleMapMove} />
           <MarkerClusterGroup>
-            {items.map(item => {
-              // Safely get lat/lng from different possible property names
-              const lat = item.latitude || item.lat;
-              const lng = item.longitude || item.lng;
-
-              if (typeof lat !== 'number' || typeof lng !== 'number') {
-                  console.warn(`Item ${item.id} has invalid coordinates: lat=${lat}, lng=${lng}`);
-                  return null; // Skip invalid markers
-              }
-
+            {tutors.map((tutor) => {
+              if (!tutor.latitude || !tutor.longitude) return null;
               return (
-                <Marker key={item.id} position={[lat, lng]}>
+                <Marker key={tutor.id} position={[tutor.latitude, tutor.longitude]}>
                   <Popup>
-                    <div style={{ padding: '5px', fontFamily: '"Segoe UI", Arial, sans-serif' }}>
-                      {mode === "jobs" ? (
-                        <>
-                          <b style={{ color: '#007bff', fontSize: '1.1em' }}>{item.title}</b><br />
-                          <span style={{ fontSize: '0.9em', color: '#555' }}>Subject: {item.subject}</span><br />
-                          <Link
-                            to={`/jobs/${item.id}`}
-                            style={viewLinkStyle}
-                            onMouseEnter={(e) => Object.assign(e.currentTarget.style, viewLinkHoverStyle)}
-                            onMouseLeave={(e) => Object.assign(e.currentTarget.style, viewLinkStyle)}
-                          >
-                            View Job
-                          </Link>
-                        </>
-                      ) : (
-                        <>
-                          <b style={{ color: '#007bff', fontSize: '1.1em' }}>{item.teacher?.username || item.username || "Tutor"}</b><br />
-                          <span style={{ fontSize: '0.9em', color: '#555' }}>
-                            Subjects: {item.subjects?.map(s => s.name).join(", ") || 'N/A'}
-                          </span><br />
-                          <Link
-                            to={`/tutors/${item.teacher?.id || item.id}`}
-                            style={viewLinkStyle}
-                            onMouseEnter={(e) => Object.assign(e.currentTarget.style, viewLinkHoverStyle)}
-                            onMouseLeave={(e) => Object.assign(e.currentTarget.style, viewLinkStyle)}
-                          >
-                            View Profile
-                          </Link>
-                        </>
-                      )}
+                    <div style={{ fontSize: 14 }}>
+                      <strong style={{ color: "#007bff" }}>
+                        {tutor.username || tutor.name || "Tutor"}
+                      </strong>
+                      <br />
+                      Location: {tutor.location || "Unknown"}
+                      <br />
+                      <a
+                        href={`/tutors/${tutor.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: "#007bff", textDecoration: "underline" }}
+                      >
+                        View Profile
+                      </a>
                     </div>
                   </Popup>
                 </Marker>
@@ -435,70 +328,147 @@ export default function MapSearch({
         </MapContainer>
       </div>
 
-      {loading && (
-        <div style={loadingMessageStyle}>
-          Loading {mode === "jobs" ? "jobs" : "tutors"} near you...
-        </div>
-      )}
+      {/* Error message */}
       {error && (
-        <div style={errorMessageStyle}>
+        <p
+          role="alert"
+          style={{
+            color: "#d93025",
+            textAlign: "center",
+            marginTop: 20,
+            fontWeight: 600,
+          }}
+        >
           {error}
-        </div>
-      )}
-      {!loading && !error && items.length === 0 && (
-        <div style={noResultsStyle}>
-          No {mode === "jobs" ? "jobs" : "tutors"} found in this area. Try searching a different location or zooming out!
-        </div>
+        </p>
       )}
 
-      {/* Display a list of results below the map */}
-      {!loading && !error && items.length > 0 && (
-        <div style={resultsListContainerStyle}>
-          <h3 style={resultsListHeadingStyle}>
-            {mode === "jobs" ? "Available Jobs" : "Available Tutors"}
-          </h3>
-          <div style={resultGridStyle}>
-            {items.map(item => (
+      {/* Tutors Grid */}
+      {hasSearched && tutors.length > 0 && (
+        <section
+          aria-live="polite"
+          style={{
+            marginTop: 36,
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+            gap: 24,
+          }}
+        >
+          {tutors.map((tutor) => (
+            <article
+              key={tutor.id}
+              style={{
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                padding: 16,
+                boxShadow: "0 1px 6px rgb(0 0 0 / 0.07)",
+                backgroundColor: "#fff",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                textAlign: "center",
+                transition: "box-shadow 0.3s ease",
+              }}
+              tabIndex={0}
+              onFocus={(e) =>
+                (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,123,255,0.3)")
+              }
+              onBlur={(e) =>
+                (e.currentTarget.style.boxShadow = "0 1px 6px rgb(0 0 0 / 0.07)")
+              }
+            >
+              {/* Avatar placeholder */}
               <div
-                key={item.id}
-                style={resultCardStyle}
-                onMouseEnter={(e) => Object.assign(e.currentTarget.style, resultCardHoverStyle)}
-                onMouseLeave={(e) => Object.assign(e.currentTarget.style, resultCardStyle)}
+                style={{
+                  width: 72,
+                  height: 72,
+                  borderRadius: "50%",
+                  backgroundColor: "#007bff",
+                  color: "#fff",
+                  fontWeight: "700",
+                  fontSize: 28,
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  userSelect: "none",
+                  marginBottom: 14,
+                  textTransform: "uppercase",
+                  boxShadow: "0 2px 8px rgba(0,123,255,0.25)",
+                }}
+                aria-label={`Avatar of ${tutor.username || tutor.name || "Tutor"}`}
               >
-                <div style={cardContentStyle}>
-                  <h4 style={cardTitleStyle}>
-                    {mode === "jobs" ? item.title : (item.teacher?.username || item.username || "Tutor")}
-                  </h4>
-                  <p style={cardDetailStyle}>
-                    <strong style={{ color: '#495057' }}>{mode === "jobs" ? "Subject:" : "Expertise:"}</strong> {mode === "jobs" ? item.subject : (item.subjects?.map(s => s.name).join(", ") || 'N/A')}
-                  </p>
-                  <p style={cardDetailStyle}>
-                    <strong style={{ color: '#495057' }}>Location:</strong> {item.location || 'Not specified'}
-                  </p>
-                </div>
-                {mode === "jobs" ? (
-                  <Link
-                    to={`/jobs/${item.id}`}
-                    style={{ ...viewLinkStyle, textAlign: 'center', margin: '0 20px 20px', display: 'block' }}
-                    onMouseEnter={(e) => Object.assign(e.currentTarget.style, viewLinkHoverStyle)}
-                    onMouseLeave={(e) => Object.assign(e.currentTarget.style, viewLinkStyle)}
-                  >
-                    View Job
-                  </Link>
-                ) : (
-                  <Link
-                    to={`/tutors/${item.teacher?.id || item.id}`}
-                    style={{ ...viewLinkStyle, textAlign: 'center', margin: '0 20px 20px', display: 'block' }}
-                    onMouseEnter={(e) => Object.assign(e.currentTarget.style, viewLinkHoverStyle)}
-                    onMouseLeave={(e) => Object.assign(e.currentTarget.style, viewLinkStyle)}
-                  >
-                    View Profile
-                  </Link>
-                )}
+                {(tutor.username || tutor.name || "T").slice(0, 1)}
               </div>
-            ))}
-          </div>
-        </div>
+
+              <h3
+                style={{
+                  margin: 0,
+                  fontSize: 18,
+                  fontWeight: 700,
+                  color: "#111",
+                  marginBottom: 6,
+                }}
+              >
+                {tutor.username || tutor.name || "Tutor"}
+              </h3>
+
+              <p
+                style={{
+                  margin: 0,
+                  fontSize: 14,
+                  color: "#666",
+                  marginBottom: 8,
+                }}
+                title={tutor.location}
+              >
+                {tutor.location || "Location not provided"}
+              </p>
+
+              <StarRating rating={4 + (tutor.trust_score ? tutor.trust_score * 1 : 0)} />
+
+              <a
+                href={`/tutors/${tutor.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  marginTop: 14,
+                  padding: "8px 20px",
+                  backgroundColor: "#007bff",
+                  color: "#fff",
+                  borderRadius: 6,
+                  textDecoration: "none",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  boxShadow: "0 3px 8px rgba(0,123,255,0.4)",
+                  transition: "background-color 0.25s ease",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#0056b3")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.backgroundColor = "#007bff")
+                }
+              >
+                View Profile
+              </a>
+            </article>
+          ))}
+        </section>
+      )}
+
+      {hasSearched && !loading && tutors.length === 0 && !error && (
+        <p
+          style={{
+            textAlign: "center",
+            marginTop: 40,
+            color: "#555",
+            fontStyle: "italic",
+            fontSize: 16,
+          }}
+          aria-live="polite"
+        >
+          No tutors found for this location.
+        </p>
       )}
     </div>
   );

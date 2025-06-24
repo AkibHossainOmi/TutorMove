@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next'; // Still included if you plan to use it for translations
-import { jobAPI } from '../utils/apiService'; // Ensure this service is correctly implemented
-import { useNotification } from '../contexts/NotificationContext';
+import { useTranslation } from 'react-i18next';
+import { jobAPI } from '../utils/apiService';
 
 const JobPostForm = ({ onClose, onJobCreated }) => {
   const { t } = useTranslation();
-  const { addNotification: showNotification } = useNotification(); // Destructure correctly
 
   const [formData, setFormData] = useState({
     title: '',
@@ -17,9 +15,11 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     location: '',
     type: 'online', // online, home, both
     requirements: '',
-    deadline: '', // Format this as 'YYYY-MM-DD' for date input
+    deadline: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,57 +32,54 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setSuccessMessage('');
+    setErrorMessage('');
 
     try {
-      // Ensure the deadline is in the correct format if your backend expects it differently
-      const payload = {
-        ...formData,
-        // Example: If backend needs date as a Date object or specific string format
-        // deadline: formData.deadline ? new Date(formData.deadline).toISOString() : null,
-      };
-
-      const response = await jobAPI.createJob(payload);
+      const response = await jobAPI.createJob(formData);
       if (response.status === 201) {
-        showNotification('Job posted successfully!', 'success');
+        setSuccessMessage('Job posted successfully!');
         onJobCreated && onJobCreated(response.data);
-        onClose(); // Close modal on success
+
+        setTimeout(() => {
+          onClose();
+        }, 1500);
       }
     } catch (error) {
       console.error("Job posting error:", error);
-      showNotification(
-        error.response?.data?.message || error.response?.data?.detail || 'Failed to post job. Please check your inputs.',
-        'error'
+      setErrorMessage(
+        error.response?.data?.message || error.response?.data?.detail || 'Failed to post job. Please check your inputs.'
       );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // --- Inline Styles ---
+  const isLocationRequired = formData.type !== 'online';
+
+  // --- Styles ---
+
   const modalOverlayStyle = {
     position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.6)', // Darker overlay
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10000, // High z-index for modals
+    zIndex: 10000,
   };
 
   const modalContentStyle = {
     backgroundColor: 'white',
-    borderRadius: '12px', // More rounded
-    padding: '40px', // More padding
-    maxWidth: '700px', // Wider modal for more content
+    borderRadius: 12,
+    padding: 40,
+    maxWidth: 700,
     width: '90%',
     maxHeight: '90vh',
-    overflowY: 'auto', // Scrollable if content overflows
-    boxShadow: '0 10px 30px rgba(0,0,0,0.25)', // Stronger shadow
-    position: 'relative', // For close button positioning
-    fontFamily: '"Segoe UI", Arial, sans-serif', // Modern font
+    overflowY: 'auto',
+    boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
+    position: 'relative',
+    fontFamily: '"Segoe UI", Arial, sans-serif',
     color: '#333',
   };
 
@@ -90,25 +87,25 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: '30px', // More space below header
-    borderBottom: '1px solid #eee', // Subtle separator
-    paddingBottom: '15px',
+    marginBottom: 30,
+    borderBottom: '1px solid #eee',
+    paddingBottom: 15,
   };
 
   const modalTitleStyle = {
     margin: 0,
     color: '#2c3e50',
-    fontSize: '2em', // Larger title
-    fontWeight: '700',
+    fontSize: '2em',
+    fontWeight: 700,
   };
 
   const closeButtonStyle = {
     background: 'none',
     border: 'none',
-    fontSize: '32px', // Larger close icon
+    fontSize: 32,
     cursor: 'pointer',
     color: '#6c757d',
-    padding: '5px', // Make it easier to click
+    padding: 5,
     transition: 'color 0.2s ease',
   };
 
@@ -117,63 +114,63 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
   };
 
   const formGroupStyle = {
-    marginBottom: '25px', // Consistent spacing between form groups
+    marginBottom: 25,
   };
 
   const labelStyle = {
     display: 'block',
-    marginBottom: '8px', // More space below label
-    fontWeight: '600', // Bolder labels
+    marginBottom: 8,
+    fontWeight: 600,
     color: '#495057',
     fontSize: '1em',
   };
 
   const inputBaseStyle = {
     width: '100%',
-    padding: '12px 15px', // More padding for inputs
-    border: '1px solid #ced4da', // Lighter border color
-    borderRadius: '8px', // More rounded inputs
-    fontSize: '16px',
+    padding: '12px 15px',
+    border: '1px solid #ced4da',
+    borderRadius: 8,
+    fontSize: 16,
     outline: 'none',
     transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
   };
 
   const inputFocusStyle = {
-    borderColor: '#28a745', // Green focus for job posting
+    borderColor: '#28a745',
     boxShadow: '0 0 0 3px rgba(40, 167, 69, 0.2)',
   };
 
   const textareaStyle = {
     ...inputBaseStyle,
-    resize: 'vertical', // Allow vertical resizing
-    minHeight: '80px',
+    resize: 'vertical',
+    minHeight: 80,
   };
 
   const selectStyle = {
     ...inputBaseStyle,
-    appearance: 'none', // Remove default arrow
+    appearance: 'none',
     backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e")`,
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'right 15px center',
-    backgroundSize: '12px',
-    cursor: 'pointer', // Indicate it's clickable
+    backgroundSize: 12,
+    cursor: 'pointer',
   };
 
   const formActionsStyle = {
     display: 'flex',
-    gap: '15px', // More space between buttons
+    gap: 15,
     justifyContent: 'flex-end',
-    marginTop: '30px', // More space above buttons
-    borderTop: '1px solid #eee', // Separator above buttons
-    paddingTop: '20px',
+    marginTop: 30,
+    borderTop: '1px solid #eee',
+    paddingTop: 20,
   };
 
   const buttonBaseStyle = {
-    padding: '12px 28px', // Generous padding
-    borderRadius: '8px', // Rounded buttons
+    padding: '12px 28px',
+    borderRadius: 8,
     border: 'none',
     fontSize: '1em',
-    fontWeight: '600',
+    fontWeight: 600,
     cursor: 'pointer',
     transition: 'background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease',
     outline: 'none',
@@ -181,7 +178,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
   const cancelButtonStyles = {
     ...buttonBaseStyle,
-    backgroundColor: '#6c757d', // Grey for cancel
+    backgroundColor: '#6c757d',
     color: 'white',
   };
   const cancelButtonHoverStyles = {
@@ -192,7 +189,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
   const submitButtonStyles = {
     ...buttonBaseStyle,
-    backgroundColor: '#28a745', // Green for submit
+    backgroundColor: '#28a745',
     color: 'white',
   };
   const submitButtonHoverStyles = {
@@ -201,14 +198,11 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     boxShadow: '0 4px 10px rgba(40, 167, 69, 0.25)',
   };
   const submitButtonDisabledStyles = {
-    backgroundColor: '#94d3a2', // Lighter green when disabled
+    backgroundColor: '#94d3a2',
     cursor: 'not-allowed',
     transform: 'none',
     boxShadow: 'none',
   };
-
-  // Helper for conditional rendering based on teaching type
-  const isLocationRequired = formData.type !== 'online';
 
   return (
     <div style={modalOverlayStyle}>
@@ -225,8 +219,34 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
           </button>
         </div>
 
+        {/* Success / Error messages */}
+        {successMessage && (
+          <div style={{
+            backgroundColor: '#d4edda',
+            color: '#155724',
+            padding: 15,
+            borderRadius: 8,
+            marginBottom: 20,
+            border: '1px solid #c3e6cb',
+          }}>
+            {successMessage}
+          </div>
+        )}
+        {errorMessage && (
+          <div style={{
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            padding: 15,
+            borderRadius: 8,
+            marginBottom: 20,
+            border: '1px solid #f5c6cb',
+          }}>
+            {errorMessage}
+          </div>
+        )}
+
         <form onSubmit={handleSubmit}>
-          {/* Job Title */}
+          {/* Title */}
           <div style={formGroupStyle}>
             <label htmlFor="title" style={labelStyle}>
               Job Title <span style={{ color: '#dc3545' }}>*</span>
@@ -243,9 +263,6 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
               onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
               placeholder="e.g., Math Tutor for High School Student"
             />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Give your job post a clear and concise title.
-            </small>
           </div>
 
           {/* Subject */}
@@ -274,13 +291,10 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
               <option value="economics">Economics</option>
               <option value="other">Other</option>
             </select>
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Choose the primary subject for this job.
-            </small>
           </div>
 
-          {/* Level & Type (flex row) */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
+          {/* Level & Type */}
+          <div style={{ display: 'flex', gap: 20, marginBottom: 25, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 'calc(50% - 10px)' }}>
               <label htmlFor="level" style={labelStyle}>
                 Level <span style={{ color: '#dc3545' }}>*</span>
@@ -303,9 +317,6 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
                 <option value="university">University</option>
                 <option value="professional">Professional</option>
               </select>
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Specify the academic level required.
-              </small>
             </div>
 
             <div style={{ flex: 1, minWidth: 'calc(50% - 10px)' }}>
@@ -326,9 +337,6 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
                 <option value="home">Home Tutoring</option>
                 <option value="both">Both</option>
               </select>
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                How would you like the tutoring to take place?
-              </small>
             </div>
           </div>
 
@@ -343,19 +351,16 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
               value={formData.description}
               onChange={handleChange}
               required
-              rows="5" // Increased rows for more content
+              rows={5}
               style={textareaStyle}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, textareaStyle)}
               placeholder="Describe what you need help with, your goals, and any specifics about the job (e.g., frequency, duration of sessions)."
             />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              Provide a detailed description of the job.
-            </small>
           </div>
 
-          {/* Budget & Duration (flex row) */}
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '25px', flexWrap: 'wrap' }}>
+          {/* Budget & Duration */}
+          <div style={{ display: 'flex', gap: 20, marginBottom: 25, flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: 'calc(50% - 10px)' }}>
               <label htmlFor="budget" style={labelStyle}>
                 Budget (Credits) <span style={{ color: '#dc3545' }}>*</span>
@@ -373,9 +378,6 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
                 onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
                 placeholder="e.g., 100 (total credits for the job)"
               />
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Your proposed budget for the entire job in credits.
-              </small>
             </div>
 
             <div style={{ flex: 1, minWidth: 'calc(50% - 10px)' }}>
@@ -393,13 +395,10 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
                 onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
                 placeholder="e.g., 2 weeks, 1 month, 10 sessions"
               />
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Approximate timeframe for the job.
-              </small>
             </div>
           </div>
 
-          {/* Location (conditional rendering based on type) */}
+          {/* Location - conditional */}
           {isLocationRequired && (
             <div style={formGroupStyle}>
               <label htmlFor="location" style={labelStyle}>
@@ -411,15 +410,12 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
-                required={isLocationRequired} // Make required if applicable
+                required={isLocationRequired}
                 style={inputBaseStyle}
                 onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
                 onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
                 placeholder="e.g., Tongi, Dhaka Division, Bangladesh"
               />
-              <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-                Specify the location for home tutoring.
-              </small>
             </div>
           )}
 
@@ -433,15 +429,12 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
               name="requirements"
               value={formData.requirements}
               onChange={handleChange}
-              rows="3"
+              rows={3}
               style={textareaStyle}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, textareaStyle)}
               placeholder="Any specific qualifications, tools, or experience you expect from the tutor."
             />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              List any specific requirements for the tutor.
-            </small>
           </div>
 
           {/* Deadline */}
@@ -458,11 +451,8 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
               style={inputBaseStyle}
               onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
               onBlur={(e) => Object.assign(e.currentTarget.style, inputBaseStyle)}
-              min={new Date().toISOString().split('T')[0]} // Set min date to today
+              min={new Date().toISOString().split('T')[0]}
             />
-            <small style={{ color: '#6c757d', display: 'block', marginTop: '5px' }}>
-              When do you need applications by? (Optional)
-            </small>
           </div>
 
           {/* Buttons */}

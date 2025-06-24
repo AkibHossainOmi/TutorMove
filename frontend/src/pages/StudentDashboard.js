@@ -1,32 +1,33 @@
-// src/pages/StudentDashboard.js
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
+// Assuming these are correctly implemented and provide necessary API calls
 import { jobAPI, tutorAPI } from '../utils/apiService';
+// Assuming these components exist and are correctly implemented
 import JobPostForm from '../components/JobPostForm';
 import JobCard from '../components/JobCard';
 import TutorCard from '../components/TutorCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import WelcomeBanner from '../components/WelcomeBanner';
 import { useAuth } from '../contexts/UseAuth';
-import Navbar from '../components/Navbar'; // Import the Navbar component
+import Navbar from '../components/Navbar';
 
 const StudentDashboard = () => {
   const { t } = useTranslation();
   const isAuthenticated = useAuth(); // Provides only isAuthenticated boolean
 
-  // Helper function to safely parse user from local storage
-  const getParsedUser = () => {
+  // Helper function to safely parse user from local storage, memoized with useCallback
+  const getParsedUser = useCallback(() => {
     try {
       const userString = localStorage.getItem('user');
-      console.log(userString);
       return userString ? JSON.parse(userString) : null;
     } catch (error) {
       console.error("Failed to parse user from local storage:", error);
       return null;
     }
-  };
+  }, []);
 
-  const [user, setUser] = useState(getParsedUser()); // User state managed locally from localStorage
+  // State variables
+  const [user, setUser] = useState(getParsedUser());
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -74,9 +75,9 @@ const StudentDashboard = () => {
   const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const currentUser = getParsedUser();
-      if (!currentUser || !currentUser.id) {
-        console.error('User data not found or invalid for dashboard data fetch.');
+      const currentUser = getParsedUser(); // Get latest user data
+      if (!currentUser || !currentUser.id || currentUser.user_type !== 'student') {
+        console.warn('User data not found, invalid, or not a student. Skipping dashboard data fetch.');
         // Reset dashboard data if user is not found or invalid
         setDashboardData({
           postedJobs: [],
@@ -113,37 +114,51 @@ const StudentDashboard = () => {
       });
     } catch (error) {
       console.error("Error loading dashboard data:", error);
+      // It's good practice to set loading to false even on error
+      setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [getParsedUser]); // Depend on getParsedUser
 
   // Effect to update user state from local storage and load dashboard data
   useEffect(() => {
-    const updateUserFromLocalStorage = () => {
+    const updateUserAndLoadData = () => {
       const updatedUser = getParsedUser();
       setUser(updatedUser);
+      // Update verification states based on the latest user data
       setVerificationRequested(updatedUser?.verification_requested || false);
       setIsVerified(updatedUser?.is_verified || false);
+
+      // Only attempt to load dashboard data if authenticated and the user is a student
+      if (isAuthenticated && updatedUser?.user_type === 'student') {
+        loadDashboardData();
+      } else {
+        // If not authenticated or not a student, stop loading and clear data
+        setIsLoading(false);
+        setDashboardData({
+          postedJobs: [],
+          applications: [],
+          favoriteTeachers: [],
+          reviews: [],
+          credits: { available: 0, spent: 0, pending: 0 },
+          stats: { totalJobs: 0, activeJobs: 0, completedJobs: 0, totalReviews: 0 }
+        });
+      }
     };
 
-    updateUserFromLocalStorage(); // Initial load
-
-    // Load data only if authenticated and the user is a student
-    if (isAuthenticated && user?.user_type === 'student') {
-      loadDashboardData();
-    } else {
-      setIsLoading(false); // Stop loading if criteria not met
-    }
+    updateUserAndLoadData(); // Initial load and setup
 
     // Listen for changes in local storage (e.g., from login/logout, profile updates)
-    window.addEventListener('storage', updateUserFromLocalStorage);
+    window.addEventListener('storage', updateUserAndLoadData);
 
     return () => {
-      window.removeEventListener('storage', updateUserFromLocalStorage);
+      window.removeEventListener('storage', updateUserAndLoadData);
     };
-    // Re-run effect if isAuthenticated changes or user.user_type changes
-  }, [isAuthenticated, loadDashboardData, user?.user_type]);
+    // Dependencies: isAuthenticated and getParsedUser (which is memoized)
+    // user state is updated inside the effect and is not a dependency here to avoid infinite loops
+  }, [isAuthenticated, getParsedUser, loadDashboardData]);
+
 
   const handleJobCreated = (newJob) => {
     setDashboardData(prev => ({
@@ -187,6 +202,7 @@ const StudentDashboard = () => {
       if (updatedUserResponse.ok) {
         const updatedUserData = await updatedUserResponse.json();
         localStorage.setItem('user', JSON.stringify(updatedUserData));
+        // Manually update user state to trigger re-render
         setUser(updatedUserData);
         setVerificationRequested(updatedUserData.verification_requested || false);
         setIsVerified(updatedUserData.is_verified || false);
@@ -228,6 +244,7 @@ const StudentDashboard = () => {
       if (updatedUserResponse.ok) {
         const updatedUserData = await updatedUserResponse.json();
         localStorage.setItem('user', JSON.stringify(updatedUserData));
+        // Manually update user state to trigger re-render
         setUser(updatedUserData);
         setVerificationRequested(updatedUserData.verification_requested || false);
         setIsVerified(updatedUserData.is_verified || false);
@@ -354,7 +371,7 @@ const StudentDashboard = () => {
         {showBecomeTeacher && (
           <div style={{
             position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
-            background: 'rgba(0,0,0,0.25)', zIndex: 9999,
+            background: 'rgba(0,0,0,0.25)', zIndex: 10000, // Ensure high z-index
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <div style={{
@@ -382,7 +399,7 @@ const StudentDashboard = () => {
         {showRequestVerification && (
           <div style={{
             position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
-            background: 'rgba(0,0,0,0.25)', zIndex: 9999,
+            background: 'rgba(0,0,0,0.25)', zIndex: 10000, // Ensure high z-index
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <div style={{
@@ -464,7 +481,7 @@ const StudentDashboard = () => {
                   width: '300px',
                   maxHeight: '400px',
                   overflowY: 'auto',
-                  zIndex: 1000
+                  zIndex: 1000 // Ensure it's above other content but below modals
                 }}>
                   <div style={{ padding: '15px', borderBottom: '1px solid #dee2e6' }}>
                     <h4 style={{ margin: 0 }}>Notifications</h4>
@@ -541,8 +558,12 @@ const StudentDashboard = () => {
               )}
             </button>
 
+            {/* Post a Job Button (main button) */}
             <button
-              onClick={() => setIsJobFormOpen(true)}
+              onClick={() => {
+                // console.log("Post a Job button clicked. Setting isJobFormOpen to true."); // Debugging
+                setIsJobFormOpen(true);
+              }}
               style={{
                 padding: '10px 20px',
                 backgroundColor: '#28a745',
@@ -602,12 +623,12 @@ const StudentDashboard = () => {
             )}
             {verificationRequested && !isVerified && (
               <span style={{ color: '#6f42c1', marginLeft: '12px' }}>
-                **Verification requested.**
+                <b>Verification requested.</b>
               </span>
             )}
             {isVerified && (
               <span style={{ color: '#28a745', marginLeft: '12px' }}>
-                **Verified Teacher ✔️**
+                <b>Verified Teacher ✔️</b>
               </span>
             )}
           </div>
@@ -768,8 +789,12 @@ const StudentDashboard = () => {
             <div style={{ display: 'grid', gap: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3>My Posted Jobs</h3>
+                {/* Post New Job Button (within jobs tab) */}
                 <button
-                  onClick={() => setIsJobFormOpen(true)}
+                  onClick={() => {
+                    // console.log("Post New Job button in 'jobs' tab clicked. Setting isJobFormOpen to true."); // Debugging
+                    setIsJobFormOpen(true);
+                  }}
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#28a745',
@@ -974,10 +999,13 @@ const StudentDashboard = () => {
           )}
         </div>
 
-        {/* Forms */}
+        {/* Forms: This is where the JobPostForm will render */}
         {isJobFormOpen && (
           <JobPostForm
-            onClose={() => setIsJobFormOpen(false)}
+            onClose={() => {
+              // console.log("JobPostForm closed. Setting isJobFormOpen to false."); // Debugging
+              setIsJobFormOpen(false);
+            }}
             onJobCreated={handleJobCreated}
           />
         )}
