@@ -47,6 +47,13 @@ from .payments import SSLCommerzPayment
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+class GigListByTeacherAPIView(generics.ListAPIView):
+    serializer_class = GigSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        teacher_id = self.kwargs.get('teacher_id')
+        return Gig.objects.filter(teacher_id=teacher_id).order_by('-created_at')
 
 class JobCreateAPIView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -125,6 +132,10 @@ class UserProfileView(generics.RetrieveAPIView): # Changed base class from gener
                 {"detail": f"Error fetching user: {e}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+class GigCreateAPIView(generics.CreateAPIView):
+    queryset = Gig.objects.all()
+    serializer_class = GigSerializer
+    permission_classes = [permissions.AllowAny] 
 
 class JobListAPIView(generics.ListAPIView):
     serializer_class = JobSerializer

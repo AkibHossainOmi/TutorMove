@@ -1,173 +1,152 @@
-// ../components/GigPostForm.js
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const GIG_CREATION_ENDPOINT = 'http://localhost:8000/api/gigs/create/';
+
 const GigPostForm = ({ onClose, onGigCreated }) => {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [subject, setSubject] = useState('');
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState(null);
-    const [success, setSuccess] = useState(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [subject, setSubject] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
 
-    // Mock API endpoint for creating a gig. Replace with your actual Django endpoint.
-    // Ensure this matches your backend where gig posts are handled.
-    const GIG_CREATION_ENDPOINT = 'YOUR_DJANGO_BACKEND_URL/api/tutor/gigs/'; // <-- IMPORTANT: Update this URL!
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
-        setError(null);
-        setSuccess(null);
+    if (!title || !description || !subject) {
+      setError('Please fill in all required fields.');
+      setIsLoading(false);
+      return;
+    }
 
-        // Basic validation
-        if (!title || !description || !subject) {
-            setError('Please fill in all required fields.');
-            setIsLoading(false);
-            return;
-        }
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      const teacherId = storedUser?.user_id;
 
-        try {
-            const storedUser = JSON.parse(localStorage.getItem('user'));
-            const teacherId = storedUser?.user_id; // Get dynamic user ID
+      if (!teacherId) {
+        setError('User not logged in or teacher ID not found.');
+        setIsLoading(false);
+        return;
+      }
 
-            if (!teacherId) {
-                setError('User not logged in or user ID not found. Please log in again.');
-                setIsLoading(false);
-                return;
-            }
+      const newGigData = {
+        title,
+        description,
+        subject,
+        teacher: teacherId, // Match your Django model field
+      };
 
-            const newGigData = {
-                title,
-                description,
-                subject,
-                teacher_id: teacherId, // Associate gig with the teacher
-                status: 'active' // Default status for a new gig
-                // Removed 'rate' field as requested
-            };
+      const response = await axios.post(GIG_CREATION_ENDPOINT, newGigData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-            // --- REAL API CALL (UNCOMMENT AND CONFIGURE FOR PRODUCTION) ---
-            // const response = await axios.post(GIG_CREATION_ENDPOINT, newGigData, {
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //         // If you use token-based authentication (e.g., Django Rest Framework Token):
-            //         // 'Authorization': `Token ${storedUser.token}`, // Assuming token is stored in user object
-            //     },
-            // });
-            // const createdGig = response.data; // Assuming your API returns the created gig object
+      setSuccess('Gig created successfully!');
+      onGigCreated(response.data); // callback to parent
+      setTimeout(() => {
+        onClose();
+      }, 1000);
+    } catch (err) {
+      console.error('Error creating gig:', err);
+      setError(err.response?.data?.detail || 'Failed to create gig.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-            // --- MOCK API CALL (FOR DEMONSTRATION) ---
-            await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network delay
-            const createdGig = {
-                id: `mock-gig-${Date.now()}`, // Mock ID
-                ...newGigData,
-                created_at: new Date().toISOString()
-            };
-            // --- END MOCK API CALL ---
+  // Keep your existing JSX and styling
+  return (
+    <div style={modalOverlayStyle}>
+      <div style={modalContentStyle}>
+        <button onClick={onClose} style={closeButtonStyle}>&times;</button>
+        <h2 style={formTitleStyle}>Post a New Gig</h2>
+        <p style={formSubtitleStyle}>Showcase your expertise and connect with students.</p>
 
-            setSuccess('Gig created successfully!');
-            onGigCreated(createdGig); // Pass the new gig back to the dashboard
-            // Optionally, clear form or close after success
-            setTimeout(() => {
-                onClose();
-            }, 1000); // Close after a short delay to show success message
+        <form onSubmit={handleSubmit}>
+          <div style={formGroupStyle}>
+            <label htmlFor="gigTitle" style={labelStyle}>Gig Title <span style={{ color: 'red' }}>*</span></label>
+            <input
+              type="text"
+              id="gigTitle"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              style={inputStyle}
+              placeholder="e.g., Advanced Calculus Tutor"
+              required
+            />
+          </div>
+          <div style={formGroupStyle}>
+            <label htmlFor="gigDescription" style={labelStyle}>Description <span style={{ color: 'red' }}>*</span></label>
+            <textarea
+              id="gigDescription"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
+              placeholder="Describe your teaching style, experience, etc."
+              required
+            />
+          </div>
+          <div style={formGroupStyle}>
+            <label htmlFor="gigSubject" style={labelStyle}>Subject <span style={{ color: 'red' }}>*</span></label>
+            <input
+              type="text"
+              id="gigSubject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              style={inputStyle}
+              placeholder="e.g., Mathematics, English"
+              required
+            />
+          </div>
 
-        } catch (err) {
-            console.error('Error creating gig:', err.response ? err.response.data : err.message);
-            setError(err.response?.data?.detail || 'Failed to create gig. Please try again.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    return (
-        <div style={modalOverlayStyle}>
-            <div style={modalContentStyle}>
-                <button onClick={onClose} style={closeButtonStyle}>&times;</button>
-                <h2 style={formTitleStyle}>Post a New Gig</h2>
-                <p style={formSubtitleStyle}>Showcase your expertise and connect with students.</p>
-
-                <form onSubmit={handleSubmit}>
-                    <div style={formGroupStyle}>
-                        <label htmlFor="gigTitle" style={labelStyle}>Gig Title <span style={{ color: 'red' }}>*</span></label>
-                        <input
-                            type="text"
-                            id="gigTitle"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
-                            style={inputStyle}
-                            placeholder="e.g., Advanced Calculus Tutor, Conversational English"
-                            required
-                        />
-                    </div>
-                    <div style={formGroupStyle}>
-                        <label htmlFor="gigDescription" style={labelStyle}>Description <span style={{ color: 'red' }}>*</span></label>
-                        <textarea
-                            id="gigDescription"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            style={{ ...inputStyle, minHeight: '120px', resize: 'vertical' }}
-                            placeholder="Describe your teaching style, experience, and what students will learn."
-                            required
-                        ></textarea>
-                    </div>
-                    <div style={formGroupStyle}>
-                        <label htmlFor="gigSubject" style={labelStyle}>Subject <span style={{ color: 'red' }}>*</span></label>
-                        <input
-                            type="text"
-                            id="gigSubject"
-                            value={subject}
-                            onChange={(e) => setSubject(e.target.value)}
-                            style={inputStyle}
-                            placeholder="e.g., Mathematics, English, Physics, Programming"
-                            required
-                        />
-                    </div>
-
-                    {isLoading && (
-                        <div style={messageStyle}>
-                            <div className="loading-spinner" style={spinnerStyle}></div>
-                            <span>Creating gig...</span>
-                        </div>
-                    )}
-                    {error && <p style={errorStyle}>{error}</p>}
-                    {success && <p style={successStyle}>{success}</p>}
-
-                    <div style={buttonGroupStyle}>
-                        <button type="submit" style={submitButtonStyle} disabled={isLoading}>
-                            Post Gig
-                        </button>
-                        <button type="button" onClick={onClose} style={cancelButtonStyle} disabled={isLoading}>
-                            Cancel
-                        </button>
-                    </div>
-                </form>
+          {isLoading && (
+            <div style={messageStyle}>
+              <div className="loading-spinner" style={spinnerStyle}></div>
+              <span>Creating gig...</span>
             </div>
-            {/* Simple global style for fade-in effect on modal */}
-            <style>
-                {`
-                @keyframes fadeIn {
-                    from { opacity: 0; transform: translateY(-20px); }
-                    to { opacity: 1; transform: translateY(0); }
-                }
-                .loading-spinner {
-                    border: 4px solid #f3f3f3;
-                    border-top: 4px solid #3498db;
-                    border-radius: 50%;
-                    width: 20px;
-                    height: 20px;
-                    animation: spin 1s linear infinite;
-                    display: inline-block;
-                    margin-right: 10px;
-                }
-                @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                }
-                `}
-            </style>
-        </div>
-    );
+          )}
+          {error && <p style={errorStyle}>{error}</p>}
+          {success && <p style={successStyle}>{success}</p>}
+
+          <div style={buttonGroupStyle}>
+            <button type="submit" style={submitButtonStyle} disabled={isLoading}>
+              Post Gig
+            </button>
+            <button type="button" onClick={onClose} style={cancelButtonStyle} disabled={isLoading}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+      <style>
+        {`
+          @keyframes fadeIn {
+              from { opacity: 0; transform: translateY(-20px); }
+              to { opacity: 1; transform: translateY(0); }
+          }
+          .loading-spinner {
+              border: 4px solid #f3f3f3;
+              border-top: 4px solid #3498db;
+              border-radius: 50%;
+              width: 20px;
+              height: 20px;
+              animation: spin 1s linear infinite;
+              display: inline-block;
+              margin-right: 10px;
+          }
+          @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+    </div>
+  );
 };
 
 // --- Updated and professionalized inline styles for the form ---

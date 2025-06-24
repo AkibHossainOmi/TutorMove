@@ -164,12 +164,12 @@ class Subject(models.Model):
         return self.name
 
 
+# models.py
 class Gig(models.Model):
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'teacher'})
+    teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'tutor'})
     title = models.CharField(max_length=255)
     description = models.TextField()
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    subjects = models.ManyToManyField('Subject', related_name='gigs_as_gig')
+    subject = models.TextField()  # Changed from ForeignKey to TextField
     created_at = models.DateTimeField(auto_now_add=True)
     contact_info = models.TextField(blank=True, null=True)
     latitude = models.FloatField(null=True, blank=True)

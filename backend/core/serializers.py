@@ -64,34 +64,13 @@ class SubjectSerializer(serializers.ModelSerializer):
 # === GIG SERIALIZER ===
 
 class GigSerializer(serializers.ModelSerializer):
-    is_premium = serializers.SerializerMethodField()
-    is_verified = serializers.SerializerMethodField()
-    trust_score = serializers.SerializerMethodField()
-    teacher_username = serializers.SerializerMethodField()
-    subjects = serializers.CharField(source='subject', read_only=True)  # or use related model
-    subject_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Subject.objects.all(), many=True, write_only=True, required=False
-    )
-
     class Meta:
         model = Gig
         fields = [
-            'id', 'teacher', 'teacher_username', 'title', 'description', 'subject', 'created_at', 'contact_info',
-            'is_premium', 'is_verified', 'trust_score', 'subjects', 'subject_ids'
+            'id', 'teacher', 'title', 'description', 'subject',
+            'latitude', 'longitude', 'created_at', 'contact_info'
         ]
-        read_only_fields = ['id', 'teacher', 'created_at']
-
-    def get_is_premium(self, obj):
-        return getattr(obj.teacher, 'usersettings', None) and obj.teacher.usersettings.is_premium
-
-    def get_is_verified(self, obj):
-        return getattr(obj.teacher, 'is_verified', False)
-
-    def get_trust_score(self, obj):
-        return getattr(obj.teacher, 'trust_score', 1.0)
-
-    def get_teacher_username(self, obj):
-        return obj.teacher.username if obj.teacher else None
+        read_only_fields = ['id', 'created_at']
 
 
 # === CREDIT SERIALIZER ===
