@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
@@ -141,6 +143,9 @@ const JobList = () => {
   }
 
   return (
+    <>
+    <Navbar/>
+    <div style={{ height: '200px' }}></div>
     <div style={containerStyle}>
       <h2 style={headerStyle}>Browse Available Gigs</h2>
       {jobs.length === 0 ? (
@@ -199,6 +204,9 @@ const JobList = () => {
         </div>
       )}
     </div>
+    <div style={{ height: '100px' }}></div>
+    <Footer/>
+    </>
   );
 };
 

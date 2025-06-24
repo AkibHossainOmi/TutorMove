@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/UseAuth';
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -23,8 +24,13 @@ const Login = () => {
       // 1. Login & save JWT token
       const response = await axios.post('/api/auth/login/', formData);
       localStorage.setItem('token', response.data.token);
-      localStorage.setItem('user', response.data.user);
-      console.log('Login successful:', response.data);
+      const user = {
+          user_id: response.data.user_id,
+          username: response.data.username,
+          user_type: response.data.user_type,
+        };
+
+      localStorage.setItem("user", JSON.stringify(user));
       // 2. Get user info (user_type) to redirect properly
       let userType = null;
 
@@ -187,6 +193,7 @@ const Login = () => {
         </div>
       </div>
     </div>
+    <Footer/>
     </>
     
   ): <Navigate to="/teacher-dashboard" />;;

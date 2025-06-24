@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom'; // Import Link for navigation
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -179,6 +181,9 @@ const Signup = () => {
   };
 
   return (
+    <>
+    <Navbar/>
+    <div style={{ height: '50px' }}></div>
     <div style={containerStyle}>
       <div style={formCardStyle}>
         <h2 style={headerStyle}>Create Your Account</h2>
@@ -285,6 +290,9 @@ const Signup = () => {
         </div>
       </div>
     </div>
+    <div style={{ height: '100px' }}></div>
+    <Footer/>
+    </>
   );
 };
 

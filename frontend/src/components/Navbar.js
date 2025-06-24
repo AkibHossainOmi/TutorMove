@@ -177,7 +177,7 @@ const Navbar = () => {
                   onClick={handleRequestTutor}
                   className="px-4 py-2 border border-transparent text-white bg-green-600 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 ease-in-out"
                 >
-                  {'Request a Tutor'}
+                  {'Signup'}
                 </button>
               </>
             )}
@@ -266,7 +266,7 @@ const Navbar = () => {
               onClick={handleRequestTutor}
               className="px-4 py-2 border border-transparent text-white bg-green-600 rounded-md text-sm font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 ease-in-out self-start mt-3"
             >
-              {'Request a Tutor'}
+              {'Signup'}
             </button>
           </>
         )}

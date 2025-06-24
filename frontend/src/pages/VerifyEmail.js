@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const VerifyEmail = () => {
   const { uid, token } = useParams();
@@ -26,6 +28,9 @@ const VerifyEmail = () => {
   }, [uid, token]);
 
   return (
+    <>
+    <Navbar/>
+    <div style={{ height: '50px' }}></div>
     <div style={{ maxWidth: 420, margin: '40px auto', padding: 32, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #eee', textAlign: 'center' }}>
       {status === 'loading' && <p>Verifying your email...</p>}
       {status !== 'loading' && (
@@ -38,6 +43,9 @@ const VerifyEmail = () => {
         </>
       )}
     </div>
+    <div style={{ height: '100px' }}></div>
+    <Footer/>
+    </>
   );
 };
 

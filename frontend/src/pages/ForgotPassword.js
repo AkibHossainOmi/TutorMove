@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState('');
@@ -22,6 +24,9 @@ const ForgotPassword = () => {
   };
 
   return (
+    <>
+    <Navbar/>
+    <div style={{ height: '50px' }}></div>
     <div style={{ maxWidth: 420, margin: '40px auto', padding: 32, background: '#fff', borderRadius: 8, boxShadow: '0 2px 8px #eee' }}>
       <h2>Forgot Password</h2>
       {sent ? (
@@ -43,6 +48,9 @@ const ForgotPassword = () => {
         </form>
       )}
     </div>
+    <div style={{ height: '100px' }}></div>
+    <Footer/>
+    </>
   );
 };
 

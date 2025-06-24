@@ -4,6 +4,7 @@ import axios from 'axios';
 import SearchBar from '../components/SearchBar'; // Assume SearchBar has its own modern styling
 import MapSearch from '../components/MapSearch'; // Assume MapSearch has its own modern styling
 import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const Home = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -191,42 +192,7 @@ const Home = () => {
   return (
     <div>
       <Navbar />
-      {/* --- Text Search UI --- */}
-      {tab === 'text' && (
-        <div style={resultsContainerStyle}>
-          <h2 style={{ fontSize: '1.8em', color: '#444', marginBottom: '25px', textAlign: 'center' }}>
-            Find Tutors by Subject or Location
-          </h2>
-          <SearchBar onSearch={handleSearch} />
-          <div style={{ marginTop: '25px' }}>
-            {loading && <p style={loadingErrorStyle}>Searching for tutors...</p>}
-            {error && <p style={errorTextStyle}>{error}</p>}
-            {!loading && !error && searchResults.length > 0 ? (
-              <ul style={resultsListStyle}>
-                {searchResults.map((tutor) => (
-                  <li
-                    key={tutor.id}
-                    style={resultItemStyle}
-                    onMouseEnter={(e) => Object.assign(e.currentTarget.style, resultItemHoverStyle)}
-                    onMouseLeave={(e) => Object.assign(e.currentTarget.style, resultItemStyle)}
-                  >
-                    <Link
-                      to={`/tutors/${tutor.id}`}
-                      style={resultLinkStyle}
-                      onMouseEnter={(e) => Object.assign(e.currentTarget.style, resultLinkHoverStyle)}
-                      onMouseLeave={(e) => Object.assign(e.currentTarget.style, resultLinkStyle)}
-                    >
-                      {tutor.username} {tutor.location ? `- ${tutor.location}` : ''} ({tutor.subject || 'Various Subjects'})
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : !loading && !error && searchResults.length === 0 ? (
-              <p style={noResultsStyle}>No tutors found with your criteria. Try a broader search!</p>
-            ) : null}
-          </div>
-        </div>
-      )}
+      <div style={{ height: '200px' }}></div>
 
       {/* --- Map Search UI --- */}
       {tab === 'map' && (
@@ -235,26 +201,8 @@ const Home = () => {
           <MapSearch mode="gigs" radiusKm={20} />
         </div>
       )}
-
-      {/* Bottom Navigation Links */}
-      <nav style={bottomNavStyle}>
-        <Link
-          to="/login"
-          style={bottomNavLinkStyle}
-          onMouseEnter={(e) => Object.assign(e.currentTarget.style, bottomNavLinkHoverStyle)}
-          onMouseLeave={(e) => Object.assign(e.currentTarget.style, bottomNavLinkStyle)}
-        >
-          Login
-        </Link>
-        <Link
-          to="/signup"
-          style={bottomNavLinkStyle}
-          onMouseEnter={(e) => Object.assign(e.currentTarget.style, bottomNavLinkHoverStyle)}
-          onMouseLeave={(e) => Object.assign(e.currentTarget.style, bottomNavLinkStyle)}
-        >
-          Sign Up
-        </Link>
-      </nav>
+      <div style={{ height: '100px' }}></div>
+      <Footer/>
     </div>
   );
 };

@@ -1,30 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // ADDED: Import axios for making API requests
-
-// The following imports are commented out to prevent redeclaration errors
-// when using the mock implementations provided below.
-// In a full application, uncomment these and remove the mock implementations.
-// import { useTranslation } from 'react-i18next';
-// import { useAuth } from '../contexts/AuthContext';
-// import { useNotification } from '../contexts/NotificationContext';
-// import { useChat } from '../contexts/ChatContext';
-// import { jobAPI, tutorAPI } from '../utils/apiService';
+import axios from 'axios';
 import GigPostForm from '../components/GigPostForm';
 import JobCard from '../components/JobCard';
 import TutorCard from '../components/TutorCard';
 import LoadingSpinner from '../components/LoadingSpinner';
 import WelcomeBanner from '../components/WelcomeBanner';
 import Navbar from '../components/Navbar';
-// import TeacherVerificationButton from '../components/TeacherVerificationButton';
 
 // Mock implementations for demonstration purposes
 // These mocks are used when the actual context/API imports are commented out.
 const useTranslation = () => ({
   t: (key) => key // Simple mock translator
 });
-const useAuth = () => ({
-  user: { id: 'teacher123', username: 'Professor Smith', email: 'professor.smith@example.com' } // Mock user with email
-});
+// const useAuth = () => ({
+//   user: { id: 'teacher123', username: 'Professor Smith', email: 'professor.smith@example.com' } // Mock user with email
+// });
 const useNotification = () => {
   const [notifications, setNotifications] = useState([
     { id: 'n1', message: 'New student inquiry!', isRead: false, created_at: new Date().toISOString() },
@@ -79,9 +69,11 @@ const TeacherVerificationButton = () => (
 
 const TeacherDashboard = () => {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  // const { user } = useAuth(); // Comment out or remove this line
   const { showNotification, notifications } = useNotification();
   const { unreadCount } = useChat();
+
+  const [user, setUser] = useState(null); // State to store user from localStorage
   const [isGigFormOpen, setIsGigFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -121,19 +113,34 @@ const TeacherDashboard = () => {
 
 
   useEffect(() => {
-    loadDashboardData();
+    // Attempt to load user from localStorage
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      console.log(storedUser);
+      if (storedUser && storedUser.user_type === 'tutor') { // Check for user type "teacher"
+        setUser(storedUser);
+        loadDashboardData(storedUser); // Pass the user object to loadDashboardData
+      } else {
+        setIsLoading(false); // Stop loading if not a teacher or no user
+        setUser(null); // Explicitly set user to null if not authorized
+      }
+    } catch (error) {
+      console.error("Failed to parse user from localStorage:", error);
+      setIsLoading(false);
+      setUser(null);
+    }
   }, []);
 
   /**
    * Loads all necessary dashboard data from API endpoints.
    * Updates the dashboardData state and handles loading state.
+   * @param {object} currentUser - The user object (from localStorage).
    */
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (currentUser) => {
     setIsLoading(true);
     try {
       // Load teacher's gigs
-      const gigsResponse = await tutorAPI.getTutorGigs({ user: user.id });
-
+      const gigsResponse = await tutorAPI.getTutorGigs({ user: currentUser }); // Use currentUser.id
       // Load matched jobs for teacher
       const matchedJobsResponse = await jobAPI.getMatchedJobs();
 
@@ -256,7 +263,7 @@ const TeacherDashboard = () => {
       const purchaseData = {
         credits: 10,  // Amount of credits to buy
         amount: 100.00, // Corresponding financial amount (e.g., BDT)
-        user_id: MOCK_USER_ID // Pass user_id explicitly since token is bypassed
+        user_id: user?.user_id || MOCK_USER_ID // Use user.user_id if available, otherwise MOCK_USER_ID
       };
 
       const response = await axios.post(
@@ -296,7 +303,7 @@ const TeacherDashboard = () => {
       // Data to send to your Django backend
       const upgradeData = {
         plan: 'monthly', // Example plan
-        user_id: MOCK_USER_ID // Pass user_id explicitly since token is bypassed
+        user_id: user?.user_id || MOCK_USER_ID // Use user.user_id if available, otherwise MOCK_USER_ID
       };
 
       const response = await axios.post(
@@ -331,10 +338,39 @@ const TeacherDashboard = () => {
   if (isLoading) {
     return <LoadingSpinner />;
   }
-
+if (!user || user.user_type !== 'tutor') {
+    return (
+      <>
+        <Navbar />
+        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
+        <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+          <h2>Access Denied</h2>
+          <p>You must be a **tutor** to access this dashboard. Your current role is: **{user?.user_type || 'Unknown'}**</p>
+          {user?.user_type === 'teacher' && (
+            <p>Please navigate to the **Teacher Dashboard**.</p>
+          )}
+          <button
+            onClick={() => window.location.href = '/'} // Redirect to home or another appropriate page
+            style={{
+              padding: '10px 20px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              marginTop: '15px'
+            }}
+          >
+            Go to Home
+          </button>
+        </div>
+      </>
+    );
+  }
   return (
     <>
-    <Navbar />
+    <Navbar/>
+    <div style={{ height: '100px' }}></div>
     <div className="teacher-dashboard-container" style={{
       padding: '30px',
       maxWidth: '1200px',
@@ -361,7 +397,7 @@ const TeacherDashboard = () => {
           gap: '10px'
         }}>
           <h1 style={{ margin: 0, color: '#212529', fontSize: '2em' }}>
-            Teacher Dashboard - Welcome, {user.username}!
+            Teacher Dashboard - Welcome, {user?.username}!
           </h1>
           <TeacherVerificationButton />
         </div>
@@ -1002,7 +1038,6 @@ const TeacherDashboard = () => {
       )}
     </div>
     </>
-  
   );
 };
 
