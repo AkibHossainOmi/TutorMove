@@ -1,268 +1,68 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import GigPostForm from '../components/GigPostForm';
+import JobCard from '../components/JobCard';
+import TutorCard from '../components/TutorCard';
+import LoadingSpinner from '../components/LoadingSpinner';
+import WelcomeBanner from '../components/WelcomeBanner';
+import Navbar from '../components/Navbar';
 
-// --- Mock Components for a Self-Contained Example ---
-// In a real application, these would be in separate files (e.g., components/GigPostForm.js)
+// Assuming you use i18n for translation
+import { useTranslation } from 'react-i18next';
 
-// Mock for i18n's useTranslation to avoid external dependency issues in this environment
-const useTranslation = () => ({ t: (key) => key });
-
-// Mock GigPostForm component
-const GigPostForm = ({ onClose, onGigCreated }) => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [subject, setSubject] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Simulate gig creation with a mock ID and active status
-    const newGig = {
-      id: `mock-gig-${Date.now()}`,
-      title,
-      description,
-      subject,
-      status: 'active', // Ensure new gigs are 'active' for stats
-      teacher: 1, // Mock teacher ID
-      latitude: null,
-      longitude: null,
-      created_at: new Date().toISOString(),
-      contact_info: 'mock@example.com'
-    };
-    onGigCreated(newGig); // Pass the new gig to the parent component
-    onClose(); // Close the form
-  };
-
-  return (
-    <div style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', zIndex: 2000
-    }}>
-      <div style={{
-        backgroundColor: 'white', padding: '30px', borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.2)', maxWidth: '500px', width: '90%'
-      }}>
-        <h2 style={{ marginBottom: '20px', color: '#343a40' }}>Create a New Gig</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="gigTitle" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Title:</label>
-            <input
-              type="text"
-              id="gigTitle"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-              style={{
-                width: '100%', padding: '10px', borderRadius: '4px',
-                border: '1px solid #ced4da', boxSizing: 'border-box'
-              }}
-            />
-          </div>
-          <div style={{ marginBottom: '15px' }}>
-            <label htmlFor="gigDescription" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Description:</label>
-            <textarea
-              id="gigDescription"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-              rows="4"
-              style={{
-                width: '100%', padding: '10px', borderRadius: '4px',
-                border: '1px solid #ced4da', boxSizing: 'border-box'
-              }}
-            ></textarea>
-          </div>
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="gigSubject" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>Subject:</label>
-            <input
-              type="text"
-              id="gigSubject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              required
-              style={{
-                width: '100%', padding: '10px', borderRadius: '4px',
-                border: '1px solid #ced4da', boxSizing: 'border-box'
-              }}
-            />
-          </div>
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '10px 20px', backgroundColor: '#6c757d', color: 'white',
-                border: 'none', borderRadius: '4px', cursor: 'pointer',
-                transition: 'background-color 0.3s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5a6268'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              style={{
-                padding: '10px 20px', backgroundColor: '#007bff', color: 'white',
-                border: 'none', borderRadius: '4px', cursor: 'pointer',
-                transition: 'background-color 0.3s ease'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
-            >
-              Create Gig
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
-
-// Mock JobCard component
-const JobCard = ({ job }) => (
-  <div style={{
-    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '15px',
-    borderLeft: '4px solid #17a2b8'
-  }}>
-    <h4 style={{ margin: '0 0 10px', color: '#17a2b8' }}>{job.title}</h4>
-    <p style={{ margin: '0 0 5px', fontSize: '0.9em', color: '#495057' }}>{job.description}</p>
-    <p style={{ margin: 0, fontSize: '0.8em', color: '#6c757d' }}>Budget: {job.budget}</p>
-  </div>
-);
-
-// Mock TutorCard component
-const TutorCard = ({ tutor }) => (
-  <div style={{
-    backgroundColor: 'white', borderRadius: '8px', padding: '20px',
-    boxShadow: '0 2px 4px rgba(0,0,0,0.1)', marginBottom: '15px',
-    borderLeft: '4px solid #28a745'
-  }}>
-    <h4 style={{ margin: '0 0 10px', color: '#28a745' }}>{tutor.title}</h4>
-    <p style={{ margin: '0 0 5px', fontSize: '0.9em', color: '#495057' }}>Subject: {tutor.subject}</p>
-    <p style={{ margin: 0, fontSize: '0.8em', color: '#6c757d' }}>{tutor.description}</p>
-  </div>
-);
-
-// Mock LoadingSpinner component
-const LoadingSpinner = () => (
-  <div style={{
-    display: 'flex', alignItems: 'center', justifyContent: 'center',
-    minHeight: '100vh', flexDirection: 'column', gap: '20px',
-    backgroundColor: '#f8f9fa', color: '#007bff'
-  }}>
-    <style>
-      {`
-        .loading-spinner-lg {
-          border: 8px solid rgba(0, 0, 0, 0.1);
-          border-left-color: #007bff;
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}
-    </style>
-    <div className="loading-spinner-lg"></div>
-    <p style={{ fontSize: '1.2em' }}>Loading dashboard data...</p>
-  </div>
-);
-
-// Mock WelcomeBanner component
-const WelcomeBanner = () => (
-  <div style={{
-    backgroundColor: '#e9ecef', padding: '20px', borderRadius: '8px',
-    textAlign: 'center', marginBottom: '30px', boxShadow: '0 2px 4px rgba(0,0,0,0.05)'
-  }}>
-    <h2 style={{ color: '#343a40', margin: '0 0 10px' }}>Welcome to Your Teacher Dashboard!</h2>
-    <p style={{ color: '#6c757d', margin: 0 }}>Manage your gigs, find jobs, track earnings, and grow your teaching career.</p>
-  </div>
-);
-
-// Mock Navbar component
-const Navbar = () => (
-  <nav style={{
-    backgroundColor: '#343a40', color: 'white', padding: '15px 30px',
-    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-    position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000,
-    boxShadow: '0 2px 5px rgba(0,0,0,0.2)'
-  }}>
-    <div style={{ fontSize: '1.5em', fontWeight: 'bold' }}>TutorLink</div>
-    <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', gap: '25px' }}>
-      <li><a href="/" style={{ color: 'white', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Home</a></li>
-      <li><a href="/find-tutors" style={{ color: 'white', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Find Tutors</a></li>
-      <li><a href="/jobs" style={{ color: 'white', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Find Jobs</a></li>
-      <li><a href="/dashboard" style={{ color: 'white', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Dashboard</a></li>
-      <li><a href="/profile" style={{ color: 'white', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Profile</a></li>
-      <li><a href="/logout" style={{ color: 'white', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}>Logout</a></li>
-    </ul>
-  </nav>
-);
-
-// Mock implementations for context hooks
+// Mock implementations for demonstration purposes (since contexts are removed)
 const useNotification = () => {
   const [notifications, setNotifications] = useState([
     { id: 'n1', message: 'New student inquiry!', isRead: false, created_at: new Date().toISOString() },
     { id: 'n2', message: 'Your gig "Math Tutor" is live!', isRead: true, created_at: new Date().toISOString() },
-    { id: 'n3', message: 'Profile updated successfully!', isRead: false, created_at: new Date().toISOString() },
   ]);
-
-  const showNotification = (message, type) => {
-    console.log(`Notification (${type}): ${message}`);
-  };
-
+  const showNotification = (message, type) => console.log(`Notification (${type}): ${message}`); // Placeholder for notification display
   return { showNotification, notifications };
 };
-
 const useChat = () => ({
-  openChat: (chatId) => console.log(`Opening chat ${chatId}`),
-  unreadCount: 3
+  openChat: (chatId) => console.log(`Opening chat ${chatId}`), // Placeholder for chat functionality
+  unreadCount: 3 // Mock unread count
 });
 
 
-// --- API Service Stubs ---
+// --- API Service Stubs (to be replaced with actual API calls) ---
+// These are placeholders. You should have actual API service files (e.g., api/jobAPI.js, api/tutorAPI.js)
+// that make real Axios calls to your Django backend.
+
 // IMPORTANT: Define your Django base URL here
 const DJANGO_BASE_URL = 'http://localhost:8000'; // Or your deployed backend URL
 
 const jobAPI = {
   getMatchedJobs: async (userId, config) => {
-    console.warn("jobAPI.getMatchedJobs is a stub. Replace with actual API call to your Django backend.");
-    return { data: { results: [
-      { id: 'job1', title: 'Mathematics Tutor Needed', description: 'Seeking a tutor for high school math.', budget: '500 BDT/hr' },
-      { id: 'job2', title: 'Physics Homework Help', description: 'Looking for help with university level physics.', budget: '700 BDT/hr' }
-    ] } };
+    // In a real app, this would be an Axios call to your backend
+    // Example: return await axios.get(`${DJANGO_BASE_URL}/api/jobs/matched/?user=${userId}`, config);
+    console.warn("jobAPI.getMatchedJobs is a stub. Replace with actual API call.");
+    return { data: { results: [] } }; // Return empty for now
   },
   getMyApplications: async (userId, config) => {
-    console.warn("jobAPI.getMyApplications is a stub. Replace with actual API call to your Django backend.");
-    return { data: { results: [
-      { id: 'app1', jobId: 'job1', status: 'pending', applied_at: new Date().toISOString() },
-      { id: 'app2', jobId: 'job2', status: 'completed', applied_at: new Date().toISOString() }
-    ] } };
+    // In a real app, this would be an Axios call to your backend
+    // Example: return await axios.get(`${DJANGO_BASE_URL}/api/applications/?user=${userId}`, config);
+    console.warn("jobAPI.getMyApplications is a stub. Replace with actual API call.");
+    return { data: { results: [] } }; // Return empty for now
   }
 };
 
 const tutorAPI = {
   getTutorGigs: async ({ teacherId, config }) => {
+    // This is the actual API call you want to make
     try {
       const response = await axios.get(`${DJANGO_BASE_URL}/api/gigs/teacher/${teacherId}/`, config);
-      console.log("Raw API response data for gigs:", response.data);
-      // Return the data directly, as it's already the array of gigs
+      console.log(response.data); // Log the response data for debugging
       return response.data;
     } catch (error) {
       console.error("Error fetching tutor gigs:", error.response ? error.response.data : error.message);
-      throw error;
+      throw error; // Re-throw to be caught by the caller
     }
   }
 };
 // --- End API Service Stubs ---
 
 
-// TeacherVerificationButton component
 const TeacherVerificationButton = () => (
   <button
     style={{
@@ -273,11 +73,8 @@ const TeacherVerificationButton = () => (
       borderRadius: '4px',
       cursor: 'pointer',
       fontSize: '14px',
-      fontWeight: 'bold',
-      transition: 'background-color 0.3s ease'
+      fontWeight: 'bold'
     }}
-    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0a800'}
-    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffc107'}
   >
     Verify Teacher Status
   </button>
@@ -286,11 +83,10 @@ const TeacherVerificationButton = () => (
 
 const TeacherDashboard = () => {
   const { t } = useTranslation();
+  const { showNotification, notifications } = useNotification(); // Now using local mock
+  const { unreadCount } = useChat(); // Now using local mock
 
-  const { showNotification, notifications } = useNotification();
-  const { unreadCount } = useChat();
-
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // State to store user from localStorage
   const [isGigFormOpen, setIsGigFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -312,26 +108,23 @@ const TeacherDashboard = () => {
     }
   });
 
+  // IMPORTANT: Replace with your actual Django backend URL and API endpoint
+  // This should match the settings in your Django project
+  // const DJANGO_BASE_URL = 'http://localhost:8000'; // Moved to global scope for API stubs
   const CREDIT_PURCHASE_ENDPOINT = `${DJANGO_BASE_URL}/api/credits/purchase/`;
   const PREMIUM_UPGRADE_ENDPOINT = `${DJANGO_BASE_URL}/api/premium/upgrade/`;
 
 
   useEffect(() => {
+    // Attempt to load user from localStorage
     try {
       const storedUser = JSON.parse(localStorage.getItem('user'));
-      // Added a mock user if localStorage is empty for demonstration purposes
-      if (!storedUser) {
-        const mockUser = { user_id: 3, username: 'MockTutor', user_type: 'tutor' };
-        localStorage.setItem('user', JSON.stringify(mockUser));
-        localStorage.setItem('access_token', 'mock_access_token'); // Mock token
-        setUser(mockUser);
-        loadDashboardData(mockUser);
-      } else if (storedUser.user_type === 'tutor') {
+      if (storedUser && storedUser.user_type === 'tutor') { // Check for user type "tutor"
         setUser(storedUser);
-        loadDashboardData(storedUser);
+        loadDashboardData(storedUser); // Pass the user object to loadDashboardData
       } else {
-        setIsLoading(false);
-        setUser(null);
+        setIsLoading(false); // Stop loading if not a tutor or no user
+        setUser(null); // Explicitly set user to null if not authorized
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage:", error);
@@ -348,35 +141,35 @@ const TeacherDashboard = () => {
   const loadDashboardData = async (currentUser) => {
     setIsLoading(true);
     try {
+      // In a real application, you'd pass the actual user ID and authentication token
       const config = {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`
+          'Authorization': `Bearer ${localStorage.getItem('access_token')}` // Use access_token
         }
       };
 
-      // Correctly handle the response structure from tutorAPI.getTutorGigs
+      // Ensure currentUser.user_id is used for fetching gigs
       const gigsResponse = await tutorAPI.getTutorGigs({ teacherId: currentUser.user_id, config });
       const matchedJobsResponse = await jobAPI.getMatchedJobs(currentUser.user_id, config);
       const applicationsResponse = await jobAPI.getMyApplications(currentUser.user_id, config);
 
-      setDashboardData(prevData => ({
-        ...prevData,
-        myGigs: gigsResponse || [], // `gigsResponse` is already the array
+      setDashboardData({
+        myGigs: gigsResponse.data.results || [],
         matchedJobs: matchedJobsResponse.data.results || [],
         applications: applicationsResponse.data.results || [],
-        // Mocked earnings and stats, replace with actual API data
+        // These earnings and stats would ideally come from a dedicated API endpoint
         earnings: {
-          total: 1500,
-          pending: 300,
-          completed: 1200
+          total: 0, // Fetch from API
+          pending: 0, // Fetch from API
+          completed: 0 // Fetch from API
         },
         stats: {
-          totalViews: 567,
-          activeGigs: (gigsResponse || []).filter(gig => gig.status === 'active').length,
-          completedJobs: (applicationsResponse.data.results || []).filter(app => app.status === 'completed').length,
-          totalStudents: 15
+          totalViews: 0, // Fetch from API
+          activeGigs: gigsResponse.data.results?.filter(gig => gig.status === 'active').length || 0,
+          completedJobs: applicationsResponse.data.results?.filter(app => app.status === 'completed').length || 0,
+          totalStudents: 0 // Fetch from API
         }
-      }));
+      });
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       showNotification(
@@ -421,15 +214,13 @@ const TeacherDashboard = () => {
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
       display: 'flex',
       alignItems: 'center',
-      gap: '15px',
-      width: '100%',
-      boxSizing: 'border-box'
+      gap: '15px'
     }}>
       <div style={{
         width: '50px',
         height: '50px',
         borderRadius: '50%',
-        backgroundColor: `${color}20`,
+        backgroundColor: `${color}20`, // Light background color from main color
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -461,6 +252,7 @@ const TeacherDashboard = () => {
 
   function showStatus(message, isError = false) {
     setStatusMessage(message);
+    // You might want to style this differently for errors in your actual CSS
     console.log(isError ? `ERROR: ${message}` : `SUCCESS: ${message}`);
   }
 
@@ -472,16 +264,17 @@ const TeacherDashboard = () => {
   const handleBuyCredits = async () => {
     showLoading('Initiating credit purchase...');
     try {
-      if (!user || !user.user_id) {
+      if (!user || !user.user_id) { // Use user.user_id
         showStatus('User not logged in or user ID not available.', true);
         hideLoading();
         return;
       }
 
+      // Data to send to your Django backend
       const purchaseData = {
-        credits: 10,
-        amount: 100.00,
-        user_id: user.user_id
+        credits: 10,     // Amount of credits to buy
+        amount: 100.00,  // Corresponding financial amount (e.g., BDT)
+        user_id: user.user_id // Use the actual user ID from localStorage
       };
 
       const response = await axios.post(
@@ -489,7 +282,7 @@ const TeacherDashboard = () => {
         purchaseData,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // Use your actual auth token
             'Content-Type': 'application/json'
           }
         }
@@ -498,7 +291,7 @@ const TeacherDashboard = () => {
       hideLoading();
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
         showStatus('Redirecting to SSLCommerz...', false);
-        window.location.href = response.data.payment_url;
+        window.location.href = response.data.payment_url; // Redirect the user to SSLCommerz
       } else {
         const errorMessage = response.data.error || 'Unknown error during payment initiation.';
         showStatus(`Payment initiation failed: ${errorMessage}`, true);
@@ -518,15 +311,16 @@ const TeacherDashboard = () => {
   const handleUpgradePremium = async () => {
     showLoading('Initiating premium upgrade...');
     try {
-      if (!user || !user.user_id) {
+      if (!user || !user.user_id) { // Use user.user_id
         showStatus('User not logged in or user ID not available.', true);
         hideLoading();
         return;
       }
 
+      // Data to send to your Django backend
       const upgradeData = {
-        plan: 'monthly',
-        user_id: user.user_id
+        plan: 'monthly', // Example plan
+        user_id: user.user_id // Use the actual user ID from localStorage
       };
 
       const response = await axios.post(
@@ -534,7 +328,7 @@ const TeacherDashboard = () => {
         upgradeData,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
+            'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // Use your actual auth token
             'Content-Type': 'application/json'
           }
         }
@@ -543,7 +337,7 @@ const TeacherDashboard = () => {
       hideLoading();
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
         showStatus('Redirecting to SSLCommerz...', false);
-        window.location.href = response.data.payment_url;
+        window.location.href = response.data.payment_url; // Redirect the user to SSLCommerz
       } else {
         const errorMessage = response.data.error || 'Unknown error during premium initiation.';
         showStatus(`Premium upgrade failed: ${errorMessage}`, true);
@@ -557,6 +351,7 @@ const TeacherDashboard = () => {
   };
 
 
+  // Display loading spinner while data is being fetched
   if (isLoading) {
     return <LoadingSpinner />;
   }
@@ -566,12 +361,12 @@ const TeacherDashboard = () => {
     return (
       <>
         <Navbar />
-        <div style={{ height: '100px' }}></div>
+        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
         <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2>Access Denied</h2>
           <p>You must be a **tutor** to access this dashboard. Your current role is: **{user?.user_type || 'Unknown'}**</p>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => window.location.href = '/'} // Redirect to home or another appropriate page
             style={{
               padding: '10px 20px',
               backgroundColor: '#007bff',
@@ -602,17 +397,19 @@ const TeacherDashboard = () => {
       }}>
         <WelcomeBanner />
 
+        {/* Header Section: Title, Verification, and Action Buttons */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          alignItems: 'flex-start', // Align items to the start, allowing vertical stacking on smaller screens
           marginBottom: '30px',
-          flexWrap: 'wrap',
-          gap: '20px'
+          flexWrap: 'wrap', // Allow items to wrap to the next line on smaller screens
+          gap: '20px' // Space between wrapped items
         }}>
+          {/* Title and Verification Button */}
           <div style={{
             display: 'flex',
-            flexDirection: 'column',
+            flexDirection: 'column', // Stack title and verification vertically
             alignItems: 'flex-start',
             gap: '10px'
           }}>
@@ -622,13 +419,15 @@ const TeacherDashboard = () => {
             <TeacherVerificationButton />
           </div>
 
+          {/* Action Buttons: Notifications, Messages, Create Gig, Buy Credits */}
           <div style={{
             display: 'flex',
             gap: '10px',
             alignItems: 'center',
-            flexWrap: 'wrap',
-            justifyContent: 'flex-end'
+            flexWrap: 'wrap', // Allow buttons to wrap
+            justifyContent: 'flex-end' // Align buttons to the right
           }}>
+            {/* Notification Button */}
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -673,7 +472,7 @@ const TeacherDashboard = () => {
               {showNotifications && (
                 <div style={{
                   position: 'absolute',
-                  top: 'calc(100% + 10px)',
+                  top: 'calc(100% + 10px)', // Position below the button with a gap
                   right: 0,
                   backgroundColor: 'white',
                   border: '1px solid #dee2e6',
@@ -699,7 +498,7 @@ const TeacherDashboard = () => {
                       <div key={notification.id} style={{
                         padding: '12px 15px',
                         borderBottom: '1px solid #f8f9fa',
-                        backgroundColor: notification.isRead ? 'white' : '#eaf4ff',
+                        backgroundColor: notification.isRead ? 'white' : '#eaf4ff', // Highlight unread
                         cursor: 'pointer',
                         transition: 'background-color 0.2s ease',
                         fontSize: '0.9em'
@@ -720,7 +519,7 @@ const TeacherDashboard = () => {
                   )}
                   <div style={{ padding: '10px 15px', textAlign: 'center', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
                     <button
-                      onClick={() => window.location.href = '/messages'}
+                      onClick={() => window.location.href = '/messages'} // Assuming /messages route handles all notifications
                       style={{
                         padding: '8px 15px',
                         backgroundColor: '#007bff',
@@ -743,6 +542,7 @@ const TeacherDashboard = () => {
               )}
             </div>
 
+            {/* Messages Button */}
             <button
               onClick={() => window.location.href = '/messages'}
               style={{
@@ -784,6 +584,7 @@ const TeacherDashboard = () => {
               )}
             </button>
 
+            {/* Create a Gig Button */}
             <button
               onClick={() => setIsGigFormOpen(true)}
               style={{
@@ -804,6 +605,7 @@ const TeacherDashboard = () => {
               ➕ Create a Gig
             </button>
 
+            {/* Buy Credits Button */}
             <button
               onClick={handleBuyCredits}
               style={{
@@ -826,32 +628,19 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
+        {/* Status/Loading Message Display */}
         {showSpinner && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '15px 0', color: '#555' }}>
-            <style>
-              {`
-                .loading-spinner {
-                  border: 4px solid rgba(0, 0, 0, 0.1);
-                  border-left-color: #007bff;
-                  border-radius: 50%;
-                  width: 24px;
-                  height: 24px;
-                  animation: spin 1s linear infinite;
-                }
-                @keyframes spin {
-                  0% { transform: rotate(0deg); }
-                  100% { transform: rotate(360deg); }
-                }
-              `}
-            </style>
-            <div className="loading-spinner" style={{ marginRight: '10px' }}></div>
+            <div className="loading-spinner" style={{ display: 'block', marginRight: '10px' }}></div>
             <span>{statusMessage}</span>
           </div>
         )}
         {!showSpinner && statusMessage && (
-          <p className="status-message" style={{ textAlign: 'center', marginTop: '15px', color: statusMessage.includes('Error') ? '#dc3545' : '#28a745' }}>{statusMessage}</p>
+          <p className="status-message" style={{ textAlign: 'center', marginTop: '15px' }}>{statusMessage}</p>
         )}
 
+
+        {/* Stats Grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -884,20 +673,14 @@ const TeacherDashboard = () => {
           />
         </div>
 
+        {/* Menu Bar */}
         <div style={{
           borderBottom: '1px solid #dee2e6',
           marginBottom: '20px',
-          overflowX: 'auto',
-          whiteSpace: 'nowrap',
-          scrollbarWidth: 'none',
-          MsOverflowStyle: 'none'
+          overflowX: 'auto', // Allow horizontal scrolling for tabs on small screens
+          whiteSpace: 'nowrap' // Prevent tabs from wrapping
         }}>
-          <style>{`
-            div::-webkit-scrollbar {
-              display: none;
-            }
-          `}</style>
-          <div style={{ display: 'flex', gap: '20px', paddingBottom: '10px' }}>
+          <div style={{ display: 'flex', gap: '20px', paddingBottom: '10px' }}> {/* Add padding to prevent cut-off of active tab border */}
             {['overview', 'jobs', 'gigs', 'wallet', 'profile', 'premium'].map(tab => (
               <button
                 key={tab}
@@ -905,24 +688,25 @@ const TeacherDashboard = () => {
                 style={{
                   padding: '10px 20px',
                   border: 'none',
-                  borderBottom: activeTab === tab ? '3px solid #007bff' : 'none',
+                  borderBottom: activeTab === tab ? '3px solid #007bff' : 'none', // Thicker border for active tab
                   backgroundColor: 'transparent',
                   color: activeTab === tab ? '#007bff' : '#6c757d',
                   cursor: 'pointer',
                   fontSize: '16px',
-                  fontWeight: activeTab === tab ? '600' : 'normal',
-                  flexShrink: 0,
+                  fontWeight: activeTab === tab ? '600' : 'normal', // Bolder for active tab
+                  flexShrink: 0, // Prevent buttons from shrinking
                   transition: 'color 0.3s ease, border-bottom 0.3s ease'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.color = '#007bff'}
                 onMouseLeave={(e) => e.currentTarget.style.color = activeTab === tab ? '#007bff' : '#6c757d'}
               >
-                {t(tab.charAt(0).toUpperCase() + tab.slice(1))}
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Tab Content */}
         <div style={{ marginTop: '20px' }}>
           {activeTab === 'overview' && (
             <div className="overview-tab-content" style={{
@@ -1040,7 +824,7 @@ const TeacherDashboard = () => {
                 borderLeft: '5px solid #28a745'
               }}>
                 <h3 style={{ color: '#28a745', marginBottom: '15px' }}>Credit Wallet</h3>
-                <p style={{ fontSize: '1.2em', marginBottom: '10px' }}>**Available Credits:** <span style={{ color: '#28a745', fontWeight: 'bold' }}>{dashboardData.earnings.total}</span></p>
+                <p style={{ fontSize: '1.2em', marginBottom: '10px' }}><strong>Available Credits:</strong> <span style={{ color: '#28a745', fontWeight: 'bold' }}>{dashboardData.earnings.total}</span></p>
                 <p style={{ fontSize: '1em', marginBottom: '5px' }}>Pending: {dashboardData.earnings.pending}</p>
                 <p style={{ fontSize: '1em' }}>Completed: {dashboardData.earnings.completed}</p>
                 <button
@@ -1075,7 +859,7 @@ const TeacherDashboard = () => {
                 <p style={{ marginBottom: '10px' }}>Configure your payout account.</p>
                 <p>Review your transaction history.</p>
                 <button
-                  onClick={() => console.log('Navigate to payment history page!')}
+                  onClick={() => alert('Navigate to payment history page!')} // Placeholder for navigation
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#6c757d',
@@ -1105,7 +889,7 @@ const TeacherDashboard = () => {
                 <h3 style={{ color: '#17a2b8', marginBottom: '15px' }}>Refer & Earn</h3>
                 <p style={{ marginBottom: '10px' }}>Invite friends to the platform and earn free credits when they sign up and complete their first lesson!</p>
                 <button
-                  onClick={() => console.log('Navigate to refer & earn page!')}
+                  onClick={() => alert('Navigate to refer & earn page!')} // Placeholder for navigation
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#17a2b8',
@@ -1153,7 +937,7 @@ const TeacherDashboard = () => {
                   <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Phone number</li>
                 </ul>
                 <button
-                  onClick={() => console.log('Navigate to profile edit page!')}
+                  onClick={() => alert('Navigate to profile edit page!')} // Placeholder for navigation
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#007bff',
@@ -1189,7 +973,7 @@ const TeacherDashboard = () => {
                   <li style={{ marginBottom: '10px', fontSize: '1em' }}>⚙️ My profile & gigs preview</li>
                 </ul>
                 <button
-                  onClick={() => console.log('Navigate to settings page!')}
+                  onClick={() => alert('Navigate to settings page!')} // Placeholder for navigation
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#fd7e14',
@@ -1219,9 +1003,7 @@ const TeacherDashboard = () => {
               padding: '40px',
               boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
               textAlign: 'center',
-              borderTop: '5px solid #ffc107',
-              maxWidth: '800px',
-              margin: '0 auto'
+              borderTop: '5px solid #ffc107'
             }}>
               <h2 style={{ color: '#ffc107', fontSize: '2.2em', marginBottom: '20px' }}>🌟 Unlock Premium Features 🌟</h2>
               <p style={{ fontSize: '1.2em', color: '#495057', marginBottom: '30px' }}>
@@ -1264,6 +1046,7 @@ const TeacherDashboard = () => {
           )}
         </div>
 
+        {/* Forms Overlay */}
         {isGigFormOpen && (
           <GigPostForm
             onClose={() => setIsGigFormOpen(false)}
