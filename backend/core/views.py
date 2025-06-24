@@ -47,6 +47,16 @@ from .payments import SSLCommerzPayment
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+
+class JobCreateAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+    def post(self, request, *args, **kwargs):
+        serializer = JobSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class UserProfileUpdateByIdView(APIView):
     """
     Allows updating a user's profile using a POST request by providing the user ID.
@@ -117,19 +127,12 @@ class UserProfileView(generics.RetrieveAPIView): # Changed base class from gener
             )
 
 class JobListAPIView(generics.ListAPIView):
-    """
-    Simple list view for active jobs with basic student verification
-    """
-    serializer_class = JobListSerializer
+    serializer_class = JobSerializer
     permission_classes = [AllowAny]
+
     def get_queryset(self):
-        return Job.objects.filter(
-            is_active=True
-        ).select_related(
-            'student', 'subject'
-        ).prefetch_related(
-            'subjects'
-        ).order_by('-created_at')
+        return Job.objects.filter(is_active=True).select_related('student').prefetch_related('subjects').order_by('-created_at')
+
 
 
 class TutorListAPIView(generics.ListAPIView):

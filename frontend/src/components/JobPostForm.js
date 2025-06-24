@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { jobAPI } from '../utils/apiService';
+import axios from 'axios';
 
 const JobPostForm = ({ onClose, onJobCreated, studentId }) => {
   const { t } = useTranslation();
@@ -29,7 +29,17 @@ const JobPostForm = ({ onClose, onJobCreated, studentId }) => {
     setIsSubmitting(true);
     setSuccessMessage('');
     setErrorMessage('');
-
+    const storedUser = localStorage.getItem('user');
+    let studentId = null;
+    
+    try {
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        studentId = parsedUser.user_id || null;
+      }
+    } catch (e) {
+      console.error('Failed to parse user from localStorage', e);
+    }
     try {
       const payload = {
         student: studentId,
@@ -39,7 +49,7 @@ const JobPostForm = ({ onClose, onJobCreated, studentId }) => {
         location: formData.location,
       };
 
-      const response = await jobAPI.createJob(payload);
+      const response = await axios.post('/api/jobs/create', payload); // Adjust API URL if needed
       if (response.status === 201) {
         setSuccessMessage('Job posted successfully!');
         onJobCreated && onJobCreated(response.data);

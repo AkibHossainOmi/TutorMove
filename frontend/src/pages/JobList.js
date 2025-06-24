@@ -12,8 +12,9 @@ const JobList = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get('/api/jobs/');
+        const response = await axios.get('http://localhost:8000/api/jobs/');
         setJobs(response.data);
+        console.log(response.data);
       } catch (err) {
         setError('Failed to fetch jobs. Please try again later.');
       } finally {

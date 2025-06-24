@@ -197,7 +197,7 @@ class Job(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'student'})
     title = models.CharField(max_length=255)
     description = models.TextField()
-    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    subject = models.TextField()
     subjects = models.ManyToManyField('Subject', related_name='gigs_as_job')
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)

@@ -105,28 +105,13 @@ class CreditSerializer(serializers.ModelSerializer):
 # === JOB SERIALIZER ===
 
 class JobSerializer(serializers.ModelSerializer):
-    subject = serializers.SerializerMethodField(read_only=True)
-    subject_id = serializers.PrimaryKeyRelatedField(
-        queryset=Subject.objects.all(), source='subject', write_only=True, required=True
-    )
-
     class Meta:
         model = Job
         fields = [
-            'id', 'student', 'title', 'description', 'subject', 'subject_id',
-            'location', 'latitude', 'longitude', 'created_at'
+            'id', 'student', 'title', 'description', 'subject',
+            'location', 'latitude', 'longitude', 'created_at', 'is_active', 'subjects'
         ]
-        read_only_fields = ['id', 'student', 'created_at', 'subject']
-
-    def get_subject(self, obj):
-        if obj.subject:
-            return {
-                "id": obj.subject.id,
-                "name": obj.subject.name,
-                "aliases": obj.subject.aliases,
-            }
-        return None
-
+        read_only_fields = ['id', 'created_at']
 
 # === APPLICATION SERIALIZER ===
 
