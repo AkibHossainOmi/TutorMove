@@ -105,13 +105,19 @@ class CreditSerializer(serializers.ModelSerializer):
 # === JOB SERIALIZER ===
 
 class JobSerializer(serializers.ModelSerializer):
+    student_name = serializers.SerializerMethodField()  # Add this field
+
     class Meta:
         model = Job
         fields = [
-            'id', 'student', 'title', 'description', 'subject',
+            'id', 'student', 'student_name', 'title', 'description', 'subject',
             'location', 'latitude', 'longitude', 'created_at', 'is_active', 'subjects'
         ]
         read_only_fields = ['id', 'created_at']
+
+    def get_student_name(self, obj):
+        return obj.student.username if obj.student else None
+
 
 # === APPLICATION SERIALIZER ===
 

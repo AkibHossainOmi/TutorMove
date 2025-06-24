@@ -133,7 +133,10 @@ class JobListAPIView(generics.ListAPIView):
     def get_queryset(self):
         return Job.objects.filter(is_active=True).select_related('student').prefetch_related('subjects').order_by('-created_at')
 
-
+class JobDetailAPIView(generics.RetrieveAPIView):
+    queryset = Job.objects.all()
+    serializer_class = JobSerializer
+    permission_classes = [AllowAny]
 
 class TutorListAPIView(generics.ListAPIView):
     queryset = User.objects.filter(user_type='tutor')
