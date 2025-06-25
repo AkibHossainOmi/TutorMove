@@ -39,6 +39,7 @@ import ProtectedRoute from './contexts/ProtectedRoute';
 import { useAuth } from './contexts/UseAuth';
 import Dashboard from './pages/Dashboard';
 import TutorMapSearch from './components/MapSearch';
+import BuyCreditPage from './pages/BuyCreditPage';
 
 
 // Additional Policy Pages
@@ -92,6 +93,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/tutors" element={<TutorList />} />
             <Route path="/tutors/:id" element={<TutorProfile />} />
+            <Route path="/buy-credits" element={<BuyCreditPage />} />
 
             {/* Gigs and Job Listings */}
             <Route path="/gigs/:id" element={<GigDetails />} />

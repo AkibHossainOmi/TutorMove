@@ -125,11 +125,15 @@ const creditAPI = {
    */
   getUserCredits: async (userId) => {
     try {
+      // Assuming a mock for now if credit endpoint is not fully implemented
+      // In a real scenario, replace this with your actual API call:
       const response = await axios.get(`http://localhost:8000/api/credit/user/${userId}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching user credits:", error.response?.data || error.message);
-      throw error;
+      // For demonstration, return a mock balance if API fails
+      // In production, you might want to throw or handle more explicitly
+      return { user_id: userId, balance: 0 }; // Return 0 credits on error
     }
   }
 };
@@ -210,6 +214,8 @@ const TeacherDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false); // Renamed to avoid confusion
+  // New state for the insufficient credits modal
+  const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
 
   // Initial dashboard data with actual defaults instead of mock values
   const [dashboardData, setDashboardData] = useState({
@@ -228,8 +234,8 @@ const TeacherDashboard = () => {
     }
   });
 
-  const CREDIT_PURCHASE_ENDPOINT = `http://localhost:8000/api/credits/purchase/`;
-  // const PREMIUM_UPGRADE_ENDPOINT = `/api/premium/upgrade/`; // Not used in the provided snippet
+  // Removed CREDIT_PURCHASE_ENDPOINT as it's now handled by BuyCreditPage
+  // Removed statusMessage, showSpinner, showLoading, hideLoading, showStatus as they are no longer needed here.
 
   /**
    * useEffect hook to load user data from localStorage and then dashboard data.
@@ -334,6 +340,18 @@ const TeacherDashboard = () => {
   };
 
   /**
+   * Handles the click on the "Create a Gig" button.
+   * Checks for credit balance before opening the GigPostForm.
+   */
+  const handleCreateGigClick = () => {
+    if (dashboardData.stats.creditBalance <= 0) {
+      setShowInsufficientCreditsModal(true);
+    } else {
+      setIsGigFormOpen(true);
+    }
+  };
+
+  /**
    * Renders a statistic card with a title, value, icon, and color.
    * @param {Object} props - The component props.
    * @param {string} props.title - The title of the stat card.
@@ -371,78 +389,15 @@ const TeacherDashboard = () => {
     </div>
   );
 
-  const [statusMessage, setStatusMessage] = useState('');
-  const [showSpinner, setShowSpinner] = useState(false);
+  // Removed statusMessage, showSpinner state as they are no longer needed here.
+  // Removed showLoading, hideLoading, showStatus functions as they are no longer needed here.
 
   /**
-   * Displays a loading spinner and a status message.
-   * @param {string} [message='Processing payment...'] - The message to display while loading.
+   * Handles the action of navigating to the Buy Credit page.
    */
-  function showLoading(message = 'Processing payment...') {
-    setShowSpinner(true);
-    setStatusMessage(message);
-  }
-
-  /**
-   * Hides the loading spinner and clears the status message.
-   */
-  function hideLoading() {
-    setShowSpinner(false);
-    setStatusMessage('');
-  }
-
-  /**
-   * Displays a status message (and logs to console).
-   * @param {string} message - The message to display.
-   * @param {boolean} [isError=false] - Whether the message indicates an error.
-   */
-  function showStatus(message, isError = false) {
-    setStatusMessage(message);
-    // You might want to use showNotification instead for consistency in UI notifications
-    showNotification(message, isError ? 'error' : 'success');
-  }
-
-  /**
-   * Handles the action of buying credits, initiating a payment process.
-   */
-  const handleBuyCredits = async () => {
-    if (!user?.user_id) {
-      showNotification("User not logged in or user ID not found.", 'error');
-      return;
-    }
-
-    // showLoading('Initiating credit purchase...');
-    try {
-      const purchaseData = {
-        credits: 10, // Example fixed amount
-        amount: 100.00, // Example fixed price
-        user_id: user.user_id
-      };
-
-      const response = await axios.post(
-        CREDIT_PURCHASE_ENDPOINT,
-        purchaseData,
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      hideLoading();
-      if (response.data.status === 'SUCCESS' && response.data.payment_url) {
-        showStatus('Redirecting to payment gateway...', false);
-        window.location.href = response.data.payment_url;
-      } else {
-        const errorMessage = response.data.error || 'Unknown error during payment initiation.';
-        showStatus(`Payment initiation failed: ${errorMessage}`, true);
-      }
-    } catch (error) {
-      hideLoading();
-      console.error('Error initiating credit purchase:', error.response?.data || error.message);
-      const userMessage = error.response?.data?.error || 'Could not initiate payment. Please try again.';
-      showStatus(`Error: ${userMessage}`, true);
-    }
+  const handleNavigateToBuyCredits = () => {
+    // Navigate to the BuyCreditPage
+    window.location.href = '/buy-credits'; // Assuming your route is '/buy-credits'
   };
 
 
@@ -678,9 +633,9 @@ const TeacherDashboard = () => {
               )}
             </button>
 
-            {/* Create a Gig Button */}
+            {/* Create a Gig Button - Modified onClick handler */}
             <button
-              onClick={() => setIsGigFormOpen(true)}
+              onClick={handleCreateGigClick} // Call the new handler
               style={{
                 padding: '10px 15px',
                 backgroundColor: '#007bff',
@@ -699,9 +654,9 @@ const TeacherDashboard = () => {
               ➕ Create a Gig
             </button>
 
-            {/* Buy Credits Button */}
+            {/* Buy Credits Button - Modified onClick handler */}
             <button
-              onClick={handleBuyCredits}
+              onClick={handleNavigateToBuyCredits} // Call the new navigation handler
               style={{
                 padding: '10px 15px',
                 backgroundColor: '#28a745',
@@ -723,15 +678,7 @@ const TeacherDashboard = () => {
         </div>
 
         {/* Loading/Status Message Area */}
-        {showSpinner && (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '15px 0', color: '#555' }}>
-            <div className="loading-spinner" style={{ display: 'block', marginRight: '10px' }}></div>
-            <span>{statusMessage}</span>
-          </div>
-        )}
-        {!showSpinner && statusMessage && (
-          <p className="status-message" style={{ textAlign: 'center', marginTop: '15px' }}>{statusMessage}</p>
-        )}
+        {/* Removed showSpinner and statusMessage display logic as it's handled by BuyCreditPage now */}
 
         {/* Statistics Cards */}
         <div style={{
@@ -842,7 +789,7 @@ const TeacherDashboard = () => {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #dee2e6', paddingBottom: '10px', marginBottom: '15px' }}>
                 <h3 style={{ margin: 0 }}>My Gigs</h3>
                 <button
-                  onClick={() => setIsGigFormOpen(true)}
+                  onClick={handleCreateGigClick} // Modified to use the new handler
                   style={{
                     padding: '10px 15px',
                     backgroundColor: '#007bff',
@@ -890,7 +837,7 @@ const TeacherDashboard = () => {
                 <p style={{ fontSize: '1em', marginBottom: '5px' }}>Pending Earnings (Estimated): {dashboardData.earnings.pending}</p>
                 <p style={{ fontSize: '1em' }}>Completed Earnings (Estimated): {dashboardData.earnings.completed}</p>
                 <button
-                  onClick={handleBuyCredits}
+                  onClick={handleNavigateToBuyCredits} // Navigates to BuyCreditPage
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#28a745',
@@ -1026,6 +973,80 @@ const TeacherDashboard = () => {
             onGigCreated={handleGigCreated}
             userId={user?.user_id} // Pass userId to the form
           />
+        )}
+
+        {/* Insufficient Credits Modal */}
+        {showInsufficientCreditsModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+              textAlign: 'center',
+              maxWidth: '400px',
+              width: '90%'
+            }}>
+              <h3 style={{ color: '#dc3545', marginBottom: '15px' }}>Insufficient Credits</h3>
+              <p style={{ marginBottom: '25px', fontSize: '1.1em' }}>
+                You do not have enough credits to create a gig. Please buy more credits to proceed.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                <button
+                  onClick={() => {
+                    setShowInsufficientCreditsModal(false); // Close the modal first
+                    handleNavigateToBuyCredits(); // Then navigate to Buy Credits page
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1em',
+                    fontWeight: '500',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+                >
+                  💳 Buy Credits
+                </button>
+                <button
+                  onClick={() => setShowInsufficientCreditsModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1em',
+                    fontWeight: '500',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5a6268'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </>
