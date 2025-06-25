@@ -2,67 +2,90 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import GigPostForm from '../components/GigPostForm';
 import JobCard from '../components/JobCard';
-import TutorCard from '../components/TutorCard';
+// import TutorCard from '../components/TutorCard'; // Removed as we are using a custom GigItemCard
 import LoadingSpinner from '../components/LoadingSpinner';
-import WelcomeBanner from '../components/WelcomeBanner';
 import Navbar from '../components/Navbar';
 
-// Assuming you use i18n for translation
-import { useTranslation } from 'react-i18next';
-
-// Mock implementations for demonstration purposes (since contexts are removed)
+/**
+ * Custom hook for managing notifications.
+ * Provides a function to show notifications (currently logs to console)
+ * and state for a list of notifications.
+ */
 const useNotification = () => {
-  const [notifications, setNotifications] = useState([
-    { id: 'n1', message: 'New student inquiry!', isRead: false, created_at: new Date().toISOString() },
-    { id: 'n2', message: 'Your gig "Math Tutor" is live!', isRead: true, created_at: new Date().toISOString() },
-  ]);
-  const showNotification = (message, type) => console.log(`Notification (${type}): ${message}`); // Placeholder for notification display
-  return { showNotification, notifications };
+  const [notifications, setNotifications] = useState([]);
+
+  /**
+   * Displays a notification message.
+   * @param {string} message - The notification message.
+   * @param {'success'|'error'|'info'} type - The type of notification.
+   */
+  const showNotification = (message, type) => {
+    console.log(`Notification (${type}): ${message}`);
+    // In a real application, you might update the notifications state
+    // For example: setNotifications(prev => [...prev, { id: Date.now(), message, type, isRead: false }]);
+  };
+
+  return { showNotification, notifications, setNotifications };
 };
+
+/**
+ * Custom hook for managing chat-related functionalities.
+ * Provides a function to open chat and a mock unread count.
+ */
 const useChat = () => ({
-  openChat: (chatId) => console.log(`Opening chat ${chatId}`), // Placeholder for chat functionality
-  unreadCount: 3 // Mock unread count
+  /**
+   * Logs a message indicating that a chat is being opened.
+   * @param {string} chatId - The ID of the chat to open.
+   */
+  openChat: (chatId) => console.log(`Opening chat ${chatId}`),
+  unreadCount: 0 // Mock unread count
 });
 
-
-// --- API Service Stubs (to be replaced with actual API calls) ---
-// These are placeholders. You should have actual API service files (e.g., api/jobAPI.js, api/tutorAPI.js)
-// that make real Axios calls to your Django backend.
-
-// IMPORTANT: Define your Django base URL here
-const DJANGO_BASE_URL = 'http://localhost:8000'; // Or your deployed backend URL
-
+/**
+ * Mock API functions for job-related operations.
+ */
 const jobAPI = {
-  getMatchedJobs: async (userId, config) => {
-    // In a real app, this would be an Axios call to your backend
-    // Example: return await axios.get(`${DJANGO_BASE_URL}/api/jobs/matched/?user=${userId}`, config);
-    console.warn("jobAPI.getMatchedJobs is a stub. Replace with actual API call.");
-    return { data: { results: [] } }; // Return empty for now
-  },
-  getMyApplications: async (userId, config) => {
-    // In a real app, this would be an Axios call to your backend
-    // Example: return await axios.get(`${DJANGO_BASE_URL}/api/applications/?user=${userId}`, config);
-    console.warn("jobAPI.getMyApplications is a stub. Replace with actual API call.");
-    return { data: { results: [] } }; // Return empty for now
-  }
+  /**
+   * Fetches mock matched jobs.
+   * @returns {Promise<Object>} A promise resolving to mock job data.
+   */
+  getMatchedJobs: async () => ({ data: { results: [] } }),
+  /**
+   * Fetches mock user applications.
+   * @returns {Promise<Object>} A promise resolving to mock application data.
+   */
+  getMyApplications: async () => ({ data: { results: [] } })
 };
 
+/**
+ * API functions for tutor-related operations.
+ */
 const tutorAPI = {
-  getTutorGigs: async ({ teacherId, config }) => {
-    // This is the actual API call you want to make
+  /**
+   * Fetches tutor gigs for a given teacher ID.
+   * Assumes the API returns gig objects with 'title', 'description', 'subject', and 'created_at'.
+   * @param {string} teacherId - The ID of the teacher.
+   * @returns {Promise<Array|Object>} A promise resolving to the gig data (array or object with results key).
+   * @throws {Error} If there's an error fetching the gigs.
+   */
+  getTutorGigs: async (teacherId) => {
     try {
-      const response = await axios.get(`${DJANGO_BASE_URL}/api/gigs/teacher/${teacherId}/`, config);
-      console.log(response.data); // Log the response data for debugging
+      // Corrected API endpoint for fetching gigs by teacher ID
+      const response = await axios.get(`http://localhost:8000/api/gigs/teacher/${teacherId}/`);
+      // Assuming Django API returns an array of gig objects directly or within a 'results' key
       return response.data;
     } catch (error) {
       console.error("Error fetching tutor gigs:", error.response ? error.response.data : error.message);
-      throw error; // Re-throw to be caught by the caller
+      // Re-throw to be caught by the calling function (loadDashboardData)
+      throw error;
     }
   }
 };
-// --- End API Service Stubs ---
 
-
+/**
+ * A placeholder button for teacher verification.
+ * This component has no actual functionality in this snippet.
+ */
 const TeacherVerificationButton = () => (
   <button
     style={{
@@ -80,13 +103,58 @@ const TeacherVerificationButton = () => (
   </button>
 );
 
+/**
+ * Component to display individual gig information in a card format.
+ * It expects a 'gig' object with 'title', 'description', 'subject', and 'created_at'.
+ * @param {Object} props - The component props.
+ * @param {Object} props.gig - The gig object to display.
+ */
+const GigItemCard = ({ gig }) => {
+  // Destructure the required properties from the gig object
+  const { title, description, subject, created_at } = gig;
 
+  return (
+    <div className="gig-card" style={{
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      padding: '20px',
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      borderLeft: '5px solid #007bff',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px',
+      transition: 'transform 0.2s ease-in-out',
+      cursor: 'pointer'
+    }}
+    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-5px)'}
+    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+    >
+      <h4 style={{ margin: '0', color: '#343a40', fontSize: '1.2em' }}>{title || 'No Title'}</h4>
+      <p style={{ margin: '0', color: '#6c757d', fontSize: '0.9em', flexGrow: 1 }}>
+        {description || 'No description provided.'}
+      </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.85em', color: '#495057' }}>
+        <span style={{ backgroundColor: '#e9ecef', padding: '4px 8px', borderRadius: '4px', fontWeight: '500' }}>
+          Subject: {subject || 'N/A'}
+        </span>
+        <span style={{ color: '#6c757d' }}>
+          Created: {created_at ? new Date(created_at).toLocaleDateString() : 'N/A'}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+
+/**
+ * The main Teacher Dashboard component.
+ * Displays various information relevant to a tutor, including gigs, jobs, and wallet.
+ */
 const TeacherDashboard = () => {
-  const { t } = useTranslation();
-  const { showNotification, notifications } = useNotification(); // Now using local mock
-  const { unreadCount } = useChat(); // Now using local mock
+  const { showNotification, notifications, setNotifications } = useNotification();
+  const { unreadCount } = useChat();
 
-  const [user, setUser] = useState(null); // State to store user from localStorage
+  const [user, setUser] = useState(null);
   const [isGigFormOpen, setIsGigFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
@@ -101,30 +169,28 @@ const TeacherDashboard = () => {
       completed: 0
     },
     stats: {
-      totalViews: 0,
       activeGigs: 0,
       completedJobs: 0,
-      totalStudents: 0
     }
   });
 
-  // IMPORTANT: Replace with your actual Django backend URL and API endpoint
-  // This should match the settings in your Django project
-  // const DJANGO_BASE_URL = 'http://localhost:8000'; // Moved to global scope for API stubs
-  const CREDIT_PURCHASE_ENDPOINT = `${DJANGO_BASE_URL}/api/credits/purchase/`;
-  const PREMIUM_UPGRADE_ENDPOINT = `${DJANGO_BASE_URL}/api/premium/upgrade/`;
+  const CREDIT_PURCHASE_ENDPOINT = `/api/credits/purchase/`;
+  const PREMIUM_UPGRADE_ENDPOINT = `/api/premium/upgrade/`; // Not used in the provided snippet
+  const MOCK_USER_ID = '1';
 
-
+  /**
+   * useEffect hook to load user data from localStorage and then dashboard data.
+   * Runs once on component mount.
+   */
   useEffect(() => {
-    // Attempt to load user from localStorage
     try {
       const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (storedUser && storedUser.user_type === 'tutor') { // Check for user type "tutor"
+      if (storedUser && storedUser.user_type === 'tutor') {
         setUser(storedUser);
-        loadDashboardData(storedUser); // Pass the user object to loadDashboardData
+        loadDashboardData(storedUser);
       } else {
-        setIsLoading(false); // Stop loading if not a tutor or no user
-        setUser(null); // Explicitly set user to null if not authorized
+        setIsLoading(false);
+        setUser(null);
       }
     } catch (error) {
       console.error("Failed to parse user from localStorage:", error);
@@ -134,46 +200,53 @@ const TeacherDashboard = () => {
   }, []);
 
   /**
-   * Loads all necessary dashboard data from API endpoints.
-   * Updates the dashboardData state and handles loading state.
-   * @param {object} currentUser - The user object (from localStorage).
+   * Fetches and updates the dashboard data for the current user.
+   * @param {Object} currentUser - The current user object, including user_id.
    */
   const loadDashboardData = async (currentUser) => {
     setIsLoading(true);
     try {
-      // In a real application, you'd pass the actual user ID and authentication token
-      const config = {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}` // Use access_token
-        }
-      };
+      if (!currentUser || !currentUser.user_id) {
+        showNotification("User ID not found. Cannot fetch dashboard data.", 'error');
+        return;
+      }
 
-      // Ensure currentUser.user_id is used for fetching gigs
-      const gigsResponse = await tutorAPI.getTutorGigs({ teacherId: currentUser.user_id, config });
-      const matchedJobsResponse = await jobAPI.getMatchedJobs(currentUser.user_id, config);
-      const applicationsResponse = await jobAPI.getMyApplications(currentUser.user_id, config);
+      const gigsData = await tutorAPI.getTutorGigs(currentUser.user_id); // This already returns response.data
 
-      setDashboardData({
-        myGigs: gigsResponse.data.results || [],
+      // Safely determine myGigs from gigsData
+      let myGigs = [];
+      if (gigsData && Array.isArray(gigsData.results)) {
+        myGigs = gigsData.results; // If it's paginated, like { count: N, results: [...] }
+      } else if (gigsData && Array.isArray(gigsData)) {
+        myGigs = gigsData; // If it's a direct array of gigs
+      } else {
+        // Fallback if data format is unexpected or empty
+        console.warn("Unexpected gig data format or no gigs found:", gigsData);
+        myGigs = [];
+      }
+
+      const matchedJobsResponse = await jobAPI.getMatchedJobs();
+      const applicationsResponse = await jobAPI.getMyApplications();
+
+      setDashboardData(prev => ({
+        ...prev,
+        myGigs: myGigs, // Use the safely determined myGigs
         matchedJobs: matchedJobsResponse.data.results || [],
         applications: applicationsResponse.data.results || [],
-        // These earnings and stats would ideally come from a dedicated API endpoint
         earnings: {
-          total: 0, // Fetch from API
-          pending: 0, // Fetch from API
-          completed: 0 // Fetch from API
+          total: myGigs.length * 50, // Example calculation
+          pending: myGigs.filter(gig => gig.status === 'pending').length * 20, // Example calculation
+          completed: myGigs.filter(gig => gig.status === 'completed').length * 50 // Example calculation
         },
         stats: {
-          totalViews: 0, // Fetch from API
-          activeGigs: gigsResponse.data.results?.filter(gig => gig.status === 'active').length || 0,
+          activeGigs: myGigs.filter(gig => gig.status === 'active').length || 0,
           completedJobs: applicationsResponse.data.results?.filter(app => app.status === 'completed').length || 0,
-          totalStudents: 0 // Fetch from API
         }
-      });
+      }));
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       showNotification(
-        'Failed to load dashboard data. Please try again.',
+        `Failed to load dashboard data: ${error.message || 'Network error'}`,
         'error'
       );
     } finally {
@@ -183,8 +256,8 @@ const TeacherDashboard = () => {
 
   /**
    * Handles the successful creation of a new gig.
-   * Adds the new gig to the myGigs list and updates active gigs count.
-   * @param {object} newGig - The newly created gig object.
+   * Adds the new gig to the dashboard data and closes the form.
+   * @param {Object} newGig - The newly created gig object.
    */
   const handleGigCreated = (newGig) => {
     setDashboardData(prev => ({
@@ -200,11 +273,12 @@ const TeacherDashboard = () => {
   };
 
   /**
-   * Reusable StatCard component for displaying key metrics.
-   * @param {string} title - The title of the stat.
-   * @param {string|number} value - The value of the stat.
-   * @param {string} icon - Emoji icon for the stat.
-   * @param {string} color - Accent color for the icon background.
+   * Renders a statistic card with a title, value, icon, and color.
+   * @param {Object} props - The component props.
+   * @param {string} props.title - The title of the stat card.
+   * @param {string|number} props.value - The value to display.
+   * @param {string} props.icon - The emoji icon for the card.
+   * @param {string} props.color - The color theme for the card.
    */
   const StatCard = ({ title, value, icon, color }) => (
     <div className="stat-card" style={{
@@ -220,7 +294,7 @@ const TeacherDashboard = () => {
         width: '50px',
         height: '50px',
         borderRadius: '50%',
-        backgroundColor: `${color}20`, // Light background color from main color
+        backgroundColor: `${color}20`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -236,45 +310,46 @@ const TeacherDashboard = () => {
     </div>
   );
 
-  // Helper functions for UI feedback (loading, status messages)
   const [statusMessage, setStatusMessage] = useState('');
   const [showSpinner, setShowSpinner] = useState(false);
 
+  /**
+   * Displays a loading spinner and a status message.
+   * @param {string} [message='Processing payment...'] - The message to display while loading.
+   */
   function showLoading(message = 'Processing payment...') {
     setShowSpinner(true);
     setStatusMessage(message);
   }
 
+  /**
+   * Hides the loading spinner and clears the status message.
+   */
   function hideLoading() {
     setShowSpinner(false);
     setStatusMessage('');
   }
 
+  /**
+   * Displays a status message (and logs to console).
+   * @param {string} message - The message to display.
+   * @param {boolean} [isError=false] - Whether the message indicates an error.
+   */
   function showStatus(message, isError = false) {
     setStatusMessage(message);
-    // You might want to style this differently for errors in your actual CSS
     console.log(isError ? `ERROR: ${message}` : `SUCCESS: ${message}`);
   }
 
-
   /**
-   * Handles the "Buy Credits" button click event.
-   * Makes an API call to the backend to initiate payment for credits.
+   * Handles the action of buying credits, initiating a payment process.
    */
   const handleBuyCredits = async () => {
     showLoading('Initiating credit purchase...');
     try {
-      if (!user || !user.user_id) { // Use user.user_id
-        showStatus('User not logged in or user ID not available.', true);
-        hideLoading();
-        return;
-      }
-
-      // Data to send to your Django backend
       const purchaseData = {
-        credits: 10,     // Amount of credits to buy
-        amount: 100.00,  // Corresponding financial amount (e.g., BDT)
-        user_id: user.user_id // Use the actual user ID from localStorage
+        credits: 10,
+        amount: 100.00,
+        user_id: user?.user_id || MOCK_USER_ID
       };
 
       const response = await axios.post(
@@ -282,7 +357,6 @@ const TeacherDashboard = () => {
         purchaseData,
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // Use your actual auth token
             'Content-Type': 'application/json'
           }
         }
@@ -291,7 +365,7 @@ const TeacherDashboard = () => {
       hideLoading();
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
         showStatus('Redirecting to SSLCommerz...', false);
-        window.location.href = response.data.payment_url; // Redirect the user to SSLCommerz
+        window.location.href = response.data.payment_url;
       } else {
         const errorMessage = response.data.error || 'Unknown error during payment initiation.';
         showStatus(`Payment initiation failed: ${errorMessage}`, true);
@@ -304,69 +378,25 @@ const TeacherDashboard = () => {
     }
   };
 
-  /**
-   * Handles the "Upgrade to Premium" button click event.
-   * Makes an API call to the backend to initiate payment for premium.
-   */
-  const handleUpgradePremium = async () => {
-    showLoading('Initiating premium upgrade...');
-    try {
-      if (!user || !user.user_id) { // Use user.user_id
-        showStatus('User not logged in or user ID not available.', true);
-        hideLoading();
-        return;
-      }
 
-      // Data to send to your Django backend
-      const upgradeData = {
-        plan: 'monthly', // Example plan
-        user_id: user.user_id // Use the actual user ID from localStorage
-      };
-
-      const response = await axios.post(
-        PREMIUM_UPGRADE_ENDPOINT,
-        upgradeData,
-        {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('access_token')}`, // Use your actual auth token
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      hideLoading();
-      if (response.data.status === 'SUCCESS' && response.data.payment_url) {
-        showStatus('Redirecting to SSLCommerz...', false);
-        window.location.href = response.data.payment_url; // Redirect the user to SSLCommerz
-      } else {
-        const errorMessage = response.data.error || 'Unknown error during premium initiation.';
-        showStatus(`Premium upgrade failed: ${errorMessage}`, true);
-      }
-    } catch (error) {
-      hideLoading();
-      console.error('Error initiating premium upgrade:', error.response ? error.response.data : error.message);
-      const userMessage = error.response?.data?.error || 'Could not initiate premium upgrade. Please try again.';
-      showStatus(`Error: ${userMessage}`, true);
-    }
-  };
-
-
-  // Display loading spinner while data is being fetched
   if (isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Access control: Ensure only 'tutor' type users can see this dashboard
+  // Access denied message if user is not a tutor
   if (!user || user.user_type !== 'tutor') {
     return (
       <>
         <Navbar />
-        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
+        <div style={{ height: '100px' }}></div>
         <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2>Access Denied</h2>
           <p>You must be a **tutor** to access this dashboard. Your current role is: **{user?.user_type || 'Unknown'}**</p>
+          {user?.user_type === 'teacher' && (
+            <p>Please navigate to the **Teacher Dashboard**.</p>
+          )}
           <button
-            onClick={() => window.location.href = '/'} // Redirect to home or another appropriate page
+            onClick={() => window.location.href = '/'}
             style={{
               padding: '10px 20px',
               backgroundColor: '#007bff',
@@ -387,7 +417,7 @@ const TeacherDashboard = () => {
   return (
     <>
       <Navbar />
-      <div style={{ height: '100px' }}></div>
+      <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
       <div className="teacher-dashboard-container" style={{
         padding: '30px',
         maxWidth: '1200px',
@@ -395,21 +425,18 @@ const TeacherDashboard = () => {
         fontFamily: 'Inter, sans-serif',
         color: '#343a40'
       }}>
-        <WelcomeBanner />
-
-        {/* Header Section: Title, Verification, and Action Buttons */}
+        {/* Dashboard Header Section */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'flex-start', // Align items to the start, allowing vertical stacking on smaller screens
+          alignItems: 'flex-start',
           marginBottom: '30px',
-          flexWrap: 'wrap', // Allow items to wrap to the next line on smaller screens
-          gap: '20px' // Space between wrapped items
+          flexWrap: 'wrap',
+          gap: '20px'
         }}>
-          {/* Title and Verification Button */}
           <div style={{
             display: 'flex',
-            flexDirection: 'column', // Stack title and verification vertically
+            flexDirection: 'column',
             alignItems: 'flex-start',
             gap: '10px'
           }}>
@@ -419,15 +446,14 @@ const TeacherDashboard = () => {
             <TeacherVerificationButton />
           </div>
 
-          {/* Action Buttons: Notifications, Messages, Create Gig, Buy Credits */}
           <div style={{
             display: 'flex',
             gap: '10px',
             alignItems: 'center',
-            flexWrap: 'wrap', // Allow buttons to wrap
-            justifyContent: 'flex-end' // Align buttons to the right
+            flexWrap: 'wrap',
+            justifyContent: 'flex-end'
           }}>
-            {/* Notification Button */}
+            {/* Notifications Button */}
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowNotifications(!showNotifications)}
@@ -472,7 +498,7 @@ const TeacherDashboard = () => {
               {showNotifications && (
                 <div style={{
                   position: 'absolute',
-                  top: 'calc(100% + 10px)', // Position below the button with a gap
+                  top: 'calc(100% + 10px)',
                   right: 0,
                   backgroundColor: 'white',
                   border: '1px solid #dee2e6',
@@ -498,13 +524,13 @@ const TeacherDashboard = () => {
                       <div key={notification.id} style={{
                         padding: '12px 15px',
                         borderBottom: '1px solid #f8f9fa',
-                        backgroundColor: notification.isRead ? 'white' : '#eaf4ff', // Highlight unread
+                        backgroundColor: notification.isRead ? 'white' : '#eaf4ff',
                         cursor: 'pointer',
                         transition: 'background-color 0.2s ease',
                         fontSize: '0.9em'
                       }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '#f8f9fa' : '#dff0ff'}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#eaf4ff'}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '#f8f9fa' : '#dff0ff'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#eaf4ff'}
                       >
                         <p style={{ margin: 0, fontWeight: notification.isRead ? 'normal' : 'bold' }}>{notification.message}</p>
                         <small style={{ color: '#6c757d' }}>
@@ -519,7 +545,7 @@ const TeacherDashboard = () => {
                   )}
                   <div style={{ padding: '10px 15px', textAlign: 'center', borderTop: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
                     <button
-                      onClick={() => window.location.href = '/messages'} // Assuming /messages route handles all notifications
+                      onClick={() => window.location.href = '/messages'}
                       style={{
                         padding: '8px 15px',
                         backgroundColor: '#007bff',
@@ -628,7 +654,7 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        {/* Status/Loading Message Display */}
+        {/* Loading/Status Message Area */}
         {showSpinner && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '15px 0', color: '#555' }}>
             <div className="loading-spinner" style={{ display: 'block', marginRight: '10px' }}></div>
@@ -639,8 +665,7 @@ const TeacherDashboard = () => {
           <p className="status-message" style={{ textAlign: 'center', marginTop: '15px' }}>{statusMessage}</p>
         )}
 
-
-        {/* Stats Grid */}
+        {/* Statistics Cards */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -660,41 +685,35 @@ const TeacherDashboard = () => {
             color="#007bff"
           />
           <StatCard
-            title="Total Students"
-            value={dashboardData.stats.totalStudents}
-            icon="👥"
+            title="Completed Jobs"
+            value={dashboardData.stats.completedJobs}
+            icon="✅"
             color="#fd7e14"
-          />
-          <StatCard
-            title="Profile Views"
-            value={dashboardData.stats.totalViews}
-            icon="👁️"
-            color="#6f42c1"
           />
         </div>
 
-        {/* Menu Bar */}
+        {/* Tab Navigation */}
         <div style={{
           borderBottom: '1px solid #dee2e6',
           marginBottom: '20px',
-          overflowX: 'auto', // Allow horizontal scrolling for tabs on small screens
-          whiteSpace: 'nowrap' // Prevent tabs from wrapping
+          overflowX: 'auto',
+          whiteSpace: 'nowrap'
         }}>
-          <div style={{ display: 'flex', gap: '20px', paddingBottom: '10px' }}> {/* Add padding to prevent cut-off of active tab border */}
-            {['overview', 'jobs', 'gigs', 'wallet', 'profile', 'premium'].map(tab => (
+          <div style={{ display: 'flex', gap: '20px', paddingBottom: '10px' }}>
+            {['jobs', 'gigs', 'wallet', 'premium'].map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 style={{
                   padding: '10px 20px',
                   border: 'none',
-                  borderBottom: activeTab === tab ? '3px solid #007bff' : 'none', // Thicker border for active tab
+                  borderBottom: activeTab === tab ? '3px solid #007bff' : 'none',
                   backgroundColor: 'transparent',
                   color: activeTab === tab ? '#007bff' : '#6c757d',
                   cursor: 'pointer',
                   fontSize: '16px',
-                  fontWeight: activeTab === tab ? '600' : 'normal', // Bolder for active tab
-                  flexShrink: 0, // Prevent buttons from shrinking
+                  fontWeight: activeTab === tab ? '600' : 'normal',
+                  flexShrink: 0,
                   transition: 'color 0.3s ease, border-bottom 0.3s ease'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.color = '#007bff'}
@@ -706,37 +725,10 @@ const TeacherDashboard = () => {
           </div>
         </div>
 
-        {/* Tab Content */}
+        {/* Tab Content Area */}
         <div style={{ marginTop: '20px' }}>
-          {activeTab === 'overview' && (
-            <div className="overview-tab-content" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '20px'
-            }}>
-              <div className="my-gigs-section">
-                <h3 style={{ borderBottom: '1px solid #dee2e6', paddingBottom: '10px', marginBottom: '15px' }}>My Recent Gigs</h3>
-                {dashboardData.myGigs.length > 0 ? (
-                  dashboardData.myGigs.slice(0, 3).map(gig => (
-                    <TutorCard key={gig.id} tutor={gig} />
-                  ))
-                ) : (
-                  <p style={{ color: '#6c757d' }}>No gigs found. Why not create one?</p>
-                )}
-              </div>
-              <div className="matched-jobs-section">
-                <h3 style={{ borderBottom: '1px solid #dee2e6', paddingBottom: '10px', marginBottom: '15px' }}>Matched Jobs</h3>
-                {dashboardData.matchedJobs.length > 0 ? (
-                  dashboardData.matchedJobs.slice(0, 3).map(job => (
-                    <JobCard key={job.id} job={job} />
-                  ))
-                ) : (
-                  <p style={{ color: '#6c757d' }}>No matched jobs at the moment.</p>
-                )}
-              </div>
-            </div>
-          )}
 
+          {/* Jobs Tab Content */}
           {activeTab === 'jobs' && (
             <div className="jobs-tab-content">
               <div style={{ marginBottom: '30px' }}>
@@ -776,6 +768,7 @@ const TeacherDashboard = () => {
             </div>
           )}
 
+          {/* Gigs Tab Content - NOW USING GigItemCard */}
           {activeTab === 'gigs' && (
             <div className="gigs-tab-content" style={{ display: 'grid', gap: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #dee2e6', paddingBottom: '10px', marginBottom: '15px' }}>
@@ -801,15 +794,16 @@ const TeacherDashboard = () => {
                 </button>
               </div>
               {dashboardData.myGigs.length > 0 ? (
-                dashboardData.myGigs.map(gig => (
-                  <TutorCard key={gig.id} tutor={gig} />
-                ))
+                dashboardData.myGigs.map((gig) => { // Changed to explicit return
+                  return <GigItemCard key={gig.id} gig={gig} />; // Renders the new GigItemCard
+                })
               ) : (
                 <p style={{ color: '#6c757d', textAlign: 'center' }}>You haven't created any gigs yet. Click "Add New Gig" to get started!</p>
               )}
             </div>
           )}
 
+          {/* Wallet Tab Content */}
           {activeTab === 'wallet' && (
             <div className="wallet-tab-content" style={{
               display: 'grid',
@@ -859,7 +853,8 @@ const TeacherDashboard = () => {
                 <p style={{ marginBottom: '10px' }}>Configure your payout account.</p>
                 <p>Review your transaction history.</p>
                 <button
-                  onClick={() => alert('Navigate to payment history page!')} // Placeholder for navigation
+                  // Using console.log instead of alert() for better user experience within an iframe
+                  onClick={() => console.log('Navigate to payment history page!')}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#6c757d',
@@ -889,7 +884,8 @@ const TeacherDashboard = () => {
                 <h3 style={{ color: '#17a2b8', marginBottom: '15px' }}>Refer & Earn</h3>
                 <p style={{ marginBottom: '10px' }}>Invite friends to the platform and earn free credits when they sign up and complete their first lesson!</p>
                 <button
-                  onClick={() => alert('Navigate to refer & earn page!')} // Placeholder for navigation
+                  // Using console.log instead of alert() for better user experience within an iframe
+                  onClick={() => console.log('Navigate to refer & earn page!')}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#17a2b8',
@@ -912,141 +908,18 @@ const TeacherDashboard = () => {
             </div>
           )}
 
-          {activeTab === 'profile' && (
-            <div className="profile-tab-content" style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-              gap: '20px'
-            }}>
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                padding: '25px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                borderLeft: '5px solid #007bff'
-              }}>
-                <h3 style={{ color: '#007bff', marginBottom: '15px' }}>Edit Profile</h3>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Personal details (Name, Bio, etc.)</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Photo upload</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Gigs management (set live/hide status)</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Address</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Education & experience</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Teaching details (subjects, grades)</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Profile description</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>➡️ Phone number</li>
-                </ul>
-                <button
-                  onClick={() => alert('Navigate to profile edit page!')} // Placeholder for navigation
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    marginTop: '20px',
-                    fontSize: '1em',
-                    fontWeight: '500',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
-                >
-                  Edit Profile Now
-                </button>
-              </div>
-              <div style={{
-                backgroundColor: 'white',
-                borderRadius: '8px',
-                padding: '25px',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                borderLeft: '5px solid #fd7e14'
-              }}>
-                <h3 style={{ color: '#fd7e14', marginBottom: '15px' }}>Additional Settings</h3>
-                <ul style={{ listStyle: 'none', padding: 0 }}>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>⚙️ Promote yourself (marketing tools)</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>⚙️ Contact settings (communication preferences)</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>⚙️ Profile picture upload</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>⚙️ Credits balance display options</li>
-                  <li style={{ marginBottom: '10px', fontSize: '1em' }}>⚙️ My profile & gigs preview</li>
-                </ul>
-                <button
-                  onClick={() => alert('Navigate to settings page!')} // Placeholder for navigation
-                  style={{
-                    padding: '10px 20px',
-                    backgroundColor: '#fd7e14',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    marginTop: '20px',
-                    fontSize: '1em',
-                    fontWeight: '500',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-                    transition: 'background-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e06b00'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#fd7e14'}
-                >
-                  Adjust Settings
-                </button>
-              </div>
+          {/* Add Premium Tab content if needed */}
+          {activeTab === 'premium' && (
+            <div className="premium-tab-content">
+              <h3>Premium Features</h3>
+              <p>Upgrade to unlock exclusive features and benefits!</p>
+              {/* Add premium upgrade button/info here */}
             </div>
           )}
 
-          {activeTab === 'premium' && (
-            <div className="premium-tab-content" style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '40px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-              textAlign: 'center',
-              borderTop: '5px solid #ffc107'
-            }}>
-              <h2 style={{ color: '#ffc107', fontSize: '2.2em', marginBottom: '20px' }}>🌟 Unlock Premium Features 🌟</h2>
-              <p style={{ fontSize: '1.2em', color: '#495057', marginBottom: '30px' }}>
-                Elevate your teaching career with exclusive benefits:
-              </p>
-              <ul style={{
-                textAlign: 'left',
-                maxWidth: '500px',
-                margin: '20px auto 40px',
-                listStyle: 'none',
-                padding: 0,
-                fontSize: '1.1em'
-              }}>
-                <li style={{ marginBottom: '15px' }}>✨ Priority listing in search results for more visibility.</li>
-                <li style={{ marginBottom: '15px' }}>📊 Advanced analytics and insights into your profile and gig performance.</li>
-                <li style={{ marginBottom: '15px' }}>🚀 Unlimited gig postings to showcase all your expertise.</li>
-                <li style={{ marginBottom: '15px' }}>✉️ Direct messaging with students for faster communication.</li>
-                <li style={{ marginBottom: '15px' }}>Profile verification badge to build trust.</li>
-              </ul>
-              <button
-                onClick={handleUpgradePremium}
-                style={{
-                  padding: '18px 40px',
-                  backgroundColor: '#ffc107',
-                  color: '#212529',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '20px',
-                  fontWeight: 'bold',
-                  boxShadow: '0 8px 15px rgba(255,193,7,0.4)',
-                  transition: 'background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease'
-                }}
-                onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#e0a800'; e.currentTarget.style.transform = 'translateY(-3px)'; }}
-                onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#ffc107'; e.currentTarget.style.transform = 'translateY(0)'; }}
-              >
-                Upgrade to Premium Now!
-              </button>
-            </div>
-          )}
         </div>
 
-        {/* Forms Overlay */}
+        {/* Gig Post Form Modal */}
         {isGigFormOpen && (
           <GigPostForm
             onClose={() => setIsGigFormOpen(false)}
