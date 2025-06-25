@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
-// Assuming these are correctly implemented and provide necessary API calls
 import { jobAPI, tutorAPI } from '../utils/apiService';
-// Assuming these components exist and are correctly implemented
 import JobPostForm from '../components/JobPostForm';
 import JobCard from '../components/JobCard';
 import TutorCard from '../components/TutorCard';
@@ -13,9 +11,8 @@ import Navbar from '../components/Navbar';
 
 const StudentDashboard = () => {
   const { t } = useTranslation();
-  const isAuthenticated = useAuth(); // Provides only isAuthenticated boolean
+  const isAuthenticated = useAuth();
 
-  // Helper function to safely parse user from local storage, memoized with useCallback
   const getParsedUser = useCallback(() => {
     try {
       const userString = localStorage.getItem('user');
@@ -26,21 +23,21 @@ const StudentDashboard = () => {
     }
   }, []);
 
-  // State variables
   const [user, setUser] = useState(getParsedUser());
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Manually managed notifications and unreadCount (for future implementation)
   const [notifications, setNotifications] = useState([
     { id: 1, message: 'Your job "Math Tutor" received a new application!', isRead: false, created_at: new Date() },
     { id: 2, message: 'You have a new message from John Doe.', isRead: false, created_at: new Date() },
     { id: 3, message: 'Your payment for "Science Project Help" has been processed.', isRead: true, created_at: new Date() },
   ]);
-  const [unreadCount, setUnreadCount] = useState(2); // Example unread count for messages
+  const [unreadCount, setUnreadCount] = useState(2);
 
   const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false);
+  const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
+
 
   const [dashboardData, setDashboardData] = useState({
     postedJobs: [],
@@ -60,25 +57,21 @@ const StudentDashboard = () => {
     }
   });
 
-  // === Become Teacher logic ===
   const [showBecomeTeacher, setShowBecomeTeacher] = useState(false);
   const [becomeTeacherLoading, setBecomeTeacherLoading] = useState(false);
   const [becomeTeacherError, setBecomeTeacherError] = useState('');
 
-  // === Request Verification logic ===
   const [showRequestVerification, setShowRequestVerification] = useState(false);
   const [requestVerificationLoading, setRequestVerificationLoading] = useState(false);
   const [verificationRequested, setVerificationRequested] = useState(user?.verification_requested || false);
   const [isVerified, setIsVerified] = useState(user?.is_verified || false);
 
-  // Fetches dashboard data based on the current user
   const loadDashboardData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const currentUser = getParsedUser(); // Get latest user data
+      const currentUser = getParsedUser();
       if (!currentUser || !currentUser.id || currentUser.user_type !== 'student') {
         console.warn('User data not found, invalid, or not a student. Skipping dashboard data fetch.');
-        // Reset dashboard data if user is not found or invalid
         setDashboardData({
           postedJobs: [],
           applications: [],
@@ -99,9 +92,9 @@ const StudentDashboard = () => {
         postedJobs: jobsResponse.data.results || [],
         applications: applicationsResponse.data.results || [],
         favoriteTeachers: favoritesResponse.data.results || [],
-        reviews: [], // Placeholder; integrate reviews API call here
+        reviews: [],
         credits: {
-          available: 2500, // Placeholder; integrate credits API call here
+          available: 2500,
           spent: 1800,
           pending: 300
         },
@@ -109,32 +102,48 @@ const StudentDashboard = () => {
           totalJobs: jobsResponse.data.results?.length || 0,
           activeJobs: jobsResponse.data.results?.filter(job => job.status === 'active').length || 0,
           completedJobs: jobsResponse.data.results?.filter(job => job.status === 'completed').length || 0,
-          totalReviews: 12 // Placeholder; integrate reviews count from API
+          totalReviews: 12
         }
       });
     } catch (error) {
       console.error("Error loading dashboard data:", error);
-      // It's good practice to set loading to false even on error
       setIsLoading(false);
     } finally {
       setIsLoading(false);
     }
-  }, [getParsedUser]); // Depend on getParsedUser
+  }, [getParsedUser]);
+  const creditAPI = {
+  /**
+   * Fetches the credit balance for a given user ID.
+   * @param {string} userId - The ID of the user.
+   * @returns {Promise<Object>} A promise resolving to the credit balance data { user_id: number, balance: number }.
+   * @throws {Error} If there's an error fetching the credit balance.
+   */
+  getUserCredits: async (userId) => {
+    try {
+      // Assuming a mock for now if credit endpoint is not fully implemented
+      // In a real scenario, replace this with your actual API call:
+      const response = await axios.get(`http://localhost:8000/api/credit/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user credits:", error.response?.data || error.message);
+      // For demonstration, return a mock balance if API fails
+      // In production, you might want to throw or handle more explicitly
+      return { user_id: userId, balance: 0 }; // Return 0 credits on error
+    }
+  }
+};
 
-  // Effect to update user state from local storage and load dashboard data
   useEffect(() => {
     const updateUserAndLoadData = () => {
       const updatedUser = getParsedUser();
       setUser(updatedUser);
-      // Update verification states based on the latest user data
       setVerificationRequested(updatedUser?.verification_requested || false);
       setIsVerified(updatedUser?.is_verified || false);
 
-      // Only attempt to load dashboard data if authenticated and the user is a student
       if (isAuthenticated && updatedUser?.user_type === 'student') {
         loadDashboardData();
       } else {
-        // If not authenticated or not a student, stop loading and clear data
         setIsLoading(false);
         setDashboardData({
           postedJobs: [],
@@ -147,16 +156,13 @@ const StudentDashboard = () => {
       }
     };
 
-    updateUserAndLoadData(); // Initial load and setup
+    updateUserAndLoadData();
 
-    // Listen for changes in local storage (e.g., from login/logout, profile updates)
     window.addEventListener('storage', updateUserAndLoadData);
 
     return () => {
       window.removeEventListener('storage', updateUserAndLoadData);
     };
-    // Dependencies: isAuthenticated and getParsedUser (which is memoized)
-    // user state is updated inside the effect and is not a dependency here to avoid infinite loops
   }, [isAuthenticated, getParsedUser, loadDashboardData]);
 
 
@@ -173,7 +179,18 @@ const StudentDashboard = () => {
     setIsJobFormOpen(false);
   };
 
-  // --- Become Teacher Handler ---
+  const handlePostJobClick = () => {
+    if (dashboardData.credits.available <= 0) {
+      setShowInsufficientCreditsModal(true);
+    } else {
+      setIsJobFormOpen(true);
+    }
+  };
+
+  const handleNavigateToBuyCredits = () => {
+    window.location.href = '/buy-credits';
+  };
+
   const handleBecomeTeacher = async () => {
     setBecomeTeacherLoading(true);
     setBecomeTeacherError('');
@@ -195,14 +212,12 @@ const StudentDashboard = () => {
         throw new Error(errorData.detail || 'Failed to upgrade to teacher role.');
       }
 
-      // Fetch the latest user data to update local storage and component state
       const updatedUserResponse = await fetch('/api/users/me/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (updatedUserResponse.ok) {
         const updatedUserData = await updatedUserResponse.json();
         localStorage.setItem('user', JSON.stringify(updatedUserData));
-        // Manually update user state to trigger re-render
         setUser(updatedUserData);
         setVerificationRequested(updatedUserData.verification_requested || false);
         setIsVerified(updatedUserData.is_verified || false);
@@ -210,7 +225,7 @@ const StudentDashboard = () => {
 
       setShowBecomeTeacher(false);
       console.log('Successfully upgraded to teacher!');
-      window.location.href = '/dashboard'; // Redirect to teacher dashboard
+      window.location.href = '/dashboard';
     } catch (err) {
       setBecomeTeacherError(err.message || 'Failed to upgrade. Please try again.');
       console.error('Failed to upgrade to teacher:', err);
@@ -219,7 +234,6 @@ const StudentDashboard = () => {
     }
   };
 
-  // --- Request Verification Handler ---
   const handleRequestVerification = async () => {
     setRequestVerificationLoading(true);
     try {
@@ -237,14 +251,12 @@ const StudentDashboard = () => {
         throw new Error(errorData.detail || 'Could not send verification request.');
       }
 
-      // Fetch the latest user data to update local storage and component state
       const updatedUserResponse = await fetch('/api/users/me/', {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (updatedUserResponse.ok) {
         const updatedUserData = await updatedUserResponse.json();
         localStorage.setItem('user', JSON.stringify(updatedUserData));
-        // Manually update user state to trigger re-render
         setUser(updatedUserData);
         setVerificationRequested(updatedUserData.verification_requested || false);
         setIsVerified(updatedUserData.is_verified || false);
@@ -290,12 +302,11 @@ const StudentDashboard = () => {
     </div>
   );
 
-  // --- Conditional Rendering for Access Control ---
   if (!isAuthenticated) {
     return (
       <>
         <Navbar />
-        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
+        <div style={{ height: '100px' }}></div>
         <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2>Access Denied</h2>
           <p>Please log in to view your dashboard.</p>
@@ -317,12 +328,11 @@ const StudentDashboard = () => {
     );
   }
 
-  // Check if user object is loaded and user_type is 'student'
   if (!user || user.user_type !== 'student') {
     return (
       <>
         <Navbar />
-        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
+        <div style={{ height: '100px' }}></div>
         <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2>Access Denied</h2>
           <p>You must be a **student** to access this dashboard. Your current role is: **{user?.user_type || 'Unknown'}**</p>
@@ -330,7 +340,7 @@ const StudentDashboard = () => {
             <p>Please navigate to the **Teacher Dashboard**.</p>
           )}
           <button
-            onClick={() => window.location.href = '/'} // Redirect to home or another appropriate page
+            onClick={() => window.location.href = '/'}
             style={{
               padding: '10px 20px',
               backgroundColor: '#007bff',
@@ -348,12 +358,11 @@ const StudentDashboard = () => {
     );
   }
 
-  // Show loading spinner while data is being fetched (after authentication and role check)
   if (isLoading) {
     return (
       <>
         <Navbar />
-        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
+        <div style={{ height: '100px' }}></div>
         <LoadingSpinner />
       </>
     );
@@ -362,16 +371,14 @@ const StudentDashboard = () => {
   return (
     <div>
       <Navbar />
-      <div style={{ height: '100px' }}></div> {/* Spacer to account for fixed navbar */}
+      <div style={{ height: '100px' }}></div>
       <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
-        {/* Welcome Banner */}
         <WelcomeBanner />
 
-        {/* --- Upgrade/Verification modals --- */}
         {showBecomeTeacher && (
           <div style={{
             position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
-            background: 'rgba(0,0,0,0.25)', zIndex: 10000, // Ensure high z-index
+            background: 'rgba(0,0,0,0.25)', zIndex: 10000,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <div style={{
@@ -399,7 +406,7 @@ const StudentDashboard = () => {
         {showRequestVerification && (
           <div style={{
             position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
-            background: 'rgba(0,0,0,0.25)', zIndex: 10000, // Ensure high z-index
+            background: 'rgba(0,0,0,0.25)', zIndex: 10000,
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <div style={{
@@ -424,7 +431,6 @@ const StudentDashboard = () => {
           </div>
         )}
 
-        {/* Header */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -435,7 +441,6 @@ const StudentDashboard = () => {
             Student Dashboard - Welcome, {user?.username || 'Guest'}!
           </h1>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            {/* Notification Button */}
             <div style={{ position: 'relative' }}>
               <button
                 onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
@@ -481,7 +486,7 @@ const StudentDashboard = () => {
                   width: '300px',
                   maxHeight: '400px',
                   overflowY: 'auto',
-                  zIndex: 1000 // Ensure it's above other content but below modals
+                  zIndex: 1000
                 }}>
                   <div style={{ padding: '15px', borderBottom: '1px solid #dee2e6' }}>
                     <h4 style={{ margin: 0 }}>Notifications</h4>
@@ -524,7 +529,6 @@ const StudentDashboard = () => {
               )}
             </div>
 
-            {/* Messages Button */}
             <button
               onClick={() => window.location.href = '/messages'}
               style={{
@@ -558,12 +562,8 @@ const StudentDashboard = () => {
               )}
             </button>
 
-            {/* Post a Job Button (main button) */}
             <button
-              onClick={() => {
-                // console.log("Post a Job button clicked. Setting isJobFormOpen to true."); // Debugging
-                setIsJobFormOpen(true);
-              }}
+              onClick={handlePostJobClick}
               style={{
                 padding: '10px 20px',
                 backgroundColor: '#28a745',
@@ -576,7 +576,7 @@ const StudentDashboard = () => {
               Post a Job
             </button>
             <button
-              onClick={() => window.location.href = '/credit-purchase'}
+              onClick={handleNavigateToBuyCredits}
               style={{
                 padding: '10px 20px',
                 backgroundColor: '#007bff',
@@ -589,7 +589,6 @@ const StudentDashboard = () => {
               Buy Credits
             </button>
 
-            {/* Show "Become a Teacher" button only for students */}
             {user?.user_type === 'student' && (
               <button
                 onClick={() => setShowBecomeTeacher(true)}
@@ -605,7 +604,6 @@ const StudentDashboard = () => {
                 Become a Teacher
               </button>
             )}
-            {/* Show "Request Verification" button only for teachers who aren't verified */}
             {user?.user_type === 'teacher' && !isVerified && !verificationRequested && (
               <button
                 onClick={() => setShowRequestVerification(true)}
@@ -634,7 +632,6 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
@@ -667,7 +664,6 @@ const StudentDashboard = () => {
           />
         </div>
 
-        {/* Menu Bar */}
         <div style={{
           borderBottom: '1px solid #dee2e6',
           marginBottom: '20px'
@@ -694,7 +690,6 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Tab Content */}
         <div style={{ marginTop: '20px' }}>
           {activeTab === 'overview' && (
             <div style={{
@@ -789,12 +784,8 @@ const StudentDashboard = () => {
             <div style={{ display: 'grid', gap: '20px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <h3>My Posted Jobs</h3>
-                {/* Post New Job Button (within jobs tab) */}
                 <button
-                  onClick={() => {
-                    // console.log("Post New Job button in 'jobs' tab clicked. Setting isJobFormOpen to true."); // Debugging
-                    setIsJobFormOpen(true);
-                  }}
+                  onClick={handlePostJobClick}
                   style={{
                     padding: '8px 16px',
                     backgroundColor: '#28a745',
@@ -830,7 +821,7 @@ const StudentDashboard = () => {
                 <p>Spent: {dashboardData.credits.spent}</p>
                 <p>Pending: {dashboardData.credits.pending}</p>
                 <button
-                  onClick={() => window.location.href = '/credit-purchase'}
+                  onClick={handleNavigateToBuyCredits}
                   style={{
                     padding: '10px 20px',
                     backgroundColor: '#007bff',
@@ -934,11 +925,31 @@ const StudentDashboard = () => {
               }}>
                 <h3>Account Settings</h3>
                 <ul style={{ listStyle: 'none', padding: 0 }}>
-                  <li style={{ marginBottom: '10px' }}>Change email/phone</li>
-                  <li style={{ marginBottom: '10px' }}>Password change</li>
-                  <li style={{ marginBottom: '10px' }}>Payment receiving settings</li>
-                  <li style={{ marginBottom: '10px' }}>Search engine visibility toggle</li>
-                  <li style={{ marginBottom: '10px' }}>Profile deactivation & deletion</li>
+                  <li style={{ marginBottom: '10px' }}>
+                    <label>
+                      <input type="checkbox" defaultChecked /> Change email/phone
+                    </label>
+                  </li>
+                  <li style={{ marginBottom: '10px' }}>
+                    <label>
+                      <input type="checkbox" defaultChecked /> Password change
+                    </label>
+                  </li>
+                  <li style={{ marginBottom: '10px' }}>
+                    <label>
+                      <input type="checkbox" defaultChecked /> Payment receiving settings
+                    </label>
+                  </li>
+                  <li style={{ marginBottom: '10px' }}>
+                    <label>
+                      <input type="checkbox" defaultChecked /> Search engine visibility toggle
+                    </label>
+                  </li>
+                  <li style={{ marginBottom: '10px' }}>
+                    <label>
+                      <input type="checkbox" defaultChecked /> Profile deactivation & deletion
+                    </label>
+                  </li>
                 </ul>
                 <button
                   style={{
@@ -999,15 +1010,86 @@ const StudentDashboard = () => {
           )}
         </div>
 
-        {/* Forms: This is where the JobPostForm will render */}
         {isJobFormOpen && (
           <JobPostForm
             onClose={() => {
-              // console.log("JobPostForm closed. Setting isJobFormOpen to false."); // Debugging
               setIsJobFormOpen(false);
             }}
             onJobCreated={handleJobCreated}
           />
+        )}
+
+        {showInsufficientCreditsModal && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: 'white',
+              padding: '30px',
+              borderRadius: '8px',
+              boxShadow: '0 5px 15px rgba(0, 0, 0, 0.3)',
+              textAlign: 'center',
+              maxWidth: '400px',
+              width: '90%'
+            }}>
+              <h3 style={{ color: '#dc3545', marginBottom: '15px' }}>Insufficient Credits</h3>
+              <p style={{ marginBottom: '25px', fontSize: '1.1em' }}>
+                You do not have enough credits to create a job post. Please buy more credits to proceed.
+              </p>
+              <div style={{ display: 'flex', justifyContent: 'center', gap: '15px' }}>
+                <button
+                  onClick={() => {
+                    setShowInsufficientCreditsModal(false);
+                    handleNavigateToBuyCredits();
+                  }}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#28a745',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1em',
+                    fontWeight: '500',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#218838'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#28a745'}
+                >
+                  💳 Buy Credits
+                </button>
+                <button
+                  onClick={() => setShowInsufficientCreditsModal(false)}
+                  style={{
+                    padding: '10px 20px',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1em',
+                    fontWeight: '500',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    transition: 'background-color 0.3s ease'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#5a6268'}
+                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
