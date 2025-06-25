@@ -174,7 +174,7 @@ const TeacherDashboard = () => {
     }
   });
 
-  const CREDIT_PURCHASE_ENDPOINT = `/api/credits/purchase/`;
+  const CREDIT_PURCHASE_ENDPOINT = `http://localhost:8000/api/credits/purchase/`;
   const PREMIUM_UPGRADE_ENDPOINT = `/api/premium/upgrade/`; // Not used in the provided snippet
   const MOCK_USER_ID = '1';
 
