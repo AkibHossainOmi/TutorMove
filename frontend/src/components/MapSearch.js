@@ -1,54 +1,24 @@
-import React, { useEffect, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import MarkerClusterGroup from "@changey/react-leaflet-markercluster";
+import React, { useState } from "react";
 import axios from "axios";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import "@changey/react-leaflet-markercluster/dist/styles.min.css";
 
-const DEFAULT_CENTER = [23.8103, 90.4125]; // Dhaka, Bangladesh
-const DEFAULT_ZOOM = 12;
 const SEARCH_RADIUS_KM = 20;
 
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: require("leaflet/dist/images/marker-icon-2x.png"),
-  iconUrl: require("leaflet/dist/images/marker-icon.png"),
-  shadowUrl: require("leaflet/dist/images/marker-shadow.png"),
-});
+const TutorMapSearch = () => {
+  const [query, setQuery] = useState("");
+  const [subject, setSubject] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
+  const [tutors, setTutors] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [hasSearched, setHasSearched] = useState(false); // track if search performed
 
-const LocationSearch = ({
-  query,
-  setQuery,
-  suggestions,
-  setSuggestions,
-  showSuggestions,
-  setShowSuggestions,
-  onSelectSuggestion,
-}) => {
-  const wrapperRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
-        setShowSuggestions(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [setShowSuggestions]);
-
-  const handleChange = async (e) => {
-    const val = e.target.value;
-    setQuery(val);
-    if (val.length < 3) {
-      setSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
+  const fetchSuggestions = async (text) => {
+    if (text.length < 3) return;
     try {
       const res = await axios.get("https://nominatim.openstreetmap.org/search", {
-        params: { q: val, format: "json", limit: 5 },
+        params: { q: text, format: "json", limit: 5 },
       });
       setSuggestions(res.data);
       setShowSuggestions(true);
@@ -58,167 +28,28 @@ const LocationSearch = ({
     }
   };
 
-  return (
-    <div
-      ref={wrapperRef}
-      style={{
-        position: "relative",
-        flexGrow: 1,
-        maxWidth: "100%",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-      }}
-    >
-      <input
-        type="text"
-        placeholder="Enter location..."
-        value={query}
-        onChange={handleChange}
-        onFocus={() => setShowSuggestions(true)}
-        aria-label="Search location"
-        style={{
-          width: "100%",
-          padding: "12px 14px",
-          fontSize: 16,
-          borderRadius: 6,
-          border: "1.5px solid #ccc",
-          outline: "none",
-          boxSizing: "border-box",
-          transition: "border-color 0.25s ease",
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" && suggestions.length > 0) {
-            e.preventDefault();
-            onSelectSuggestion(suggestions[0]);
-            setShowSuggestions(false);
-          }
-        }}
-      />
-      {showSuggestions && suggestions.length > 0 && (
-        <ul
-          role="listbox"
-          aria-label="Location suggestions"
-          style={{
-            position: "absolute",
-            top: "calc(100% + 4px)",
-            left: 0,
-            right: 0,
-            backgroundColor: "#fff",
-            border: "1.5px solid #ddd",
-            borderRadius: 6,
-            maxHeight: 180,
-            overflowY: "auto",
-            margin: 0,
-            padding: 0,
-            listStyle: "none",
-            boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
-            zIndex: 1000,
-          }}
-        >
-          {suggestions.map((loc) => (
-            <li
-              key={loc.place_id}
-              onClick={() => {
-                onSelectSuggestion(loc);
-                setQuery(loc.display_name);
-                setShowSuggestions(false);
-              }}
-              role="option"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  onSelectSuggestion(loc);
-                  setQuery(loc.display_name);
-                  setShowSuggestions(false);
-                }
-              }}
-              style={{
-                padding: "10px 12px",
-                cursor: "pointer",
-                borderBottom: "1px solid #eee",
-                fontSize: 14,
-                color: "#333",
-                userSelect: "none",
-              }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "#f5faff")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "transparent")
-              }
-            >
-              {loc.display_name}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-};
-
-const StarRating = ({ rating = 5 }) => {
-  // Just show filled stars up to rating (max 5)
-  const stars = Array(5)
-    .fill(0)
-    .map((_, i) => (
-      <svg
-        key={i}
-        width="16"
-        height="16"
-        viewBox="0 0 24 24"
-        fill={i < rating ? "#ffb400" : "#ddd"}
-        stroke="#ffb400"
-        strokeWidth="1"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        style={{ marginRight: 2 }}
-        aria-hidden="true"
-      >
-        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-      </svg>
-    ));
-  return <div style={{ display: "flex" }}>{stars}</div>;
-};
-
-export default function TutorMapSearch() {
-  const [query, setQuery] = useState("");
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [selectedLocation, setSelectedLocation] = useState(null);
-  const [center, setCenter] = useState(DEFAULT_CENTER);
-  const [zoom, setZoom] = useState(DEFAULT_ZOOM);
-  const [tutors, setTutors] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [hasSearched, setHasSearched] = useState(false);
-
   const handleSearch = async () => {
-    if (!selectedLocation) {
-      setError("Please select a location from suggestions.");
+    if (!selectedLocation || !subject.trim()) {
+      setError("Please select a location and subject");
       return;
     }
-    setError(null);
     setLoading(true);
+    setError(null);
     try {
       const res = await axios.post("http://localhost:8000/api/search-tutors/", {
         location: selectedLocation.display_name,
+        subject: subject.trim(),
         radius_km: SEARCH_RADIUS_KM,
       });
       setTutors(res.data.results || []);
-      setCenter([parseFloat(selectedLocation.lat), parseFloat(selectedLocation.lon)]);
-      setZoom(14);
-    } catch {
-      setError("Failed to load tutors.");
+      setHasSearched(true);
+    } catch (err) {
+      setError("Failed to fetch tutors");
       setTutors([]);
+      setHasSearched(true);
     } finally {
       setLoading(false);
-      setHasSearched(true);
     }
-  };
-
-  const handleSelectSuggestion = (loc) => {
-    setSelectedLocation(loc);
-    setQuery(loc.display_name);
-    setShowSuggestions(false);
   };
 
   return (
@@ -227,249 +58,198 @@ export default function TutorMapSearch() {
         maxWidth: 960,
         margin: "40px auto",
         padding: 24,
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        color: "#222",
+        fontFamily: "Segoe UI, sans-serif",
       }}
     >
       <h1
         style={{
           textAlign: "center",
-          marginBottom: 32,
-          fontWeight: 700,
           fontSize: "2rem",
-          color: "#111",
+          fontWeight: 700,
+          marginBottom: 30,
         }}
       >
-        Find Tutors Within {SEARCH_RADIUS_KM} km
+        Find Tutors by Location and Subject
       </h1>
 
-      {/* Search row */}
+      {/* Input Fields */}
       <div
         style={{
           display: "flex",
-          gap: 12,
-          maxWidth: 600,
+          gap: 10,
+          maxWidth: 700,
           margin: "0 auto",
-          alignItems: "center",
+          marginBottom: 20,
         }}
       >
-        <LocationSearch
-          query={query}
-          setQuery={setQuery}
-          suggestions={suggestions}
-          setSuggestions={setSuggestions}
-          showSuggestions={showSuggestions}
-          setShowSuggestions={setShowSuggestions}
-          onSelectSuggestion={handleSelectSuggestion}
+        <div style={{ flexGrow: 1, position: "relative" }}>
+          <input
+            type="text"
+            placeholder="Enter location..."
+            value={query}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              fetchSuggestions(e.target.value);
+            }}
+            onFocus={() => setShowSuggestions(true)}
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              borderRadius: 8,
+              border: "1.5px solid #ccc",
+              fontSize: 16,
+              outline: "none",
+            }}
+          />
+          {showSuggestions && suggestions.length > 0 && (
+            <ul
+              style={{
+                position: "absolute",
+                top: "100%",
+                left: 0,
+                right: 0,
+                background: "#fff",
+                border: "1px solid #ddd",
+                borderRadius: 8,
+                maxHeight: 200,
+                overflowY: "auto",
+                marginTop: 4,
+                padding: 0,
+                listStyle: "none",
+                zIndex: 10,
+              }}
+            >
+              {suggestions.map((sugg) => (
+                <li
+                  key={sugg.place_id}
+                  onClick={() => {
+                    setSelectedLocation(sugg);
+                    setQuery(sugg.display_name);
+                    setShowSuggestions(false);
+                  }}
+                  style={{
+                    padding: "10px 12px",
+                    cursor: "pointer",
+                    borderBottom: "1px solid #eee",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f8ff")}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                >
+                  {sugg.display_name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <input
+          type="text"
+          placeholder="Enter subject..."
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          style={{
+            flexGrow: 1,
+            padding: "12px 16px",
+            borderRadius: 8,
+            border: "1.5px solid #ccc",
+            fontSize: 16,
+          }}
         />
         <button
           onClick={handleSearch}
-          disabled={loading || !selectedLocation}
+          disabled={loading}
           style={{
-            padding: "12px 28px",
-            backgroundColor: loading || !selectedLocation ? "#ccc" : "#007bff",
-            color: loading || !selectedLocation ? "#666" : "#fff",
-            fontWeight: 600,
-            fontSize: 16,
-            borderRadius: 6,
+            padding: "12px 24px",
+            backgroundColor: loading ? "#ccc" : "#007bff",
+            color: "#fff",
+            borderRadius: 8,
             border: "none",
-            cursor: loading || !selectedLocation ? "not-allowed" : "pointer",
-            boxShadow: loading || !selectedLocation ? "none" : "0 2px 8px rgb(0 123 255 / 0.6)",
-            transition: "background-color 0.3s ease",
+            fontWeight: "bold",
+            cursor: loading ? "not-allowed" : "pointer",
           }}
-          aria-disabled={loading || !selectedLocation}
         >
           {loading ? "Searching..." : "Search"}
         </button>
       </div>
 
-      {/* Map */}
-      <div
-        style={{
-          height: 400,
-          marginTop: 30,
-          borderRadius: 10,
-          overflow: "hidden",
-          boxShadow: "0 6px 20px rgba(0,0,0,0.1)",
-        }}
-      >
-        <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }}>
-          <TileLayer
-            attribution="&copy; OpenStreetMap contributors"
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <MarkerClusterGroup>
-            {tutors.map((tutor) => {
-              if (!tutor.latitude || !tutor.longitude) return null;
-              return (
-                <Marker key={tutor.id} position={[tutor.latitude, tutor.longitude]}>
-                  <Popup>
-                    <div style={{ fontSize: 14 }}>
-                      <strong style={{ color: "#007bff" }}>
-                        {tutor.username || tutor.name || "Tutor"}
-                      </strong>
-                      <br />
-                      Location: {tutor.location || "Unknown"}
-                      <br />
-                      <a
-                        href={`/tutors/${tutor.id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ color: "#007bff", textDecoration: "underline" }}
-                      >
-                        View Profile
-                      </a>
-                    </div>
-                  </Popup>
-                </Marker>
-              );
-            })}
-          </MarkerClusterGroup>
-        </MapContainer>
-      </div>
+      {/* Error */}
+      {error && <p style={{ color: "red", textAlign: "center", marginTop: 10 }}>{error}</p>}
 
-      {/* Error message */}
-      {error && (
-        <p
-          role="alert"
+      {/* Tutors List */}
+      {tutors.length > 0 && (
+        <div
           style={{
-            color: "#d93025",
-            textAlign: "center",
-            marginTop: 20,
-            fontWeight: 600,
-          }}
-        >
-          {error}
-        </p>
-      )}
-
-      {/* Tutors Grid */}
-      {hasSearched && tutors.length > 0 && (
-        <section
-          aria-live="polite"
-          style={{
-            marginTop: 36,
+            marginTop: 30,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit,minmax(260px,1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
             gap: 24,
           }}
         >
           {tutors.map((tutor) => (
-            <article
+            <div
               key={tutor.id}
               style={{
                 border: "1px solid #ddd",
-                borderRadius: 8,
-                padding: 16,
-                boxShadow: "0 1px 6px rgb(0 0 0 / 0.07)",
-                backgroundColor: "#fff",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
+                borderRadius: 10,
+                padding: 20,
                 textAlign: "center",
-                transition: "box-shadow 0.3s ease",
+                background: "#fff",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
               }}
-              tabIndex={0}
-              onFocus={(e) =>
-                (e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,123,255,0.3)")
-              }
-              onBlur={(e) =>
-                (e.currentTarget.style.boxShadow = "0 1px 6px rgb(0 0 0 / 0.07)")
-              }
             >
-              {/* Avatar placeholder */}
               <div
                 style={{
-                  width: 72,
-                  height: 72,
+                  width: 70,
+                  height: 70,
                   borderRadius: "50%",
                   backgroundColor: "#007bff",
                   color: "#fff",
-                  fontWeight: "700",
                   fontSize: 28,
+                  fontWeight: 700,
                   display: "flex",
                   justifyContent: "center",
                   alignItems: "center",
-                  userSelect: "none",
-                  marginBottom: 14,
+                  margin: "0 auto 14px auto",
                   textTransform: "uppercase",
-                  boxShadow: "0 2px 8px rgba(0,123,255,0.25)",
                 }}
-                aria-label={`Avatar of ${tutor.username || tutor.name || "Tutor"}`}
+                aria-label={`Avatar for ${tutor.username || "Tutor"}`}
               >
-                {(tutor.username || tutor.name || "T").slice(0, 1)}
+                {(tutor.username || "T")[0]}
               </div>
-
-              <h3
-                style={{
-                  margin: 0,
-                  fontSize: 18,
-                  fontWeight: 700,
-                  color: "#111",
-                  marginBottom: 6,
-                }}
-              >
-                {tutor.username || tutor.name || "Tutor"}
-              </h3>
-
-              <p
-                style={{
-                  margin: 0,
-                  fontSize: 14,
-                  color: "#666",
-                  marginBottom: 8,
-                }}
-                title={tutor.location}
-              >
-                {tutor.location || "Location not provided"}
+              <h3 style={{ margin: 0, fontSize: 18 }}>{tutor.username || "Tutor"}</h3>
+              <p style={{ color: "#666", fontSize: 14, margin: "4px 0" }}>
+                Location: {tutor.location || "Unknown"}
               </p>
-
-              <StarRating rating={4 + (tutor.trust_score ? tutor.trust_score * 1 : 0)} />
-
+              <p style={{ color: "#666", fontSize: 14, margin: "4px 0" }}>
+                Trust Score: {tutor.trust_score ?? 0}
+              </p>
               <a
                 href={`/tutors/${tutor.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 style={{
-                  marginTop: 14,
-                  padding: "8px 20px",
+                  marginTop: 10,
+                  display: "inline-block",
+                  padding: "8px 16px",
                   backgroundColor: "#007bff",
                   color: "#fff",
-                  borderRadius: 6,
                   textDecoration: "none",
+                  borderRadius: 6,
                   fontWeight: 600,
-                  fontSize: 14,
-                  boxShadow: "0 3px 8px rgba(0,123,255,0.4)",
-                  transition: "background-color 0.25s ease",
                 }}
-                onMouseEnter={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#0056b3")
-                }
-                onMouseLeave={(e) =>
-                  (e.currentTarget.style.backgroundColor = "#007bff")
-                }
               >
                 View Profile
               </a>
-            </article>
+            </div>
           ))}
-        </section>
+        </div>
       )}
 
-      {hasSearched && !loading && tutors.length === 0 && !error && (
-        <p
-          style={{
-            textAlign: "center",
-            marginTop: 40,
-            color: "#555",
-            fontStyle: "italic",
-            fontSize: 16,
-          }}
-          aria-live="polite"
-        >
-          No tutors found for this location.
+      {/* No tutors message only after search */}
+      {tutors.length === 0 && !loading && hasSearched && (
+        <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>
+          No tutors found
         </p>
       )}
     </div>
   );
-}
+};
+
+export default TutorMapSearch;

@@ -74,6 +74,30 @@ class GigSerializer(serializers.ModelSerializer):
 
 
 # === CREDIT SERIALIZER ===
+class CreditUpdateByUserSerializer(serializers.Serializer):
+    user_id = serializers.IntegerField()
+    amount = serializers.IntegerField(min_value=1)
+    isincrease = serializers.BooleanField()
+
+    def validate(self, data):
+        from .models import Credit
+        try:
+            credit = Credit.objects.get(user__id=data['user_id'])
+        except Credit.DoesNotExist:
+            raise serializers.ValidationError("Credit entry not found for the user.")
+
+        # Calculate new balance
+        amount = data['amount']
+        new_balance = credit.balance + amount if data['isincrease'] else credit.balance - amount
+
+        if new_balance < 0:
+            raise serializers.ValidationError("Balance cannot go negative.")
+        if new_balance > 9223372036854776000:
+            raise serializers.ValidationError("Balance exceeds maximum limit.")
+
+        data['credit'] = credit  # Pass the credit instance forward
+        data['new_balance'] = new_balance
+        return data
 
 class CreditSerializer(serializers.ModelSerializer):
     class Meta:

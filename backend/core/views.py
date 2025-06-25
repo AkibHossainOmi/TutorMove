@@ -37,8 +37,7 @@ from .serializers import (
     ApplicationSerializer, NotificationSerializer, MessageSerializer, UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, TutorSerializer, JobListSerializer,
-    OrderSerializer,
-    PaymentSerializer,
+    OrderSerializer, PaymentSerializer, CreditUpdateByUserSerializer,
 )
 
 from .payments import SSLCommerzPayment
@@ -265,16 +264,36 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * math.asin(math.sqrt(a))
 
     return R * c
+class UserCreditBalanceView(APIView):
+    permission_classes = [AllowAny]  # no auth required
+    def get(self, request, user_id):
+        credit = get_object_or_404(Credit, user__id=user_id)
+        return Response({
+            "user_id": user_id,
+            "balance": credit.balance
+        }, status=status.HTTP_200_OK)
+
+class CreditUpdateByUserPostView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = CreditUpdateByUserSerializer(data=request.data)
+        if serializer.is_valid():
+            credit = serializer.validated_data['credit']
+            credit.balance = serializer.validated_data['new_balance']
+            credit.save()
+            return Response({
+                "user_id": credit.user.id,
+                "new_balance": credit.balance
+            }, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 class TutorSearchAPIView(APIView):
-    """
-    POST API that accepts 'location' (string),
-    returns tutors within 20 km radius of that location,
-    plus latitude and longitude of input location.
-    """
     permission_classes = [AllowAny]
 
     def post(self, request):
         input_location = request.data.get("location", "")
+        subject_query = request.data.get("subject", "").strip().lower()
+
         if not input_location:
             return Response({"error": "Location is required"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -289,7 +308,7 @@ class TutorSearchAPIView(APIView):
 
         tutors = User.objects.filter(user_type="tutor").exclude(location__isnull=True).exclude(location__exact="")
 
-        nearby_tutors = []
+        matched_tutors = []
         for tutor in tutors:
             try:
                 tutor_loc = geolocator.geocode(tutor.location)
@@ -297,16 +316,21 @@ class TutorSearchAPIView(APIView):
                     continue
                 tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
                 distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
-                if distance_km <= 20:
-                    nearby_tutors.append(tutor)
+
+                if distance_km <= 10:
+                    # Check if tutor has a Gig with matching subject
+                    matching_gigs = Gig.objects.filter(teacher=tutor)
+                    if subject_query:
+                        matching_gigs = matching_gigs.filter(subject__icontains=subject_query)
+
+                    if matching_gigs.exists():
+                        matched_tutors.append(tutor)
             except Exception:
-                # Skip tutor if geocoding fails
                 continue
 
-        serializer = UserSerializer(nearby_tutors, many=True)
-
+        serializer = UserSerializer(matched_tutors, many=True)
         return Response({
-            "count": len(nearby_tutors),
+            "count": len(matched_tutors),
             "longitude": input_lon,
             "latitude": input_lat,
             "results": serializer.data
@@ -905,6 +929,16 @@ class EscrowPaymentViewSet(viewsets.ModelViewSet):
 # --- AbuseReportSerializer not shown for brevity ---
 
 # --- SSLCommerz IPN, Success, Fail, Cancel Views ---
+def update_user_credit(user_id: int, credits_to_add: int):
+    try:
+        user = User.objects.get(id=user_id)
+        credit_obj, _ = Credit.objects.get_or_create(user=user)
+        credit_obj.balance = (credit_obj.balance or 0) + credits_to_add
+        credit_obj.save()
+        return True, credit_obj.balance
+    except User.DoesNotExist:
+        return False, "User not found"
+
 @csrf_exempt
 @api_view(['POST', 'GET'])
 @permission_classes([AllowAny])
@@ -985,8 +1019,9 @@ def payment_success_view(request):
                     'val_id': val_id,
                     'amount': str(validated_amount),
                     'status': 'SUCCESS',
-                    'type': payment_type,
+                    'credit': payment_type,
                 })
+                update_user_credit(int(user_id_str), int(payment_type))
                 return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
             else:
                 payment.status = 'FAILED'
@@ -1002,8 +1037,11 @@ def payment_success_view(request):
                 'val_id': val_id,
                 'amount': str(payment.amount),
                 'status': payment.status,
-                'type': payment_type,
+                'credit': payment_type,
             })
+            print(query)
+            print("\n")
+            print(user_id)
             return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
     else:
         # Validation failed

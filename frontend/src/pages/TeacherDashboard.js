@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import GigPostForm from '../components/GigPostForm';
 import JobCard from '../components/JobCard';
-// import TutorCard from '../components/TutorCard'; // Removed as we are using a custom GigItemCard
 import LoadingSpinner from '../components/LoadingSpinner';
 import Navbar from '../components/Navbar';
 
@@ -21,11 +20,18 @@ const useNotification = () => {
    */
   const showNotification = (message, type) => {
     console.log(`Notification (${type}): ${message}`);
-    // In a real application, you might update the notifications state
-    // For example: setNotifications(prev => [...prev, { id: Date.now(), message, type, isRead: false }]);
+    // In a real application, you would typically add to the notifications state here
+    setNotifications(prev => [...prev, { id: Date.now(), message, type, isRead: false, created_at: new Date().toISOString() }]);
   };
 
-  return { showNotification, notifications, setNotifications };
+  // Mark a notification as read (example)
+  const markAsRead = (id) => {
+    setNotifications(prev =>
+      prev.map(n => (n.id === id ? { ...n, isRead: true } : n))
+    );
+  };
+
+  return { showNotification, notifications, setNotifications, markAsRead };
 };
 
 /**
@@ -38,23 +44,49 @@ const useChat = () => ({
    * @param {string} chatId - The ID of the chat to open.
    */
   openChat: (chatId) => console.log(`Opening chat ${chatId}`),
-  unreadCount: 0 // Mock unread count
+  unreadCount: 0 // This remains a mock unread count as no API is provided for it.
 });
 
 /**
- * Mock API functions for job-related operations.
+ * API functions for job-related operations.
+ * These are kept as mocks since no specific job API endpoints were provided for actual data.
  */
 const jobAPI = {
   /**
    * Fetches mock matched jobs.
+   * In a real app, this would fetch from a /api/jobs/matched/ endpoint.
    * @returns {Promise<Object>} A promise resolving to mock job data.
    */
-  getMatchedJobs: async () => ({ data: { results: [] } }),
+  getMatchedJobs: async () => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return {
+      data: {
+        results: [
+          // Example mock job if no real data comes
+          // { id: 101, title: 'Math Tutor Needed (Grade 10)', description: 'Seeking a tutor for algebra and geometry.', subject: 'Mathematics', budget: 50, status: 'open' },
+          // { id: 102, title: 'English Essay Help', description: 'Assistance with college application essays.', subject: 'English', budget: 70, status: 'open' },
+        ]
+      }
+    };
+  },
   /**
    * Fetches mock user applications.
+   * In a real app, this would fetch from a /api/applications/my/ endpoint.
    * @returns {Promise<Object>} A promise resolving to mock application data.
    */
-  getMyApplications: async () => ({ data: { results: [] } })
+  getMyApplications: async () => {
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return {
+      data: {
+        results: [
+          // Example mock application
+          // { id: 201, jobId: 101, status: 'pending', appliedDate: '2025-06-20' }
+        ]
+      }
+    };
+  }
 };
 
 /**
@@ -63,20 +95,40 @@ const jobAPI = {
 const tutorAPI = {
   /**
    * Fetches tutor gigs for a given teacher ID.
-   * Assumes the API returns gig objects with 'title', 'description', 'subject', and 'created_at'.
+   * Assumes the API returns gig objects with 'id', 'title', 'description', 'subject', and 'created_at'.
    * @param {string} teacherId - The ID of the teacher.
-   * @returns {Promise<Array|Object>} A promise resolving to the gig data (array or object with results key).
+   * @returns {Promise<Array>} A promise resolving to an array of gig data.
    * @throws {Error} If there's an error fetching the gigs.
    */
   getTutorGigs: async (teacherId) => {
     try {
-      // Corrected API endpoint for fetching gigs by teacher ID
       const response = await axios.get(`http://localhost:8000/api/gigs/teacher/${teacherId}/`);
-      // Assuming Django API returns an array of gig objects directly or within a 'results' key
+      // API might return an array directly or an object with a 'results' key (for pagination)
+      // We normalize it to always return an array
+      return Array.isArray(response.data) ? response.data : response.data.results || [];
+    } catch (error) {
+      console.error("Error fetching tutor gigs:", error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
+/**
+ * API functions for credit-related operations.
+ */
+const creditAPI = {
+  /**
+   * Fetches the credit balance for a given user ID.
+   * @param {string} userId - The ID of the user.
+   * @returns {Promise<Object>} A promise resolving to the credit balance data { user_id: number, balance: number }.
+   * @throws {Error} If there's an error fetching the credit balance.
+   */
+  getUserCredits: async (userId) => {
+    try {
+      const response = await axios.get(`http://localhost:8000/api/credit/user/${userId}`);
       return response.data;
     } catch (error) {
-      console.error("Error fetching tutor gigs:", error.response ? error.response.data : error.message);
-      // Re-throw to be caught by the calling function (loadDashboardData)
+      console.error("Error fetching user credits:", error.response?.data || error.message);
       throw error;
     }
   }
@@ -105,12 +157,11 @@ const TeacherVerificationButton = () => (
 
 /**
  * Component to display individual gig information in a card format.
- * It expects a 'gig' object with 'title', 'description', 'subject', and 'created_at'.
+ * It expects a 'gig' object with 'id', 'title', 'description', 'subject', and 'created_at'.
  * @param {Object} props - The component props.
  * @param {Object} props.gig - The gig object to display.
  */
 const GigItemCard = ({ gig }) => {
-  // Destructure the required properties from the gig object
   const { title, description, subject, created_at } = gig;
 
   return (
@@ -151,32 +202,34 @@ const GigItemCard = ({ gig }) => {
  * Displays various information relevant to a tutor, including gigs, jobs, and wallet.
  */
 const TeacherDashboard = () => {
-  const { showNotification, notifications, setNotifications } = useNotification();
-  const { unreadCount } = useChat();
+  const { showNotification, notifications, setNotifications, markAsRead } = useNotification();
+  const { unreadCount } = useChat(); // unreadCount remains mock as no API is provided
 
   const [user, setUser] = useState(null);
   const [isGigFormOpen, setIsGigFormOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [showNotificationsDropdown, setShowNotificationsDropdown] = useState(false); // Renamed to avoid confusion
+
+  // Initial dashboard data with actual defaults instead of mock values
   const [dashboardData, setDashboardData] = useState({
     myGigs: [],
     matchedJobs: [],
     applications: [],
     earnings: {
-      total: 0,
-      pending: 0,
-      completed: 0
+      total: 0, // Will be fetched from credit API
+      pending: 0, // Should be calculated from real gig/job data
+      completed: 0 // Should be calculated from real gig/job data
     },
     stats: {
-      activeGigs: 0,
-      completedJobs: 0,
+      activeGigs: 0, // Calculated from myGigs
+      completedJobs: 0, // Calculated from applications
+      creditBalance: 0, // Fetched from credit API
     }
   });
 
   const CREDIT_PURCHASE_ENDPOINT = `http://localhost:8000/api/credits/purchase/`;
-  const PREMIUM_UPGRADE_ENDPOINT = `/api/premium/upgrade/`; // Not used in the provided snippet
-  const MOCK_USER_ID = '1';
+  // const PREMIUM_UPGRADE_ENDPOINT = `/api/premium/upgrade/`; // Not used in the provided snippet
 
   /**
    * useEffect hook to load user data from localStorage and then dashboard data.
@@ -189,6 +242,7 @@ const TeacherDashboard = () => {
         setUser(storedUser);
         loadDashboardData(storedUser);
       } else {
+        // If no user or not a tutor, set loading to false and user to null
         setIsLoading(false);
         setUser(null);
       }
@@ -208,45 +262,45 @@ const TeacherDashboard = () => {
     try {
       if (!currentUser || !currentUser.user_id) {
         showNotification("User ID not found. Cannot fetch dashboard data.", 'error');
+        setIsLoading(false);
         return;
       }
 
-      const gigsData = await tutorAPI.getTutorGigs(currentUser.user_id); // This already returns response.data
+      // Fetch all data concurrently
+      const [gigsData, creditBalanceData, matchedJobsResponse, applicationsResponse] = await Promise.all([
+        tutorAPI.getTutorGigs(currentUser.user_id),
+        creditAPI.getUserCredits(currentUser.user_id),
+        jobAPI.getMatchedJobs(), // This is still a mock
+        jobAPI.getMyApplications(), // This is still a mock
+      ]);
 
-      // Safely determine myGigs from gigsData
-      let myGigs = [];
-      if (gigsData && Array.isArray(gigsData.results)) {
-        myGigs = gigsData.results; // If it's paginated, like { count: N, results: [...] }
-      } else if (gigsData && Array.isArray(gigsData)) {
-        myGigs = gigsData; // If it's a direct array of gigs
-      } else {
-        // Fallback if data format is unexpected or empty
-        console.warn("Unexpected gig data format or no gigs found:", gigsData);
-        myGigs = [];
-      }
-
-      const matchedJobsResponse = await jobAPI.getMatchedJobs();
-      const applicationsResponse = await jobAPI.getMyApplications();
+      const myGigs = gigsData || []; // Ensure it's an array
+      const matchedJobs = matchedJobsResponse.data?.results || [];
+      const applications = applicationsResponse.data?.results || [];
+      const creditBalance = creditBalanceData.balance || 0;
 
       setDashboardData(prev => ({
         ...prev,
-        myGigs: myGigs, // Use the safely determined myGigs
-        matchedJobs: matchedJobsResponse.data.results || [],
-        applications: applicationsResponse.data.results || [],
+        myGigs: myGigs,
+        matchedJobs: matchedJobs,
+        applications: applications,
         earnings: {
-          total: myGigs.length * 50, // Example calculation
-          pending: myGigs.filter(gig => gig.status === 'pending').length * 20, // Example calculation
-          completed: myGigs.filter(gig => gig.status === 'completed').length * 50 // Example calculation
+          total: creditBalance, // Directly from API
+          // These calculations remain example-based as real logic is not provided
+          pending: myGigs.filter(gig => gig.status === 'pending').length * 20,
+          completed: myGigs.filter(gig => gig.status === 'completed').length * 50
         },
         stats: {
           activeGigs: myGigs.filter(gig => gig.status === 'active').length || 0,
-          completedJobs: applicationsResponse.data.results?.filter(app => app.status === 'completed').length || 0,
+          completedJobs: applications.filter(app => app.status === 'completed').length || 0,
+          creditBalance: creditBalance,
         }
       }));
+      showNotification('Dashboard data loaded successfully!', 'success');
     } catch (error) {
       console.error("Error loading dashboard data:", error);
       showNotification(
-        `Failed to load dashboard data: ${error.message || 'Network error'}`,
+        `Failed to load dashboard data: ${error.response?.data?.detail || error.message || 'Network error'}`,
         'error'
       );
     } finally {
@@ -260,14 +314,21 @@ const TeacherDashboard = () => {
    * @param {Object} newGig - The newly created gig object.
    */
   const handleGigCreated = (newGig) => {
-    setDashboardData(prev => ({
-      ...prev,
-      myGigs: [newGig, ...prev.myGigs],
-      stats: {
-        ...prev.stats,
-        activeGigs: prev.stats.activeGigs + 1
-      }
-    }));
+    // Reloading all dashboard data is safer to ensure all stats are updated correctly
+    // or you can optimistically update if you're sure about the structure.
+    // For simplicity and data consistency, let's reload if the user is available.
+    if (user) {
+      loadDashboardData(user);
+    } else {
+      setDashboardData(prev => ({
+        ...prev,
+        myGigs: [newGig, ...prev.myGigs],
+        stats: {
+          ...prev.stats,
+          activeGigs: prev.stats.activeGigs + 1
+        }
+      }));
+    }
     setIsGigFormOpen(false);
     showNotification('Gig created successfully!', 'success');
   };
@@ -337,19 +398,25 @@ const TeacherDashboard = () => {
    */
   function showStatus(message, isError = false) {
     setStatusMessage(message);
-    console.log(isError ? `ERROR: ${message}` : `SUCCESS: ${message}`);
+    // You might want to use showNotification instead for consistency in UI notifications
+    showNotification(message, isError ? 'error' : 'success');
   }
 
   /**
    * Handles the action of buying credits, initiating a payment process.
    */
   const handleBuyCredits = async () => {
-    showLoading('Initiating credit purchase...');
+    if (!user?.user_id) {
+      showNotification("User not logged in or user ID not found.", 'error');
+      return;
+    }
+
+    // showLoading('Initiating credit purchase...');
     try {
       const purchaseData = {
-        credits: 10,
-        amount: 100.00,
-        user_id: user?.user_id || MOCK_USER_ID
+        credits: 10, // Example fixed amount
+        amount: 100.00, // Example fixed price
+        user_id: user.user_id
       };
 
       const response = await axios.post(
@@ -364,7 +431,7 @@ const TeacherDashboard = () => {
 
       hideLoading();
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
-        showStatus('Redirecting to SSLCommerz...', false);
+        showStatus('Redirecting to payment gateway...', false);
         window.location.href = response.data.payment_url;
       } else {
         const errorMessage = response.data.error || 'Unknown error during payment initiation.';
@@ -372,7 +439,7 @@ const TeacherDashboard = () => {
       }
     } catch (error) {
       hideLoading();
-      console.error('Error initiating credit purchase:', error.response ? error.response.data : error.message);
+      console.error('Error initiating credit purchase:', error.response?.data || error.message);
       const userMessage = error.response?.data?.error || 'Could not initiate payment. Please try again.';
       showStatus(`Error: ${userMessage}`, true);
     }
@@ -388,13 +455,11 @@ const TeacherDashboard = () => {
     return (
       <>
         <Navbar />
-        <div style={{ height: '100px' }}></div>
+        <div style={{ height: '100px' }}></div> {/* Spacer for fixed navbar */}
         <div style={{ padding: '30px', maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
           <h2>Access Denied</h2>
           <p>You must be a **tutor** to access this dashboard. Your current role is: **{user?.user_type || 'Unknown'}**</p>
-          {user?.user_type === 'teacher' && (
-            <p>Please navigate to the **Teacher Dashboard**.</p>
-          )}
+          {/* Removed the 'teacher' specific message as user_type 'teacher' might not be distinct from 'tutor' in your system, or is a typo. */}
           <button
             onClick={() => window.location.href = '/'}
             style={{
@@ -441,7 +506,7 @@ const TeacherDashboard = () => {
             gap: '10px'
           }}>
             <h1 style={{ margin: 0, color: '#212529', fontSize: '2em' }}>
-              Teacher Dashboard - Welcome, {user?.username}!
+              Teacher Dashboard - Welcome, {user?.username || 'Teacher'}!
             </h1>
             <TeacherVerificationButton />
           </div>
@@ -456,7 +521,7 @@ const TeacherDashboard = () => {
             {/* Notifications Button */}
             <div style={{ position: 'relative' }}>
               <button
-                onClick={() => setShowNotifications(!showNotifications)}
+                onClick={() => setShowNotificationsDropdown(!showNotificationsDropdown)}
                 style={{
                   padding: '10px 15px',
                   backgroundColor: '#6c757d',
@@ -474,7 +539,7 @@ const TeacherDashboard = () => {
                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#6c757d'}
               >
                 🔔 Notifications
-                {notifications?.filter(n => !n.isRead).length > 0 && (
+                {notifications.filter(n => !n.isRead).length > 0 && (
                   <span style={{
                     position: 'absolute',
                     top: '-8px',
@@ -495,7 +560,7 @@ const TeacherDashboard = () => {
                   </span>
                 )}
               </button>
-              {showNotifications && (
+              {showNotificationsDropdown && (
                 <div style={{
                   position: 'absolute',
                   top: 'calc(100% + 10px)',
@@ -519,18 +584,21 @@ const TeacherDashboard = () => {
                   <div style={{ padding: '15px', borderBottom: '1px solid #dee2e6', backgroundColor: '#f8f9fa' }}>
                     <h4 style={{ margin: 0, color: '#343a40' }}>Notifications</h4>
                   </div>
-                  {notifications?.length > 0 ? (
+                  {notifications.length > 0 ? (
                     notifications.slice(0, 5).map(notification => (
-                      <div key={notification.id} style={{
-                        padding: '12px 15px',
-                        borderBottom: '1px solid #f8f9fa',
-                        backgroundColor: notification.isRead ? 'white' : '#eaf4ff',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease',
-                        fontSize: '0.9em'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '#f8f9fa' : '#dff0ff'}
-                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#eaf4ff'}
+                      <div
+                        key={notification.id}
+                        onClick={() => markAsRead(notification.id)} // Mark as read on click
+                        style={{
+                          padding: '12px 15px',
+                          borderBottom: '1px solid #f8f9fa',
+                          backgroundColor: notification.isRead ? 'white' : '#eaf4ff',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease',
+                          fontSize: '0.9em'
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? '#f8f9fa' : '#dff0ff'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = notification.isRead ? 'white' : '#eaf4ff'}
                       >
                         <p style={{ margin: 0, fontWeight: notification.isRead ? 'normal' : 'bold' }}>{notification.message}</p>
                         <small style={{ color: '#6c757d' }}>
@@ -588,7 +656,7 @@ const TeacherDashboard = () => {
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#17a2b8'}
             >
               💬 Messages
-              {unreadCount > 0 && (
+              {unreadCount > 0 && ( // This is still a mock unreadCount
                 <span style={{
                   position: 'absolute',
                   top: '-8px',
@@ -673,8 +741,8 @@ const TeacherDashboard = () => {
           marginBottom: '30px'
         }}>
           <StatCard
-            title="Total Earnings"
-            value={`${dashboardData.earnings.total} Credits`}
+            title="Current Credits" // Changed title to reflect actual credit balance
+            value={`${dashboardData.stats.creditBalance} Credits`}
             icon="💰"
             color="#28a745"
           />
@@ -794,9 +862,9 @@ const TeacherDashboard = () => {
                 </button>
               </div>
               {dashboardData.myGigs.length > 0 ? (
-                dashboardData.myGigs.map((gig) => { // Changed to explicit return
-                  return <GigItemCard key={gig.id} gig={gig} />; // Renders the new GigItemCard
-                })
+                dashboardData.myGigs.map((gig) => (
+                  <GigItemCard key={gig.id} gig={gig} />
+                ))
               ) : (
                 <p style={{ color: '#6c757d', textAlign: 'center' }}>You haven't created any gigs yet. Click "Add New Gig" to get started!</p>
               )}
@@ -818,9 +886,9 @@ const TeacherDashboard = () => {
                 borderLeft: '5px solid #28a745'
               }}>
                 <h3 style={{ color: '#28a745', marginBottom: '15px' }}>Credit Wallet</h3>
-                <p style={{ fontSize: '1.2em', marginBottom: '10px' }}><strong>Available Credits:</strong> <span style={{ color: '#28a745', fontWeight: 'bold' }}>{dashboardData.earnings.total}</span></p>
-                <p style={{ fontSize: '1em', marginBottom: '5px' }}>Pending: {dashboardData.earnings.pending}</p>
-                <p style={{ fontSize: '1em' }}>Completed: {dashboardData.earnings.completed}</p>
+                <p style={{ fontSize: '1.2em', marginBottom: '10px' }}><strong>Available Credits:</strong> <span style={{ color: '#28a745', fontWeight: 'bold' }}>{dashboardData.stats.creditBalance}</span></p>
+                <p style={{ fontSize: '1em', marginBottom: '5px' }}>Pending Earnings (Estimated): {dashboardData.earnings.pending}</p>
+                <p style={{ fontSize: '1em' }}>Completed Earnings (Estimated): {dashboardData.earnings.completed}</p>
                 <button
                   onClick={handleBuyCredits}
                   style={{
@@ -853,7 +921,6 @@ const TeacherDashboard = () => {
                 <p style={{ marginBottom: '10px' }}>Configure your payout account.</p>
                 <p>Review your transaction history.</p>
                 <button
-                  // Using console.log instead of alert() for better user experience within an iframe
                   onClick={() => console.log('Navigate to payment history page!')}
                   style={{
                     padding: '10px 20px',
@@ -884,7 +951,6 @@ const TeacherDashboard = () => {
                 <h3 style={{ color: '#17a2b8', marginBottom: '15px' }}>Refer & Earn</h3>
                 <p style={{ marginBottom: '10px' }}>Invite friends to the platform and earn free credits when they sign up and complete their first lesson!</p>
                 <button
-                  // Using console.log instead of alert() for better user experience within an iframe
                   onClick={() => console.log('Navigate to refer & earn page!')}
                   style={{
                     padding: '10px 20px',
@@ -910,10 +976,44 @@ const TeacherDashboard = () => {
 
           {/* Add Premium Tab content if needed */}
           {activeTab === 'premium' && (
-            <div className="premium-tab-content">
-              <h3>Premium Features</h3>
-              <p>Upgrade to unlock exclusive features and benefits!</p>
-              {/* Add premium upgrade button/info here */}
+            <div className="premium-tab-content" style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              padding: '25px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              borderLeft: '5px solid #ffc107',
+              textAlign: 'center'
+            }}>
+              <h3 style={{ color: '#ffc107', marginBottom: '15px' }}>Unlock Premium Features! 🚀</h3>
+              <p style={{ fontSize: '1.1em', marginBottom: '20px', color: '#555' }}>
+                Upgrade to a premium membership to gain access to exclusive benefits, including:
+              </p>
+              <ul style={{ listStyleType: 'none', padding: 0, margin: '0 auto 20px', maxWidth: '400px', textAlign: 'left' }}>
+                <li style={{ marginBottom: '10px', fontSize: '1em' }}>✨ Priority listing in search results</li>
+                <li style={{ marginBottom: '10px', fontSize: '1em' }}>📈 Advanced analytics for your gigs</li>
+                <li style={{ marginBottom: '10px', fontSize: '1em' }}>📞 Direct support access</li>
+                <li style={{ fontSize: '1em' }}>🎁 Special discounts on credit purchases</li>
+              </ul>
+              <button
+                // onClick={() => window.location.href = PREMIUM_UPGRADE_ENDPOINT} // Uncomment and implement if you have a premium upgrade page
+                onClick={() => showNotification("Premium upgrade feature coming soon!", "info")}
+                style={{
+                  padding: '12px 25px',
+                  backgroundColor: '#ffc107',
+                  color: '#212529',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                  fontSize: '1.1em',
+                  fontWeight: '600',
+                  boxShadow: '0 4px 8px rgba(0,0,0,0.15)',
+                  transition: 'background-color 0.3s ease, transform 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#e0a800'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#ffc107'}
+              >
+                Upgrade to Premium
+              </button>
             </div>
           )}
 
@@ -924,6 +1024,7 @@ const TeacherDashboard = () => {
           <GigPostForm
             onClose={() => setIsGigFormOpen(false)}
             onGigCreated={handleGigCreated}
+            userId={user?.user_id} // Pass userId to the form
           />
         )}
       </div>

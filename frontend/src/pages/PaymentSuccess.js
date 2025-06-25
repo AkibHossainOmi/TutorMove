@@ -8,10 +8,10 @@ const PaymentSuccess = () => {
   const transactionId = searchParams.get('tran_id') || 'N/A';
   const amount = searchParams.get('amount') || 'N/A';
   const currency = searchParams.get('currency') || 'BDT';
-  const type = searchParams.get('type') || 'purchase'; // e.g., 'credit_purchase', 'premium_upgrade'
+  const credit = searchParams.get('credit') || 'purchase'; // e.g., 'credit_purchase', 'premium_upgrade'
 
-  // Success message based on payment type
-  const successMessage = type === 'premium_upgrade' 
+  // Success message based on payment credit
+  const successMessage = credit === 'premium_upgrade' 
     ? "Your account has been successfully upgraded to Premium!"
     : `Your payment was successful! You've received ${amount} ${currency}.`;
 
@@ -134,8 +134,12 @@ const PaymentSuccess = () => {
         <div style={detailStyle}>
           <strong>Transaction ID:</strong> {transactionId}
           <br/>
-          {type !== 'premium_upgrade' && (
+          {credit !== 'premium_upgrade' && (
             <span><strong>Amount:</strong> {amount} {currency}</span>
+          )}
+          <br/>
+          {credit !== 'premium_upgrade' && (
+            <span><strong>Credit:</strong> {credit}</span>
           )}
         </div>
 

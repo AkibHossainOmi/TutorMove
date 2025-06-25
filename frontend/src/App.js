@@ -35,10 +35,10 @@ import ResetPassword from './pages/ResetPassword';
 
 
 // Map Search (if needed)
-import MapSearch from './pages/MapSearch'; // adjust import if you have
 import ProtectedRoute from './contexts/ProtectedRoute';
 import { useAuth } from './contexts/UseAuth';
 import Dashboard from './pages/Dashboard';
+import TutorMapSearch from './components/MapSearch';
 
 
 // Additional Policy Pages
@@ -110,8 +110,8 @@ function App() {
             <Route path="/payments/cancel" element={<PaymentCancel />} />
 
             {/* Map Search functionality */}
-            <Route path="/map-search" element={<MapSearch mode="gigs" radiusKm={20} />} />
-            <Route path="/job-map" element={<MapSearch mode="jobs" radiusKm={20} />} />
+            <Route path="/map-search" element={<TutorMapSearch mode="gigs" radiusKm={20} />} />
+            <Route path="/job-map" element={<TutorMapSearch mode="jobs" radiusKm={20} />} />
           </Route>
         </Routes>
       </BrowserRouter>

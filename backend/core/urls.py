@@ -8,7 +8,8 @@ from .views import (
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, UserProfileView, UserProfileUpdateByIdView,
-    TutorSearchAPIView, JobCreateAPIView, JobDetailAPIView, GigCreateAPIView,GigListByTeacherAPIView,
+    TutorSearchAPIView, JobCreateAPIView, JobDetailAPIView, GigCreateAPIView,GigListByTeacherAPIView, CreditUpdateByUserPostView,
+    UserCreditBalanceView,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -55,6 +56,8 @@ urlpatterns = [
     path('jobs/<int:pk>/', JobDetailAPIView.as_view(), name='job-detail'),
     path('gigs/create/', GigCreateAPIView.as_view(), name='gig-create'),
     path('gigs/teacher/<int:teacher_id>/', GigListByTeacherAPIView.as_view(), name='gigs-by-teacher'),
+    path('credit/update/', CreditUpdateByUserPostView.as_view(), name='credit-update-by-user'),
+    path('credit/user/<int:user_id>/', UserCreditBalanceView.as_view(), name='user-credit-balance'),
     # All other API endpoints handled by the router
     path('', include(router.urls)),
 
