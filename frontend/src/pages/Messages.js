@@ -11,7 +11,9 @@ export default function WhatsAppLikeMessaging() {
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const messagesContainerRef = useRef(null); 
+  const messagesContainerRef = useRef(null);
+
+  // Load userId from localStorage on mount
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) {
@@ -20,39 +22,56 @@ export default function WhatsAppLikeMessaging() {
     }
   }, []);
 
-  useEffect(() => {
+  // Helper: Fetch conversations for current user
+  const fetchConversations = () => {
     if (!userId) return;
     axios.post('http://localhost:8000/api/conversations/', { user_id: userId })
       .then(res => setConversations(res.data))
       .catch(console.error);
-    setActiveConversation(null);
-    setMessages([]);
+  };
+
+  // Fetch conversations on userId load
+  useEffect(() => {
+    if (!userId) return;
+  
+    // Initial fetch
+    fetchConversations();
+  
+    // Poll every 2 seconds
+    const intervalId = setInterval(fetchConversations, 60000);
+  
+    // Cleanup on unmount
+    return () => clearInterval(intervalId);
   }, [userId]);
 
+  // Fetch messages for active conversation and mark as read
   useEffect(() => {
-    if (!activeConversation?.id) return;
-  
-    // Fetch messages immediately once
-    const fetchMessages = () => {
-      axios.post('http://localhost:8000/api/conversations/messages/', { conversation_id: activeConversation.id })
-        .then(res => setMessages(res.data))
-        .catch(console.error);
-    };
-  
-    fetchMessages();
-  
-    // Poll every 20 seconds
-    const intervalId = setInterval(fetchMessages, 1000);
-  
-    return () => clearInterval(intervalId);  // cleanup on unmount or activeConversation change
-  }, [activeConversation]);  
+    if (!activeConversation?.id || !userId) return;
 
+    const fetchMessages = () => {
+      axios.post('http://localhost:8000/api/conversations/messages/', {
+        conversation_id: activeConversation.id,
+        user_id: userId,
+      })
+      .then(res => setMessages(res.data))
+      .catch(console.error);
+    };
+
+    fetchMessages();
+
+    const intervalId = setInterval(fetchMessages, 2000);
+
+    return () => clearInterval(intervalId);
+  }, [activeConversation, userId]);
+
+  // Auto-scroll messages container to bottom on messages update
   useEffect(() => {
     if (messagesContainerRef.current) {
       messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
     }
   }, [messages]);
 
+  // Search users by keyword
   const handleSearch = () => {
     if (!searchTerm.trim()) return;
     axios.post('http://localhost:8000/api/users/search/', { keyword: searchTerm.trim() })
@@ -60,25 +79,32 @@ export default function WhatsAppLikeMessaging() {
       .catch(console.error);
   };
 
+  // Start or open conversation with other user
   const startConversation = (otherUser) => {
     if (!userId) return alert('User not found. Please login.');
-  
+
     const existingConv = conversations.find(c =>
       (c.user1.id === otherUser.id && c.user2.id === userId) ||
       (c.user2.id === otherUser.id && c.user1.id === userId)
     );
-  
+
     setActiveConversation(existingConv || { id: null, user1: { id: userId }, user2: otherUser, messages: [] });
-  
-    // Clear messages if new conversation (no id)
+
     if (!existingConv) {
       setMessages([]);
     }
-  
+
     setSearchResults([]);
     setSearchTerm('');
-  };  
+  };
 
+  // Handle conversation click: set active and refresh conversations to update unread status
+  const handleConversationClick = (conv) => {
+    setActiveConversation(conv);
+    fetchConversations();  // Refresh to update unread state after opening
+  };
+
+  // Send new message
   const sendMessage = () => {
     if (!newMessage.trim() || !userId || !activeConversation) return;
 
@@ -92,6 +118,7 @@ export default function WhatsAppLikeMessaging() {
       content: newMessage.trim(),
     }).then(res => {
       if (!activeConversation.id) {
+        // If new conversation, refresh list and set active conversation
         axios.post('http://localhost:8000/api/conversations/', { user_id: userId })
           .then(res2 => {
             setConversations(res2.data);
@@ -102,17 +129,20 @@ export default function WhatsAppLikeMessaging() {
             setActiveConversation(conv);
           });
       } else {
+        // Append message in current conversation
         setMessages(prev => [...prev, res.data]);
       }
       setNewMessage('');
     }).catch(console.error);
   };
 
+  // Format timestamp to hh:mm
   const formatTime = (timestamp) => {
     const date = new Date(timestamp);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // If no userId found, prompt login
   if (!userId) {
     return (
       <div className="h-screen flex items-center justify-center text-gray-600">
@@ -145,8 +175,14 @@ export default function WhatsAppLikeMessaging() {
               {searchResults.length > 0 && (
                 <div className="bg-white border border-green-500 rounded mt-2 max-h-60 overflow-y-auto shadow-lg">
                   {searchResults.map(user => (
-                    <div key={user.id} className="flex items-center gap-3 px-4 py-2 hover:bg-green-100 cursor-pointer" onClick={() => startConversation(user)}>
-                      <div className="bg-green-400 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">{user.username.charAt(0).toUpperCase()}</div>
+                    <div
+                      key={user.id}
+                      className="flex items-center gap-3 px-4 py-2 hover:bg-green-100 cursor-pointer"
+                      onClick={() => startConversation(user)}
+                    >
+                      <div className="bg-green-400 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">
+                        {user.username.charAt(0).toUpperCase()}
+                      </div>
                       <span className="text-gray-700 text-sm">{user.username}</span>
                     </div>
                   ))}
@@ -160,8 +196,15 @@ export default function WhatsAppLikeMessaging() {
                 conversations.map(conv => {
                   const otherUser = conv.user1.id === userId ? conv.user2 : conv.user1;
                   const isActive = activeConversation?.id === conv.id;
+                  const isUnread = conv.has_unread;
+
                   return (
-                    <div key={conv.id} onClick={() => setActiveConversation(conv)} className={`flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-green-100 border-l-4 ${isActive ? 'border-green-500 bg-green-50' : 'border-transparent'}`}>
+                    <div
+                      key={conv.id}
+                      onClick={() => handleConversationClick(conv)}
+                      className={`flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-green-100 border-l-4 ${isActive ? 'border-green-500 bg-green-50' : 'border-transparent'}`}
+                      style={{ fontWeight: isUnread ? '700' : '400' }}
+                    >
                       <div className="bg-green-400 rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-xl">
                         {otherUser.username.charAt(0).toUpperCase()}
                       </div>

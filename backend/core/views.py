@@ -69,7 +69,7 @@ class ConversationListView(APIView):
             return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
         conversations = Conversation.objects.filter(Q(user1_id=user_id) | Q(user2_id=user_id))
-        serializer = ConversationSerializer(conversations, many=True)
+        serializer = ConversationSerializer(conversations, many=True, context={'current_user_id': int(user_id)})
         return Response(serializer.data)
 
 class ConversationMessagesView(APIView):
@@ -77,15 +77,19 @@ class ConversationMessagesView(APIView):
 
     def post(self, request):
         conversation_id = request.data.get('conversation_id')
-        if not conversation_id:
-            return Response({'error': 'conversation_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        user_id = request.data.get('user_id')  # pass user_id as well
+
+        if not conversation_id or not user_id:
+            return Response({'error': 'conversation_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             conversation = Conversation.objects.get(id=conversation_id)
         except Conversation.DoesNotExist:
             return Response({'error': 'conversation not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        # Use the related name 'chats' from Chat model
+        # Mark unread messages as read where sender is NOT the current user
+        conversation.chats.filter(is_read=False).exclude(sender_id=user_id).update(is_read=True)
+
         chats = conversation.chats.all()
         serializer = ChatSerializer(chats, many=True)
         return Response(serializer.data)

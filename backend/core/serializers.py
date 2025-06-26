@@ -26,16 +26,24 @@ class ConversationSerializer(serializers.ModelSerializer):
     user1 = UserSerializer()
     user2 = UserSerializer()
     last_message = serializers.SerializerMethodField()
+    has_unread = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
-        fields = ['id', 'user1', 'user2', 'last_message']
+        fields = ['id', 'user1', 'user2', 'last_message', 'has_unread']
 
     def get_last_message(self, obj):
-        last_chat = obj.chats.last()  # use related_name 'chats' from Chat model
+        last_chat = obj.chats.last()
         if last_chat:
             return ChatSerializer(last_chat).data
         return None
+
+    def get_has_unread(self, obj):
+        current_user_id = self.context.get('current_user_id')
+        if not current_user_id:
+            return False
+        # Unread messages sent by the other user
+        return obj.chats.filter(is_read=False).exclude(sender_id=current_user_id).exists()
 
 # === AUTH & PASSWORD RESET SERIALIZERS ===
 
