@@ -157,7 +157,7 @@ const JobList = () => {
       <Navbar />
       <div style={{ height: '150px' }}></div>
       <div style={containerStyle}>
-        <h2 style={headerStyle}>Browse Available Gigs</h2>
+        <h2 style={headerStyle}>Browse Available Jobs</h2>
         {jobs.length === 0 ? (
           <p style={messageStyle}>No jobs found at the moment. Check back soon!</p>
         ) : (

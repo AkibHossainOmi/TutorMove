@@ -1,4 +1,5 @@
 
+from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 from geopy.geocoders import Nominatim
 from rest_framework.views import APIView
 from django.db.models import Q

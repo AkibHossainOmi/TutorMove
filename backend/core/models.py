@@ -218,7 +218,7 @@ class Job(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     subject = models.TextField()
-    subjects = models.ManyToManyField('Subject', related_name='gigs_as_job')
+    subjects = models.ManyToManyField('Subject', related_name='gigs_as_job', null=True, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

@@ -49,7 +49,7 @@ const JobPostForm = ({ onClose, onJobCreated, studentId }) => {
         location: formData.location,
       };
 
-      const response = await axios.post('/api/jobs/create', payload); // Adjust API URL if needed
+      const response = await axios.post('http://localhost:8000/api/jobs/create', payload); // Adjust API URL if needed
       if (response.status === 201) {
         setSuccessMessage('Job posted successfully!');
         onJobCreated && onJobCreated(response.data);
