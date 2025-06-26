@@ -5,10 +5,37 @@ from rest_framework import serializers
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
-    Order, Payment
+    Order, Payment, Conversation, Chat,
 )
 
 User = get_user_model()
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']
+
+class ChatSerializer(serializers.ModelSerializer):
+    sender = UserSerializer(read_only=True)
+
+    class Meta:
+        model = Chat
+        fields = ['id', 'sender', 'content', 'timestamp']
+
+class ConversationSerializer(serializers.ModelSerializer):
+    user1 = UserSerializer()
+    user2 = UserSerializer()
+    last_message = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Conversation
+        fields = ['id', 'user1', 'user2', 'last_message']
+
+    def get_last_message(self, obj):
+        last_chat = obj.chats.last()  # use related_name 'chats' from Chat model
+        if last_chat:
+            return ChatSerializer(last_chat).data
+        return None
 
 # === AUTH & PASSWORD RESET SERIALIZERS ===
 

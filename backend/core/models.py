@@ -22,7 +22,6 @@ class User(AbstractUser):
     phone_otp_expires = models.DateTimeField(blank=True, null=True)
     trust_score = models.FloatField(default=1.0)
     is_verified = models.BooleanField(default=False)
-    is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
     verification_requested = models.BooleanField(default=False)
     verification_doc = models.FileField(upload_to='verification_docs/', blank=True, null=True)
     verification_requested = models.BooleanField(default=False) # Reverted: Original duplicate field
@@ -162,6 +161,26 @@ class Subject(models.Model):
 
     def __str__(self):
         return self.name
+
+class Conversation(models.Model):
+    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_user1')
+    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_user2')
+
+    def __str__(self):
+        return f"Conversation between {self.user1.username} and {self.user2.username}"
+
+class Chat(models.Model):
+    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='chats')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"{self.sender.username}: {self.content[:20]}"
+
 
 
 # models.py

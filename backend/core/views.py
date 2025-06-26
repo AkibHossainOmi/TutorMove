@@ -30,7 +30,7 @@ from django.http import JsonResponse
 from urllib.parse import urlencode
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment
+    Order, Payment, Conversation, Chat,
 )
 from .serializers import (
     UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
@@ -38,6 +38,7 @@ from .serializers import (
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, TutorSerializer, JobListSerializer,
     OrderSerializer, PaymentSerializer, CreditUpdateByUserSerializer,
+    UserSerializer, ConversationSerializer, ChatSerializer,
 )
 
 from .payments import SSLCommerzPayment
@@ -46,6 +47,74 @@ from .payments import SSLCommerzPayment
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+
+class UserSearchView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        keyword = request.data.get('keyword', '').strip()
+        if not keyword:
+            return Response({'error': 'keyword is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        users = User.objects.filter(username__icontains=keyword)[:20]
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+
+class ConversationListView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        user_id = request.data.get('user_id')
+        if not user_id:
+            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        conversations = Conversation.objects.filter(Q(user1_id=user_id) | Q(user2_id=user_id))
+        serializer = ConversationSerializer(conversations, many=True)
+        return Response(serializer.data)
+
+class ConversationMessagesView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        conversation_id = request.data.get('conversation_id')
+        if not conversation_id:
+            return Response({'error': 'conversation_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            conversation = Conversation.objects.get(id=conversation_id)
+        except Conversation.DoesNotExist:
+            return Response({'error': 'conversation not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Use the related name 'chats' from Chat model
+        chats = conversation.chats.all()
+        serializer = ChatSerializer(chats, many=True)
+        return Response(serializer.data)
+
+
+class SendMessageView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        sender_id = request.data.get('sender_id')
+        receiver_id = request.data.get('receiver_id')
+        content = request.data.get('content', '').strip()
+
+        if not all([sender_id, receiver_id, content]):
+            return Response({'error': 'sender_id, receiver_id and content are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Find existing conversation or create new one
+        conversation = Conversation.objects.filter(
+            (Q(user1_id=sender_id) & Q(user2_id=receiver_id)) |
+            (Q(user1_id=receiver_id) & Q(user2_id=sender_id))
+        ).first()
+
+        if not conversation:
+            conversation = Conversation.objects.create(user1_id=sender_id, user2_id=receiver_id)
+
+        chat = Chat.objects.create(conversation=conversation, sender_id=sender_id, content=content)
+        serializer = ChatSerializer(chat)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 class GigListByTeacherAPIView(generics.ListAPIView):
     serializer_class = GigSerializer
     permission_classes = [permissions.AllowAny]
