@@ -28,7 +28,7 @@ const BuyCreditPage = () => {
   // Status message for user feedback (e.g., success, redirection)
   const [statusMessage, setStatusMessage] = useState('');
   // Price per credit (10 Taka as per your requirement)
-  const PRICE_PER_CREDIT = 10;
+  const PRICE_PER_CREDIT = 1;
   // Backend API endpoint for purchasing credits
   const CREDIT_PURCHASE_ENDPOINT = `http://localhost:8000/api/credits/purchase/`;
 
