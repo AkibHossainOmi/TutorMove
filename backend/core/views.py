@@ -515,7 +515,7 @@ class TutorSearchAPIView(APIView):
                 if loc:
                     input_lat, input_lon = loc.latitude, loc.longitude
             except (GeocoderUnavailable, GeocoderTimedOut):
-                pass  # silently skip location if geocoding fails
+                pass
 
         tutors = User.objects.filter(user_type="tutor").exclude(location__isnull=True).exclude(location__exact="")
 
@@ -523,14 +523,16 @@ class TutorSearchAPIView(APIView):
 
         for tutor in tutors:
             try:
-                # Filter gigs by subject
+                # Filter gigs by subject to ensure tutor is relevant
                 gigs_qs = Gig.objects.filter(teacher=tutor)
                 if subject_query:
                     gigs_qs = gigs_qs.filter(subject__icontains=subject_query)
 
-                gig_count = gigs_qs.count()
-                if gig_count == 0:
+                if gigs_qs.count() == 0:
                     continue  # Skip if no matching gigs
+
+                # Get credit count for tutor (adjust field name as per your model)
+                credit_count = getattr(tutor, "credit_count", 0)
 
                 # Optionally calculate distance
                 distance_km = None
@@ -540,12 +542,12 @@ class TutorSearchAPIView(APIView):
                         tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
                         distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
 
-                matched_tutors.append((tutor, gig_count, distance_km))
+                matched_tutors.append((tutor, credit_count, distance_km))
 
             except Exception:
                 continue
 
-        # Sort by number of gigs descending — location is NOT used in sorting
+        # Sort by credit_count descending
         matched_tutors.sort(key=lambda x: x[1], reverse=True)
 
         combined_tutors = [t[0] for t in matched_tutors]

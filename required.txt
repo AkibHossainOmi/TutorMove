@@ -1,3 +1,0 @@
-Profile Messages, Number update - done
-Sort tutor search by gigs - done
-Send notifications to all tutor on new job post and send notification to tutor whom contact is unlocked.
