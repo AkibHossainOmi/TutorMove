@@ -22,7 +22,7 @@ const BuyCreditPage = () => {
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedPackage, setSelectedPackage] = useState(null);
   
-  const PRICE_PER_CREDIT = 1;
+  const PRICE_PER_CREDIT = 10;
   const CREDIT_PURCHASE_ENDPOINT = `http://localhost:8000/api/credits/purchase/`;
 
   // Credit packages with discounts for bulk purchases

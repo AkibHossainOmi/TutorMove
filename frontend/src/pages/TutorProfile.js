@@ -69,20 +69,24 @@ export default function TutorProfilePage() {
     <>
       <Navbar />
       <main className="min-h-screen mt-20 bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
-          <div className="flex items-center gap-6 mb-6">
-          <div className="w-[100px] h-[100px] rounded-full bg-blue-600 text-white text-4xl font-bold flex items-center justify-center select-none">
-        {profile.username ? profile.username.charAt(0).toUpperCase() : 'T'}
-      </div>
+        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 relative">
+          {/* Message button positioned in top right corner */}
+          {JSON.parse(localStorage.getItem("user"))?.user_type === "student" && (
+            <UnlockedMessageButton
+              studentId={getStudentId()}
+              tutorId={tutorId}
+              tutorUsername={profile.username}
+            />
+          )}
 
+          <div className="flex items-center gap-6 mb-6">
+            <div className="w-[100px] h-[100px] rounded-full bg-blue-600 text-white text-4xl font-bold flex items-center justify-center select-none">
+              {profile.username ? profile.username.charAt(0).toUpperCase() : 'T'}
+            </div>
             <div>
-              <h1 className="text-3xl font-semibold text-gray-900">
-                {profile.username}
-              </h1>
+              <h1 className="text-3xl font-semibold text-gray-900">{profile.username}</h1>
               <p className="text-gray-600">{profile.location || "Location not specified"}</p>
-              <p className={`mt-1 text-sm font-medium ${
-                profile.is_verified ? "text-green-600" : "text-gray-500"
-              }`}>
+              <p className={`mt-1 text-sm font-medium ${profile.is_verified ? "text-green-600" : "text-gray-500"}`}>
                 {profile.is_verified ? "Verified Tutor" : ""}
               </p>
               <p className="text-yellow-600 font-semibold mt-1">
@@ -229,5 +233,69 @@ export default function TutorProfilePage() {
       </main>
       <Footer />
     </>
+  );
+}
+
+// Updated Message Button Component with better styling and positioning
+function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
+  const [unlocked, setUnlocked] = useState(false);
+  const [checking, setChecking] = useState(true);
+  const [hovered, setHovered] = useState(false);
+
+  useEffect(() => {
+    async function checkUnlock() {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token || !studentId || !tutorId) return;
+
+        const res = await fetch(
+          `http://localhost:8000/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+
+        const data = await res.json();
+        setUnlocked(data.unlocked === true);
+      } catch (err) {
+        console.error("Unlock check failed:", err);
+      } finally {
+        setChecking(false);
+      }
+    }
+
+    checkUnlock();
+  }, [studentId, tutorId]);
+
+  if (checking || !unlocked) return null;
+
+  return (
+    <div className="absolute top-4 right-4">
+  <a
+    href={`http://localhost:3000/messages/?username=${encodeURIComponent(tutorUsername)}`}
+    className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
+      hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
+    } text-indigo-600`}
+    onMouseEnter={() => setHovered(true)}
+    onMouseLeave={() => setHovered(false)}
+  >
+    <svg
+      className="w-5 h-5 mr-2"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+      />
+    </svg>
+    <span className="font-medium">Message</span>
+  </a>
+</div>
+
   );
 }

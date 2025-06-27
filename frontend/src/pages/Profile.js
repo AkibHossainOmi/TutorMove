@@ -16,6 +16,7 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [updateStatus, setUpdateStatus] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
 
   // Average rating state (for tutors)
   const [avgRating, setAvgRating] = useState(null);
@@ -66,6 +67,7 @@ const Profile = () => {
       setBio(data.bio || '');
       setEducation(data.education || '');
       setExperience(data.experience || '');
+      setPhoneNumber(data.phone_number || '');
 
       // If user is tutor, fetch average rating
       if (data.user_type === 'tutor') {
@@ -106,6 +108,7 @@ const Profile = () => {
           education,
           experience,
           location: locationInput,
+          phone_number: phoneNumber,
         }),
       });
 
@@ -228,6 +231,7 @@ const Profile = () => {
                   { label: 'Bio', value: bio },
                   { label: 'Education', value: education },
                   { label: 'Experience', value: experience },
+                  { label: 'Phone', value: userData.phone_number || 'Not Provided', icon: '📞' },
                   {
                     label: 'Average Rating',
                     value: avgRating !== null ? avgRating.toFixed(1) : 'No reviews',
@@ -271,6 +275,14 @@ const Profile = () => {
                 type="text"
                 onChange={(e) => setLocationInput(e.target.value)}
                 placeholder="Location"
+              />
+
+              <input
+                className="w-full p-3 border rounded-md"
+                type="text"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder="Phone Number"
               />
 
               <button

@@ -176,11 +176,34 @@ class GigListByTeacherAPIView(generics.ListAPIView):
 
 class JobCreateAPIView(APIView):
     permission_classes = [permissions.AllowAny]
+
     def post(self, request, *args, **kwargs):
         serializer = JobSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            job = serializer.save()
+
+            student_id = request.data.get('student') or job.student.id
+            try:
+                student = User.objects.get(id=student_id)
+            except User.DoesNotExist:
+                return Response({"error": "Student not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Fetch all tutors
+            tutors = User.objects.filter(user_type='tutor')
+
+            # Create notification with student's username
+            notifications = [
+                Notification(
+                    from_user=student,
+                    to_user=tutor,
+                    message=f"New job posted by {student.username}: {job.title}"
+                )
+                for tutor in tutors
+            ]
+            Notification.objects.bulk_create(notifications)
+
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileUpdateByIdView(APIView):
@@ -196,7 +219,7 @@ class UserProfileUpdateByIdView(APIView):
         except User.DoesNotExist:
             return Response({'id': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        allowed_fields = ['bio', 'education', 'experience', 'location']
+        allowed_fields = ['bio', 'education', 'experience', 'location', 'phone_number']
         data_to_update = {field: request.data.get(field) for field in allowed_fields if field in request.data}
 
         for key, value in data_to_update.items():
@@ -209,6 +232,7 @@ class UserProfileUpdateByIdView(APIView):
             'education': user.education,
             'experience': user.experience,
             'location': user.location,
+            'phone_number': str(user.phone_number) if user.phone_number else '',
         }, status=status.HTTP_200_OK)
 
 class TutorAverageRating(APIView):
@@ -456,54 +480,83 @@ class CreditUpdateByUserPostView(APIView):
             }, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+from geopy.geocoders import Nominatim
+from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import User, Gig
+from .serializers import UserSerializer
+from math import radians, cos, sin, asin, sqrt
+
+def haversine(lon1, lat1, lon2, lat2):
+    # Calculate the great circle distance between two points on the earth (specified in decimal degrees)
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    dlon = lon2 - lon1 
+    dlat = lat2 - lat1 
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a)) 
+    km = 6371 * c
+    return km
+
 class TutorSearchAPIView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        input_location = request.data.get("location", "")
+        input_location = request.data.get("location", "").strip()
         subject_query = request.data.get("subject", "").strip().lower()
 
-        if not input_location:
-            return Response({"error": "Location is required"}, status=status.HTTP_400_BAD_REQUEST)
-
         geolocator = Nominatim(user_agent="your_app_name")
-        try:
-            loc = geolocator.geocode(input_location)
-            if not loc:
-                return Response({"error": "Could not geocode the provided location"}, status=status.HTTP_400_BAD_REQUEST)
-            input_lat, input_lon = loc.latitude, loc.longitude
-        except (GeocoderUnavailable, GeocoderTimedOut):
-            return Response({"error": "Geocoding service unavailable"}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        input_lat, input_lon = None, None
+
+        if input_location:
+            try:
+                loc = geolocator.geocode(input_location)
+                if loc:
+                    input_lat, input_lon = loc.latitude, loc.longitude
+            except (GeocoderUnavailable, GeocoderTimedOut):
+                pass  # silently skip location if geocoding fails
 
         tutors = User.objects.filter(user_type="tutor").exclude(location__isnull=True).exclude(location__exact="")
 
         matched_tutors = []
+
         for tutor in tutors:
             try:
-                tutor_loc = geolocator.geocode(tutor.location)
-                if not tutor_loc:
-                    continue
-                tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
-                distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
+                # Filter gigs by subject
+                gigs_qs = Gig.objects.filter(teacher=tutor)
+                if subject_query:
+                    gigs_qs = gigs_qs.filter(subject__icontains=subject_query)
 
-                if distance_km <= 10:
-                    # Check if tutor has a Gig with matching subject
-                    matching_gigs = Gig.objects.filter(teacher=tutor)
-                    if subject_query:
-                        matching_gigs = matching_gigs.filter(subject__icontains=subject_query)
+                gig_count = gigs_qs.count()
+                if gig_count == 0:
+                    continue  # Skip if no matching gigs
 
-                    if matching_gigs.exists():
-                        matched_tutors.append(tutor)
+                # Optionally calculate distance
+                distance_km = None
+                if input_lat is not None and input_lon is not None:
+                    tutor_loc = geolocator.geocode(tutor.location)
+                    if tutor_loc:
+                        tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
+                        distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
+
+                matched_tutors.append((tutor, gig_count, distance_km))
+
             except Exception:
                 continue
 
-        serializer = UserSerializer(matched_tutors, many=True)
+        # Sort by number of gigs descending — location is NOT used in sorting
+        matched_tutors.sort(key=lambda x: x[1], reverse=True)
+
+        combined_tutors = [t[0] for t in matched_tutors]
+
+        serializer = UserSerializer(combined_tutors, many=True)
+
         return Response({
-            "count": len(matched_tutors),
-            "longitude": input_lon,
-            "latitude": input_lat,
+            "count": len(combined_tutors),
             "results": serializer.data
         })
+
 # --- GigViewSet ---
 class GigViewSet(viewsets.ModelViewSet):
     serializer_class = GigSerializer
@@ -1506,10 +1559,9 @@ class UnlockContactInfoView(APIView):
             return Response({'error': 'Invalid student or tutor ID'}, status=400)
 
         if ContactUnlock.objects.filter(student=student, tutor=tutor).exists():
-            # Already unlocked
             return Response({
                 'detail': 'Already unlocked.',
-                'phone': tutor.phone_number,
+                'phone': str(tutor.phone_number) if tutor.phone_number else None,
                 'email': tutor.email
             })
 
@@ -1524,11 +1576,19 @@ class UnlockContactInfoView(APIView):
         # Record unlock
         ContactUnlock.objects.create(student=student, tutor=tutor)
 
+        # 🔔 Create notification for the tutor
+        Notification.objects.create(
+            from_user=student,
+            to_user=tutor,
+            message=f"{student.username} has unlocked your contact information."
+        )
+
         return Response({
             'detail': 'Contact info unlocked.',
-            'phone': tutor.phone_number,
+            'phone': str(tutor.phone_number) if tutor.phone_number else None,
             'email': tutor.email
         })
+
 
 class EmailVerifyView(views.APIView):
     permission_classes = [AllowAny]

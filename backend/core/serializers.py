@@ -154,7 +154,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'id', 'username', 'email', 'user_type',
+            'id', 'username', 'email', 'user_type', 'phone_number',
             'trust_score', 'is_verified', 'verification_requested', 'verification_doc', 'location', 'bio', 'education', 'experience',
         ]
 

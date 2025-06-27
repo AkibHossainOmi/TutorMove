@@ -138,12 +138,20 @@
    * Notification item component.
    */
   const NotificationItem = ({ notification }) => {
+    const handleNotificationClick = () => {
+      // If it's a job posting notification, redirect to /jobs
+      if (notification.message.includes("job")) {
+        window.location.href = "/jobs";
+      }
+    };
+  
     return (
       <div
         className={`px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
           !notification.is_read ? 'bg-blue-50 hover:bg-blue-100' : 'bg-white hover:bg-gray-50'
         }`}
         key={notification.id}
+        onClick={handleNotificationClick}  // Add onClick handler
       >
         <div className="flex items-start">
           <div className={`flex-shrink-0 mt-1 mr-3 w-2 h-2 rounded-full ${

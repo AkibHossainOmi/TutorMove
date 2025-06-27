@@ -1,8 +1,3 @@
-welcome credit 5 - Done
-mobile number, email unlock on credit - Done
-message if unlock - done
-email verification - done
-1st 5 gigs are free - done
-premium user
-profile view of tutor
-review
+Profile Messages, Number update - done
+Sort tutor search by gigs - done
+Send notifications to all tutor on new job post and send notification to tutor whom contact is unlocked.
