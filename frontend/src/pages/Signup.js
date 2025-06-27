@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate, Link } from 'react-router-dom'; // Import Link for navigation
+import { useNavigate, Link, Navigate } from 'react-router-dom'; // Import Link for navigation
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
+import { useAuth } from '../contexts/UseAuth';
 
 const Signup = () => {
   const [formData, setFormData] = useState({
@@ -15,6 +16,7 @@ const Signup = () => {
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const isAuthenticated = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -180,7 +182,7 @@ const Signup = () => {
     textDecoration: 'underline',
   };
 
-  return (
+  return !isAuthenticated? (
     <>
     <Navbar/>
     <div style={{ height: '50px' }}></div>
@@ -293,7 +295,7 @@ const Signup = () => {
     <div style={{ height: '100px' }}></div>
     <Footer/>
     </>
-  );
+  ) : <Navigate to="/dashboard" /> ;
 };
 
 export default Signup;

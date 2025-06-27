@@ -72,13 +72,50 @@ export default function WhatsAppLikeMessaging() {
   }, [messages]);
 
   // Search users by keyword
-  const handleSearch = () => {
-    if (!searchTerm.trim()) return;
-    axios.post('http://localhost:8000/api/users/search/', { keyword: searchTerm.trim() })
-      .then(res => setSearchResults(res.data))
-      .catch(console.error);
+  const checkContactUnlocked = async (studentId, tutorId, token) => {
+    try {
+      const res = await axios.get('http://localhost:8000/api/check-unlock-status/', {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { student_id: studentId, tutor_id: tutorId },
+      });
+      return res.data.unlocked === true;
+    } catch {
+      return false;
+    }
   };
-
+  
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return;
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!token || !user) return;
+  
+    try {
+      const res = await axios.post('http://localhost:8000/api/users/search/', { keyword: searchTerm.trim() }, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+  
+      // Now filter tutors who are unlocked only
+      const filteredResults = [];
+  
+      // Await all unlock checks in parallel
+      const unlockChecks = await Promise.all(
+        res.data.map(async (tutor) => {
+          const unlocked = await checkContactUnlocked(user.user_id, tutor.id, token);
+          return unlocked ? tutor : null;
+        })
+      );
+  
+      // Filter out nulls
+      unlockChecks.forEach(tutor => {
+        if (tutor) filteredResults.push(tutor);
+      });
+  
+      setSearchResults(filteredResults);
+    } catch (err) {
+      console.error(err);
+    }
+  };
   // Start or open conversation with other user
   const startConversation = (otherUser) => {
     if (!userId) return alert('User not found. Please login.');

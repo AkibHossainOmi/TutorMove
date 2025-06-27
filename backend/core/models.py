@@ -15,7 +15,8 @@ class User(AbstractUser):
     email_verified = models.BooleanField(default=False)
     otp_code = models.CharField(max_length=6, blank=True, null=True)
     otp_expires = models.DateTimeField(blank=True, null=True)
-    credit_balance = models.IntegerField(default=0)
+    credit_balance = models.IntegerField(default=5)
+    phone_number = PhoneNumberField(blank=True, null=True, unique=True)
     phone = PhoneNumberField(blank=True, null=True, unique=True)
     phone_verified = models.BooleanField(default=False)
     phone_otp = models.CharField(max_length=6, blank=True, null=True)
@@ -28,6 +29,13 @@ class User(AbstractUser):
     is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
     location = models.CharField(max_length=255, blank=True, null=True, help_text="e.g., City, Country or Region")
 
+class ContactUnlock(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocks')
+    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocked_by')
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('student', 'tutor')
 
 # ADDED: Order and Payment Models (These are new and remain as part of payment integration)
 class Order(models.Model):
@@ -218,7 +226,7 @@ class Job(models.Model):
     title = models.CharField(max_length=255)
     description = models.TextField()
     subject = models.TextField()
-    subjects = models.ManyToManyField('Subject', related_name='gigs_as_job', null=True, blank=True)
+    subjects = models.ManyToManyField(Subject, blank=True)
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -248,13 +256,24 @@ class Application(models.Model):
         return f"Application by {self.teacher.username} for {self.job.title}"
 
 class Notification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    from_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='sent_notifications',
+        default=1 
+    )
+    to_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='received_notifications',
+        default=1 
+    )
     message = models.TextField()
     is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Notification for {self.user.username} - {'Read' if self.is_read else 'Unread'}"
+        return f'From {self.from_user} to {self.to_user} - {self.message[:30]}'
 
 class Message(models.Model):
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')

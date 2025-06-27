@@ -31,7 +31,7 @@ from django.http import JsonResponse
 from urllib.parse import urlencode
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, Conversation, Chat,
+    Order, Payment, Conversation, Chat, ContactUnlock,
 )
 from .serializers import (
     UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
@@ -48,6 +48,34 @@ from .payments import SSLCommerzPayment
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+
+class MarkNotificationsReadView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request, user_id):
+        # Mark all unread notifications for this user as read
+        updated_count = Notification.objects.filter(to_user_id=user_id, is_read=False).update(is_read=True)
+        
+        return Response({
+            "message": f"{updated_count} notifications marked as read.",
+            "read_count": updated_count
+        }, status=status.HTTP_200_OK)
+
+class UnreadNotificationsView(APIView):
+    permission_classes = [AllowAny]
+    def get(self, request, user_id):
+        unread_notifications = Notification.objects.filter(to_user_id=user_id, is_read=False).order_by('-created_at')
+        serializer = NotificationSerializer(unread_notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+class NotificationCreateView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = NotificationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserSearchView(APIView):
     permission_classes = [AllowAny]
@@ -1374,6 +1402,56 @@ class RegisterView(views.APIView):
             serializer.save()
             return Response({'detail': 'Registered successfully. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class CheckUnlockStatusView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        student_id = request.query_params.get('student_id')
+        tutor_id = request.query_params.get('tutor_id')
+
+        if not student_id or not tutor_id:
+            return Response({'error': 'Missing student_id or tutor_id'}, status=400)
+
+        unlocked = ContactUnlock.objects.filter(student_id=student_id, tutor_id=tutor_id).exists()
+        return Response({'unlocked': unlocked})
+
+class UnlockContactInfoView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        student_id = request.data.get('student_id')
+        tutor_id = request.data.get('tutor_id')
+
+        try:
+            student = User.objects.get(id=student_id, user_type='student')
+            tutor = User.objects.get(id=tutor_id, user_type='tutor')
+        except User.DoesNotExist:
+            return Response({'error': 'Invalid student or tutor ID'}, status=400)
+
+        if ContactUnlock.objects.filter(student=student, tutor=tutor).exists():
+            # Already unlocked
+            return Response({
+                'detail': 'Already unlocked.',
+                'phone': tutor.phone_number,
+                'email': tutor.email
+            })
+
+        credit = Credit.objects.filter(user=student).first()
+        if not credit or credit.balance < 1:
+            return Response({'error': 'Not enough credits.'}, status=402)
+
+        # Deduct 1 credit
+        credit.balance -= 1
+        credit.save()
+
+        # Record unlock
+        ContactUnlock.objects.create(student=student, tutor=tutor)
+
+        return Response({
+            'detail': 'Contact info unlocked.',
+            'phone': tutor.phone_number,
+            'email': tutor.email
+        })
 
 class EmailVerifyView(views.APIView):
     permission_classes = [AllowAny]
@@ -1383,13 +1461,18 @@ class EmailVerifyView(views.APIView):
             uid = force_str(urlsafe_base64_decode(uid))
             user = UserModel.objects.get(pk=uid)
         except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-            return Response({'error': 'Invalid link.'}, status=400)
-        if user and default_token_generator.check_token(user, token):
+            return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
-            return Response({'detail': 'Email verified! You may now log in.'})
-        return Response({'error': 'Invalid or expired link.'}, status=400)
 
+            # Create a credit record linked to this user
+            Credit.objects.create(user=user, balance=5)  # or initial amount you want
+
+            return Response({'detail': 'Email verified successfully. You can now log in.'}, status=status.HTTP_200_OK)
+
+        return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 class LoginView(views.APIView):
     permission_classes = [AllowAny]
 

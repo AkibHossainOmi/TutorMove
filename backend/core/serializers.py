@@ -1,6 +1,11 @@
 # backend/core/serializers.py
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail, EmailMultiAlternatives
 from rest_framework import serializers
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message,
@@ -62,10 +67,42 @@ class RegisterSerializer(serializers.ModelSerializer):
             password=validated_data['password'],
             user_type=validated_data['user_type'],
         )
-        user.is_active = True  # for email verification, or True if not needed
+        user.is_active = False
         user.save()
-        return user
 
+        # Email verification link
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        verify_url = f"{settings.FRONTEND_SITE_URL}/verify-email/{uid}/{token}/"
+
+        # HTML Email Content
+        html_content = f"""
+        <html>
+          <body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 40px;">
+            <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
+              <h2 style="color: #111827;">Welcome to <span style="color: #3b82f6;">TutorMove</span>!</h2>
+              <p style="font-size: 16px; color: #374151;">Thank you for signing up. Please confirm your email address by clicking the button below:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="{verify_url}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">Verify Email</a>
+              </div>
+              <p style="font-size: 14px; color: #6b7280;">If you did not register for TutorMove, you can safely ignore this email.</p>
+            </div>
+          </body>
+        </html>
+        """
+        text_content = f"Please verify your account by clicking this link: {verify_url}"
+
+        # Send email
+        msg = EmailMultiAlternatives(
+            subject="Verify your TutorMove account",
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email],
+        )
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
+        return user
 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
@@ -170,7 +207,7 @@ class ApplicationSerializer(serializers.ModelSerializer):
 class NotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Notification
-        fields = '__all__'
+        fields = ['id', 'from_user', 'to_user', 'message', 'created_at', 'is_read']
 
 
 # === MESSAGE SERIALIZER ===
@@ -244,7 +281,7 @@ class AbuseReportSerializer(serializers.ModelSerializer):
 class TutorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone', 'trust_score', 'credit_balance']
+        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'trust_score', 'credit_balance']
 
 class JobListSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)

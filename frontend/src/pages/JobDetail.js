@@ -9,6 +9,11 @@ const JobDetail = () => {
   const [job, setJob] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [applyStatus, setApplyStatus] = useState('idle');
+
+  // Get user from localStorage
+  const storedUser = localStorage.getItem('user');
+  const user = storedUser ? JSON.parse(storedUser) : null;
 
   useEffect(() => {
     const fetchJob = async () => {
@@ -24,6 +29,39 @@ const JobDetail = () => {
     fetchJob();
   }, [id]);
 
+  const handleApply = async () => {
+    if (!user || !user.user_id) {
+      alert('You must be logged in to apply.');
+      return;
+    }
+    if (!job || !job.student) {
+      alert('Job data incomplete: no poster info found.');
+      return;
+    }
+
+    setApplyStatus('loading');
+    try {
+      // 1) Deduct 1 credit from user
+      await axios.post('http://localhost:8000/api/credit/update/', {
+        user_id: user.user_id,
+        amount: 1,
+        isincrease: false,
+      });
+
+      // 2) Create notification for job poster (to_user)
+      await axios.post('http://localhost:8000/api/notifications/create/', {
+        from_user: user.user_id,
+        to_user: job.student,
+        message: `${user.username} applied to your job "${job.title}"`,
+      });
+
+      setApplyStatus('success');
+    } catch (err) {
+      console.error('Error during apply:', err.response?.data || err.message);
+      setApplyStatus('failed');
+    }
+  };
+
   const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
     const date = new Date(dateStr);
@@ -35,19 +73,12 @@ const JobDetail = () => {
   };
 
   const renderContent = () => {
-    if (loading) {
-      return <p style={styles.statusText}>Loading job details...</p>;
-    }
-    if (error) {
-      return <p style={styles.statusText}>{error}</p>;
-    }
-    if (!job) {
-      return <p style={styles.statusText}>Job not found.</p>;
-    }
+    if (loading) return <p style={styles.statusText}>Loading job details...</p>;
+    if (error) return <p style={styles.statusText}>{error}</p>;
+    if (!job) return <p style={styles.statusText}>Job not found.</p>;
 
     return (
       <div style={styles.card}>
-        {/* Gradient Top Strip */}
         <div style={styles.banner}></div>
 
         <div style={styles.cardContent}>
@@ -78,7 +109,20 @@ const JobDetail = () => {
           </div>
 
           <div style={styles.buttonWrapper}>
-            <button style={styles.applyButton}>Apply for this Job</button>
+            <button
+              style={styles.applyButton}
+              onClick={handleApply}
+              disabled={applyStatus === 'loading' || applyStatus === 'success'}
+            >
+              {applyStatus === 'loading'
+                ? 'Applying...'
+                : applyStatus === 'success'
+                ? 'Applied ✔'
+                : 'Apply for this Job'}
+            </button>
+            {applyStatus === 'failed' && (
+              <p style={{ color: 'red', marginTop: '10px' }}>Failed to apply. Try again.</p>
+            )}
           </div>
         </div>
       </div>
@@ -96,7 +140,7 @@ const JobDetail = () => {
   );
 };
 
-// 💅 Styles
+// Styles unchanged
 const styles = {
   container: {
     minHeight: 'calc(100vh - 160px)',

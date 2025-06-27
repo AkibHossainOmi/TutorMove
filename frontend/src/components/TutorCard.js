@@ -1,45 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import BuyCreditsModal from './BuyCreditsModal'; // Assuming this modal is already styled modernly
+import BuyCreditsModal from './BuyCreditsModal';
 
 const getTrustLabel = (score) => {
-  // Ensure score is a number, default to 1.0 if null/undefined
   const numericScore = parseFloat(score) || 1.0;
-  if (numericScore >= 1.5) return { label: 'High Trust', color: '#007bff', emoji: '⭐' }; // Primary blue
-  if (numericScore >= 1.0) return { label: 'Moderate Trust', color: '#ffc107', emoji: '👍' }; // Warning yellow
-  return { label: 'Low Trust', color: '#dc3545', emoji: '⚠️' }; // Danger red
+  if (numericScore >= 1.5) return { label: 'High Trust', color: '#007bff', emoji: '⭐' };
+  if (numericScore >= 1.0) return { label: 'Moderate Trust', color: '#ffc107', emoji: '👍' };
+  return { label: 'Low Trust', color: '#dc3545', emoji: '⚠️' };
 };
 
 const TutorCard = ({ tutor }) => {
-  // Initialize contactInfo based on tutor.contact_info, or a locked state
-  const [contactInfo, setContactInfo] = useState(tutor.contact_info || '[Locked. Buy credits to view.]');
+  const [contactInfo, setContactInfo] = useState('[Locked. Buy credits to view.]');
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
-  const [showBuyCredits, setShowBuyCredits] = useState(false); // Controls BuyCreditsModal visibility
+  const [showBuyCredits, setShowBuyCredits] = useState(false);
   const [error, setError] = useState('');
 
-  // Dynamically determine trust badge properties
   const trust = getTrustLabel(tutor.trust_score);
 
-  // Unlock handler for contact info
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    const user = JSON.parse(localStorage.getItem('user'));
+
+    if (!token || !user || user.user_type !== 'student') return;
+
+    axios
+      .get(`http://localhost:8000/api/check-unlock-status/`, {
+        headers: { Authorization: `Bearer ${token}` },
+        params: { student_id: user.user_id, tutor_id: tutor.id },
+      })
+      .then((res) => {
+        if (res.data.unlocked) {
+          setIsUnlocked(true);
+          setContactInfo(tutor.phone_number || tutor.email || 'Contact not available');
+        }
+      })
+      .catch(() => {
+        // fail silently
+      });
+  }, [tutor.id]);
+
   const handleUnlockContact = async () => {
     setUnlocking(true);
     setError('');
     try {
-      // Assuming your backend expects a POST to unlock contact
-      const token = localStorage.getItem('token'); // Get JWT token from local storage
-      if (!token) {
-        setError('You must be logged in to unlock contact info.');
-        setShowBuyCredits(true); // Suggest login/signup as well
+      const token = localStorage.getItem('token');
+      const user = JSON.parse(localStorage.getItem('user'));
+
+      if (!token || !user || user.user_type !== 'student') {
+        setError('Only students can unlock tutor contact info. Please log in as a student.');
+        setUnlocking(false);
         return;
       }
-      const res = await axios.post(`/api/tutors/${tutor.id}/unlock_contact/`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}` // Include Authorization header
+
+      const res = await axios.post(
+        'http://localhost:8000/api/unlock-contact/',
+        { student_id: user.user_id, tutor_id: tutor.id },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
         }
-      });
-      setContactInfo(res.data.contact_info);
-      setError(''); // Clear any previous errors
+      );
+
+      const contact = res.data.phone || res.data.email;
+      setContactInfo(contact || 'Contact not available');
+      setIsUnlocked(true);
+      setError('');
     } catch (err) {
       const msg =
         err.response?.data?.error ||
@@ -47,8 +76,8 @@ const TutorCard = ({ tutor }) => {
         (typeof err.response?.data === 'string' ? err.response.data : '') ||
         'Failed to unlock contact info.';
       setError(msg);
-      // If error message indicates insufficient credit, show buy credits modal
-      if (msg.toLowerCase().includes('credit') || err.response?.status === 402) { // 402 Payment Required
+
+      if (msg.toLowerCase().includes('credit') || err.response?.status === 402) {
         setShowBuyCredits(true);
       }
     } finally {
@@ -260,35 +289,42 @@ const TutorCard = ({ tutor }) => {
       onMouseLeave={(e) => Object.assign(e.currentTarget.style, cardStyle)}
     >
       <div style={headerStyle}>
-        <div style={avatarStyle}>
-          {tutor.username ? tutor.username.charAt(0).toUpperCase() : 'T'}
-        </div>
+        <div style={avatarStyle}>{tutor.username ? tutor.username.charAt(0).toUpperCase() : 'T'}</div>
         <div style={nameLocationContainerStyle}>
           <h3 style={nameStyle}>
             {tutor.username || 'Anonymous Tutor'}
             {tutor.is_verified && (
               <span style={verifiedBadgeStyle} title="Verified Tutor">
-                <svg width="14" height="14" fill="#28a745" style={{ marginRight: '4px', verticalAlign: 'middle' }} viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+                {/* SVG checkmark */}
+                <svg
+                  width="14"
+                  height="14"
+                  fill="#28a745"
+                  style={{ marginRight: '4px', verticalAlign: 'middle' }}
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
                 Verified
               </span>
             )}
             {tutor.is_premium && (
               <span style={featuredBadgeStyle} title="Featured Tutor">
-                <span role="img" aria-label="star" style={{ verticalAlign: 'middle', marginRight: '4px' }}>🌟</span>
+                <span role="img" aria-label="star" style={{ verticalAlign: 'middle', marginRight: '4px' }}>
+                  🌟
+                </span>
                 Featured
               </span>
             )}
           </h3>
-          <p style={locationStyle}>
-            {tutor.location || 'Location not specified'}
-          </p>
+          <p style={locationStyle}>{tutor.location || 'Location not specified'}</p>
         </div>
       </div>
 
       <div style={detailsSectionStyle}>
         <p style={detailParagraphStyle}>
           <strong style={strongTextStyle}>Contact Info:</strong>{' '}
-          {contactInfo && !contactInfo.startsWith('[Locked') ? (
+          {isUnlocked ? (
             <span>{contactInfo}</span>
           ) : (
             <button
@@ -303,21 +339,40 @@ const TutorCard = ({ tutor }) => {
           )}
         </p>
         {error && <div style={errorMessageStyle}>{error}</div>}
-        <p style={detailParagraphStyle}><strong style={strongTextStyle}>Email:</strong> {tutor.email || 'Not provided'}</p>
-        <p style={detailParagraphStyle}><strong style={strongTextStyle}>Role:</strong> {tutor.user_type || 'Teacher'}</p>
-        <p style={detailParagraphStyle}><strong style={strongTextStyle}>Joined:</strong> {tutor.date_joined ? new Date(tutor.date_joined).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : 'Recently'}</p>
+        <p style={detailParagraphStyle}>
+          <strong style={strongTextStyle}>Role:</strong> {tutor.user_type || 'Teacher'}
+        </p>
+        <p style={detailParagraphStyle}>
+          <strong style={strongTextStyle}>Joined:</strong>{' '}
+          {tutor.date_joined
+            ? new Date(tutor.date_joined).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+              })
+            : 'Recently'}
+        </p>
       </div>
 
       <div style={footerStyle}>
         <div style={footerBadgesContainerStyle}>
           <span style={secondaryBadgeStyle}>
-            <span role="img" aria-label="star" style={{verticalAlign: 'middle'}}>⭐</span> {tutor.average_rating ? tutor.average_rating.toFixed(1) : 'N/A'}
+            <span role="img" aria-label="star" style={{ verticalAlign: 'middle' }}>
+              ⭐
+            </span>{' '}
+            {tutor.average_rating ? tutor.average_rating.toFixed(1) : 'N/A'}
           </span>
           <span style={secondaryBadgeStyle}>
-            <span role="img" aria-label="books" style={{verticalAlign: 'middle'}}>📚</span> {tutor.subjects?.length || 0} subjects
+            <span role="img" aria-label="books" style={{ verticalAlign: 'middle' }}>
+              📚
+            </span>{' '}
+            {tutor.subjects?.length || 0} subjects
           </span>
           <span style={trustBadgeStyle} title={trust.label}>
-            <span role="img" aria-label={trust.label} style={{verticalAlign: 'middle'}}>{trust.emoji}</span> {trust.label}
+            <span role="img" aria-label={trust.label} style={{ verticalAlign: 'middle' }}>
+              {trust.emoji}
+            </span>{' '}
+            {trust.label}
           </span>
         </div>
         <Link
@@ -330,11 +385,10 @@ const TutorCard = ({ tutor }) => {
         </Link>
       </div>
 
-      {/* BuyCreditsModal will show if showBuyCredits is true */}
       <BuyCreditsModal
         show={showBuyCredits}
         onClose={() => setShowBuyCredits(false)}
-        onBuyCredits={() => window.location.href = '/credit-purchase'} // Redirect to credit purchase page
+        onBuyCredits={() => (window.location.href = '/credit-purchase')}
         message="You need more credits to unlock contact information. Please purchase credits to proceed."
       />
     </div>

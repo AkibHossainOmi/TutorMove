@@ -9,7 +9,8 @@ from .views import (
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, UserProfileView, UserProfileUpdateByIdView,
     TutorSearchAPIView, JobCreateAPIView, JobDetailAPIView, GigCreateAPIView,GigListByTeacherAPIView, CreditUpdateByUserPostView,
-    UserCreditBalanceView, UserSearchView, ConversationListView, ConversationMessagesView, SendMessageView,
+    UserCreditBalanceView, UserSearchView, ConversationListView, ConversationMessagesView, SendMessageView,NotificationCreateView,
+    UnreadNotificationsView,MarkNotificationsReadView, EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -46,7 +47,7 @@ urlpatterns = [
 
     # Auth & account endpoints (JWT/session-based, email/password)
     path('auth/register/', RegisterView.as_view(), name='register'),
-    path('auth/verify-email/<str:uid>/<str:token>/', EmailVerifyView.as_view(), name='email-verify'),
+    path('auth/verify-email/<str:uid>/<str:token>/', EmailVerifyView.as_view(), name='verify-email'),
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
@@ -62,6 +63,11 @@ urlpatterns = [
     path('conversations/', ConversationListView.as_view(), name='conversation-list'),
     path('conversations/messages/', ConversationMessagesView.as_view(), name='conversation-messages'),
     path('messages/send/', SendMessageView.as_view(), name='send-message'),
+    path('notifications/create/', NotificationCreateView.as_view(), name='notification-create'),
+    path('notifications/unread/<int:user_id>/', UnreadNotificationsView.as_view(), name='unread-notifications'),
+    path('notifications/mark-read/<int:user_id>/', MarkNotificationsReadView.as_view(), name='notifications-mark-read'),
+    path('unlock-contact/', UnlockContactInfoView.as_view(), name='unlock-contact'),
+    path('check-unlock-status/', CheckUnlockStatusView.as_view(), name='check-unlock-status'),
     # All other API endpoints handled by the router
     path('', include(router.urls)),
 

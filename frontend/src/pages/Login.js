@@ -191,7 +191,7 @@ const Login = () => {
     <Footer/>
     </>
     
-  ): <Navigate to="/dashboard" />;;
+  ): <Navigate to="/dashboard" />;
 };
 
 export default Login;
