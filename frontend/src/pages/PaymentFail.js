@@ -7,182 +7,130 @@ const PaymentFail = () => {
   const transactionId = searchParams.get('tran_id') || null;
   const status = searchParams.get('status') || 'FAILED';
   const errorMessage = searchParams.get('reason') || 'An unknown error occurred during your payment.';
-  const errorCode = status; // Using status as error code display
-
-  const styles = {
-    pageContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: 'calc(100vh - 120px)',
-      backgroundColor: '#f8f9fa',
-      fontFamily: '"Segoe UI", Arial, sans-serif',
-      padding: 20,
-    },
-    card: {
-      backgroundColor: '#fff',
-      borderRadius: 15,
-      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.1)',
-      padding: 40,
-      maxWidth: 550,
-      width: '100%',
-      textAlign: 'center',
-      border: '2px solid #dc3545',
-      animation: 'fadeInScale 0.5s ease-out forwards',
-    },
-    icon: {
-      fontSize: '4em',
-      color: '#dc3545',
-      marginBottom: 20,
-    },
-    title: {
-      fontSize: '2.5em',
-      fontWeight: 700,
-      color: '#2c3e50',
-      marginBottom: 15,
-    },
-    message: {
-      fontSize: '1.1em',
-      color: '#555',
-      marginBottom: 30,
-      lineHeight: 1.6,
-    },
-    detail: {
-      backgroundColor: '#fbe9e9',
-      padding: '15px 20px',
-      borderRadius: 10,
-      marginBottom: 30,
-      fontSize: '0.95em',
-      color: '#721c24',
-      border: '1px solid #f5c6cb',
-      whiteSpace: 'pre-wrap',
-    },
-    buttonContainer: {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: 15,
-      marginTop: 30,
-    },
-    retryButton: {
-      padding: '14px 30px',
-      backgroundColor: '#ffc107',
-      color: '#212529',
-      border: 'none',
-      borderRadius: 8,
-      fontSize: '1.1em',
-      fontWeight: 600,
-      cursor: 'pointer',
-      textDecoration: 'none',
-      boxShadow: '0 4px 10px rgba(255,193,7,0.2)',
-      textAlign: 'center',
-      transition: 'background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease',
-    },
-    contactSupportButton: {
-      padding: '14px 30px',
-      backgroundColor: '#17a2b8',
-      color: 'white',
-      border: 'none',
-      borderRadius: 8,
-      fontSize: '1.1em',
-      fontWeight: 600,
-      cursor: 'pointer',
-      textDecoration: 'none',
-      boxShadow: '0 4px 10px rgba(23,162,184,0.1)',
-      textAlign: 'center',
-      transition: 'background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease',
-    },
-    goHomeButton: {
-      padding: '14px 30px',
-      backgroundColor: '#6c757d',
-      color: 'white',
-      border: 'none',
-      borderRadius: 8,
-      fontSize: '1.1em',
-      fontWeight: 600,
-      cursor: 'pointer',
-      textDecoration: 'none',
-      boxShadow: '0 4px 10px rgba(108,117,125,0.1)',
-      textAlign: 'center',
-      transition: 'background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease',
-    },
-  };
-
-  // Hover effect handlers
-  const handleHover = (e, hoverStyles) => {
-    Object.assign(e.currentTarget.style, hoverStyles);
-  };
-  const handleLeave = (e, baseStyles) => {
-    Object.assign(e.currentTarget.style, baseStyles);
-  };
-
-  const keyframesStyle = `
-    @keyframes fadeInScale {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-  `;
 
   return (
-    <div style={styles.pageContainer}>
-      <style>{keyframesStyle}</style>
-      <div style={styles.card}>
-        <div style={styles.icon} aria-label="Payment Failed Icon">❌</div>
-        <h1 style={styles.title}>Payment Failed</h1>
-        <p style={styles.message}>
-          We encountered an issue processing your payment. Please review the details below or try again.
-        </p>
-
-        <div style={styles.detail}>
-          {/* <strong>Error Code:</strong> {errorCode}
-          <br /> */}
-          <strong>Message:</strong> {errorMessage}
-          {transactionId && (
-            <>
-              <br />
-              <strong>Transaction ID:</strong> {transactionId}
-            </>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-red-50 to-gray-50 flex items-center justify-center p-6 font-sans">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-red-400 animate-fade-in">
+        {/* Header with gradient background */}
+        <div className="bg-gradient-to-r from-red-500 to-orange-600 p-6 text-center">
+          <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg 
+              className="w-12 h-12 text-white" 
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth="2" 
+                d="M6 18L18 6M6 6l12 12" 
+              />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-bold text-white mb-1">Payment Failed</h1>
+          <p className="text-white text-opacity-90">
+            We encountered an issue processing your payment
+          </p>
         </div>
 
-        <div style={styles.buttonContainer}>
-          <Link
-            to="/credit-purchase"
-            style={styles.retryButton}
-            aria-label="Retry Payment"
-            onMouseEnter={(e) =>
-              handleHover(e, { backgroundColor: '#e0a800', transform: 'translateY(-2px)', boxShadow: '0 6px 15px rgba(255,193,7,0.3)' })
-            }
-            onMouseLeave={(e) => handleLeave(e, styles.retryButton)}
-          >
-            Try Again
-          </Link>
+        {/* Content */}
+        <div className="p-6 sm:p-8">
+          {/* Error details */}
+          <div className="bg-red-50 border border-red-100 rounded-lg p-4 mb-6">
+            <div className="grid grid-cols-1 gap-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Status:</span>
+                <span className="font-medium text-gray-800">{status}</span>
+              </div>
+              <div>
+                <span className="text-gray-600">Message:</span>
+                <p className="font-medium text-gray-800 mt-1">{errorMessage}</p>
+              </div>
+              {transactionId && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Transaction ID:</span>
+                  <span className="font-medium text-gray-800">{transactionId}</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-          <Link
-            to="/contact"
-            style={styles.contactSupportButton}
-            aria-label="Contact Support"
-            onMouseEnter={(e) =>
-              handleHover(e, { backgroundColor: '#138496', transform: 'translateY(-2px)', boxShadow: '0 6px 15px rgba(23,162,184,0.2)' })
-            }
-            onMouseLeave={(e) => handleLeave(e, styles.contactSupportButton)}
-          >
-            Contact Support
-          </Link>
+          {/* Additional guidance */}
+          <div className="flex items-start mb-6">
+            <svg 
+              className="flex-shrink-0 w-5 h-5 text-red-500 mt-0.5 mr-2" 
+              fill="currentColor" 
+              viewBox="0 0 20 20"
+            >
+              <path 
+                fillRule="evenodd" 
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" 
+                clipRule="evenodd" 
+              />
+            </svg>
+            <p className="text-gray-600">
+              Please check your payment details and try again, or contact support if the problem persists.
+            </p>
+          </div>
 
-          <Link
-            to="/"
-            style={styles.goHomeButton}
-            aria-label="Back to Home"
-            onMouseEnter={(e) =>
-              handleHover(e, { backgroundColor: '#5a6268', transform: 'translateY(-2px)', boxShadow: '0 6px 15px rgba(108,117,125,0.2)' })
-            }
-            onMouseLeave={(e) => handleLeave(e, styles.goHomeButton)}
-          >
-            Back to Home
-          </Link>
+          {/* Action buttons */}
+          <div className="space-y-3">
+            <Link
+                to="/credit-purchase"
+                className="block w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:text-black font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:from-amber-600 hover:to-amber-700 text-center"
+              >
+              Try Again
+            </Link>
+            <Link
+              to="/contact"
+              className="block w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:from-blue-600 hover:to-blue-700 text-center"
+            >
+              Contact Support
+            </Link>
+
+            <Link
+              to="/"
+              className="block w-full px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-200 transition-all duration-300 text-center"
+            >
+              Back to Home
+            </Link>
+          </div>
+
+          {/* Support information */}
+          <div className="mt-8 pt-6 border-t border-gray-100">
+            <p className="text-xs text-gray-500 text-center mb-2">
+              Need immediate assistance?
+            </p>
+            <div className="flex justify-center space-x-4">
+              <a 
+                href="mailto:support@example.com" 
+                className="text-xs text-blue-600 hover:underline"
+              >
+                support@example.com
+              </a>
+              <span className="text-xs text-gray-400">|</span>
+              <a 
+                href="tel:+880123456789" 
+                className="text-xs text-blue-600 hover:underline"
+              >
+                +880 1234 56789
+              </a>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Animation styles */}
+      <style jsx>{`
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
+        }
+      `}</style>
     </div>
   );
 };
