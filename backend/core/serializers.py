@@ -15,6 +15,40 @@ from .models import (
 
 User = get_user_model()
 
+class TutorProfileUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['bio', 'education', 'experience', 'location']
+
+class TeacherProfileSerializer(serializers.ModelSerializer):
+    gigs = serializers.SerializerMethodField()
+    reviews = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            'id', 'username', 'email', 'phone_number',
+            'user_type', 'bio', 'education', 'experience',
+            'location', 'profile_picture', 'trust_score', 'is_verified',
+            'subjects', 'gigs', 'reviews', 'bio', 'education', 'experience', 'location'
+        ]
+
+    def get_gigs(self, obj):
+        gigs_qs = Gig.objects.filter(teacher=obj)
+        return GigSerializer(gigs_qs, many=True).data
+
+    def get_reviews(self, obj):
+        reviews_qs = Review.objects.filter(teacher=obj, is_verified=True)
+        return ReviewSerializer(reviews_qs, many=True).data
+
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        contact_unlocked = self.context.get('contact_unlocked', False)
+        if not contact_unlocked:
+            data['email'] = None
+            data['phone_number'] = None
+        return data
+
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -121,7 +155,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             'id', 'username', 'email', 'user_type',
-            'trust_score', 'is_verified', 'verification_requested', 'verification_doc', 'location'
+            'trust_score', 'is_verified', 'verification_requested', 'verification_doc', 'location', 'bio', 'education', 'experience',
         ]
 
 
@@ -229,25 +263,12 @@ class UserSettingsSerializer(serializers.ModelSerializer):
 # === REVIEW SERIALIZER ===
 
 class ReviewSerializer(serializers.ModelSerializer):
-    student_name = serializers.CharField(source='student.username', read_only=True)
-    teacher_name = serializers.CharField(source='teacher.username', read_only=True)
-    job_title = serializers.CharField(source='job.title', read_only=True)
-    student_email = serializers.EmailField(source='student.email', read_only=True)
-    teacher_email = serializers.EmailField(source='teacher.email', read_only=True)
-    teacher_trust_score = serializers.FloatField(source='teacher.trust_score', read_only=True)
+    student_username = serializers.CharField(source='student.username', read_only=True)
 
     class Meta:
         model = Review
-        fields = [
-            'id', 'student', 'teacher', 'rating', 'comment', 'created_at', 'updated_at',
-            'job', 'is_verified', 'student_name', 'teacher_name', 'job_title',
-            'student_email', 'teacher_email', 'teacher_trust_score',
-        ]
-        read_only_fields = [
-            'id', 'student', 'created_at', 'updated_at', 'is_verified',
-            'student_name', 'teacher_name', 'job_title',
-            'student_email', 'teacher_email', 'teacher_trust_score'
-        ]
+        fields = ['id', 'student', 'student_username', 'teacher', 'rating', 'comment', 'created_at', 'updated_at']
+        read_only_fields = ['student', 'teacher', 'created_at', 'updated_at']
 
 
 # === ESCROW PAYMENT SERIALIZER ===

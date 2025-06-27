@@ -10,7 +10,8 @@ from .views import (
     payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, UserProfileView, UserProfileUpdateByIdView,
     TutorSearchAPIView, JobCreateAPIView, JobDetailAPIView, GigCreateAPIView,GigListByTeacherAPIView, CreditUpdateByUserPostView,
     UserCreditBalanceView, UserSearchView, ConversationListView, ConversationMessagesView, SendMessageView,NotificationCreateView,
-    UnreadNotificationsView,MarkNotificationsReadView, EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView,
+    UnreadNotificationsView,MarkNotificationsReadView, EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView, TeacherProfileView,
+    SubmitReview, TutorAverageRating,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -68,6 +69,9 @@ urlpatterns = [
     path('notifications/mark-read/<int:user_id>/', MarkNotificationsReadView.as_view(), name='notifications-mark-read'),
     path('unlock-contact/', UnlockContactInfoView.as_view(), name='unlock-contact'),
     path('check-unlock-status/', CheckUnlockStatusView.as_view(), name='check-unlock-status'),
+    path('teacher/<int:tutor_id>/', TeacherProfileView.as_view(), name='teacher-profile'),
+    path('reviews/', SubmitReview.as_view(), name='submit-review'),
+    path('reviews/<int:tutor_id>/', TutorAverageRating.as_view(), name='tutor-average-rating'),
     # All other API endpoints handled by the router
     path('', include(router.urls)),
 

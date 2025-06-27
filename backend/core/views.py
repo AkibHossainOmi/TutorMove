@@ -1,4 +1,5 @@
 
+from django.db.models import Avg
 from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 from geopy.geocoders import Nominatim
 from rest_framework.views import APIView
@@ -39,7 +40,7 @@ from .serializers import (
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, TutorSerializer, JobListSerializer,
     OrderSerializer, PaymentSerializer, CreditUpdateByUserSerializer,
-    UserSerializer, ConversationSerializer, ChatSerializer,
+    ConversationSerializer, ChatSerializer, TeacherProfileSerializer
 )
 
 from .payments import SSLCommerzPayment
@@ -48,6 +49,23 @@ from .payments import SSLCommerzPayment
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
+
+class TeacherProfileView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, tutor_id):
+        student_id = request.data.get('student_id')
+        if not student_id:
+            return Response({'detail': 'student_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        tutor = get_object_or_404(User, id=tutor_id, user_type='tutor')
+        student = get_object_or_404(User, id=student_id, user_type='student')
+
+        contact_unlocked = ContactUnlock.objects.filter(student=student, tutor=tutor).exists()
+
+        serializer = TeacherProfileSerializer(tutor, context={'contact_unlocked': contact_unlocked})
+        return Response(serializer.data)
+
 
 class MarkNotificationsReadView(APIView):
     permission_classes = [AllowAny]
@@ -166,10 +184,7 @@ class JobCreateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileUpdateByIdView(APIView):
-    """
-    Allows updating a user's profile using a POST request by providing the user ID.
-    """
-    permission_classes = [permissions.AllowAny]  # ⚠️ Use proper permission in production
+    permission_classes = [AllowAny]  # public API, no auth required
 
     def post(self, request):
         user_id = request.data.get('id')
@@ -181,12 +196,64 @@ class UserProfileUpdateByIdView(APIView):
         except User.DoesNotExist:
             return Response({'id': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = UserSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        allowed_fields = ['bio', 'education', 'experience', 'location']
+        data_to_update = {field: request.data.get(field) for field in allowed_fields if field in request.data}
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        for key, value in data_to_update.items():
+            setattr(user, key, value)
+
+        user.save()
+
+        return Response({
+            'bio': user.bio,
+            'education': user.education,
+            'experience': user.experience,
+            'location': user.location,
+        }, status=status.HTTP_200_OK)
+
+class TutorAverageRating(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request, tutor_id):
+        avg_rating = Review.objects.filter(teacher_id=tutor_id).aggregate(average=Avg('rating'))['average']
+        avg_rating = round(avg_rating or 0, 1)
+        return Response({"average_rating": avg_rating})
+
+class SubmitReview(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        data = request.data.copy()
+
+        student_id = data.get('student')
+        if not student_id:
+            return Response({"error": "student id is required"}, status=400)
+
+        try:
+            student = User.objects.get(id=student_id)
+        except User.DoesNotExist:
+            return Response({"error": "Student not found."}, status=404)
+
+        try:
+            teacher = User.objects.get(id=data.get('teacher'), user_type='tutor')
+        except User.DoesNotExist:
+            return Response({"error": "Tutor not found."}, status=404)
+
+        # Check existing review
+        review_qs = Review.objects.filter(student=student, teacher=teacher)
+        if review_qs.exists():
+            review = review_qs.first()
+            serializer = ReviewSerializer(review, data=data, partial=True)
+        else:
+            serializer = ReviewSerializer(data=data)
+
+        if serializer.is_valid():
+            # Set the student explicitly on save
+            serializer.save(student=student, teacher=teacher)
+            return Response({"message": "Review submitted.", "review": serializer.data})
+        else:
+            return Response(serializer.errors, status=400)
+
 class UserProfileView(generics.RetrieveAPIView): # Changed base class from generics.RetrieveAPIView to APIView
     """
     API view to retrieve the profile of the currently authenticated user (GET).
@@ -1402,6 +1469,16 @@ class RegisterView(views.APIView):
             serializer.save()
             return Response({'detail': 'Registered successfully. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+def user_profile_view(request, user_id):
+    try:
+        user = User.objects.get(pk=user_id)
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
 class CheckUnlockStatusView(APIView):
     permission_classes = [AllowAny]
 

@@ -1,6 +1,7 @@
 # backend/core/models.py
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import F
 from django.utils import timezone
 import re
 from phonenumber_field.modelfields import PhoneNumberField
@@ -28,6 +29,12 @@ class User(AbstractUser):
     verification_requested = models.BooleanField(default=False) # Reverted: Original duplicate field
     is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
     location = models.CharField(max_length=255, blank=True, null=True, help_text="e.g., City, Country or Region")
+    bio = models.TextField(blank=True, null=True)
+    education = models.CharField(max_length=255, blank=True, null=True)
+    experience = models.CharField(max_length=255, blank=True, null=True)
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+    subjects = models.JSONField(default=list, blank=True)
+    jobcount = models.PositiveIntegerField(default=0)
 
 class ContactUnlock(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocks')
@@ -315,26 +322,24 @@ class Review(models.Model):
     comment = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    job = models.ForeignKey(Job, on_delete=models.SET_NULL, null=True, blank=True)
     is_verified = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('student', 'teacher', 'job')
+        unique_together = ('student', 'teacher')
         ordering = ['-created_at']
 
     def __str__(self):
         return f"Review by {self.student.username} for {self.teacher.username}"
 
     def save(self, *args, **kwargs):
-        if self.job and not self.is_verified:
-            completed_application = Application.objects.filter(
-                job=self.job,
-                teacher=self.teacher,
-                status='completed'
-            ).exists()
-            if completed_application:
-                self.is_verified = True
+        is_new = self.pk is None
+
         super().save(*args, **kwargs)
+
+        if is_new:
+            self.teacher.jobcount = F('jobcount') + 1
+            self.teacher.save(update_fields=['jobcount'])
+            self.teacher.refresh_from_db()
 
 class EscrowPayment(models.Model):
     student = models.ForeignKey(User, related_name='escrow_student', on_delete=models.CASCADE)
