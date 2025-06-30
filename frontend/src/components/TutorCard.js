@@ -24,11 +24,11 @@ const TutorCard = ({ tutor, featured = false }) => {
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
     setCurrentUserType(user?.user_type || '');
-
+  
     if (!token || !user || user.user_type !== 'student') return;
-
+  
     axios
-      .get(`http://localhost:8000/api/check-unlock-status/`, {
+      .get(`${process.env.REACT_APP_API_URL}/api/check-unlock-status/`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { student_id: user.user_id, tutor_id: tutor.id },
       })
@@ -42,7 +42,7 @@ const TutorCard = ({ tutor, featured = false }) => {
         }
       })
       .catch(() => {});
-  }, [tutor.id]);
+  }, [tutor.id, tutor.email, tutor.phone_number]);  
 
   const handleUnlockContact = async () => {
     setUnlocking(true);
@@ -57,7 +57,7 @@ const TutorCard = ({ tutor, featured = false }) => {
       }
 
       const res = await axios.post(
-        'http://localhost:8000/api/unlock-contact/',
+        `${process.env.REACT_APP_API_URL}/api/unlock-contact/`,
         { student_id: user.user_id, tutor_id: tutor.id },
         {
           headers: {

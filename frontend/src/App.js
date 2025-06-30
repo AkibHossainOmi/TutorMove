@@ -1,17 +1,8 @@
-import React, { Suspense } from 'react';
+import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { useChat } from './contexts/ChatContext';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import LoadingSpinner from './components/LoadingSpinner';
-import ChatWindow from './components/ChatWindow';
-
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
-import TeacherDashboard from './pages/TeacherDashboard';
-import StudentDashboard from './pages/StudentDashboard';
 import TutorList from './pages/TutorList';
 import TutorProfile from './pages/TutorProfile';
 import Profile from './pages/Profile';
@@ -36,7 +27,6 @@ import ResetPassword from './pages/ResetPassword';
 
 // Map Search (if needed)
 import ProtectedRoute from './contexts/ProtectedRoute';
-import { useAuth } from './contexts/UseAuth';
 import Dashboard from './pages/Dashboard';
 import TutorMapSearch from './components/MapSearch';
 import BuyCreditPage from './pages/BuyCreditPage';
@@ -50,21 +40,6 @@ const RefundPolicy = () => (
     {/* Add more content as needed */}
   </div>
 );
-
-// Chat Integration Component
-const ChatIntegration = () => {
-  const { isChatOpen, activeConversation, closeChat } = useChat();
-  const { user } = useAuth();
-  if (!isChatOpen || !activeConversation || !user) return null;
-  return (
-    <ChatWindow
-      conversationId={activeConversation.id}
-      currentUser={user}
-      onClose={closeChat}
-      isOpen={isChatOpen}
-    />
-  );
-};
 
 function App() {
   return (

@@ -22,7 +22,7 @@ const Login = () => {
     setError(null);
     try {
       // 1. Login & save JWT token
-      const response = await axios.post('http://localhost:8000/api/auth/login/', formData);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login/`, formData);
       localStorage.setItem('token', response.data.token);
       const user = {
           user_id: response.data.user_id,
@@ -39,7 +39,7 @@ const Login = () => {
         userType = response.data.user_type;
       } else {
         // Option B: Fetch user info after login using the token
-        const userRes = await axios.get('/api/users/me/', {
+        const userRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/me/`, {
           headers: { Authorization: `Bearer ${response.data.token}` },
         });
         userType = userRes.data.user_type;

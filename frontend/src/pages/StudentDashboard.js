@@ -42,7 +42,7 @@ const jobAPI = {
 const tutorAPI = {
   getTutorGigs: async (teacherId) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/gigs/teacher/${teacherId}/`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/gigs/teacher/${teacherId}/`);
       return Array.isArray(response.data) ? response.data : response.data.results || [];
     } catch (error) {
       console.error("Error fetching tutor gigs:", error.response?.data || error.message);
@@ -57,7 +57,7 @@ const tutorAPI = {
 const creditAPI = {
   getUserCredits: async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/credit/user/${userId}`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/credit/user/${userId}`);
       return response.data;
     } catch (error) {
       console.error("Error fetching user credits:", error.response?.data || error.message);
@@ -115,29 +115,29 @@ const StatCard = ({ title, value, icon, color, trend }) => {
 };
 
 
-/**
- * Component to display individual gig information.
- */
-const GigItemCard = ({ gig }) => {
-  const { title, description, subject, created_at } = gig;
+// /**
+//  * Component to display individual gig information.
+//  */
+// const GigItemCard = ({ gig }) => {
+//   const { title, description, subject, created_at } = gig;
 
-  return (
-    <div className="gig-card bg-white rounded-lg p-5 shadow-sm border-l-4 border-blue-500 flex flex-col gap-2 transition-transform hover:-translate-y-1 cursor-pointer">
-      <h4 className="m-0 text-gray-800 text-lg">{title || 'No Title'}</h4>
-      <p className="m-0 text-gray-600 text-sm flex-grow">
-        {description || 'No description provided.'}
-      </p>
-      <div className="flex justify-between items-center text-sm text-gray-700">
-        <span className="bg-gray-100 px-2 py-1 rounded font-medium">
-          Subject: {subject || 'N/A'}
-        </span>
-        <span className="text-gray-600">
-          Created: {created_at ? new Date(created_at).toLocaleDateString() : 'N/A'}
-        </span>
-      </div>
-    </div>
-  );
-};
+//   return (
+//     <div className="gig-card bg-white rounded-lg p-5 shadow-sm border-l-4 border-blue-500 flex flex-col gap-2 transition-transform hover:-translate-y-1 cursor-pointer">
+//       <h4 className="m-0 text-gray-800 text-lg">{title || 'No Title'}</h4>
+//       <p className="m-0 text-gray-600 text-sm flex-grow">
+//         {description || 'No description provided.'}
+//       </p>
+//       <div className="flex justify-between items-center text-sm text-gray-700">
+//         <span className="bg-gray-100 px-2 py-1 rounded font-medium">
+//           Subject: {subject || 'N/A'}
+//         </span>
+//         <span className="text-gray-600">
+//           Created: {created_at ? new Date(created_at).toLocaleDateString() : 'N/A'}
+//         </span>
+//       </div>
+//     </div>
+//   );
+// };
 
 /**
  * The main Student Dashboard component.
@@ -195,7 +195,7 @@ const StudentDashboard = () => {
     if (user) {
       try {
         // Deduct 1 credit by sending the required data
-        const creditUpdateResponse = await axios.post('http://localhost:8000/api/credit/update/', {
+        const creditUpdateResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/credit/update/`, {
           user_id: user.user_id,
           amount: 1,
           isincrease: false
@@ -224,7 +224,7 @@ const StudentDashboard = () => {
   // Fetch unread notifications for user
   const fetchNotifications = async (userId) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/notifications/unread/${userId}/`);
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/unread/${userId}/`);
       const unreadNotifs = response.data || [];
       setNotifications(unreadNotifs);
       setUnreadNotificationCount(unreadNotifs.length);
@@ -237,7 +237,7 @@ const StudentDashboard = () => {
   const markNotificationsRead = async () => {
     if (!user) return;
     try {
-      await axios.post(`http://localhost:8000/api/notifications/mark-read/${user.user_id}/`);
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/notifications/mark-read/${user.user_id}/`);
       setUnreadNotificationCount(0);
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     } catch (error) {
@@ -309,7 +309,7 @@ const StudentDashboard = () => {
           creditBalance,
           totalJobs: prev.stats.totalJobs,
           activeJobs: prev.stats.activeJobs,
-          completedJobs: prev.stats.completedJobs,
+          // completedJobs: prev.stats.completedJobs,
           totalReviews: prev.stats.totalReviews,
         }
       }));

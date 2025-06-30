@@ -34,7 +34,7 @@ export default function TutorProfilePage() {
       try {
         setLoading(true);
 
-        const profileRes = await fetch(`http://localhost:8000/api/teacher/${tutorId}/`, {
+        const profileRes = await fetch(`${process.env.REACT_APP_API_URL}/api/teacher/${tutorId}/`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -46,7 +46,7 @@ export default function TutorProfilePage() {
         const profileData = await profileRes.json();
         setProfile(profileData);
 
-        const ratingRes = await fetch(`http://localhost:8000/api/reviews/${tutorId}/`);
+        const ratingRes = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${tutorId}/`);
         if (!ratingRes.ok) throw new Error("Failed to fetch rating");
         const ratingData = await ratingRes.json();
         setAverageRating(ratingData.average_rating || null);
@@ -175,7 +175,7 @@ export default function TutorProfilePage() {
                   const studentId = getStudentId();
 
                   try {
-                    const res = await fetch("http://localhost:8000/api/reviews/", {
+                    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/`, {
                       method: "POST",
                       headers: {
                         "Content-Type": "application/json",
@@ -249,7 +249,7 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
         if (!token || !studentId || !tutorId) return;
 
         const res = await fetch(
-          `http://localhost:8000/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`,
+          `${process.env.REACT_APP_API_URL}/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -272,7 +272,7 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
   return (
     <div className="absolute top-4 right-4">
   <a
-    href={`http://localhost:3000/messages/?username=${encodeURIComponent(tutorUsername)}`}
+    href={`https://asr25.com/messages/?username=${encodeURIComponent(tutorUsername)}`}
     className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
       hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
     } text-indigo-600`}

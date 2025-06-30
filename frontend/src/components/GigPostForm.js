@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const GIG_CREATION_ENDPOINT = 'http://localhost:8000/api/gigs/create/';
-const SUBJECTS_API = 'http://localhost:8000/api/subjects';
+const GIG_CREATION_ENDPOINT = `${process.env.REACT_APP_API_URL}/api/gigs/create/`;
+const SUBJECTS_API = `${process.env.REACT_APP_API_URL}/api/subjects`;
 
 const GigPostForm = ({ onClose, onGigCreated }) => {
   const [title, setTitle] = useState('');

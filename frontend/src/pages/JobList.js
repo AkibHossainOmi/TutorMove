@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { FiBriefcase, FiMapPin, FiBook, FiClock, FiDollarSign } from 'react-icons/fi';
+import { FiBriefcase, FiMapPin, FiBook, FiDollarSign } from 'react-icons/fi';
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
@@ -15,7 +15,7 @@ const JobList = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/jobs/');
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/jobs/`);
         setJobs(response.data);
       } catch (err) {
         setError('Failed to fetch jobs. Please try again later.');
@@ -156,7 +156,7 @@ const JobList = () => {
           {!loading && !error && filteredJobs.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredJobs.map((job) => {
-                const initials = job.title ? job.title.slice(0, 3).toUpperCase() : 'JOB';
+                // const initials = job.title ? job.title.slice(0, 3).toUpperCase() : 'JOB';
                 return (
                   <Link
                     to={`/jobs/${job.id}`}

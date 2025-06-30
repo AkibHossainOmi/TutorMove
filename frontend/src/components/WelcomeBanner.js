@@ -15,7 +15,7 @@ function WelcomeBanner() {
     //   return;
     // }
 
-    axios.get('/api/credits/')
+    axios.get(`${process.env.REACT_APP_API_URL}/api/credits/`)
       .then(res => {
         // Condition: Show ONLY if the user's balance is exactly the WELCOME_CREDIT amount
         // This assumes these credits are a one-time welcome bonus

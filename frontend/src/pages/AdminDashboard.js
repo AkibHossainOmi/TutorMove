@@ -7,18 +7,18 @@ const AdminDashboard = () => {
   const [reports, setReports] = useState([]);
 
   useEffect(() => {
-    axios.get('/api/admin-tools/dashboard/').then(res => setStats(res.data));
-    axios.get('/api/admin-tools/pending_gigs/').then(res => setPendingGigs(res.data));
-    axios.get('/api/admin-tools/reports/').then(res => setReports(res.data));
+    axios.get(`${process.env.REACT_APP_API_URL}/api/admin-tools/dashboard/`).then(res => setStats(res.data));
+    axios.get(`${process.env.REACT_APP_API_URL}/api/admin-tools/pending_gigs/`).then(res => setPendingGigs(res.data));
+    axios.get(`${process.env.REACT_APP_API_URL}/api/admin-tools/reports/`).then(res => setReports(res.data));
   }, []);
 
   const approveGig = async (gigId) => {
-    await axios.post(`/api/admin-tools/${gigId}/approve_gig/`);
+    await axios.post(`${process.env.REACT_APP_API_URL}/api/admin-tools/${gigId}/approve_gig/`);
     setPendingGigs(prev => prev.filter(gig => gig.id !== gigId));
   };
 
   const blockUser = async (userId) => {
-    await axios.post(`/api/admin-tools/${userId}/block_user/`);
+    await axios.post(`${process.env.REACT_APP_API_URL}/api/admin-tools/${userId}/block_user/`);
     alert("User blocked!");
   };
 

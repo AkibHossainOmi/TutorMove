@@ -35,7 +35,7 @@ const MessagePage = () => {
   const messagesEndRef = useRef(null);
 
   // API base URL for your Django backend
-  const API_BASE_URL = 'http://localhost:3000/api'; // Updated API Base URL
+  const API_BASE_URL = 'https://asr25.com/api'; // Updated API Base URL
 
   // --- Initial Load and User Authentication Check ---
   useEffect(() => {

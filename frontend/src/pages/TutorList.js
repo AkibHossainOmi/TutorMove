@@ -20,11 +20,11 @@ const TutorList = () => {
 
   // Fetch subjects and locations
   useEffect(() => {
-    axios.get('/api/subjects/')
+    axios.get(`${process.env.REACT_APP_API_URL}/api/subjects/`)
       .then(res => setSubjects(res.data))
       .catch(() => setSubjects([]));
 
-    axios.get('/api/locations/')
+    axios.get(`${process.env.REACT_APP_API_URL}/api/locations/`)
       .then(res => setLocations(res.data))
       .catch(() => setLocations([]));
   }, []);
@@ -34,7 +34,7 @@ const TutorList = () => {
     setLoading(true);
     setError(null);
 
-    let url = `/api/tutors/?page=${page}&page_size=${PAGE_SIZE}`;
+    let url = `${process.env.REACT_APP_API_URL}/api/tutors/?page=${page}&page_size=${PAGE_SIZE}`;
     if (premiumOnly) url += '&is_premium=true';
     if (selectedSubject) url += `&subject=${encodeURIComponent(selectedSubject)}`;
     if (selectedLocation) url += `&location=${encodeURIComponent(selectedLocation)}`;

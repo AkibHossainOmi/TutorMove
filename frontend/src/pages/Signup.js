@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link, Navigate } from 'react-router-dom'; // Import Link for navigation
 import Footer from '../components/Footer';
@@ -32,7 +32,8 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/api/auth/register/', formData);
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register/`, formData);
+      console.debug('Registration response:', response.data);
       // Backend typically sends an email verification link.
       // So, we don't usually log in or set token immediately here.
       setSuccess('Registration successful! Please check your email to verify your account.');

@@ -23,7 +23,7 @@ const BuyCreditPage = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
   
   const PRICE_PER_CREDIT = 10;
-  const CREDIT_PURCHASE_ENDPOINT = `http://localhost:8000/api/credits/purchase/`;
+  const CREDIT_PURCHASE_ENDPOINT = `${process.env.REACT_APP_API_URL}/api/credits/purchase/`;
 
   // Credit packages with discounts for bulk purchases
   const creditPackages = [

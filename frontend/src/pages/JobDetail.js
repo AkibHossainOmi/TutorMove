@@ -19,7 +19,7 @@ const JobDetail = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const response = await axios.get(`/api/jobs/${id}/`);
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/jobs/${id}/`);
         setJob(response.data);
       } catch (err) {
         setError('Failed to fetch job details.');
@@ -43,13 +43,13 @@ const JobDetail = () => {
 
     setApplyStatus('loading');
     try {
-      await axios.post('http://localhost:8000/api/credit/update/', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/credit/update/`, {
         user_id: user.user_id,
         amount: 1,
         isincrease: false,
       });
 
-      await axios.post('http://localhost:8000/api/notifications/create/', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/notifications/create/`, {
         from_user: user.user_id,
         to_user: job.student,
         message: `${user.username} applied to your job "${job.title}"`,

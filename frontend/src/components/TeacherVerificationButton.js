@@ -15,7 +15,7 @@ const TeacherVerificationButton = () => {
   const requestVerification = async () => {
     setLoading(true);
     try {
-      await fetch('/api/users/request_verification/', {
+      await fetch(`${process.env.REACT_APP_API_URL}/api/users/request_verification/`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });

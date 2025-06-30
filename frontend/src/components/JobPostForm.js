@@ -26,7 +26,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await axios.get("/api/subjects/");
+        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/subjects/`);
         setSubjects(response.data);
       } catch (error) {
         console.error("Failed to fetch subjects:", error);
@@ -78,7 +78,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
       };
 
       const response = await axios.post(
-        "http://localhost:8000/api/jobs/create",
+        `${process.env.REACT_APP_API_URL}/api/jobs/create`,
         payload
       );
       if (response.status === 201) {

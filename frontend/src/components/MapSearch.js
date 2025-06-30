@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 const SEARCH_RADIUS_KM = 20;
@@ -6,13 +6,27 @@ const SEARCH_RADIUS_KM = 20;
 const TutorMapSearch = () => {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("");
+  const [subjects, setSubjects] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [hasSearched, setHasSearched] = useState(false); // track if search performed
+  const [hasSearched, setHasSearched] = useState(false);
+
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      try {
+        const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/subjects`);
+        const activeSubjects = res.data.filter((s) => s.is_active);
+        setSubjects(activeSubjects);
+      } catch (err) {
+        console.error("Failed to fetch subjects", err);
+      }
+    };
+    fetchSubjects();
+  }, []);
 
   const fetchSuggestions = async (text) => {
     if (text.length < 3) return;
@@ -29,15 +43,15 @@ const TutorMapSearch = () => {
   };
 
   const handleSearch = async () => {
-    if (!selectedLocation || !subject.trim()) {
-      setError("Please select a location and subject");
+    if (!subject.trim()) {
+      setError("Please select a subject");
       return;
     }
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post("http://localhost:8000/api/search-tutors/", {
-        location: selectedLocation.display_name,
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/search-tutors/`, {
+        location: selectedLocation ? selectedLocation.display_name : "",
         subject: subject.trim(),
         radius_km: SEARCH_RADIUS_KM,
       });
@@ -51,37 +65,16 @@ const TutorMapSearch = () => {
       setLoading(false);
     }
   };
+  
 
   return (
-    <div
-      style={{
-        maxWidth: 960,
-        margin: "40px auto",
-        padding: 24,
-        fontFamily: "Segoe UI, sans-serif",
-      }}
-    >
-      <h1
-        style={{
-          textAlign: "center",
-          fontSize: "2rem",
-          fontWeight: 700,
-          marginBottom: 30,
-        }}
-      >
+    <div style={{ maxWidth: 960, margin: "40px auto", padding: 24, fontFamily: "Segoe UI, sans-serif" }}>
+      <h1 style={{ textAlign: "center", fontSize: "2rem", fontWeight: 700, marginBottom: 30 }}>
         Find Tutors by Location and Subject
       </h1>
 
       {/* Input Fields */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          maxWidth: 700,
-          margin: "0 auto",
-          marginBottom: 20,
-        }}
-      >
+      <div style={{ display: "flex", gap: 10, maxWidth: 700, margin: "0 auto", marginBottom: 20 }}>
         <div style={{ flexGrow: 1, position: "relative" }}>
           <input
             type="text"
@@ -90,7 +83,10 @@ const TutorMapSearch = () => {
             onChange={(e) => {
               setQuery(e.target.value);
               fetchSuggestions(e.target.value);
-            }}
+              if (e.target.value.trim() === "") {
+                setSelectedLocation(null);
+              }
+            }}            
             onFocus={() => setShowSuggestions(true)}
             style={{
               width: "100%",
@@ -141,9 +137,8 @@ const TutorMapSearch = () => {
             </ul>
           )}
         </div>
-        <input
-          type="text"
-          placeholder="Enter subject..."
+
+        <select
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           style={{
@@ -153,7 +148,15 @@ const TutorMapSearch = () => {
             border: "1.5px solid #ccc",
             fontSize: 16,
           }}
-        />
+        >
+          <option value="">Select subject...</option>
+          {subjects.map((s) => (
+            <option key={s.id} value={s.aliases}>
+              {s.name}
+            </option>
+          ))}
+        </select>
+
         <button
           onClick={handleSearch}
           disabled={loading}
@@ -244,9 +247,7 @@ const TutorMapSearch = () => {
 
       {/* No tutors message only after search */}
       {tutors.length === 0 && !loading && hasSearched && (
-        <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>
-          No tutors found
-        </p>
+        <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>No tutors found</p>
       )}
     </div>
   );

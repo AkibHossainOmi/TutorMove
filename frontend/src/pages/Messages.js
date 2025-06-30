@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import axios from 'axios';
 import { useLocation } from 'react-router-dom';
 import Footer from '../components/Footer';
@@ -26,24 +26,24 @@ export default function WhatsAppLikeMessaging() {
     }
   }, []);
 
-  const fetchConversations = () => {
+  const fetchConversations = useCallback(() => {
     if (!userId) return;
-    axios.post('http://localhost:8000/api/conversations/', { user_id: userId })
+    axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/`, { user_id: userId })
       .then(res => setConversations(res.data))
       .catch(console.error);
-  };
+  }, [userId]);
 
   useEffect(() => {
     if (!userId) return;
     fetchConversations();
     const intervalId = setInterval(fetchConversations, 60000);
     return () => clearInterval(intervalId);
-  }, [userId]);
+  }, [userId, fetchConversations]);
 
   useEffect(() => {
     if (!activeConversation?.id || !userId) return;
     const fetchMessages = () => {
-      axios.post('http://localhost:8000/api/conversations/messages/', {
+      axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/messages/`, {
         conversation_id: activeConversation.id,
         user_id: userId,
       })
@@ -63,7 +63,7 @@ export default function WhatsAppLikeMessaging() {
 
   const checkContactUnlocked = async (studentId, tutorId, token) => {
     try {
-      const res = await axios.get('http://localhost:8000/api/check-unlock-status/', {
+      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/check-unlock-status/`, {
         headers: { Authorization: `Bearer ${token}` },
         params: { student_id: studentId, tutor_id: tutorId },
       });
@@ -80,7 +80,7 @@ export default function WhatsAppLikeMessaging() {
     if (!token || !user) return;
 
     try {
-      const res = await axios.post('http://localhost:8000/api/users/search/', { keyword: searchTerm.trim() }, {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/search/`, { keyword: searchTerm.trim() }, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -121,13 +121,13 @@ export default function WhatsAppLikeMessaging() {
       ? activeConversation.user2.id
       : activeConversation.user1.id;
 
-    axios.post('http://localhost:8000/api/messages/send/', {
+    axios.post(`${process.env.REACT_APP_API_URL}/api/messages/send/`, {
       sender_id: userId,
       receiver_id: receiverId,
       content: newMessage.trim(),
     }).then(res => {
       if (!activeConversation.id) {
-        axios.post('http://localhost:8000/api/conversations/', { user_id: userId })
+        axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/`, { user_id: userId })
           .then(res2 => {
             setConversations(res2.data);
             const conv = res2.data.find(c =>
@@ -150,36 +150,59 @@ export default function WhatsAppLikeMessaging() {
 
   // Auto open inbox by username if provided in URL
   useEffect(() => {
-    if (!userId || !usernameFromQuery || conversations.length === 0) return;
+    if (!userId || !usernameFromQuery) return;
   
     const token = localStorage.getItem('token');
     const user = JSON.parse(localStorage.getItem('user'));
     if (!token || !user) return;
   
-    // Try to find conversation with the given username
-    const matchingConv = conversations.find(conv => {
-      const otherUser = conv.user1.id === userId ? conv.user2 : conv.user1;
-      return otherUser.username === usernameFromQuery;
-    });
+    const openChatByUsername = async () => {
+      try {
+        let convs = conversations;
   
-    if (matchingConv) {
-      setActiveConversation(matchingConv);
-    } else {
-      // No conversation exists, try to search and start one
-      axios.post('http://localhost:8000/api/users/search/', { keyword: usernameFromQuery }, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).then(async res => {
-        const target = res.data.find(u => u.username === usernameFromQuery);
-        if (!target) return;
-  
-        const unlocked = await checkContactUnlocked(user.user_id, target.id, token);
-        if (unlocked) {
-          startConversation(target);
+        // If conversations are empty, fetch them
+        if (convs.length === 0) {
+          const convRes = await axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/`, { user_id: userId }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          convs = convRes.data;
+          setConversations(convs);
         }
-      }).catch(console.error);
-    }
-  }, [userId, conversations, usernameFromQuery]);  
-
+  
+        // Find conversation with usernameFromQuery
+        const matchingConv = convs.find(conv => {
+          const otherUser = conv.user1.id === userId ? conv.user2 : conv.user1;
+          return otherUser.username.toLowerCase() === usernameFromQuery.toLowerCase();
+        });
+  
+        if (matchingConv) {
+          setActiveConversation(matchingConv);
+          return;
+        }
+  
+        // No conversation, search user by username
+        const searchRes = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/search/`, { keyword: usernameFromQuery }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+  
+        const targetUser = searchRes.data.find(u => u.username.toLowerCase() === usernameFromQuery.toLowerCase());
+        if (!targetUser) return;
+  
+        // Check if contact is unlocked before starting conversation
+        const unlocked = await checkContactUnlocked(user.user_id, targetUser.id, token);
+        if (unlocked) {
+          startConversation(targetUser);
+        }
+      } catch (error) {
+        console.error('Error opening chat from URL:', error);
+      }
+    };
+  
+    openChatByUsername();
+  
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, usernameFromQuery]);
+  
   if (!userId) {
     return (
       <div className="h-screen flex items-center justify-center text-gray-600">

@@ -121,7 +121,8 @@ const JobCard = ({ job }) => {
     setError('');
     try {
       // Use correct endpoint for apply (adjust as needed)
-      const res = await axios.post(`/api/applications/`, { job: job.id });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/applications/`, { job: job.id });
+      console.debug('Apply response:', res.data);
       setApplied(true);
       setError('');
     } catch (err) {
