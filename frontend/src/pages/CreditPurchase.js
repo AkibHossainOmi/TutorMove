@@ -43,7 +43,7 @@ const CreditPurchase = () => {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.post('/api/credits/purchase/', 
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/credits/purchase/`, 
         { credits, amount: price },
         { headers: { Authorization: `Bearer ${token}` } }
       );

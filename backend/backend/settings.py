@@ -17,7 +17,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dswq$mer#l$f2p%b8ey
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['tutormove.com', 'www.tutormove.com', 'api.tutormove.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -109,10 +109,16 @@ SSL_COMMERZ = {
 # Custom user model
 AUTH_USER_MODEL = "core.User"
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "tutormove.com@gmail.com")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "btwc wjvr dfek uabp")
-FROM_EMAIL = os.getenv("FROM_EMAIL", "tutormove.com@gmail.com")
-FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL", "http://localhost:3000")
+DEFAULT_FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_HOST_USER)
+DEFAULT_FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_HOST_USER)
+FROM_EMAIL = DEFAULT_FROM_EMAIL 
+FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL", "https://tutormove.com")
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -170,7 +176,11 @@ USE_I18N = True
 USE_L10N = True
 
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

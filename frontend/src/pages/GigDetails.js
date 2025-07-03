@@ -16,7 +16,7 @@ const GigDetails = ({ gig: initialGig }) => {
   React.useEffect(() => {
     if (!gig && id) {
       setLoading(true);
-      axios.get(`/api/tutors/${id}/`)
+      axios.get(`${process.env.REACT_APP_API_URL}/api/tutors/${id}/`)
         .then(res => {
           setGig(res.data);
           setContactInfo(res.data.contact_info || '[Locked. Buy credits to view.]');
@@ -30,7 +30,7 @@ const GigDetails = ({ gig: initialGig }) => {
     setUnlocking(true);
     setError('');
     try {
-      const res = await axios.post(`/api/tutors/${id || gig.id}/unlock_contact/`);
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tutors/${id || gig.id}/unlock_contact/`);
       setContactInfo(res.data.contact_info);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to unlock contact info.');

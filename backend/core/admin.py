@@ -50,9 +50,9 @@ class ApplicationAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ('user', 'is_read', 'created_at')
+    list_display = ('from_user', 'to_user', 'is_read', 'created_at')
     list_filter = ('is_read', 'created_at')
-    search_fields = ('user__username', 'message')
+    search_fields = ('from_user__username', 'to_user__username', 'message')
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):

@@ -11,7 +11,7 @@ const RequestVerificationButton = ({ isVerified, verificationRequested, onReques
     setSuccessMsg('');
     setErrorMsg('');
     try {
-      const response = await axios.post('/api/users/request_verification/');
+      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/request_verification/`);
       setSuccessMsg(response.data.detail || 'Verification request sent.');
       onRequested && onRequested();
     } catch (err) {

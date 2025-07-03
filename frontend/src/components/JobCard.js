@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-// import './JobCard.css';
+import '../index.css'; // Ensure global styles are applied
 
 // BuyCreditsModal Component
 const BuyCreditsModal = ({ open, onClose }) => {
@@ -121,7 +121,8 @@ const JobCard = ({ job }) => {
     setError('');
     try {
       // Use correct endpoint for apply (adjust as needed)
-      const res = await axios.post(`/api/applications/`, { job: job.id });
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/applications/`, { job: job.id });
+      console.debug('Apply response:', res.data);
       setApplied(true);
       setError('');
     } catch (err) {

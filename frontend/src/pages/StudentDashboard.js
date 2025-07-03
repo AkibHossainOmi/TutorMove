@@ -1,25 +1,160 @@
-// src/pages/StudentDashboard.js
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useAuth } from '../contexts/AuthContext';
-import { useNotification } from '../contexts/NotificationContext';
-import { useChat } from '../contexts/ChatContext';
-import { jobAPI, tutorAPI } from '../utils/apiService';
+import axios from 'axios';
 import JobPostForm from '../components/JobPostForm';
 import JobCard from '../components/JobCard';
-import TutorCard from '../components/TutorCard';
 import LoadingSpinner from '../components/LoadingSpinner';
-import WelcomeBanner from '../components/WelcomeBanner';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
+/**
+ * Custom hook for managing chat-related functionalities.
+ */
+const useChat = () => ({
+  openChat: (chatId) => console.log(`Opening chat ${chatId}`),
+  unreadCount: 0
+});
+
+/**
+ * API functions for job-related operations.
+ */
+const jobAPI = {
+  getMatchedJobs: async () => {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return {
+      data: {
+        results: []
+      }
+    };
+  },
+  getMyApplications: async () => {
+    await new Promise(resolve => setTimeout(resolve, 400));
+    return {
+      data: {
+        results: []
+      }
+    };
+  }
+};
+
+/**
+ * API functions for tutor-related operations.
+ */
+const tutorAPI = {
+  getTutorGigs: async (teacherId) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/gigs/teacher/${teacherId}/`);
+      return Array.isArray(response.data) ? response.data : response.data.results || [];
+    } catch (error) {
+      console.error("Error fetching tutor gigs:", error.response?.data || error.message);
+      throw error;
+    }
+  }
+};
+
+/**
+ * API functions for credit-related operations.
+ */
+const creditAPI = {
+  getUserCredits: async (userId) => {
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/credit/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user credits:", error.response?.data || error.message);
+      return { user_id: userId, balance: 0 };
+    }
+  }
+};
+
+/**
+ * Notification item component
+ */
+const NotificationItem = ({ notification }) => {
+  return (
+    <div className={`px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
+      !notification.is_read ? 'bg-blue-50 hover:bg-blue-100' : 'bg-white hover:bg-gray-50'
+    }`}>
+      <div className="flex items-start">
+        <div className={`flex-shrink-0 mt-1 mr-3 w-2 h-2 rounded-full ${
+          !notification.is_read ? 'bg-blue-500' : 'bg-transparent'
+        }`}></div>
+        <div>
+          <p className="text-sm text-gray-800">{notification.message}</p>
+          <small className="text-xs text-gray-500">
+            {new Date(notification.created_at).toLocaleString()}
+          </small>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const StatCard = ({ title, value, icon, color, trend }) => {
+  const colorClasses = {
+    blue: 'from-blue-500 to-blue-600',
+    emerald: 'from-emerald-500 to-emerald-600',
+    amber: 'from-amber-500 to-amber-600',
+    violet: 'from-violet-500 to-violet-600'
+  };
+
+  return (
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</p>
+            <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
+          </div>
+          <div className={`bg-gradient-to-br ${colorClasses[color]} rounded-lg p-3 text-white`}>
+            {icon}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+// /**
+//  * Component to display individual gig information.
+//  */
+// const GigItemCard = ({ gig }) => {
+//   const { title, description, subject, created_at } = gig;
+
+//   return (
+//     <div className="gig-card bg-white rounded-lg p-5 shadow-sm border-l-4 border-blue-500 flex flex-col gap-2 transition-transform hover:-translate-y-1 cursor-pointer">
+//       <h4 className="m-0 text-gray-800 text-lg">{title || 'No Title'}</h4>
+//       <p className="m-0 text-gray-600 text-sm flex-grow">
+//         {description || 'No description provided.'}
+//       </p>
+//       <div className="flex justify-between items-center text-sm text-gray-700">
+//         <span className="bg-gray-100 px-2 py-1 rounded font-medium">
+//           Subject: {subject || 'N/A'}
+//         </span>
+//         <span className="text-gray-600">
+//           Created: {created_at ? new Date(created_at).toLocaleDateString() : 'N/A'}
+//         </span>
+//       </div>
+//     </div>
+//   );
+// };
+
+/**
+ * The main Student Dashboard component.
+ */
 const StudentDashboard = () => {
-  const { t } = useTranslation();
-  const { user, refreshUser } = useAuth(); // refreshUser to refetch after upgrading
-  const { showNotification, notifications } = useNotification();
-  const { openChat, unreadCount } = useChat();
+  const { unreadCount } = useChat();
   const [isJobFormOpen, setIsJobFormOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+
   const [dashboardData, setDashboardData] = useState({
     postedJobs: [],
     applications: [],
@@ -34,61 +169,19 @@ const StudentDashboard = () => {
       totalJobs: 0,
       activeJobs: 0,
       completedJobs: 0,
-      totalReviews: 0
+      totalReviews: 0,
+      creditBalance: 0
+    },
+    myGigs: [],
+    matchedJobs: [],
+    earnings: {
+      pending: 0,
+      completed: 0,
+      total: 0
     }
   });
-
-  // === Become Teacher logic ===
-  const [showBecomeTeacher, setShowBecomeTeacher] = useState(false);
-  const [becomeTeacherLoading, setBecomeTeacherLoading] = useState(false);
-  const [becomeTeacherError, setBecomeTeacherError] = useState('');
-  // === Request Verification logic ===
-  const [showRequestVerification, setShowRequestVerification] = useState(false);
-  const [requestVerificationLoading, setRequestVerificationLoading] = useState(false);
-  const [verificationRequested, setVerificationRequested] = useState(user?.verification_requested || false);
-  const [isVerified, setIsVerified] = useState(user?.is_verified || false);
-
-  useEffect(() => {
-    loadDashboardData();
-    // Update verification state if user object changes
-    setVerificationRequested(user?.verification_requested || false);
-    setIsVerified(user?.is_verified || false);
-  }, [user]);
-
-  const loadDashboardData = async () => {
-    setIsLoading(true);
-    try {
-      const jobsResponse = await jobAPI.getJobs({ user: user.id });
-      const applicationsResponse = await jobAPI.getMyApplications();
-      const favoritesResponse = await tutorAPI.getFavoriteTutors();
-      setDashboardData({
-        postedJobs: jobsResponse.data.results || [],
-        applications: applicationsResponse.data.results || [],
-        favoriteTeachers: favoritesResponse.data.results || [],
-        reviews: [], // You can fetch from reviews API
-        credits: {
-          available: 2500,
-          spent: 1800,
-          pending: 300
-        },
-        stats: {
-          totalJobs: jobsResponse.data.results?.length || 0,
-          activeJobs: jobsResponse.data.results?.filter(job => job.status === 'active').length || 0,
-          completedJobs: jobsResponse.data.results?.filter(job => job.status === 'completed').length || 0,
-          totalReviews: 12 // Example only
-        }
-      });
-    } catch (error) {
-      showNotification(
-        'Failed to load dashboard data. Please try again.',
-        'error'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleJobCreated = (newJob) => {
+  
+  const handleJobCreated = async (newJob) => {
     setDashboardData(prev => ({
       ...prev,
       postedJobs: [newJob, ...prev.postedJobs],
@@ -98,720 +191,567 @@ const StudentDashboard = () => {
         activeJobs: prev.stats.activeJobs + 1
       }
     }));
+  
+    if (user) {
+      try {
+        // Deduct 1 credit by sending the required data
+        const creditUpdateResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/credit/update/`, {
+          user_id: user.user_id,
+          amount: 1,
+          isincrease: false
+        });
+  
+        console.log('Credit updated:', creditUpdateResponse.data);
+  
+        // Reload data to reflect changes
+        await loadDashboardData(user);
+      } catch (error) {
+        console.error('Error updating credit after gig creation:', error.response?.data || error.message);
+      }
+    }
+  
     setIsJobFormOpen(false);
   };
+  
+  const handlePostJobClick = () => {
+    if (dashboardData.stats.creditBalance <= 0) {
+      setShowInsufficientCreditsModal(true);
+    } else {
+      setIsJobFormOpen(true);
+    }
+  };
 
-  // --- Become Teacher Handler ---
-  const handleBecomeTeacher = async () => {
-    setBecomeTeacherLoading(true);
-    setBecomeTeacherError('');
+  // Fetch unread notifications for user
+  const fetchNotifications = async (userId) => {
     try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/users/become_teacher/', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/unread/${userId}/`);
+      const unreadNotifs = response.data || [];
+      setNotifications(unreadNotifs);
+      setUnreadNotificationCount(unreadNotifs.length);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error.response?.data || error.message);
+    }
+  };
+
+  // Mark all notifications as read
+  const markNotificationsRead = async () => {
+    if (!user) return;
+    try {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/notifications/mark-read/${user.user_id}/`);
+      setUnreadNotificationCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (error) {
+      console.error("Failed to mark notifications as read:", error.response?.data || error.message);
+    }
+  };
+
+  // Toggle notifications dropdown & mark as read if opened
+  const toggleNotifications = () => {
+    setShowNotifications(prev => {
+      const newState = !prev;
+      if (newState) markNotificationsRead();
+      return newState;
+    });
+  };
+
+  useEffect(() => {
+    try {
+      const storedUser = JSON.parse(localStorage.getItem('user'));
+      if (storedUser && storedUser.user_type === 'student') {
+        setUser(storedUser);
+        loadDashboardData(storedUser);
+        fetchNotifications(storedUser.user_id);
+      } else {
+        setIsLoading(false);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error("Failed to parse user from localStorage:", error);
+      setIsLoading(false);
+      setUser(null);
+    }
+  }, []);
+
+  const loadDashboardData = async (currentUser) => {
+    setIsLoading(true);
+    try {
+      if (!currentUser || !currentUser.user_id) {
+        console.error("User ID not found. Cannot fetch dashboard data.");
+        setIsLoading(false);
+        return;
+      }
+
+      const [gigsData, creditBalanceData, matchedJobsResponse, applicationsResponse] = await Promise.all([
+        tutorAPI.getTutorGigs(currentUser.user_id),
+        creditAPI.getUserCredits(currentUser.user_id),
+        jobAPI.getMatchedJobs(),
+        jobAPI.getMyApplications(),
+      ]);
+
+      const myGigs = gigsData || [];
+      const matchedJobs = matchedJobsResponse.data?.results || [];
+      const applications = applicationsResponse.data?.results || [];
+      const creditBalance = creditBalanceData.balance || 0;
+
+      setDashboardData(prev => ({
+        ...prev,
+        myGigs,
+        matchedJobs,
+        applications,
+        earnings: {
+          total: creditBalance,
+          pending: myGigs.filter(gig => gig.status === 'pending').length * 20,
+          completed: myGigs.filter(gig => gig.status === 'completed').length * 50
+        },
+        stats: {
+          activeGigs: myGigs.filter(gig => gig.status === 'active').length || 0,
+          completedJobs: applications.filter(app => app.status === 'completed').length || 0,
+          creditBalance,
+          totalJobs: prev.stats.totalJobs,
+          activeJobs: prev.stats.activeJobs,
+          // completedJobs: prev.stats.completedJobs,
+          totalReviews: prev.stats.totalReviews,
         }
-      });
-      await refreshUser(); // Refresh current user from backend
-      setShowBecomeTeacher(false);
-      // Redirect to teacher dashboard (or reload page)
-      window.location.href = '/teacher-dashboard';
-    } catch (err) {
-      setBecomeTeacherError('Failed to upgrade. Please try again.');
+      }));
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    } finally {
+      setIsLoading(false);
     }
-    setBecomeTeacherLoading(false);
   };
 
-  // --- Request Verification Handler ---
-  const handleRequestVerification = async () => {
-    setRequestVerificationLoading(true);
-    try {
-      const token = localStorage.getItem('token');
-      await fetch('/api/users/request_verification/', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setVerificationRequested(true);
-      setShowRequestVerification(false);
-      showNotification('Verification request submitted.', 'success');
-      await refreshUser();
-    } catch {
-      showNotification('Could not send verification request.', 'error');
-    }
-    setRequestVerificationLoading(false);
+  const handleNavigateToBuyCredits = () => {
+    window.location.href = '/buy-credits';
   };
-
-  const StatCard = ({ title, value, icon, color }) => (
-    <div style={{
-      backgroundColor: 'white',
-      borderRadius: '8px',
-      padding: '20px',
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '15px'
-    }}>
-      <div style={{
-        width: '50px',
-        height: '50px',
-        borderRadius: '50%',
-        backgroundColor: `${color}20`,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '24px',
-        color: color
-      }}>
-        {icon}
-      </div>
-      <div>
-        <h3 style={{ margin: '0', color: '#495057' }}>{value}</h3>
-        <p style={{ margin: '5px 0 0', color: '#6c757d' }}>{title}</p>
-      </div>
-    </div>
-  );
 
   if (isLoading) {
-    return <LoadingSpinner />;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (!user || user.user_type !== 'student') {
+    return (
+      <>
+        <Navbar />
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="max-w-md w-full bg-white rounded-xl shadow-md overflow-hidden p-8 text-center">
+            <div className="bg-rose-100 p-3 rounded-full inline-flex mb-4">
+              <svg className="w-8 h-8 text-rose-500" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
+            <p className="text-gray-600 mb-6">
+              You must be a <strong>student</strong> to access this dashboard.
+            </p>
+            <button
+              onClick={() => window.location.href = '/'}
+              className="w-full px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Go to Home
+            </button>
+          </div>
+        </div>
+      </>
+    );
   }
 
   return (
-    <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
-      {/* Welcome Banner goes here */}
-      <WelcomeBanner />
-
-      {/* --- Upgrade/Verification modals --- */}
-      {showBecomeTeacher && (
-        <div style={{
-          position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
-          background: 'rgba(0,0,0,0.25)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div style={{
-            background: 'white', borderRadius: 8, padding: 36, minWidth: 340, textAlign: 'center'
-          }}>
-            <h3>Become a Teacher</h3>
-            <p>Are you sure you want to become a teacher? You’ll be able to create gigs and apply for jobs as a tutor.</p>
-            <button
-              style={{ background: '#28a745', color: 'white', borderRadius: 4, padding: '8px 22px', border: 'none', fontWeight: 500, marginRight: 8 }}
-              onClick={handleBecomeTeacher}
-              disabled={becomeTeacherLoading}
-            >
-              {becomeTeacherLoading ? 'Upgrading...' : 'Yes, Become Teacher'}
-            </button>
-            <button
-              style={{ background: '#6c757d', color: 'white', borderRadius: 4, padding: '8px 22px', border: 'none', fontWeight: 500 }}
-              onClick={() => setShowBecomeTeacher(false)}
-            >
-              Cancel
-            </button>
-            {becomeTeacherError && <div style={{ color: 'red', marginTop: 10 }}>{becomeTeacherError}</div>}
+    <div className="min-h-screen bg-gray-50">
+      <Navbar />
+      
+      <main className="max-w-7xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 py-8">
+        {/* Dashboard Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+              Welcome back, {user?.username || 'Student'}!
+            </h1>
+            <p className="text-gray-600">Find tutors, post jobs, and manage your learning</p>
           </div>
-        </div>
-      )}
-      {showRequestVerification && (
-        <div style={{
-          position: 'fixed', left: 0, top: 0, width: '100vw', height: '100vh',
-          background: 'rgba(0,0,0,0.25)', zIndex: 9999,
-          display: 'flex', alignItems: 'center', justifyContent: 'center'
-        }}>
-          <div style={{
-            background: 'white', borderRadius: 8, padding: 36, minWidth: 340, textAlign: 'center'
-          }}>
-            <h3>Request Verification</h3>
-            <p>Submit a verification request to be reviewed by our admins. Verified teachers are prioritized in search and gain a trust badge.</p>
-            <button
-              style={{ background: '#007bff', color: 'white', borderRadius: 4, padding: '8px 22px', border: 'none', fontWeight: 500, marginRight: 8 }}
-              onClick={handleRequestVerification}
-              disabled={requestVerificationLoading}
-            >
-              {requestVerificationLoading ? 'Submitting...' : 'Submit Request'}
-            </button>
-            <button
-              style={{ background: '#6c757d', color: 'white', borderRadius: 4, padding: '8px 22px', border: 'none', fontWeight: 500 }}
-              onClick={() => setShowRequestVerification(false)}
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
 
-      {/* Header */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '30px'
-      }}>
-        <h1 style={{ margin: 0, color: '#212529' }}>
-          Student Dashboard - Welcome, {user.username}!
-        </h1>
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {/* Notification Button */}
-          <div style={{ position: 'relative' }}>
+          <div className="flex flex-wrap gap-3">
+            {/* Notifications Dropdown */}
+            <div className="relative">
+              <button
+                onClick={toggleNotifications}
+                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-xs hover:bg-gray-50 transition-colors relative"
+                aria-label="Notifications"
+              >
+                <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                </svg>
+                {unreadNotificationCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                    {unreadNotificationCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
+                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                    <h3 className="text-sm font-medium text-gray-900">Notifications</h3>
+                  </div>
+                  <div className="max-h-96 overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-gray-500">No new notifications</div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <NotificationItem key={notif.id} notification={notif} />
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Messages Button */}
             <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              style={{
-                padding: '10px',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                position: 'relative'
-              }}
+              onClick={() => window.location.href = '/messages'}
+              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-xs hover:bg-gray-50 transition-colors relative"
             >
-              🔔 Notifications
-              {notifications?.filter(n => !n.isRead).length > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-5px',
-                  right: '-5px',
-                  backgroundColor: '#dc3545',
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  fontSize: '12px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  {notifications.filter(n => !n.isRead).length}
+              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                  {unreadCount}
                 </span>
               )}
             </button>
-            {showNotifications && (
-              <div style={{
-                position: 'absolute',
-                top: '100%',
-                right: 0,
-                backgroundColor: 'white',
-                border: '1px solid #dee2e6',
-                borderRadius: '4px',
-                boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                width: '300px',
-                maxHeight: '400px',
-                overflowY: 'auto',
-                zIndex: 1000
-              }}>
-                <div style={{ padding: '15px', borderBottom: '1px solid #dee2e6' }}>
-                  <h4 style={{ margin: 0 }}>Notifications</h4>
+
+            {/* Create a Job Button */}
+            <button
+              onClick={handlePostJobClick}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Post Job
+            </button>
+
+            {/* Buy Credits Button */}
+            <button
+              onClick={handleNavigateToBuyCredits}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+              </svg>
+              Buy Credits
+            </button>
+          </div>
+        </div>
+
+        {/* Credit Balance Notice */}
+        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
+            </svg>
+            <p className="text-sm text-blue-800">
+              You have {dashboardData.stats.creditBalance} credits remaining. {dashboardData.stats.creditBalance <= 2 && (
+                <button 
+                  onClick={handleNavigateToBuyCredits}
+                  className="text-blue-600 font-medium hover:underline"
+                >
+                  Buy more credits
+                </button>
+              )}
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <StatCard
+            title="Available Credits"
+            value={dashboardData.stats.creditBalance}
+            icon="💰"
+            color="emerald"
+          />
+          <StatCard
+            title="Active Jobs"
+            value={dashboardData.stats.activeJobs}
+            icon="📝"
+            color="blue"
+          />
+          <StatCard
+            title="Completed Jobs"
+            value={dashboardData.stats.completedJobs}
+            icon="✅"
+            color="violet"
+          />
+          <StatCard
+            title="Favorite Tutors"
+            value={dashboardData.favoriteTeachers.length}
+            icon="❤️"
+            color="amber"
+          />
+        </div>
+
+        {/* Main Content Tabs */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200">
+            <nav className="flex -mb-px">
+              {['jobs', 'tutors', 'premium'].map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                </button>
+              ))}
+            </nav>
+          </div>
+
+          {/* Tab Content */}
+          <div className="p-6">
+            {/* Jobs Tab */}
+            {activeTab === 'jobs' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Your Job Posts</h3>
+                  <button
+                    onClick={handlePostJobClick}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    <svg className="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                    </svg>
+                    Post New Job
+                  </button>
                 </div>
-                {notifications?.length > 0 ? (
-                  notifications.slice(0, 5).map(notification => (
-                    <div key={notification.id} style={{
-                      padding: '10px 15px',
-                      borderBottom: '1px solid #f8f9fa',
-                      backgroundColor: notification.isRead ? 'white' : '#f8f9fa'
-                    }}>
-                      <p style={{ margin: 0, fontSize: '14px' }}>{notification.message}</p>
-                      <small style={{ color: '#6c757d' }}>
-                        {new Date(notification.created_at).toLocaleDateString()}
-                      </small>
-                    </div>
-                  ))
+
+                {dashboardData.postedJobs.length > 0 ? (
+                  <div className="space-y-4">
+                    {dashboardData.postedJobs.map((job) => (
+                      <JobCard key={job.id} job={job} />
+                    ))}
+                  </div>
                 ) : (
-                  <div style={{ padding: '15px', textAlign: 'center', color: '#6c757d' }}>
-                    No notifications
+                  <div className="bg-gray-50 rounded-lg p-8 text-center">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No jobs posted yet</h3>
+                    <p className="mt-1 text-sm text-gray-500">Get started by posting your first job.</p>
+                    <div className="mt-6">
+                      <button
+                        onClick={handlePostJobClick}
+                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                      >
+                        Post New Job
+                      </button>
+                    </div>
                   </div>
                 )}
-                <div style={{ padding: '10px 15px', textAlign: 'center' }}>
+              </div>
+            )}
+
+            {/* Tutors Tab */}
+            {activeTab === 'tutors' && (
+              <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-gray-900">Recommended Tutors</h3>
                   <button
-                    onClick={() => window.location.href = '/messages'}
-                    style={{
-                      padding: '5px 10px',
-                      backgroundColor: '#007bff',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px',
-                      cursor: 'pointer',
-                      fontSize: '12px'
-                    }}
+                    onClick={() => window.location.href = '/tutors'}
+                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                   >
-                    View All
+                    Browse All Tutors
+                  </button>
+                </div>
+
+                <div className="bg-gray-50 rounded-lg p-8 text-center">
+                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                  </svg>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Find your perfect tutor</h3>
+                  <p className="mt-1 text-sm text-gray-500">Browse our verified tutors to find your perfect match.</p>
+                  <div className="mt-6">
+                    <button
+                      onClick={() => window.location.href = '/tutors'}
+                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                    >
+                      Browse Tutors
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Premium Tab */}
+            {activeTab === 'premium' && (
+              <div className="space-y-6">
+                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-8 text-center border border-yellow-200">
+                  <h3 className="text-xl font-bold text-yellow-600 mb-4">Unlock Premium Features 🚀</h3>
+                  <p className="text-gray-700 mb-6">
+                    Upgrade to Student Premium for exclusive benefits that enhance your learning experience.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                      <div className="text-yellow-500 text-2xl mb-3">✨</div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Priority Matching</h4>
+                      <p className="text-gray-600 text-sm">Get your job posts seen by top tutors first</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                      <div className="text-yellow-500 text-2xl mb-3">📞</div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Direct Support</h4>
+                      <p className="text-gray-600 text-sm">24/7 access to our support team</p>
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                      <div className="text-yellow-500 text-2xl mb-3">🎁</div>
+                      <h4 className="font-semibold text-gray-900 mb-2">Exclusive Discounts</h4>
+                      <p className="text-gray-600 text-sm">Save on credits and premium features</p>
+                    </div>
+                  </div>
+
+                  <button
+                    className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 rounded-lg hover:shadow-lg transition-all font-bold shadow-md"
+                  >
+                    Upgrade Now - $9.99/month
                   </button>
                 </div>
               </div>
             )}
           </div>
-
-          {/* Messages Button */}
-          <button
-            onClick={() => window.location.href = '/messages'}
-            style={{
-              padding: '10px',
-              backgroundColor: '#17a2b8',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-              position: 'relative'
-            }}
-          >
-            💬 Messages
-            {unreadCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-5px',
-                right: '-5px',
-                backgroundColor: '#dc3545',
-                color: 'white',
-                borderRadius: '50%',
-                width: '20px',
-                height: '20px',
-                fontSize: '12px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                {unreadCount}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => setIsJobFormOpen(true)}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#28a745',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Post a Job
-          </button>
-          <button
-            onClick={() => window.location.href = '/credit-purchase'}
-            style={{
-              padding: '10px 20px',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer'
-            }}
-          >
-            Buy Credits
-          </button>
-
-          {/* Show "Become a Teacher" button only for students */}
-          {user.user_type === 'student' && (
-            <button
-              onClick={() => setShowBecomeTeacher(true)}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#fd7e14',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Become a Teacher
-            </button>
-          )}
-          {/* Show "Request Verification" button only for teachers who aren't verified */}
-          {user.user_type === 'teacher' && !isVerified && !verificationRequested && (
-            <button
-              onClick={() => setShowRequestVerification(true)}
-              style={{
-                padding: '10px 20px',
-                backgroundColor: '#6f42c1',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer'
-              }}
-            >
-              Request Verification
-            </button>
-          )}
-          {verificationRequested && !isVerified && (
-            <span style={{ color: '#6f42c1', marginLeft: '12px' }}>
-              <b>Verification requested.</b>
-            </span>
-          )}
-          {isVerified && (
-            <span style={{ color: '#28a745', marginLeft: '12px' }}>
-              <b>Verified Teacher ✔️</b>
-            </span>
-          )}
         </div>
-      </div>
 
-      {/* Stats Grid */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '20px',
-        marginBottom: '30px'
-      }}>
-        <StatCard
-          title="Available Credits"
-          value={`${dashboardData.credits.available} Credits`}
-          icon="💳"
-          color="#28a745"
-        />
-        <StatCard
-          title="Active Jobs"
-          value={dashboardData.stats.activeJobs}
-          icon="📋"
-          color="#007bff"
-        />
-        <StatCard
-          title="Completed Jobs"
-          value={dashboardData.stats.completedJobs}
-          icon="✅"
-          color="#fd7e14"
-        />
-        <StatCard
-          title="Reviews Given"
-          value={dashboardData.stats.totalReviews}
-          icon="⭐"
-          color="#6f42c1"
-        />
-      </div>
-
-      {/* Menu Bar */}
-      <div style={{
-        borderBottom: '1px solid #dee2e6',
-        marginBottom: '20px'
-      }}>
-        <div style={{ display: 'flex', gap: '20px' }}>
-          {['overview', 'findTutors', 'jobs', 'wallet', 'reviews', 'settings'].map(tab => (
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              style={{
-                padding: '10px 20px',
-                border: 'none',
-                borderBottom: activeTab === tab ? '2px solid #007bff' : 'none',
-                backgroundColor: 'transparent',
-                color: activeTab === tab ? '#007bff' : '#6c757d',
-                cursor: 'pointer',
-                fontSize: '16px',
-                fontWeight: activeTab === tab ? '500' : 'normal'
-              }}
+              onClick={handlePostJobClick}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              {tab === 'findTutors' ? 'Find Tutors' : tab.charAt(0).toUpperCase() + tab.slice(1)}
+              <div className="bg-blue-100 p-3 rounded-full mb-2">
+                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-gray-700">Post Job</span>
             </button>
-          ))}
+            <button
+              onClick={() => window.location.href = '/tutors'}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="bg-emerald-100 p-3 rounded-full mb-2">
+                <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
+                  <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-gray-700">Find Tutors</span>
+            </button>
+            <button
+              onClick={handleNavigateToBuyCredits}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="bg-amber-100 p-3 rounded-full mb-2">
+                <svg className="w-6 h-6 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-gray-700">Buy Credits</span>
+            </button>
+            <button
+              onClick={() => window.location.href = '/profile'}
+              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              <div className="bg-violet-100 p-3 rounded-full mb-2">
+                <svg className="w-6 h-6 text-violet-600" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <span className="text-sm font-medium text-gray-700">Edit Profile</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </main>
 
-      {/* Tab Content */}
-      <div style={{ marginTop: '20px' }}>
-        {activeTab === 'overview' && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '20px'
-          }}>
-            <div>
-              <h3>My Recent Jobs</h3>
-              {dashboardData.postedJobs.slice(0, 3).map(job => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </div>
-            <div>
-              <h3>Favorite Teachers</h3>
-              {dashboardData.favoriteTeachers.slice(0, 3).map(teacher => (
-                <TutorCard key={teacher.id} tutor={teacher} />
-              ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'findTutors' && (
-          <div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-              gap: '20px',
-              marginBottom: '30px'
-            }}>
-              <button
-                onClick={() => window.location.href = '/tutors'}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
-                All Teachers
-              </button>
-              <button
-                onClick={() => window.location.href = '/tutors?type=online'}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
-                Online Teachers
-              </button>
-              <button
-                onClick={() => window.location.href = '/tutors?type=home'}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#fd7e14',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
-                Home Tutors
-              </button>
-              <button
-                onClick={() => window.location.href = '/tutors?service=assignment'}
-                style={{
-                  padding: '20px',
-                  backgroundColor: '#6f42c1',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  cursor: 'pointer',
-                  fontSize: '16px'
-                }}
-              >
-                Assignment Help
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'jobs' && (
-          <div style={{ display: 'grid', gap: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3>My Posted Jobs</h3>
-              <button
-                onClick={() => setIsJobFormOpen(true)}
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Post New Job
-              </button>
-            </div>
-            {dashboardData.postedJobs.map(job => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'wallet' && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '20px'
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <h3>Credit Wallet</h3>
-              <p>Available Credits: {dashboardData.credits.available}</p>
-              <p>Spent: {dashboardData.credits.spent}</p>
-              <p>Pending: {dashboardData.credits.pending}</p>
-              <button
-                onClick={() => window.location.href = '/credit-purchase'}
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '10px'
-                }}
-              >
-                Buy Credits
-              </button>
-            </div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <h3>Payments</h3>
-              <p>Account getting paid</p>
-              <p>Payment history</p>
-              <button
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#6c757d',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '10px'
-                }}
-              >
-                View Payment History
-              </button>
-            </div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <h3>Refer & Earn</h3>
-              <p>Invite friends to get free credits</p>
-              <button
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#17a2b8',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  marginTop: '10px'
-                }}
-              >
-                Invite Friends
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'reviews' && (
-          <div style={{
-            backgroundColor: 'white',
-            borderRadius: '8px',
-            padding: '20px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-          }}>
-            <h3>Reviews Given to Teachers</h3>
-            <p>Ability to review after payment</p>
-            <div style={{ marginTop: '20px' }}>
-              {dashboardData.reviews.length > 0 ? (
-                dashboardData.reviews.map(review => (
-                  <div key={review.id} style={{
-                    borderBottom: '1px solid #dee2e6',
-                    padding: '15px 0'
-                  }}>
-                    <h4>{review.teacher_name}</h4>
-                    <p>Rating: {review.rating}/5</p>
-                    <p>{review.comment}</p>
-                  </div>
-                ))
-              ) : (
-                <p>No reviews given yet. Complete a job to leave a review!</p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'settings' && (
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '20px'
-          }}>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <h3>Account Settings</h3>
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                <li style={{ marginBottom: '10px' }}>Change email/phone</li>
-                <li style={{ marginBottom: '10px' }}>Password change</li>
-                <li style={{ marginBottom: '10px' }}>Payment receiving settings</li>
-                <li style={{ marginBottom: '10px' }}>Search engine visibility toggle</li>
-                <li style={{ marginBottom: '10px' }}>Profile deactivation & deletion</li>
-              </ul>
-              <button
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#007bff',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Manage Settings
-              </button>
-            </div>
-            <div style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              padding: '20px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}>
-              <h3>Notification Settings</h3>
-              <ul style={{ listStyle: 'none', padding: 0 }}>
-                <li style={{ marginBottom: '10px' }}>
-                  <label>
-                    <input type="checkbox" defaultChecked /> Job notification settings
-                  </label>
-                </li>
-                <li style={{ marginBottom: '10px' }}>
-                  <label>
-                    <input type="checkbox" defaultChecked /> Email notifications
-                  </label>
-                </li>
-                <li style={{ marginBottom: '10px' }}>
-                  <label>
-                    <input type="checkbox" defaultChecked /> SMS notifications
-                  </label>
-                </li>
-                <li style={{ marginBottom: '10px' }}>
-                  <label>
-                    <input type="checkbox" defaultChecked /> Push notifications
-                  </label>
-                </li>
-              </ul>
-              <button
-                style={{
-                  padding: '10px 20px',
-                  backgroundColor: '#28a745',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Save Preferences
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Forms */}
+      {/* Job Post Form Modal */}
       {isJobFormOpen && (
-        <JobPostForm
-          onClose={() => setIsJobFormOpen(false)}
-          onJobCreated={handleJobCreated}
-        />
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+              <h3 className="text-lg font-medium text-gray-900">Create New Job Post</h3>
+              <button
+                onClick={() => setIsJobFormOpen(false)}
+                className="text-gray-400 hover:text-gray-500"
+              >
+                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6">
+              <JobPostForm
+                onClose={() => setIsJobFormOpen(false)}
+                onJobCreated={handleJobCreated}
+              />
+            </div>
+          </div>
+        </div>
       )}
+
+      {/* Insufficient Credits Modal */}
+      {showInsufficientCreditsModal && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-medium text-gray-900">Insufficient Credits</h3>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-center mb-4">
+                <div className="bg-rose-100 p-3 rounded-full">
+                  <svg className="h-8 w-8 text-rose-600" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-center text-gray-600 mb-6">
+                You don't have enough credits to post a new job. Please purchase more credits to continue.
+              </p>
+              <div className="flex justify-center gap-4">
+                <button
+                  onClick={() => setShowInsufficientCreditsModal(false)}
+                  className="px-5 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowInsufficientCreditsModal(false);
+                    handleNavigateToBuyCredits();
+                  }}
+                  className="px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Buy Credits
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="w-screen relative left-1/2 right-1/2 -mx-[50.4vw] h-20">
+      <Footer/>
+      </div>
     </div>
   );
 };

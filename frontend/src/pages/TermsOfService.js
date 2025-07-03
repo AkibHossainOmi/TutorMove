@@ -1,10 +1,15 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import Footer from '../components/Footer';
+import Navbar from '../components/Navbar';
 
 const TermsOfService = () => {
   const { t } = useTranslation();
 
   return (
+    <>
+      <Navbar/>
+    <div style={{ height: '50px' }}></div>
     <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto' }}>
       <h1 style={{ marginBottom: '30px', color: '#212529' }}>
         {t('terms.title', 'Terms of Service')}
@@ -126,6 +131,9 @@ const TermsOfService = () => {
         {t('terms.lastUpdated', 'Last updated:')} {new Date().toLocaleDateString()}
       </p>
     </div>
+    <div style={{ height: '100px' }}></div>
+    <Footer/>
+    </>
   );
 };
 

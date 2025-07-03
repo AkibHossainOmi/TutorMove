@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import Navbar from '../components/Navbar';
+import Footer from '../components/Footer';
 
 const ResetPassword = () => {
   const { uid, token } = useParams();
@@ -12,7 +14,7 @@ const ResetPassword = () => {
     e.preventDefault();
     setMsg(null);
     try {
-      await axios.post('/api/auth/password-reset-confirm/', {
+      await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/password-reset-confirm/`, {
         uid,
         token,
         new_password: newPassword,
@@ -25,6 +27,9 @@ const ResetPassword = () => {
   };
 
   return (
+    <>
+    <Navbar/>
+    <div style={{ height: '50px' }}></div>
     <div>
       <h2>Reset Password</h2>
       {msg && <p>{msg}</p>}
@@ -37,6 +42,9 @@ const ResetPassword = () => {
         <button type="submit">Set New Password</button>
       </form>
     </div>
+    <div style={{ height: '100px' }}></div>
+    <Footer/>
+    </>
   );
 };
 
