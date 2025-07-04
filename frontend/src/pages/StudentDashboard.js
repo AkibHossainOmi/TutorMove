@@ -1,322 +1,131 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import JobPostForm from '../components/JobPostForm';
-import JobCard from '../components/JobCard';
-import LoadingSpinner from '../components/LoadingSpinner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import LoadingSpinner from '../components/LoadingSpinner';
+import DashboardHeader from '../components/Dashboard/Student/DashboardHeader';
+import DashboardStats from '../components/Dashboard/Student/DashboardStats';
+import DashboardTabs from '../components/Dashboard/Student/DashboardTabs';
+import QuickActions from '../components/Dashboard/Student/QuickActions';
+import JobPostModal from '../components/Dashboard/Student/JobPostModal';
+import InsufficientCreditsModal from '../components/Dashboard/Student/InsufficientCreditsModal';
+import { creditAPI } from '../utils/apiService';
 
-/**
- * Custom hook for managing chat-related functionalities.
- */
-const useChat = () => ({
-  openChat: (chatId) => console.log(`Opening chat ${chatId}`),
-  unreadCount: 0
-});
-
-/**
- * API functions for job-related operations.
- */
-const jobAPI = {
-  getMatchedJobs: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-      data: {
-        results: []
-      }
-    };
-  },
-  getMyApplications: async () => {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    return {
-      data: {
-        results: []
-      }
-    };
-  }
-};
-
-/**
- * API functions for tutor-related operations.
- */
-const tutorAPI = {
-  getTutorGigs: async (teacherId) => {
+// Simplified API functions
+const studentAPI = {
+  getCredits: async (userId) => {
+    console.log('Calling getCredits with userId:', userId);
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/gigs/teacher/${teacherId}/`);
-      return Array.isArray(response.data) ? response.data : response.data.results || [];
-    } catch (error) {
-      console.error("Error fetching tutor gigs:", error.response?.data || error.message);
-      throw error;
-    }
-  }
-};
-
-/**
- * API functions for credit-related operations.
- */
-const creditAPI = {
-  getUserCredits: async (userId) => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/credit/user/${userId}`);
+      const response = await creditAPI.getCreditBalance(userId);
       return response.data;
     } catch (error) {
-      console.error("Error fetching user credits:", error.response?.data || error.message);
-      return { user_id: userId, balance: 0 };
+      console.error("Error fetching credits:", error);
+      return { balance: 0 };
+    }
+  },
+  getPostedJobs: async (userId) => {
+    console.log('Calling getPostedJobs with userId:', userId);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/jobs/${userId}`);
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching jobs:", error);
+      return [];
+    }
+  },
+  getFavoriteTeachers: async (userId) => {
+    console.log('Calling getFavoriteTeachers with userId:', userId);
+    try {
+      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/favorites/${userId}`);
+      return response.data || [];
+    } catch (error) {
+      console.error("Error fetching favorite teachers:", error);
+      return [];
     }
   }
 };
 
-/**
- * Notification item component
- */
-const NotificationItem = ({ notification }) => {
-  return (
-    <div className={`px-4 py-3 border-b border-gray-100 cursor-pointer transition-colors ${
-      !notification.is_read ? 'bg-blue-50 hover:bg-blue-100' : 'bg-white hover:bg-gray-50'
-    }`}>
-      <div className="flex items-start">
-        <div className={`flex-shrink-0 mt-1 mr-3 w-2 h-2 rounded-full ${
-          !notification.is_read ? 'bg-blue-500' : 'bg-transparent'
-        }`}></div>
-        <div>
-          <p className="text-sm text-gray-800">{notification.message}</p>
-          <small className="text-xs text-gray-500">
-            {new Date(notification.created_at).toLocaleString()}
-          </small>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const StatCard = ({ title, value, icon, color, trend }) => {
-  const colorClasses = {
-    blue: 'from-blue-500 to-blue-600',
-    emerald: 'from-emerald-500 to-emerald-600',
-    amber: 'from-amber-500 to-amber-600',
-    violet: 'from-violet-500 to-violet-600'
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 uppercase tracking-wider">{title}</p>
-            <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
-          </div>
-          <div className={`bg-gradient-to-br ${colorClasses[color]} rounded-lg p-3 text-white`}>
-            {icon}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-// /**
-//  * Component to display individual gig information.
-//  */
-// const GigItemCard = ({ gig }) => {
-//   const { title, description, subject, created_at } = gig;
-
-//   return (
-//     <div className="gig-card bg-white rounded-lg p-5 shadow-sm border-l-4 border-blue-500 flex flex-col gap-2 transition-transform hover:-translate-y-1 cursor-pointer">
-//       <h4 className="m-0 text-gray-800 text-lg">{title || 'No Title'}</h4>
-//       <p className="m-0 text-gray-600 text-sm flex-grow">
-//         {description || 'No description provided.'}
-//       </p>
-//       <div className="flex justify-between items-center text-sm text-gray-700">
-//         <span className="bg-gray-100 px-2 py-1 rounded font-medium">
-//           Subject: {subject || 'N/A'}
-//         </span>
-//         <span className="text-gray-600">
-//           Created: {created_at ? new Date(created_at).toLocaleDateString() : 'N/A'}
-//         </span>
-//       </div>
-//     </div>
-//   );
-// };
-
-/**
- * The main Student Dashboard component.
- */
 const StudentDashboard = () => {
-  const { unreadCount } = useChat();
-  const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('overview');
   const [isLoading, setIsLoading] = useState(true);
+  const [isJobFormOpen, setIsJobFormOpen] = useState(false);
   const [showInsufficientCreditsModal, setShowInsufficientCreditsModal] = useState(false);
-
-  // Notifications state
-  const [notifications, setNotifications] = useState([]);
-  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
-
+  const [activeTab, setActiveTab] = useState('jobs');
+  const [favoriteTeachers, setFavoriteTeachers] = useState([]);
   const [dashboardData, setDashboardData] = useState({
     postedJobs: [],
-    applications: [],
-    favoriteTeachers: [],
-    reviews: [],
-    credits: {
-      available: 0,
-      spent: 0,
-      pending: 0
-    },
+    credits: 0,
     stats: {
-      totalJobs: 0,
       activeJobs: 0,
-      completedJobs: 0,
-      totalReviews: 0,
-      creditBalance: 0
-    },
-    myGigs: [],
-    matchedJobs: [],
-    earnings: {
-      pending: 0,
-      completed: 0,
-      total: 0
+      completedJobs: 0
     }
   });
-  
-  const handleJobCreated = async (newJob) => {
+
+  // Get user from localStorage once
+  useEffect(() => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    if (storedUser?.user_type === 'student') {
+      setUser(storedUser);
+    } else {
+      setIsLoading(false); // Non-student users
+    }
+  }, []);
+
+  // Load dashboard data only after user is set
+  useEffect(() => {
+    if (!user?.user_id) return;
+
+    const loadDashboardData = async () => {
+      setIsLoading(true);
+      try {
+        const [creditsData, jobsData, favoritesData] = await Promise.all([
+          studentAPI.getCredits(user.user_id),
+          studentAPI.getPostedJobs(user.user_id),
+          studentAPI.getFavoriteTeachers(user.user_id)
+        ]);
+
+        const activeJobs = jobsData.filter(job => job.status === 'active').length;
+        const completedJobs = jobsData.filter(job => job.status === 'completed').length;
+
+        setDashboardData({
+          postedJobs: jobsData,
+          credits: creditsData.balance || 0,
+          stats: {
+            activeJobs,
+            completedJobs
+          }
+        });
+
+        setFavoriteTeachers(favoritesData);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, [user]);
+
+  // Handle job creation
+  const handleJobCreated = (newJob) => {
     setDashboardData(prev => ({
       ...prev,
       postedJobs: [newJob, ...prev.postedJobs],
       stats: {
         ...prev.stats,
-        totalJobs: prev.stats.totalJobs + 1,
         activeJobs: prev.stats.activeJobs + 1
-      }
+      },
+      credits: prev.credits - 1
     }));
-  
-    if (user) {
-      try {
-        // Deduct 1 credit by sending the required data
-        const creditUpdateResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/credit/update/`, {
-          user_id: user.user_id,
-          amount: 1,
-          isincrease: false
-        });
-  
-        console.log('Credit updated:', creditUpdateResponse.data);
-  
-        // Reload data to reflect changes
-        await loadDashboardData(user);
-      } catch (error) {
-        console.error('Error updating credit after gig creation:', error.response?.data || error.message);
-      }
-    }
-  
     setIsJobFormOpen(false);
   };
-  
+
   const handlePostJobClick = () => {
-    if (dashboardData.stats.creditBalance <= 0) {
+    if (dashboardData.credits <= 0) {
       setShowInsufficientCreditsModal(true);
     } else {
       setIsJobFormOpen(true);
-    }
-  };
-
-  // Fetch unread notifications for user
-  const fetchNotifications = async (userId) => {
-    try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/unread/${userId}/`);
-      const unreadNotifs = response.data || [];
-      setNotifications(unreadNotifs);
-      setUnreadNotificationCount(unreadNotifs.length);
-    } catch (error) {
-      console.error("Failed to fetch notifications:", error.response?.data || error.message);
-    }
-  };
-
-  // Mark all notifications as read
-  const markNotificationsRead = async () => {
-    if (!user) return;
-    try {
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/notifications/mark-read/${user.user_id}/`);
-      setUnreadNotificationCount(0);
-      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    } catch (error) {
-      console.error("Failed to mark notifications as read:", error.response?.data || error.message);
-    }
-  };
-
-  // Toggle notifications dropdown & mark as read if opened
-  const toggleNotifications = () => {
-    setShowNotifications(prev => {
-      const newState = !prev;
-      if (newState) markNotificationsRead();
-      return newState;
-    });
-  };
-
-  useEffect(() => {
-    try {
-      const storedUser = JSON.parse(localStorage.getItem('user'));
-      if (storedUser && storedUser.user_type === 'student') {
-        setUser(storedUser);
-        loadDashboardData(storedUser);
-        fetchNotifications(storedUser.user_id);
-      } else {
-        setIsLoading(false);
-        setUser(null);
-      }
-    } catch (error) {
-      console.error("Failed to parse user from localStorage:", error);
-      setIsLoading(false);
-      setUser(null);
-    }
-  }, []);
-
-  const loadDashboardData = async (currentUser) => {
-    setIsLoading(true);
-    try {
-      if (!currentUser || !currentUser.user_id) {
-        console.error("User ID not found. Cannot fetch dashboard data.");
-        setIsLoading(false);
-        return;
-      }
-
-      const [gigsData, creditBalanceData, matchedJobsResponse, applicationsResponse] = await Promise.all([
-        tutorAPI.getTutorGigs(currentUser.user_id),
-        creditAPI.getUserCredits(currentUser.user_id),
-        jobAPI.getMatchedJobs(),
-        jobAPI.getMyApplications(),
-      ]);
-
-      const myGigs = gigsData || [];
-      const matchedJobs = matchedJobsResponse.data?.results || [];
-      const applications = applicationsResponse.data?.results || [];
-      const creditBalance = creditBalanceData.balance || 0;
-
-      setDashboardData(prev => ({
-        ...prev,
-        myGigs,
-        matchedJobs,
-        applications,
-        earnings: {
-          total: creditBalance,
-          pending: myGigs.filter(gig => gig.status === 'pending').length * 20,
-          completed: myGigs.filter(gig => gig.status === 'completed').length * 50
-        },
-        stats: {
-          activeGigs: myGigs.filter(gig => gig.status === 'active').length || 0,
-          completedJobs: applications.filter(app => app.status === 'completed').length || 0,
-          creditBalance,
-          totalJobs: prev.stats.totalJobs,
-          activeJobs: prev.stats.activeJobs,
-          // completedJobs: prev.stats.completedJobs,
-          totalReviews: prev.stats.totalReviews,
-        }
-      }));
-    } catch (error) {
-      console.error("Error loading dashboard data:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -332,131 +141,25 @@ const StudentDashboard = () => {
     );
   }
 
-  if (!user || user.user_type !== 'student') {
-    return (
-      <>
-        <Navbar />
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="max-w-md w-full bg-white rounded-xl shadow-md overflow-hidden p-8 text-center">
-            <div className="bg-rose-100 p-3 rounded-full inline-flex mb-4">
-              <svg className="w-8 h-8 text-rose-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Access Denied</h2>
-            <p className="text-gray-600 mb-6">
-              You must be a <strong>student</strong> to access this dashboard.
-            </p>
-            <button
-              onClick={() => window.location.href = '/'}
-              className="w-full px-5 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Go to Home
-            </button>
-          </div>
-        </div>
-      </>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       
       <main className="max-w-7xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 py-8">
-        {/* Dashboard Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-8">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              Welcome back, {user?.username || 'Student'}!
-            </h1>
-            <p className="text-gray-600">Find tutors, post jobs, and manage your learning</p>
-          </div>
+        <DashboardHeader
+          user={user}
+          creditBalance={dashboardData.credits}
+          onPostJobClick={handlePostJobClick}
+          onBuyCreditsClick={handleNavigateToBuyCredits}
+        />
 
-          <div className="flex flex-wrap gap-3">
-            {/* Notifications Dropdown */}
-            <div className="relative">
-              <button
-                onClick={toggleNotifications}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-xs hover:bg-gray-50 transition-colors relative"
-                aria-label="Notifications"
-              >
-                <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
-                </svg>
-                {unreadNotificationCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                    {unreadNotificationCount}
-                  </span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 overflow-hidden z-50">
-                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
-                    <h3 className="text-sm font-medium text-gray-900">Notifications</h3>
-                  </div>
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="p-4 text-center text-gray-500">No new notifications</div>
-                    ) : (
-                      notifications.map((notif) => (
-                        <NotificationItem key={notif.id} notification={notif} />
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Messages Button */}
-            <button
-              onClick={() => window.location.href = '/messages'}
-              className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-xs hover:bg-gray-50 transition-colors relative"
-            >
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10c0 3.866-3.582 7-8 7a8.841 8.841 0 01-4.083-.98L2 17l1.338-3.123C2.493 12.767 2 11.434 2 10c0-3.866 3.582-7 8-7s8 3.134 8 7zM7 9H5v2h2V9zm8 0h-2v2h2V9zM9 9h2v2H9V9z" clipRule="evenodd" />
-              </svg>
-              {unreadCount > 0 && (
-                <span className="absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-
-            {/* Create a Job Button */}
-            <button
-              onClick={handlePostJobClick}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-lg shadow-md hover:shadow-lg transition-all"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-              </svg>
-              Post Job
-            </button>
-
-            {/* Buy Credits Button */}
-            <button
-              onClick={handleNavigateToBuyCredits}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-md hover:bg-green-700 transition-colors"
-            >
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-              </svg>
-              Buy Credits
-            </button>
-          </div>
-        </div>
-
-        {/* Credit Balance Notice */}
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">
           <div className="flex items-center">
             <svg className="w-5 h-5 text-blue-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
             </svg>
             <p className="text-sm text-blue-800">
-              You have {dashboardData.stats.creditBalance} credits remaining. {dashboardData.stats.creditBalance <= 2 && (
+              You have {dashboardData.credits} credits remaining. {dashboardData.credits <= 2 && (
                 <button 
                   onClick={handleNavigateToBuyCredits}
                   className="text-blue-600 font-medium hover:underline"
@@ -468,289 +171,42 @@ const StudentDashboard = () => {
           </div>
         </div>
 
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title="Available Credits"
-            value={dashboardData.stats.creditBalance}
-            icon="💰"
-            color="emerald"
-          />
-          <StatCard
-            title="Active Jobs"
-            value={dashboardData.stats.activeJobs}
-            icon="📝"
-            color="blue"
-          />
-          <StatCard
-            title="Completed Jobs"
-            value={dashboardData.stats.completedJobs}
-            icon="✅"
-            color="violet"
-          />
-          <StatCard
-            title="Favorite Tutors"
-            value={dashboardData.favoriteTeachers.length}
-            icon="❤️"
-            color="amber"
-          />
-        </div>
+        <DashboardStats 
+          stats={{
+            creditBalance: dashboardData.credits,
+            activeJobs: dashboardData.stats.activeJobs,
+            completedJobs: dashboardData.stats.completedJobs
+          }}
+          favoriteTeachersCount={favoriteTeachers.length}
+        />
 
-        {/* Main Content Tabs */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-8">
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200">
-            <nav className="flex -mb-px">
-              {['jobs', 'tutors', 'premium'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
-                    activeTab === tab
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
-            </nav>
-          </div>
+        <DashboardTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          postedJobs={dashboardData.postedJobs}
+          onPostJobClick={handlePostJobClick}
+        />
 
-          {/* Tab Content */}
-          <div className="p-6">
-            {/* Jobs Tab */}
-            {activeTab === 'jobs' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">Your Job Posts</h3>
-                  <button
-                    onClick={handlePostJobClick}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    <svg className="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                    </svg>
-                    Post New Job
-                  </button>
-                </div>
-
-                {dashboardData.postedJobs.length > 0 ? (
-                  <div className="space-y-4">
-                    {dashboardData.postedJobs.map((job) => (
-                      <JobCard key={job.id} job={job} />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 rounded-lg p-8 text-center">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">No jobs posted yet</h3>
-                    <p className="mt-1 text-sm text-gray-500">Get started by posting your first job.</p>
-                    <div className="mt-6">
-                      <button
-                        onClick={handlePostJobClick}
-                        className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                      >
-                        Post New Job
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Tutors Tab */}
-            {activeTab === 'tutors' && (
-              <div className="space-y-6">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">Recommended Tutors</h3>
-                  <button
-                    onClick={() => window.location.href = '/tutors'}
-                    className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                  >
-                    Browse All Tutors
-                  </button>
-                </div>
-
-                <div className="bg-gray-50 rounded-lg p-8 text-center">
-                  <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                  </svg>
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">Find your perfect tutor</h3>
-                  <p className="mt-1 text-sm text-gray-500">Browse our verified tutors to find your perfect match.</p>
-                  <div className="mt-6">
-                    <button
-                      onClick={() => window.location.href = '/tutors'}
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                    >
-                      Browse Tutors
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Premium Tab */}
-            {activeTab === 'premium' && (
-              <div className="space-y-6">
-                <div className="bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg p-8 text-center border border-yellow-200">
-                  <h3 className="text-xl font-bold text-yellow-600 mb-4">Unlock Premium Features 🚀</h3>
-                  <p className="text-gray-700 mb-6">
-                    Upgrade to Student Premium for exclusive benefits that enhance your learning experience.
-                  </p>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                      <div className="text-yellow-500 text-2xl mb-3">✨</div>
-                      <h4 className="font-semibold text-gray-900 mb-2">Priority Matching</h4>
-                      <p className="text-gray-600 text-sm">Get your job posts seen by top tutors first</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                      <div className="text-yellow-500 text-2xl mb-3">📞</div>
-                      <h4 className="font-semibold text-gray-900 mb-2">Direct Support</h4>
-                      <p className="text-gray-600 text-sm">24/7 access to our support team</p>
-                    </div>
-                    <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-                      <div className="text-yellow-500 text-2xl mb-3">🎁</div>
-                      <h4 className="font-semibold text-gray-900 mb-2">Exclusive Discounts</h4>
-                      <p className="text-gray-600 text-sm">Save on credits and premium features</p>
-                    </div>
-                  </div>
-
-                  <button
-                    className="px-6 py-3 bg-gradient-to-r from-yellow-400 to-amber-500 text-gray-900 rounded-lg hover:shadow-lg transition-all font-bold shadow-md"
-                  >
-                    Upgrade Now - $9.99/month
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <button
-              onClick={handlePostJobClick}
-              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="bg-blue-100 p-3 rounded-full mb-2">
-                <svg className="w-6 h-6 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-gray-700">Post Job</span>
-            </button>
-            <button
-              onClick={() => window.location.href = '/tutors'}
-              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="bg-emerald-100 p-3 rounded-full mb-2">
-                <svg className="w-6 h-6 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M6 6V5a3 3 0 013-3h2a3 3 0 013 3v1h2a2 2 0 012 2v3.57A22.952 22.952 0 0110 13a22.95 22.95 0 01-8-1.43V8a2 2 0 012-2h2zm2-1a1 1 0 011-1h2a1 1 0 011 1v1H8V5zm1 5a1 1 0 011-1h.01a1 1 0 110 2H10a1 1 0 01-1-1z" clipRule="evenodd" />
-                  <path d="M2 13.692V16a2 2 0 002 2h12a2 2 0 002-2v-2.308A24.974 24.974 0 0110 15c-2.796 0-5.487-.46-8-1.308z" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-gray-700">Find Tutors</span>
-            </button>
-            <button
-              onClick={handleNavigateToBuyCredits}
-              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="bg-amber-100 p-3 rounded-full mb-2">
-                <svg className="w-6 h-6 text-amber-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z" />
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-gray-700">Buy Credits</span>
-            </button>
-            <button
-              onClick={() => window.location.href = '/profile'}
-              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <div className="bg-violet-100 p-3 rounded-full mb-2">
-                <svg className="w-6 h-6 text-violet-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <span className="text-sm font-medium text-gray-700">Edit Profile</span>
-            </button>
-          </div>
-        </div>
+        <QuickActions
+          onPostJobClick={handlePostJobClick}
+          onBuyCreditsClick={handleNavigateToBuyCredits}
+        />
       </main>
 
-      {/* Job Post Form Modal */}
-      {isJobFormOpen && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-medium text-gray-900">Create New Job Post</h3>
-              <button
-                onClick={() => setIsJobFormOpen(false)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            <div className="p-6">
-              <JobPostForm
-                onClose={() => setIsJobFormOpen(false)}
-                onJobCreated={handleJobCreated}
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <JobPostModal
+        isOpen={isJobFormOpen}
+        onClose={() => setIsJobFormOpen(false)}
+        onJobCreated={handleJobCreated}
+      />
 
-      {/* Insufficient Credits Modal */}
-      {showInsufficientCreditsModal && (
-        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Insufficient Credits</h3>
-            </div>
-            <div className="p-6">
-              <div className="flex items-center justify-center mb-4">
-                <div className="bg-rose-100 p-3 rounded-full">
-                  <svg className="h-8 w-8 text-rose-600" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-              <p className="text-center text-gray-600 mb-6">
-                You don't have enough credits to post a new job. Please purchase more credits to continue.
-              </p>
-              <div className="flex justify-center gap-4">
-                <button
-                  onClick={() => setShowInsufficientCreditsModal(false)}
-                  className="px-5 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => {
-                    setShowInsufficientCreditsModal(false);
-                    handleNavigateToBuyCredits();
-                  }}
-                  className="px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-                >
-                  Buy Credits
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <InsufficientCreditsModal
+        isOpen={showInsufficientCreditsModal}
+        onClose={() => setShowInsufficientCreditsModal(false)}
+        onBuyCredits={handleNavigateToBuyCredits}
+      />
 
       <div className="w-screen relative left-1/2 right-1/2 -mx-[50.4vw] h-20">
-      <Footer/>
+        <Footer />
       </div>
     </div>
   );

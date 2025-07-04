@@ -5,6 +5,7 @@ Django settings for tutorclone_backend project.
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 # Load environment variables from .env file
 load_dotenv()
@@ -118,7 +119,8 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "btwc wjvr dfek uabp")
 DEFAULT_FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_HOST_USER)
 DEFAULT_FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_HOST_USER)
 FROM_EMAIL = DEFAULT_FROM_EMAIL 
-FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL")
+FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL", "http://localhost:3000")
+INTERNAL_API_BASE_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -184,13 +186,30 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+USE_JWT=True
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+JWT_COOKIE = {
+    'REFRESH_TOKEN_NAME': 'refresh_token',
+    'HTTPONLY': True,
+    'SECURE': not DEBUG,  # True in production
+    'SAMESITE': 'Lax',
+    'MAX_AGE': 7 * 24 * 60 * 60,  # 7 days
+    'PATH': '/api/auth/token/refresh/',
 }

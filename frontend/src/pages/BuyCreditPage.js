@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Footer from '../components/Footer';
+import { creditAPI } from '../utils/apiService';
 
 // Custom hook for notifications
 const useNotification = () => {
@@ -23,7 +23,6 @@ const BuyCreditPage = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
   
   const PRICE_PER_CREDIT = 10;
-  const CREDIT_PURCHASE_ENDPOINT = `${process.env.REACT_APP_API_URL}/api/credits/purchase/`;
 
   // Credit packages with discounts for bulk purchases
   const creditPackages = [
@@ -91,9 +90,7 @@ const BuyCreditPage = () => {
         user_id: currentUser.user_id
       };
 
-      const response = await axios.post(CREDIT_PURCHASE_ENDPOINT, purchaseData, {
-        headers: { 'Content-Type': 'application/json' }
-      });
+      const response = await creditAPI.purchaseCredits(purchaseData);
 
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
         setStatusMessage('Redirecting to payment gateway...');

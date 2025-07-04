@@ -1,24 +1,22 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { authAPI } from '../utils/apiService';
 
 const VerifyEmail = () => {
   const { uid, token } = useParams();
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'error'
   const [message, setMessage] = useState('');
-  const hasVerified = useRef(false); // Prevent multiple API calls
+  const hasVerified = useRef(false);
 
   useEffect(() => {
-    if (hasVerified.current) return; // Already verified in this render lifecycle
+    if (hasVerified.current) return;
     hasVerified.current = true;
 
     const verifyEmail = async () => {
       try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/auth/verify-email/${uid}/${token}/`
-        );
+        const res = await authAPI.verifyEmail(uid, token);
         setStatus('success');
         setMessage(res.data.detail || 'Email verified successfully.');
       } catch (err) {
@@ -37,7 +35,7 @@ const VerifyEmail = () => {
   return (
     <>
       <Navbar />
-      <div className="h-12" />
+      <div className="h-[180px]" />
       <div className="max-w-md mx-auto p-8 bg-white rounded-lg shadow-md text-center">
         {status === 'loading' && <p className="text-gray-600">Verifying your email...</p>}
 

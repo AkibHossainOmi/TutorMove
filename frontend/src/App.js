@@ -9,7 +9,6 @@ import Profile from './pages/Profile';
 import JobList from './pages/JobList';
 import JobDetail from './pages/JobDetail';
 import Messages from './pages/Messages';
-import CreditPurchase from './pages/CreditPurchase';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import GigDetails from './pages/GigDetails';
@@ -79,7 +78,6 @@ function App() {
 
             {/* Messaging and Credit Management */}
             <Route path="/messages" element={<Messages />} />
-            <Route path="/credits" element={<CreditPurchase />} />
 
             {/* Payment Status Pages */}
             <Route path="/payments/success/" element={<PaymentSuccess />} />

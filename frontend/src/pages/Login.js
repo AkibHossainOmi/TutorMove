@@ -1,50 +1,42 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { useNavigate, Link, Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/UseAuth';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 
+// Import authAPI from your api service module
+import { authAPI } from '../utils/apiService'; // Adjust path if needed
+
 const Login = () => {
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ username: '', password: '' });
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const isAuthenticated = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-  const isAuthenticated = useAuth();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
     try {
-      // 1. Login & save JWT token
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/login/`, formData);
-      localStorage.setItem('token', response.data.token);
+      // Use authAPI.login instead of axios.post directly
+      const response = await authAPI.login(formData);
+      const data = response.data;
+
+      // Store access token
+      localStorage.setItem('token', data.access);
+
+      // Store user info
       const user = {
-          user_id: response.data.user_id,
-          username: response.data.username,
-          user_type: response.data.user_type,
-        };
+        user_id: data.user_id,
+        username: data.username,
+        user_type: data.user_type,
+      };
+      localStorage.setItem('user', JSON.stringify(user));
 
-      localStorage.setItem("user", JSON.stringify(user));
-      // 2. Get user info (user_type) to redirect properly
-      let userType = null;
-
-      // Option A: If backend returns user_type in login response:
-      if (response.data.user_type) {
-        userType = response.data.user_type;
-      } else {
-        // Option B: Fetch user info after login using the token
-        const userRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/me/`, {
-          headers: { Authorization: `Bearer ${response.data.token}` },
-        });
-        userType = userRes.data.user_type;
-      }
-      console.log(userType);
+      console.log('Login successful, navigating to dashboard...');
       navigate('/dashboard');
     } catch (err) {
       setError(
@@ -55,143 +47,73 @@ const Login = () => {
     }
   };
 
-  return !isAuthenticated ?(
+  if (isAuthenticated) return <Navigate to="/dashboard" />;
+
+  return (
     <>
-    <Navbar />
-    <div style={{
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '100vh',
-      backgroundColor: '#f0f2f5',
-      fontFamily: 'Arial, sans-serif',
-      padding: '20px'
-    }}>
-      <div style={{
-        backgroundColor: '#ffffff',
-        padding: '40px',
-        borderRadius: '10px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-        width: '100%',
-        maxWidth: '400px',
-        textAlign: 'center'
-      }}>
-        <h2 style={{
-          marginBottom: '30px',
-          color: '#333333',
-          fontSize: '28px',
-          fontWeight: '600'
-        }}>Welcome Back!</h2>
-        {error && (
-          <p style={{
-            color: '#dc3545',
-            backgroundColor: '#f8d7da',
-            border: '1px solid #f5c6cb',
-            borderRadius: '5px',
-            padding: '10px 15px',
-            marginBottom: '20px',
-            fontSize: '14px'
-          }}>
-            {error}
-          </p>
-        )}
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column' }}>
-          <div style={{ marginBottom: '20px', textAlign: 'left' }}>
-            <label htmlFor="username" style={{
-              display: 'block',
-              marginBottom: '8px',
-              color: '#555555',
-              fontSize: '15px',
-              fontWeight: 'bold'
-            }}>
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #ced4da',
-                borderRadius: '5px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-            />
+      <Navbar />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
+        <div className="bg-white p-10 rounded-lg shadow-md w-full max-w-md text-center">
+          <h2 className="mb-6 text-2xl font-semibold text-gray-800">Welcome Back!</h2>
+
+          {error && (
+            <p className="text-sm text-red-700 bg-red-100 border border-red-300 rounded px-4 py-2 mb-5">
+              {error}
+            </p>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex flex-col">
+            <div className="mb-5 text-left">
+              <label htmlFor="username" className="block mb-2 text-sm font-semibold text-gray-700">
+                Username:
+              </label>
+              <input
+                type="text"
+                name="username"
+                id="username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+
+            <div className="mb-6 text-left">
+              <label htmlFor="password" className="block mb-2 text-sm font-semibold text-gray-700">
+                Password:
+              </label>
+              <input
+                type="password"
+                name="password"
+                id="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
+            </div>
+
+            <button
+              type="submit"
+              className="bg-blue-600 text-white py-3 rounded font-semibold text-lg hover:bg-blue-700 transition duration-300"
+            >
+              Log In
+            </button>
+          </form>
+
+          <div className="mt-6">
+            <Link
+              to="/forgot-password"
+              className="text-blue-600 text-sm hover:text-blue-800 transition"
+            >
+              Forgot password?
+            </Link>
           </div>
-          <div style={{ marginBottom: '30px', textAlign: 'left' }}>
-            <label htmlFor="password" style={{
-              display: 'block',
-              marginBottom: '8px',
-              color: '#555555',
-              fontSize: '15px',
-              fontWeight: 'bold'
-            }}>
-              Password:
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              style={{
-                width: '100%',
-                padding: '12px',
-                border: '1px solid #ced4da',
-                borderRadius: '5px',
-                fontSize: '16px',
-                boxSizing: 'border-box'
-              }}
-            />
-          </div>
-          <button
-            type="submit"
-            style={{
-              backgroundColor: '#007bff',
-              color: 'white',
-              padding: '14px 20px',
-              border: 'none',
-              borderRadius: '5px',
-              fontSize: '18px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'background-color 0.3s ease',
-              outline: 'none'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#0056b3'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#007bff'}
-          >
-            Log In
-          </button>
-        </form>
-        <div style={{ marginTop: '25px' }}>
-          <Link
-            to="/forgot-password"
-            style={{
-              color: '#007bff',
-              textDecoration: 'none',
-              fontSize: '15px',
-              transition: 'color 0.3s ease'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.color = '#0056b3'}
-            onMouseOut={(e) => e.currentTarget.style.color = '#007bff'}
-          >
-            Forgot password?
-          </Link>
         </div>
       </div>
-    </div>
-    <Footer/>
+      <Footer />
     </>
-    
-  ): <Navigate to="/dashboard" />;
+  );
 };
 
 export default Login;

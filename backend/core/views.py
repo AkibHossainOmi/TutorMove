@@ -23,11 +23,17 @@ from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
+from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from decimal import Decimal
 import uuid
+import requests
 from django.http import JsonResponse
+from core.modules.auth import ( RegisterView,
+    EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView, 
+    CookieTokenObtainPairView, CookieTokenRefreshView,
+)
 
 from urllib.parse import urlencode
 from .models import (
@@ -36,16 +42,24 @@ from .models import (
 )
 from .serializers import (
     UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
-    ApplicationSerializer, NotificationSerializer, MessageSerializer, UserSettingsSerializer, ReviewSerializer,
+    ApplicationSerializer, NotificationSerializer, MessageSerializer, 
+    UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
-    RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, TutorSerializer, JobListSerializer,
-    OrderSerializer, PaymentSerializer, CreditUpdateByUserSerializer,
+    TutorSerializer, PaymentSerializer, CreditUpdateByUserSerializer,
     ConversationSerializer, ChatSerializer, TeacherProfileSerializer
 )
 
 from .payments import SSLCommerzPayment
 
-
+__all__ = [
+    "RegisterView",
+    "EmailVerifyView",
+    "LoginView",
+    "PasswordResetRequestView",
+    "PasswordResetConfirmView",
+    "CookieTokenObtainPairView",
+    "CookieTokenRefreshView",
+]
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
@@ -188,10 +202,18 @@ class JobCreateAPIView(APIView):
             except User.DoesNotExist:
                 return Response({"error": "Student not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Fetch all tutors
-            tutors = User.objects.filter(user_type='tutor')
+            # 🔻 Deduct 1 credit from student
+            try:
+                credit = Credit.objects.get(user=student)
+                if credit.balance >= 1:
+                    credit.balance -= 1
+                    credit.save()
+                else:
+                    return Response({"error": "Insufficient credits"}, status=status.HTTP_400_BAD_REQUEST)
+            except Credit.DoesNotExist:
+                return Response({"error": "Credit record not found"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Create notification with student's username
+            tutors = User.objects.filter(user_type='tutor')
             notifications = [
                 Notification(
                     from_user=student,
@@ -458,13 +480,44 @@ def haversine(lon1, lat1, lon2, lat2):
 
     return R * c
 class UserCreditBalanceView(APIView):
-    permission_classes = [AllowAny]  # no auth required
+    permission_classes = [IsAuthenticated]  # no auth required
     def get(self, request, user_id):
         credit = get_object_or_404(Credit, user__id=user_id)
         return Response({
             "user_id": user_id,
             "balance": credit.balance
         }, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def credit_purchase(request):
+    """
+    Proxy endpoint that forwards credit purchase request to the real internal API.
+    """
+    purchase_data = {
+        'credits': request.data.get('credits'),
+        'amount': request.data.get('amount'),
+        'user_id': request.data.get('user_id'),
+    }
+
+    try:
+        # Construct full URL to actual internal endpoint
+        actual_url = f"{settings.INTERNAL_API_BASE_URL}/api/credits/purchase/"
+
+        # Include the current user's access token in the request if needed
+        headers = {
+            'Authorization': f"Bearer {request.auth}",  # assumes JWT auth
+            'Content-Type': 'application/json',
+        }
+
+        # Make the internal request
+        res = requests.post(actual_url, json=purchase_data, headers=headers)
+
+        # Return the response from the actual API
+        return Response(res.json(), status=res.status_code)
+
+    except Exception as e:
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreditUpdateByUserPostView(APIView):
     permission_classes = [AllowAny]
@@ -1513,27 +1566,6 @@ class AdminViewSet(viewsets.ViewSet):
 
 # ------------------ AUTH API: Registration, Email Verify, Login, Password Reset -------------------
 
-UserModel = get_user_model()
-
-class RegisterView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({'detail': 'Registered successfully. Please check your email to verify your account.'}, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET'])
-def user_profile_view(request, user_id):
-    try:
-        user = User.objects.get(pk=user_id)
-        serializer = UserProfileSerializer(user)
-        return Response(serializer.data)
-    except User.DoesNotExist:
-        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
-
 class CheckUnlockStatusView(APIView):
     permission_classes = [AllowAny]
 
@@ -1590,91 +1622,6 @@ class UnlockContactInfoView(APIView):
             'phone': str(tutor.phone_number) if tutor.phone_number else None,
             'email': tutor.email
         })
-
-
-class EmailVerifyView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, uid, token):
-        try:
-            uid = force_str(urlsafe_base64_decode(uid))
-            user = UserModel.objects.get(pk=uid)
-        except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-            return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        if default_token_generator.check_token(user, token):
-            user.is_active = True
-            user.save()
-
-            # Create a credit record linked to this user
-            Credit.objects.create(user=user, balance=5)  # or initial amount you want
-
-            return Response({'detail': 'Email verified successfully. You can now log in.'}, status=status.HTTP_200_OK)
-
-        return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
-class LoginView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        username = request.data.get('username')
-        password = request.data.get('password')
-        user = authenticate(request, username=username, password=password)
-        if user:
-            if not user.is_active:
-                return Response({'error': 'Email not verified.'}, status=400)
-            token, created = Token.objects.get_or_create(user=user)
-            return Response({
-                'token': token.key,
-                'user_id': user.id,
-                'username': user.username,
-                'user_type': user.user_type
-            })
-        return Response({'error': 'Invalid credentials.'}, status=400)
-
-class PasswordResetRequestView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            try:
-                user = UserModel.objects.get(email=email)
-            except UserModel.DoesNotExist:
-                return Response({'detail': 'If the email exists, you will get a reset link.'})
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_url = f"{settings.FRONTEND_SITE_URL}/reset-password/{uid}/{token}"
-            send_mail(
-                "TutorMove Password Reset",
-                f"Hi {user.username},\n\nReset your password here: {reset_url}",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-            return Response({'detail': 'If the email exists, you will get a reset link.'})
-        return Response(serializer.errors, status=400)
-
-class PasswordResetConfirmView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        if serializer.is_valid():
-            uid = serializer.validated_data['uid']
-            token = serializer.validated_data['token']
-            new_password = serializer.validated_data['new_password']
-            try:
-                uid = force_str(urlsafe_base64_decode(uid))
-                user = UserModel.objects.get(pk=uid)
-            except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-                return Response({'error': 'Invalid link.'}, status=400)
-            if default_token_generator.check_token(user, token):
-                user.set_password(new_password)
-                user.save()
-                return Response({'detail': 'Password reset successful.'})
-            return Response({'error': 'Invalid or expired token.'}, status=400)
-        return Response(serializer.errors, status=400)
 
 # NEW: Payment ViewSet to list payments
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):

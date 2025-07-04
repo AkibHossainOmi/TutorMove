@@ -11,7 +11,7 @@ from .views import (
     TutorSearchAPIView, JobCreateAPIView, JobDetailAPIView, GigCreateAPIView,GigListByTeacherAPIView, CreditUpdateByUserPostView,
     UserCreditBalanceView, UserSearchView, ConversationListView, ConversationMessagesView, SendMessageView,NotificationCreateView,
     UnreadNotificationsView,MarkNotificationsReadView, EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView, TeacherProfileView,
-    SubmitReview, TutorAverageRating,
+    SubmitReview, TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -48,10 +48,12 @@ urlpatterns = [
 
     # Auth & account endpoints (JWT/session-based, email/password)
     path('auth/register/', RegisterView.as_view(), name='register'),
-    path('auth/verify-email/<str:uid>/<str:token>/', EmailVerifyView.as_view(), name='verify-email'),
+    path('auth/verify/<str:uid>/<str:token>/', EmailVerifyView.as_view(), name='verify-email'),
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
+    path('auth/token/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('auth/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('profile/', UserProfileView.as_view(), name='user-profile'),
     path('profile/edit/', UserProfileUpdateByIdView.as_view(), name='user-profile-edit'),
     path('jobs/create', JobCreateAPIView.as_view(), name='job-create'),
@@ -59,6 +61,7 @@ urlpatterns = [
     path('gigs/create/', GigCreateAPIView.as_view(), name='gig-create'),
     path('gigs/teacher/<int:teacher_id>/', GigListByTeacherAPIView.as_view(), name='gigs-by-teacher'),
     path('credit/update/', CreditUpdateByUserPostView.as_view(), name='credit-update-by-user'),
+    path('credit/purchase/', credit_purchase, name='credit_purchase'),
     path('credit/user/<int:user_id>/', UserCreditBalanceView.as_view(), name='user-credit-balance'),
     path('users/search/', UserSearchView.as_view(), name='user-search'),
     path('conversations/', ConversationListView.as_view(), name='conversation-list'),

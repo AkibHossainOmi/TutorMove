@@ -5,8 +5,9 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail, EmailMultiAlternatives
+from django.core.mail import EmailMultiAlternatives
 from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     User, Gig, Credit, Job, Application, Notification, Message,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
@@ -147,7 +148,17 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     token = serializers.CharField()
     new_password = serializers.CharField()
 
-
+class UserTokenSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if not self.user.is_active:
+            raise serializers.ValidationError({'error': 'Email not verified.'})
+        data.update({
+            'user_id': self.user.id,
+            'username': self.user.username,
+            'user_type': self.user.user_type,
+        })
+        return data
 # === USER & PROFILE SERIALIZERS ===
 
 class UserSerializer(serializers.ModelSerializer):
