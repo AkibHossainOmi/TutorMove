@@ -1,215 +1,186 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import axios from 'axios';
-import { useLocation } from 'react-router-dom';
-import Footer from '../components/Footer';
-import Navbar from '../components/Navbar';
+import React, { useEffect, useState, useRef, useCallback } from "react";
+import ChatSocket from "../components/ChatSocket";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 
 export default function WhatsAppLikeMessaging() {
-  const [userId, setUserId] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
+  const [user, setUser] = useState(null);
+  const socketRef = useRef(null);
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const messagesContainerRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [partnerTyping, setPartnerTyping] = useState(false);
+  const typingTimeoutRef = useRef(null);
+  const messagesRef = useRef();
 
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const usernameFromQuery = queryParams.get('username');
+  // Safe send wrapper
+  // Wrapped in useCallback so it can be used safely in other callbacks
+  const sendSocketMessage = useCallback(
+    (msg) => {
+      if (socketRef.current && socketRef.current.connected) {
+        socketRef.current.send(msg);
+      }
+    },
+    []
+  );
 
+  // Handle incoming socket events
+  const handleSocketMessage = useCallback(
+    (data) => {
+      switch (data.type) {
+        case "chat.message":
+          if (data.message.conversation_id === activeConversation?.id) {
+            setMessages((prev) => [...prev, data.message]);
+          }
+          break;
+
+        case "chat.typing":
+          setPartnerTyping(data.is_typing);
+          if (data.is_typing) {
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+            typingTimeoutRef.current = setTimeout(() => setPartnerTyping(false), 2000);
+          }
+          break;
+
+        case "chat.conversations":
+          setConversations(data.conversations);
+          break;
+
+        case "chat.messages":
+          setMessages(data.messages);
+          break;
+
+        case "chat.search_results":
+          setSearchResults(data.results);
+          break;
+
+        case "chat.conversation_started":
+          const conv = data.conversation;
+          setActiveConversation(conv);     // Open the new conversation
+          setMessages([]);                 // Clear old messages
+
+          // Request messages for this conversation
+          sendSocketMessage({
+            type: "chat.get_messages",
+            conversation_id: conv.id,
+          });
+
+          // Add the new conversation to conversations list if not present
+          setConversations((prev) => {
+            if (prev.some((c) => c.id === conv.id)) return prev;
+            return [conv, ...prev];
+          });
+
+          // Clear search UI
+          setSearchResults([]);
+          setSearchTerm("");
+          break;
+
+        default:
+          break;
+      }
+    },
+    [activeConversation, sendSocketMessage]
+  );
+
+  // Load user and initialize socket once
   useEffect(() => {
-    const userStr = localStorage.getItem('user');
+    const userStr = localStorage.getItem("user");
     if (userStr) {
-      const user = JSON.parse(userStr);
-      if (user?.user_id) setUserId(user.user_id);
+      const parsedUser = JSON.parse(userStr);
+      setUser(parsedUser);
+
+      const ws = new ChatSocket(parsedUser.user_id, handleSocketMessage);
+      socketRef.current = ws;
+
+      // When socket opens, fetch conversations
+      const onOpen = () => {
+        sendSocketMessage({ type: "chat.get_conversations", user_id: parsedUser.user_id });
+      };
+      ws.socket.addEventListener("open", onOpen);
+
+      // Cleanup on unmount
+      return () => {
+        ws.socket.removeEventListener("open", onOpen);
+        if (ws.socket.readyState === WebSocket.OPEN || ws.socket.readyState === WebSocket.CONNECTING) {
+          ws.close();
+        }
+      };
     }
-  }, []);
+  }, [handleSocketMessage, sendSocketMessage]);
 
-  const fetchConversations = useCallback(() => {
-    if (!userId) return;
-    axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/`, { user_id: userId })
-      .then(res => setConversations(res.data))
-      .catch(console.error);
-  }, [userId]);
-
+  // Scroll to latest message
   useEffect(() => {
-    if (!userId) return;
-    fetchConversations();
-    const intervalId = setInterval(fetchConversations, 60000);
-    return () => clearInterval(intervalId);
-  }, [userId, fetchConversations]);
-
-  useEffect(() => {
-    if (!activeConversation?.id || !userId) return;
-    const fetchMessages = () => {
-      axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/messages/`, {
-        conversation_id: activeConversation.id,
-        user_id: userId,
-      })
-        .then(res => setMessages(res.data))
-        .catch(console.error);
-    };
-    fetchMessages();
-    const intervalId = setInterval(fetchMessages, 2000);
-    return () => clearInterval(intervalId);
-  }, [activeConversation, userId]);
-
-  useEffect(() => {
-    if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    if (messagesRef.current) {
+      messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
     }
   }, [messages]);
 
-  const checkContactUnlocked = async (studentId, tutorId, token) => {
-    try {
-      const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/check-unlock-status/`, {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { student_id: studentId, tutor_id: tutorId },
-      });
-      return res.data.unlocked === true;
-    } catch {
-      return false;
-    }
-  };
+  const getOtherUser = (conv) => conv.participants.find((u) => u.id !== user?.user_id);
 
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) return;
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!token || !user) return;
-
-    try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/search/`, { keyword: searchTerm.trim() }, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      const unlockChecks = await Promise.all(
-        res.data.map(async (tutor) => {
-          const unlocked = await checkContactUnlocked(user.user_id, tutor.id, token);
-          return unlocked ? tutor : null;
-        })
-      );
-
-      const filteredResults = unlockChecks.filter(t => t !== null);
-      setSearchResults(filteredResults);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const startConversation = (otherUser) => {
-    if (!userId) return alert('User not found. Please login.');
-    const existingConv = conversations.find(c =>
-      (c.user1.id === otherUser.id && c.user2.id === userId) ||
-      (c.user2.id === otherUser.id && c.user1.id === userId)
-    );
-    setActiveConversation(existingConv || { id: null, user1: { id: userId }, user2: otherUser, messages: [] });
-    if (!existingConv) setMessages([]);
-    setSearchResults([]);
-    setSearchTerm('');
-  };
-
-  const handleConversationClick = (conv) => {
+  const openConversation = (conv) => {
     setActiveConversation(conv);
-    fetchConversations();
+    setMessages([]);
+    sendSocketMessage({
+      type: "chat.get_messages",
+      conversation_id: conv.id,
+    });
   };
 
   const sendMessage = () => {
-    if (!newMessage.trim() || !userId || !activeConversation) return;
-    const receiverId = activeConversation.user1.id === userId
-      ? activeConversation.user2.id
-      : activeConversation.user1.id;
-
-    axios.post(`${process.env.REACT_APP_API_URL}/api/messages/send/`, {
-      sender_id: userId,
-      receiver_id: receiverId,
-      content: newMessage.trim(),
-    }).then(res => {
-      if (!activeConversation.id) {
-        axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/`, { user_id: userId })
-          .then(res2 => {
-            setConversations(res2.data);
-            const conv = res2.data.find(c =>
-              (c.user1.id === receiverId && c.user2.id === userId) ||
-              (c.user2.id === receiverId && c.user1.id === userId)
-            );
-            setActiveConversation(conv);
-          });
-      } else {
-        setMessages(prev => [...prev, res.data]);
-      }
-      setNewMessage('');
-    }).catch(console.error);
+    if (!newMessage.trim() || !socketRef.current || !activeConversation) return;
+    sendSocketMessage({
+      type: "chat.message",
+      sender_id: user.user_id,
+      conversation_id: activeConversation.id,
+      content: newMessage,
+    });
+    setNewMessage("");
   };
 
-  const formatTime = (timestamp) => {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const handleTyping = () => {
+    if (!socketRef.current || !activeConversation) return;
+    const partner = getOtherUser(activeConversation);
+    if (!partner) return;
+
+    sendSocketMessage({
+      type: "chat.typing",
+      sender_id: user.user_id,
+      receiver_id: partner.id,
+      is_typing: true,
+    });
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      sendSocketMessage({
+        type: "chat.typing",
+        sender_id: user.user_id,
+        receiver_id: partner.id,
+        is_typing: false,
+      });
+    }, 2000);
   };
 
-  // Auto open inbox by username if provided in URL
-  useEffect(() => {
-    if (!userId || !usernameFromQuery) return;
-  
-    const token = localStorage.getItem('token');
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!token || !user) return;
-  
-    const openChatByUsername = async () => {
-      try {
-        let convs = conversations;
-  
-        // If conversations are empty, fetch them
-        if (convs.length === 0) {
-          const convRes = await axios.post(`${process.env.REACT_APP_API_URL}/api/conversations/`, { user_id: userId }, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          convs = convRes.data;
-          setConversations(convs);
-        }
-  
-        // Find conversation with usernameFromQuery
-        const matchingConv = convs.find(conv => {
-          const otherUser = conv.user1.id === userId ? conv.user2 : conv.user1;
-          return otherUser.username.toLowerCase() === usernameFromQuery.toLowerCase();
-        });
-  
-        if (matchingConv) {
-          setActiveConversation(matchingConv);
-          return;
-        }
-  
-        // No conversation, search user by username
-        const searchRes = await axios.post(`${process.env.REACT_APP_API_URL}/api/users/search/`, { keyword: usernameFromQuery }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-  
-        const targetUser = searchRes.data.find(u => u.username.toLowerCase() === usernameFromQuery.toLowerCase());
-        if (!targetUser) return;
-  
-        // Check if contact is unlocked before starting conversation
-        const unlocked = await checkContactUnlocked(user.user_id, targetUser.id, token);
-        if (unlocked) {
-          startConversation(targetUser);
-        }
-      } catch (error) {
-        console.error('Error opening chat from URL:', error);
-      }
-    };
-  
-    openChatByUsername();
-  
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userId, usernameFromQuery]);
-  
-  if (!userId) {
-    return (
-      <div className="h-screen flex items-center justify-center text-gray-600">
-        <p>Please log in or set user info in localStorage under key <code>user</code> with a valid <code>user_id</code>.</p>
-      </div>
-    );
-  }
+  const handleSearch = () => {
+    if (!searchTerm.trim() || !socketRef.current) return;
+    sendSocketMessage({
+      type: "chat.search_user",
+      keyword: searchTerm.trim(),
+    });
+  };
+
+  const startConversationWith = (targetUser) => {
+    if (!socketRef.current || !user) return;
+    sendSocketMessage({
+      type: "chat.start_conversation",
+      sender_id: user.user_id,
+      receiver_id: targetUser.id,
+    });
+    // Clearing search UI is now done in handleSocketMessage after conversation started
+  };
 
   return (
     <>
@@ -218,66 +189,44 @@ export default function WhatsAppLikeMessaging() {
         <div className="w-full max-w-6xl h-[80vh] bg-white rounded-2xl shadow-lg flex overflow-hidden">
           {/* Sidebar */}
           <div className="w-80 border-r border-gray-300 flex flex-col">
-            <div className="p-3 border-b border-gray-300">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search or start new chat"
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                  className="w-full border border-gray-300 rounded-full pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <svg className="w-5 h-5 text-gray-400 absolute left-3 top-2.5 pointer-events-none" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35m0 0A7.5 7.5 0 1110.5 3a7.5 7.5 0 016.15 13.65z" />
-                </svg>
-              </div>
+            <div className="p-3 border-b">
+              <input
+                type="text"
+                placeholder="Search users..."
+                className="w-full border px-3 py-2 rounded"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
               {searchResults.length > 0 && (
-                <div className="bg-white border border-green-500 rounded mt-2 max-h-60 overflow-y-auto shadow-lg">
-                  {searchResults.map(user => (
+                <div className="mt-2 bg-white shadow rounded border max-h-64 overflow-y-auto">
+                  {searchResults.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center gap-3 px-4 py-2 hover:bg-green-100 cursor-pointer"
-                      onClick={() => startConversation(user)}
+                      onClick={() => startConversationWith(user)}
+                      className="p-2 cursor-pointer hover:bg-green-100"
                     >
-                      <div className="bg-green-400 rounded-full w-8 h-8 flex items-center justify-center text-white font-bold">
-                        {user.username.charAt(0).toUpperCase()}
-                      </div>
-                      <span className="text-gray-700 text-sm">{user.username}</span>
+                      {user.username}
                     </div>
                   ))}
                 </div>
               )}
             </div>
             <div className="flex-grow overflow-y-auto">
-              {conversations.length === 0 ? (
-                <p className="text-center text-gray-500 mt-10 text-sm">No conversations yet</p>
-              ) : (
-                conversations.map(conv => {
-                  const otherUser = conv.user1.id === userId ? conv.user2 : conv.user1;
-                  const isActive = activeConversation?.id === conv.id;
-                  const isUnread = conv.has_unread;
-                  return (
-                    <div
-                      key={conv.id}
-                      onClick={() => handleConversationClick(conv)}
-                      className={`flex items-center gap-4 px-4 py-3 cursor-pointer hover:bg-green-100 border-l-4 ${isActive ? 'border-green-500 bg-green-50' : 'border-transparent'}`}
-                      style={{ fontWeight: isUnread ? '700' : '400' }}
-                    >
-                      <div className="bg-green-400 rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-xl">
-                        {otherUser.username.charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex flex-col flex-grow overflow-hidden">
-                        <div className="font-semibold text-gray-800 truncate">{otherUser.username}</div>
-                        <div className="text-gray-500 text-xs truncate mt-0.5">{conv.last_message ? conv.last_message.content : 'No messages yet'}</div>
-                      </div>
-                      {conv.last_message && (
-                        <div className="text-xs text-gray-400 whitespace-nowrap ml-2">{formatTime(conv.last_message.timestamp)}</div>
-                      )}
-                    </div>
-                  );
-                })
-              )}
+              {conversations.map((conv) => {
+                const partner = getOtherUser(conv);
+                return (
+                  <div
+                    key={conv.id}
+                    onClick={() => openConversation(conv)}
+                    className={`p-3 cursor-pointer hover:bg-green-100 ${
+                      activeConversation?.id === conv.id ? "bg-green-50" : ""
+                    }`}
+                  >
+                    {partner?.username || "Unknown"}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
@@ -285,46 +234,63 @@ export default function WhatsAppLikeMessaging() {
           <div className="flex-1 flex flex-col">
             {activeConversation ? (
               <>
-                <div className="flex items-center gap-4 border-b border-gray-300 p-4">
-                  <div className="bg-green-400 rounded-full w-12 h-12 flex items-center justify-center text-white font-bold text-xl">
-                    {(activeConversation.user1.id === userId ? activeConversation.user2.username.charAt(0) : activeConversation.user1.username.charAt(0)).toUpperCase()}
-                  </div>
-                  <div className="font-semibold text-lg text-gray-900 truncate">
-                    {activeConversation.user1.id === userId ? activeConversation.user2.username : activeConversation.user1.username}
-                  </div>
+                <div className="p-4 border-b font-semibold text-lg">
+                  {getOtherUser(activeConversation)?.username}
                 </div>
-                <div ref={messagesContainerRef} className="flex-grow overflow-y-auto px-6 py-4 space-y-3 bg-gray-50">
-                  {messages.length === 0 ? (
-                    <p className="text-center text-gray-400 mt-10 italic text-sm">No messages yet</p>
-                  ) : (
-                    messages.map(msg => {
-                      const isSender = msg.sender.id === userId;
-                      return (
-                        <div key={msg.id} className={`flex max-w-xs break-words ${isSender ? 'ml-auto justify-end' : 'mr-auto justify-start'}`}>
-                          <div className={`px-4 py-2 rounded-lg text-sm whitespace-pre-wrap ${isSender ? 'bg-green-500 text-white rounded-br-none' : 'bg-white border border-gray-300 rounded-bl-none'}`}>
-                            <div>{msg.content}</div>
-                            <div className={`text-[10px] mt-1 ${isSender ? 'text-green-100 text-right' : 'text-gray-400 text-left'}`}>{formatTime(msg.timestamp)}</div>
+
+                <div
+                  ref={messagesRef}
+                  className="flex-grow overflow-y-auto px-6 py-4 space-y-3 bg-gray-50"
+                >
+                  {messages.map((msg) => {
+                    const isSelf = msg.sender.id === user.user_id;
+                    return (
+                      <div key={msg.id} className={`max-w-xs ${isSelf ? "ml-auto" : ""}`}>
+                        <div
+                          className={`px-4 py-2 rounded-lg text-sm ${
+                            isSelf
+                              ? "bg-green-500 text-white rounded-br-none"
+                              : "bg-white border border-gray-300 rounded-bl-none"
+                          }`}
+                        >
+                          <div>{msg.content}</div>
+                          <div className="text-[10px] mt-1 text-right text-gray-300">
+                            {new Date(msg.timestamp).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </div>
                         </div>
-                      );
-                    })
-                  )}
+                      </div>
+                    );
+                  })}
+
+                  {partnerTyping && <div className="text-xs text-gray-400 italic">Typing...</div>}
                 </div>
-                <div className="p-4 border-t border-gray-300 flex items-center gap-3 bg-white">
+
+                <div className="p-4 flex gap-3 border-t">
                   <input
                     type="text"
-                    placeholder="Type a message"
                     value={newMessage}
-                    onChange={e => setNewMessage(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                    className="flex-grow border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
+                    onChange={(e) => {
+                      setNewMessage(e.target.value);
+                      handleTyping();
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+                    placeholder="Type a message"
+                    className="flex-grow border border-gray-300 rounded-full px-4 py-2"
                   />
-                  <button onClick={sendMessage} className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full transition">Send</button>
+                  <button
+                    onClick={sendMessage}
+                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full"
+                  >
+                    Send
+                  </button>
                 </div>
               </>
             ) : (
-              <div className="flex-grow flex items-center justify-center text-gray-400 italic select-none">
-                Select a conversation or search users to start chatting
+              <div className="flex-grow flex items-center justify-center text-gray-400 italic">
+                Select a chat or search user
               </div>
             )}
           </div>

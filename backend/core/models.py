@@ -177,27 +177,6 @@ class Subject(models.Model):
     def __str__(self):
         return self.name
 
-class Conversation(models.Model):
-    user1 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_user1')
-    user2 = models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversations_as_user2')
-
-    def __str__(self):
-        return f"Conversation between {self.user1.username} and {self.user2.username}"
-
-class Chat(models.Model):
-    conversation = models.ForeignKey(Conversation, on_delete=models.CASCADE, related_name='chats')
-    sender = models.ForeignKey(User, on_delete=models.CASCADE)
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
-
-    class Meta:
-        ordering = ['timestamp']
-
-    def __str__(self):
-        return f"{self.sender.username}: {self.content[:20]}"
-
-
 
 # models.py
 class Gig(models.Model):
@@ -282,15 +261,47 @@ class Notification(models.Model):
     def __str__(self):
         return f'From {self.from_user} to {self.to_user} - {self.message[:30]}'
 
-class Message(models.Model):
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sent_messages')
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='received_messages')
-    content = models.TextField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-    is_read = models.BooleanField(default=False)
+class Conversation(models.Model):
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Message from {self.sender.username} to {self.receiver.username}"
+        return f"Conversation {self.id}"
+
+
+class ConversationParticipant(models.Model):
+    conversation = models.ForeignKey(Conversation, related_name='participants', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='conversations', on_delete=models.CASCADE)
+    joined_at = models.DateTimeField(auto_now_add=True)
+    last_read_message = models.ForeignKey("Message", null=True, blank=True, on_delete=models.SET_NULL)
+
+    class Meta:
+        unique_together = ('conversation', 'user')
+
+    def __str__(self):
+        return f"{self.user.username} in Conversation {self.conversation.id}"
+
+class Message(models.Model):
+    conversation = models.ForeignKey(Conversation, related_name='messages', on_delete=models.CASCADE)
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_system = models.BooleanField(default=False)  # For bidding events or notifications
+    attachment = models.FileField(upload_to='chat_attachments/', null=True, blank=True)
+
+    class Meta:
+        ordering = ['timestamp']
+
+    def __str__(self):
+        return f"{self.sender.username}: {self.content[:30]}"
+
+class MessageRead(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reads")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('message', 'user')
+
 
 class UserSettings(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

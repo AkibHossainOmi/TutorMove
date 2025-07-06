@@ -9,9 +9,9 @@ from django.core.mail import EmailMultiAlternatives
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
-    User, Gig, Credit, Job, Application, Notification, Message,
+    User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
-    Order, Payment, Conversation, Chat,
+    Order, Payment,
 )
 
 User = get_user_model()
@@ -54,36 +54,6 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
-
-class ChatSerializer(serializers.ModelSerializer):
-    sender = UserSerializer(read_only=True)
-
-    class Meta:
-        model = Chat
-        fields = ['id', 'sender', 'content', 'timestamp']
-
-class ConversationSerializer(serializers.ModelSerializer):
-    user1 = UserSerializer()
-    user2 = UserSerializer()
-    last_message = serializers.SerializerMethodField()
-    has_unread = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Conversation
-        fields = ['id', 'user1', 'user2', 'last_message', 'has_unread']
-
-    def get_last_message(self, obj):
-        last_chat = obj.chats.last()
-        if last_chat:
-            return ChatSerializer(last_chat).data
-        return None
-
-    def get_has_unread(self, obj):
-        current_user_id = self.context.get('current_user_id')
-        if not current_user_id:
-            return False
-        # Unread messages sent by the other user
-        return obj.chats.filter(is_read=False).exclude(sender_id=current_user_id).exists()
 
 # === AUTH & PASSWORD RESET SERIALIZERS ===
 
@@ -247,10 +217,10 @@ class NotificationSerializer(serializers.ModelSerializer):
 
 # === MESSAGE SERIALIZER ===
 
-class MessageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Message
-        fields = '__all__'
+# class MessageSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Message
+#         fields = '__all__'
 
 
 # === USER SETTINGS SERIALIZER ===

@@ -2,14 +2,13 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
     UserViewSet, GigViewSet, CreditViewSet, JobViewSet,
-    ApplicationViewSet, NotificationViewSet, MessageViewSet, UserSettingsViewSet,
+    ApplicationViewSet, NotificationViewSet, UserSettingsViewSet,
     ReviewViewSet, PremiumViewSet, EscrowPaymentViewSet, SubjectViewSet,
     AdminViewSet,
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, 
-    ConversationListView, ConversationMessagesView, 
-    SendMessageView, EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView, SubmitReview, 
+    EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView, SubmitReview, 
     TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
@@ -28,7 +27,7 @@ router.register(r'jobs', JobViewSet, basename='job')
 router.register(r'gigs', GigViewSet, basename='gig')
 router.register(r'applications', ApplicationViewSet, basename='application')
 router.register(r'notifications', NotificationViewSet, basename='notification')
-router.register(r'messages', MessageViewSet, basename='message')
+# router.register(r'messages', MessageViewSet, basename='message')
 router.register(r'settings', UserSettingsViewSet, basename='settings')
 router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'premium', PremiumViewSet, basename='premium')
@@ -53,9 +52,9 @@ urlpatterns = [
     # path('credit/purchase/', credit_purchase, name='credit_purchase'),
     # path('credit/user/<int:user_id>/', UserCreditBalanceView.as_view(), name='user-credit-balance'),
     # path('users/search/', UserSearchView.as_view(), name='user-search'),
-    path('conversations/', ConversationListView.as_view(), name='conversation-list'),
-    path('conversations/messages/', ConversationMessagesView.as_view(), name='conversation-messages'),
-    path('messages/send/', SendMessageView.as_view(), name='send-message'),
+    # path('conversations/', ConversationListView.as_view(), name='conversation-list'),
+    # path('conversations/messages/', ConversationMessagesView.as_view(), name='conversation-messages'),
+    # path('messages/send/', SendMessageView.as_view(), name='send-message'),
     path('unlock-contact/', UnlockContactInfoView.as_view(), name='unlock-contact'),
     path('check-unlock-status/', CheckUnlockStatusView.as_view(), name='check-unlock-status'),
     # path('teacher/<int:tutor_id>/', TeacherProfileView.as_view(), name='teacher-profile'),

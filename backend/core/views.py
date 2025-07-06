@@ -37,16 +37,15 @@ from core.modules.auth import ( RegisterView,
 
 from urllib.parse import urlencode
 from .models import (
-    User, Gig, Credit, Job, Application, Notification, Message, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, Conversation, Chat, ContactUnlock,
+    User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
+    Order, Payment, ContactUnlock,
 )
 from .serializers import (
     UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
-    ApplicationSerializer, NotificationSerializer, MessageSerializer, 
+    ApplicationSerializer, NotificationSerializer, 
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     PaymentSerializer, CreditUpdateByUserSerializer,
-    ConversationSerializer, ChatSerializer
 )
 
 from .payments import SSLCommerzPayment
@@ -63,65 +62,6 @@ __all__ = [
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
-
-class ConversationListView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        user_id = request.data.get('user_id')
-        if not user_id:
-            return Response({'error': 'user_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        conversations = Conversation.objects.filter(Q(user1_id=user_id) | Q(user2_id=user_id))
-        serializer = ConversationSerializer(conversations, many=True, context={'current_user_id': int(user_id)})
-        return Response(serializer.data)
-
-class ConversationMessagesView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        conversation_id = request.data.get('conversation_id')
-        user_id = request.data.get('user_id')  # pass user_id as well
-
-        if not conversation_id or not user_id:
-            return Response({'error': 'conversation_id and user_id are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            conversation = Conversation.objects.get(id=conversation_id)
-        except Conversation.DoesNotExist:
-            return Response({'error': 'conversation not found'}, status=status.HTTP_404_NOT_FOUND)
-
-        # Mark unread messages as read where sender is NOT the current user
-        conversation.chats.filter(is_read=False).exclude(sender_id=user_id).update(is_read=True)
-
-        chats = conversation.chats.all()
-        serializer = ChatSerializer(chats, many=True)
-        return Response(serializer.data)
-
-
-class SendMessageView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        sender_id = request.data.get('sender_id')
-        receiver_id = request.data.get('receiver_id')
-        content = request.data.get('content', '').strip()
-
-        if not all([sender_id, receiver_id, content]):
-            return Response({'error': 'sender_id, receiver_id and content are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Find existing conversation or create new one
-        conversation = Conversation.objects.filter(
-            (Q(user1_id=sender_id) & Q(user2_id=receiver_id)) |
-            (Q(user1_id=receiver_id) & Q(user2_id=sender_id))
-        ).first()
-
-        if not conversation:
-            conversation = Conversation.objects.create(user1_id=sender_id, user2_id=receiver_id)
-
-        chat = Chat.objects.create(conversation=conversation, sender_id=sender_id, content=content)
-        serializer = ChatSerializer(chat)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 class TutorViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
@@ -873,45 +813,45 @@ class NotificationViewSet(viewsets.ModelViewSet):
 
 
 # --- MessageViewSet ---
-class MessageViewSet(viewsets.ModelViewSet):
-    serializer_class = MessageSerializer
-    permission_classes = [IsAuthenticated]
+# class MessageViewSet(viewsets.ModelViewSet):
+#     serializer_class = MessageSerializer
+#     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        user = self.request.user
-        return Message.objects.filter(Q(sender=user) | Q(receiver=user))
+#     def get_queryset(self):
+#         user = self.request.user
+#         return Message.objects.filter(Q(sender=user) | Q(receiver=user))
 
-    def create(self, request, *args, **kwargs):
-        if request.user.user_type == 'student':
-            try:
-                credit = Credit.objects.get(user=request.user)
-            except Credit.DoesNotExist:
-                return Response({'error': 'You must buy credits to message tutors.'}, status=status.HTTP_403_FORBIDDEN)
-            if credit.balance < 1:
-                return Response({'error': 'Insufficient credits. Buy credits to unlock messaging.'}, status=status.HTTP_403_FORBIDDEN)
-            credit.balance -= 1
-            credit.save()
-        receiver_id = request.data.get('receiver')
-        content = request.data.get('content')
-        if not receiver_id or not content:
-            return Response(
-                {'error': 'Both receiver and content are required'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            receiver = User.objects.get(id=receiver_id)
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'Receiver not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-        message = Message.objects.create(
-            sender=request.user,
-            receiver=receiver,
-            content=content
-        )
-        serializer = self.get_serializer(message)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+#     def create(self, request, *args, **kwargs):
+#         if request.user.user_type == 'student':
+#             try:
+#                 credit = Credit.objects.get(user=request.user)
+#             except Credit.DoesNotExist:
+#                 return Response({'error': 'You must buy credits to message tutors.'}, status=status.HTTP_403_FORBIDDEN)
+#             if credit.balance < 1:
+#                 return Response({'error': 'Insufficient credits. Buy credits to unlock messaging.'}, status=status.HTTP_403_FORBIDDEN)
+#             credit.balance -= 1
+#             credit.save()
+#         receiver_id = request.data.get('receiver')
+#         content = request.data.get('content')
+#         if not receiver_id or not content:
+#             return Response(
+#                 {'error': 'Both receiver and content are required'},
+#                 status=status.HTTP_400_BAD_REQUEST
+#             )
+#         try:
+#             receiver = User.objects.get(id=receiver_id)
+#         except User.DoesNotExist:
+#             return Response(
+#                 {'error': 'Receiver not found'},
+#                 status=status.HTTP_404_NOT_FOUND
+#             )
+#         message = Message.objects.create(
+#             sender=request.user,
+#             receiver=receiver,
+#             content=content
+#         )
+#         serializer = self.get_serializer(message)
+#         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 # --- UserSettingsViewSet ---
 class UserSettingsViewSet(viewsets.ModelViewSet):

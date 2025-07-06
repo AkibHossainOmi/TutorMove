@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
     User, Gig, Credit, Job, Application,
-    Notification, Message, UserSettings, Review, EscrowPayment ,Subject
+    Notification, Message, UserSettings, Review, EscrowPayment ,Subject, Conversation, ConversationParticipant,
 )
 
 @admin.register(User)
@@ -56,9 +56,23 @@ class NotificationAdmin(admin.ModelAdmin):
 
 @admin.register(Message)
 class MessageAdmin(admin.ModelAdmin):
-    list_display = ('sender', 'receiver', 'is_read', 'timestamp')
-    list_filter = ('is_read', 'timestamp')
-    search_fields = ('sender__username', 'receiver__username', 'content')
+    list_display = ('conversation', 'sender', 'content_preview', 'is_system', 'timestamp')
+    list_filter = ('is_system', 'timestamp')
+    search_fields = ('sender__username', 'conversation__id', 'content')
+
+    def content_preview(self, obj):
+        return (obj.content[:50] + '...') if obj.content else '[No Text]'
+    content_preview.short_description = 'Message'
+
+@admin.register(Conversation)
+class ConversationAdmin(admin.ModelAdmin):
+    list_display = ('id', 'created_at')
+    search_fields = ('id',)
+
+@admin.register(ConversationParticipant)
+class ConversationParticipantAdmin(admin.ModelAdmin):
+    list_display = ('conversation', 'user', 'joined_at', 'last_read_message')
+    search_fields = ('user__username', 'conversation__id')
 
 @admin.register(UserSettings)
 class UserSettingsAdmin(admin.ModelAdmin):
