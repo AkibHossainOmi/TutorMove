@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { FiBriefcase, FiMapPin, FiBook, FiDollarSign } from 'react-icons/fi';
+import { jobAPI } from '../utils/apiService';
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
@@ -15,7 +15,7 @@ const JobList = () => {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/jobs/`);
+        const response = await jobAPI.getJobs();
         setJobs(response.data);
       } catch (err) {
         setError('Failed to fetch jobs. Please try again later.');

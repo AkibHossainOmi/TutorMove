@@ -5,6 +5,7 @@
   import LoadingSpinner from '../components/LoadingSpinner';
   import Navbar from '../components/Navbar';
   import Footer from '../components/Footer';
+import { creditAPI, gigApi, notificationAPI } from '../utils/apiService';
 
   /**
    * Custom hook for managing chat-related functionalities.
@@ -42,7 +43,7 @@
   const tutorAPI = {
     getTutorGigs: async (teacherId) => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/gigs/teacher/${teacherId}/`);
+        const response = await gigApi.getGigs();
         return Array.isArray(response.data) ? response.data : response.data.results || [];
       } catch (error) {
         console.error("Error fetching tutor gigs:", error.response?.data || error.message);
@@ -54,10 +55,10 @@
   /**
    * API functions for credit-related operations.
    */
-  const creditAPI = {
+  const credit = {
     getUserCredits: async (userId) => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/credit/user/${userId}`);
+        const response = await creditAPI.getCreditBalance();
         return response.data;
       } catch (error) {
         console.error("Error fetching user credits:", error.response?.data || error.message);
@@ -252,7 +253,7 @@
     // Fetch notifications for the logged in user
     const fetchNotifications = async (userId) => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/notifications/unread/${userId}/`);
+        const response = await notificationAPI.getUnreadNotifications();
         const unreadNotifs = response.data || [];
         setNotifications(unreadNotifs);
         setUnreadNotificationCount(unreadNotifs.length);
@@ -290,7 +291,7 @@
 
         const [gigsData, creditBalanceData, matchedJobsResponse, applicationsResponse] = await Promise.all([
           tutorAPI.getTutorGigs(currentUser.user_id),
-          creditAPI.getUserCredits(currentUser.user_id),
+          credit.getUserCredits(currentUser.user_id),
           jobAPI.getMatchedJobs(),
           jobAPI.getMyApplications(),
         ]);
@@ -367,7 +368,7 @@
     const markNotificationsRead = async () => {
       if (!user) return;
       try {
-        await axios.post(`${process.env.REACT_APP_API_URL}/api/notifications/mark-read/${user.user_id}/`);
+        notificationAPI.markAsRead();
         setUnreadNotificationCount(0);
         setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
       } catch (error) {

@@ -9,24 +9,21 @@ import DashboardTabs from '../components/Dashboard/Student/DashboardTabs';
 import QuickActions from '../components/Dashboard/Student/QuickActions';
 import JobPostModal from '../components/Dashboard/Student/JobPostModal';
 import InsufficientCreditsModal from '../components/Dashboard/Student/InsufficientCreditsModal';
-import { creditAPI } from '../utils/apiService';
+import { creditAPI, jobAPI, notificationAPI } from '../utils/apiService';
 
-// Simplified API functions
 const studentAPI = {
-  getCredits: async (userId) => {
-    console.log('Calling getCredits with userId:', userId);
+  getCredits: async () => {
     try {
-      const response = await creditAPI.getCreditBalance(userId);
+      const response = await creditAPI.getCreditBalance();
       return response.data;
     } catch (error) {
       console.error("Error fetching credits:", error);
       return { balance: 0 };
     }
   },
-  getPostedJobs: async (userId) => {
-    console.log('Calling getPostedJobs with userId:', userId);
+  getPostedJobs: async () => {
     try {
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/jobs/${userId}`);
+      const response = await jobAPI.getJobs();
       return response.data || [];
     } catch (error) {
       console.error("Error fetching jobs:", error);
@@ -34,7 +31,6 @@ const studentAPI = {
     }
   },
   getFavoriteTeachers: async (userId) => {
-    console.log('Calling getFavoriteTeachers with userId:', userId);
     try {
       const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/favorites/${userId}`);
       return response.data || [];
@@ -60,18 +56,19 @@ const StudentDashboard = () => {
       completedJobs: 0
     }
   });
+  const [notifications, setNotifications] = useState([]);
+  const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  // Get user from localStorage once
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser?.user_type === 'student') {
       setUser(storedUser);
     } else {
-      setIsLoading(false); // Non-student users
+      setIsLoading(false);
     }
   }, []);
 
-  // Load dashboard data only after user is set
   useEffect(() => {
     if (!user?.user_id) return;
 
@@ -79,8 +76,8 @@ const StudentDashboard = () => {
       setIsLoading(true);
       try {
         const [creditsData, jobsData, favoritesData] = await Promise.all([
-          studentAPI.getCredits(user.user_id),
-          studentAPI.getPostedJobs(user.user_id),
+          studentAPI.getCredits(),
+          studentAPI.getPostedJobs(),
           studentAPI.getFavoriteTeachers(user.user_id)
         ]);
 
@@ -97,6 +94,8 @@ const StudentDashboard = () => {
         });
 
         setFavoriteTeachers(favoritesData);
+
+        await loadNotifications();
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -104,10 +103,20 @@ const StudentDashboard = () => {
       }
     };
 
+    const loadNotifications = async () => {
+      try {
+        const res = await notificationAPI.getUnreadNotifications();
+        const data = res.data || [];
+        setNotifications(data);
+        setUnreadNotificationCount(data.length);
+      } catch (error) {
+        console.error('Failed to load notifications', error);
+      }
+    };
+
     loadDashboardData();
   }, [user]);
 
-  // Handle job creation
   const handleJobCreated = (newJob) => {
     setDashboardData(prev => ({
       ...prev,
@@ -133,6 +142,22 @@ const StudentDashboard = () => {
     window.location.href = '/buy-credits';
   };
 
+  const handleToggleNotifications = () => {
+    if (!showNotifications) {
+      handleMarkNotificationsRead();
+    }
+    setShowNotifications(!showNotifications);
+  };
+
+  const handleMarkNotificationsRead = async () => {
+    try {
+      await notificationAPI.markAsRead();
+      setUnreadNotificationCount(0);
+    } catch (err) {
+      console.error("Failed to mark notifications as read", err);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -144,13 +169,19 @@ const StudentDashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
+
       <main className="max-w-7xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader
           user={user}
           creditBalance={dashboardData.credits}
           onPostJobClick={handlePostJobClick}
           onBuyCreditsClick={handleNavigateToBuyCredits}
+          notifications={notifications}
+          unreadNotificationCount={unreadNotificationCount}
+          showNotifications={showNotifications}
+          onToggleNotifications={handleToggleNotifications}
+          onMarkNotificationsRead={handleMarkNotificationsRead}
+          unreadMessagesCount={0}
         />
 
         <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mb-8">

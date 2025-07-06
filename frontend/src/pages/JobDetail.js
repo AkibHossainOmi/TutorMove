@@ -4,6 +4,7 @@ import axios from 'axios';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { FiBriefcase, FiMapPin, FiBook, FiUser, FiCalendar, FiAlertCircle, FiDollarSign, FiClock } from 'react-icons/fi';
+import { jobAPI } from '../utils/apiService';
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -19,7 +20,7 @@ const JobDetail = () => {
   useEffect(() => {
     const fetchJob = async () => {
       try {
-        const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/jobs/${id}/`);
+        const response = await jobAPI.getJobDetail(id);
         setJob(response.data);
       } catch (err) {
         setError('Failed to fetch job details.');

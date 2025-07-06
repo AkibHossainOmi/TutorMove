@@ -3,6 +3,7 @@ import { FaMapMarkerAlt, FaUser } from 'react-icons/fa';
 import { MdVerifiedUser } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { userApi } from '../utils/apiService';
 // import axios from 'axios';
 
 const Profile = () => {
@@ -112,61 +113,42 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    const fetchUserProfile = async () => {
-      setLoading(true);
-      setError(null);
-  
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        setError('User data not found. Please log in.');
-        setLoading(false);
-        return;
+  const fetchUserProfile = async () => {
+    setLoading(true);
+    setError(null);
+
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+      setError('User data not found. Please log in.');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const res = await userApi.getUser();
+      const data = res.data;
+      setUserData(data);
+      setUserType(data.user_type || '');
+      setSavedLocation(data.location || '');
+      setLocationInput(data.location || '');
+      setBio(data.bio || '');
+      setEducation(data.education || '');
+      setExperience(data.experience || '');
+      setPhoneNumber(data.phone_number || '');
+
+      if (data.user_type === 'tutor') {
+        fetchAverageRating(data.id);
       }
-  
-      let user;
-      try {
-        user = JSON.parse(storedUser);
-        if (!user?.user_id) throw new Error('User ID not found.');
-      } catch (e) {
-        setError('Invalid user data. Please log in again.');
-        setLoading(false);
-        return;
-      }
-  
-      try {
-        const token = localStorage.getItem('token');
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token && { Authorization: `Token ${token}` }),
-          },
-          body: JSON.stringify({ id: user.user_id }),
-        });
-  
-        if (!res.ok) throw new Error(`Failed: ${res.status}`);
-        const data = await res.json();
-        setUserData(data);
-        setUserType(data.user_type || '');
-        setSavedLocation(data.location || '');
-        setLocationInput(data.location || '');
-        setBio(data.bio || '');
-        setEducation(data.education || '');
-        setExperience(data.experience || '');
-        setPhoneNumber(data.phone_number || '');
-  
-        // If user is tutor, fetch average rating
-        if (data.user_type === 'tutor') {
-          fetchAverageRating(data.id);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUserProfile();
-  }, []);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchUserProfile();
+}, []);
 
   if (loading) {
     return (

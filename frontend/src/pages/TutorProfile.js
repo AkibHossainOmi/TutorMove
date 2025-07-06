@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import { tutorAPI } from "../utils/apiService";
 
 export default function TutorProfilePage() {
   const { tutorId } = useParams();
@@ -33,24 +34,13 @@ export default function TutorProfilePage() {
 
       try {
         setLoading(true);
-
-        const profileRes = await fetch(`${process.env.REACT_APP_API_URL}/api/teacher/${tutorId}/`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ student_id: studentId }),
-        });
-
-        if (!profileRes.ok) throw new Error("Failed to fetch profile");
-        const profileData = await profileRes.json();
-        setProfile(profileData);
+        const profileData = await tutorAPI.getTutorProfile(tutorId);
+        setProfile(profileData.data);
 
         const ratingRes = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${tutorId}/`);
         if (!ratingRes.ok) throw new Error("Failed to fetch rating");
         const ratingData = await ratingRes.json();
         setAverageRating(ratingData.average_rating || null);
-
       } catch (err) {
         setError(err.message);
       } finally {
@@ -70,7 +60,6 @@ export default function TutorProfilePage() {
       <Navbar />
       <main className="min-h-screen mt-20 bg-gray-100 p-8">
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 relative">
-          {/* Message button positioned in top right corner */}
           {JSON.parse(localStorage.getItem("user"))?.user_type === "student" && (
             <UnlockedMessageButton
               studentId={getStudentId()}
@@ -113,13 +102,10 @@ export default function TutorProfilePage() {
 
           <section className="mb-6">
             <h3 className="text-lg font-semibold mb-3">Subjects</h3>
-            {profile.subjects && profile.subjects.length > 0 ? (
+            {profile.subjects?.length > 0 ? (
               <ul className="flex flex-wrap gap-2">
                 {profile.subjects.map((subj, i) => (
-                  <li
-                    key={i}
-                    className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium"
-                  >
+                  <li key={i} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
                     {subj}
                   </li>
                 ))}
@@ -143,13 +129,10 @@ export default function TutorProfilePage() {
 
           <section className="mb-6">
             <h3 className="text-lg font-semibold mb-3">Gigs</h3>
-            {profile.gigs && profile.gigs.length > 0 ? (
+            {profile.gigs?.length > 0 ? (
               <ul className="space-y-3">
                 {profile.gigs.map((gig) => (
-                  <li
-                    key={gig.id}
-                    className="border p-3 rounded-md hover:shadow-lg transition-shadow cursor-pointer"
-                  >
+                  <li key={gig.id} className="border p-3 rounded-md hover:shadow-lg transition-shadow cursor-pointer">
                     <h4 className="font-semibold text-indigo-700">{gig.title}</h4>
                     <p className="text-gray-700">{gig.description}</p>
                     <p className="text-sm text-gray-500 mt-1">Subject: {gig.subject}</p>
@@ -161,7 +144,7 @@ export default function TutorProfilePage() {
             )}
           </section>
 
-          {/* Review submission form */}
+          {/* Review Form */}
           {JSON.parse(localStorage.getItem("user"))?.user_type === "student" && (
             <section className="mt-10 pt-8 border-t border-gray-200">
               <h3 className="text-xl font-semibold mb-4 text-gray-800">Leave a Review</h3>
@@ -177,15 +160,8 @@ export default function TutorProfilePage() {
                   try {
                     const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/`, {
                       method: "POST",
-                      headers: {
-                        "Content-Type": "application/json",
-                      },
-                      body: JSON.stringify({
-                        student: studentId,
-                        teacher: tutorId,
-                        comment,
-                        rating,
-                      }),
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ student: studentId, teacher: tutorId, comment, rating })
                     });
 
                     if (!res.ok) {
@@ -214,16 +190,11 @@ export default function TutorProfilePage() {
                 >
                   <option value="">Select rating</option>
                   {[1, 2, 3, 4, 5].map((r) => (
-                    <option key={r} value={r}>
-                      {r} Star{r > 1 ? "s" : ""}
-                    </option>
+                    <option key={r} value={r}>{r} Star{r > 1 ? "s" : ""}</option>
                   ))}
                 </select>
 
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition"
-                >
+                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
                   Submit Review
                 </button>
               </form>
@@ -236,11 +207,11 @@ export default function TutorProfilePage() {
   );
 }
 
-// Updated Message Button Component with better styling and positioning
 function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
   const [unlocked, setUnlocked] = useState(false);
   const [checking, setChecking] = useState(true);
   const [hovered, setHovered] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     async function checkUnlock() {
@@ -248,12 +219,9 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
         const token = localStorage.getItem("token");
         if (!token || !studentId || !tutorId) return;
 
-        const res = await fetch(
-          `${process.env.REACT_APP_API_URL}/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         const data = await res.json();
         setUnlocked(data.unlocked === true);
@@ -271,31 +239,30 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
 
   return (
     <div className="absolute top-4 right-4">
-  <a
-    href={`https://asr25.com/messages/?username=${encodeURIComponent(tutorUsername)}`}
-    className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
-      hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
-    } text-indigo-600`}
-    onMouseEnter={() => setHovered(true)}
-    onMouseLeave={() => setHovered(false)}
-  >
-    <svg
-      className="w-5 h-5 mr-2"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
+      <button
+      onClick={() => navigate(`/messages/?username=${encodeURIComponent(tutorUsername)}`)}
+      className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
+        hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
+      } text-indigo-600`}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-      />
-    </svg>
-    <span className="font-medium">Message</span>
-  </a>
-</div>
-
+        <svg
+          className="w-5 h-5 mr-2"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2}
+          viewBox="0 0 24 24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
+        </svg>
+        <span className="font-medium">Message</span>
+      </button>
+    </div>
   );
 }

@@ -111,7 +111,7 @@ export const authAPI = {
 export const tutorAPI = {
   searchTutors: (params) => apiService.get('/api/tutors/search/', { params }),
   getTutorProfile: (id) => apiService.get(`/api/tutors/${id}/`),
-  getTutorGigs: (params) => apiService.get('/api/tutors/', { params }),
+  getTutors: () => apiService.get(`/api/tutors/`),
   createGig: (gigData) => apiService.post('/api/tutors/', gigData),
   updateGig: (id, gigData) => apiService.patch(`/api/tutors/${id}/`, gigData),
   deleteGig: (id) => apiService.delete(`/api/tutors/${id}/`),
@@ -140,9 +140,22 @@ export const jobAPI = {
   getJobsByLocation: (location) => apiService.get('/api/jobs/by-location/', { params: { location } }),
 };
 
+export const gigApi = {
+  getGigs: () => apiService.get('/api/gigs/'),
+  createGig: (gigData) => apiService.post('/api/gigs/', gigData),
+};
+
+export const subjectApi = {
+  getSubjects: () => apiService.get('/api/subjects/'),
+};
+
+export const userApi = {
+  getUser: () => apiService.get('/api/users/me/'),
+};
+
 // Credit API calls
 export const creditAPI = {
-  getCreditBalance: (userId) => apiService.get(`/api/credit/user/${userId}`),
+  getCreditBalance: () => apiService.get(`/api/credits/`),
   getCreditHistory: (params) => apiService.get('/api/credit/history/', { params }),
   transferCredits: (transferData) => apiService.post('/api/credit/transfer/', transferData),
   getReferralCode: () => apiService.get('/api/credit/referral-code/'),
@@ -175,8 +188,8 @@ export const messageAPI = {
 
 // Notification API calls
 export const notificationAPI = {
-  getNotifications: (params) => apiService.get('/notifications/', { params }),
-  markAsRead: (id) => apiService.patch(`/notifications/${id}/`, { is_read: true }),
+  getUnreadNotifications: () => apiService.get('/api/notifications/unread/'),
+  markAsRead: () => apiService.post(`/api/notifications/mark-read/`),
   markAllAsRead: () => apiService.post('/notifications/mark-all-read/'),
   deleteNotification: (id) => apiService.delete(`/notifications/${id}/`),
   updateNotificationPreferences: (preferences) => apiService.patch('/notifications/preferences/', preferences),

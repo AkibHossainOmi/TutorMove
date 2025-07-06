@@ -50,7 +50,7 @@ const TutorMapSearch = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/search-tutors/`, {
+      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tutors/search/`, {
         location: selectedLocation ? selectedLocation.display_name : "",
         subject: subject.trim(),
         radius_km: SEARCH_RADIUS_KM,

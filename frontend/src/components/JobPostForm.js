@@ -78,7 +78,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
       };
 
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/api/jobs/create`,
+        `${process.env.REACT_APP_API_URL}/api/jobs`,
         payload
       );
       if (response.status === 201) {

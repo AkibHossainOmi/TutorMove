@@ -53,7 +53,7 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username']
+        fields = '__all__'
 
 class ChatSerializer(serializers.ModelSerializer):
     sender = UserSerializer(read_only=True)
@@ -159,16 +159,6 @@ class UserTokenSerializer(TokenObtainPairSerializer):
             'user_type': self.user.user_type,
         })
         return data
-# === USER & PROFILE SERIALIZERS ===
-
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = [
-            'id', 'username', 'email', 'user_type', 'phone_number',
-            'trust_score', 'is_verified', 'verification_requested', 'verification_doc', 'location', 'bio', 'education', 'experience',
-        ]
-
 
 # === SUBJECT SERIALIZER ===
 
@@ -313,7 +303,7 @@ class AbuseReportSerializer(serializers.ModelSerializer):
 class TutorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'first_name', 'last_name', 'email', 'phone_number', 'trust_score', 'credit_balance']
+        fields = '__all__'
 
 class JobListSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)

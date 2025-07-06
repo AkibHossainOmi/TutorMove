@@ -26,7 +26,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 import uuid
 import requests
 from django.http import JsonResponse
@@ -45,8 +45,8 @@ from .serializers import (
     ApplicationSerializer, NotificationSerializer, MessageSerializer, 
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
-    TutorSerializer, PaymentSerializer, CreditUpdateByUserSerializer,
-    ConversationSerializer, ChatSerializer, TeacherProfileSerializer
+    PaymentSerializer, CreditUpdateByUserSerializer,
+    ConversationSerializer, ChatSerializer
 )
 
 from .payments import SSLCommerzPayment
@@ -63,63 +63,6 @@ __all__ = [
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
-
-class TeacherProfileView(APIView):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, tutor_id):
-        student_id = request.data.get('student_id')
-        if not student_id:
-            return Response({'detail': 'student_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        tutor = get_object_or_404(User, id=tutor_id, user_type='tutor')
-        student = get_object_or_404(User, id=student_id, user_type='student')
-
-        contact_unlocked = ContactUnlock.objects.filter(student=student, tutor=tutor).exists()
-
-        serializer = TeacherProfileSerializer(tutor, context={'contact_unlocked': contact_unlocked})
-        return Response(serializer.data)
-
-
-class MarkNotificationsReadView(APIView):
-    permission_classes = [AllowAny]
-    def post(self, request, user_id):
-        # Mark all unread notifications for this user as read
-        updated_count = Notification.objects.filter(to_user_id=user_id, is_read=False).update(is_read=True)
-        
-        return Response({
-            "message": f"{updated_count} notifications marked as read.",
-            "read_count": updated_count
-        }, status=status.HTTP_200_OK)
-
-class UnreadNotificationsView(APIView):
-    permission_classes = [AllowAny]
-    def get(self, request, user_id):
-        unread_notifications = Notification.objects.filter(to_user_id=user_id, is_read=False).order_by('-created_at')
-        serializer = NotificationSerializer(unread_notifications, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-class NotificationCreateView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = NotificationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class UserSearchView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        keyword = request.data.get('keyword', '').strip()
-        if not keyword:
-            return Response({'error': 'keyword is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-        users = User.objects.filter(username__icontains=keyword)[:20]
-        serializer = UserSerializer(users, many=True)
-        return Response(serializer.data)
 
 class ConversationListView(APIView):
     permission_classes = [AllowAny]
@@ -180,13 +123,67 @@ class SendMessageView(APIView):
         serializer = ChatSerializer(chat)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-class GigListByTeacherAPIView(generics.ListAPIView):
-    serializer_class = GigSerializer
-    permission_classes = [permissions.AllowAny]
+class TutorViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.filter(user_type='tutor')
 
-    def get_queryset(self):
-        teacher_id = self.kwargs.get('teacher_id')
-        return Gig.objects.filter(teacher_id=teacher_id).order_by('-created_at')
+    @action(detail=False, methods=["post"], url_path="search", permission_classes=[AllowAny])
+    def search(self, request):
+        input_location = request.data.get("location", "").strip()
+        subject_query = request.data.get("subject", "").strip().lower()
+
+        geolocator = Nominatim(user_agent="your_app_name")
+        input_lat, input_lon = None, None
+
+        if input_location:
+            try:
+                loc = geolocator.geocode(input_location)
+                if loc:
+                    input_lat, input_lon = loc.latitude, loc.longitude
+            except (GeocoderUnavailable, GeocoderTimedOut):
+                pass
+
+        # All tutors (no location exclusion!)
+        tutors = User.objects.filter(user_type="tutor")
+        matched_tutors = []
+
+        for tutor in tutors:
+            try:
+                # Check if tutor has relevant subject
+                gigs_qs = Gig.objects.filter(teacher=tutor)
+                if subject_query:
+                    gigs_qs = gigs_qs.filter(subject__icontains=subject_query)
+
+                if subject_query and not gigs_qs.exists():
+                    continue  # Skip tutor if no relevant subject match
+
+                credit_count = getattr(tutor, "credit_count", 0)
+
+                distance_km = None
+                if input_lat is not None and input_lon is not None and tutor.location:
+                    try:
+                        tutor_loc = geolocator.geocode(tutor.location)
+                        if tutor_loc:
+                            tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
+                            distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
+                    except Exception:
+                        pass  # Location geocode failed, skip distance
+
+                matched_tutors.append((tutor, credit_count, distance_km))
+            except Exception:
+                continue
+
+        # Sort: by credits DESC, then distance ASC (None distances go last)
+        matched_tutors.sort(
+            key=lambda x: (-x[1], x[2] if x[2] is not None else float('inf'))
+        )
+
+        combined_tutors = [t[0] for t in matched_tutors]
+        serializer = self.get_serializer(combined_tutors, many=True)
+        return Response({
+            "count": len(combined_tutors),
+            "results": serializer.data
+        })
 
 class JobCreateAPIView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -351,22 +348,6 @@ class GigCreateAPIView(generics.CreateAPIView):
     serializer_class = GigSerializer
     permission_classes = [permissions.AllowAny] 
 
-class JobListAPIView(generics.ListAPIView):
-    serializer_class = JobSerializer
-    permission_classes = [AllowAny]
-
-    def get_queryset(self):
-        return Job.objects.filter(is_active=True).select_related('student').prefetch_related('subjects').order_by('-created_at')
-
-class JobDetailAPIView(generics.RetrieveAPIView):
-    queryset = Job.objects.all()
-    serializer_class = JobSerializer
-    permission_classes = [AllowAny]
-
-class TutorListAPIView(generics.ListAPIView):
-    queryset = User.objects.filter(user_type='tutor')
-    serializer_class = TutorSerializer
-    permission_classes = [AllowAny]
 # --- UserViewSet ---
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -479,6 +460,7 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * math.asin(math.sqrt(a))
 
     return R * c
+
 class UserCreditBalanceView(APIView):
     permission_classes = [IsAuthenticated]  # no auth required
     def get(self, request, user_id):
@@ -542,76 +524,6 @@ from .models import User, Gig
 from .serializers import UserSerializer
 from math import radians, cos, sin, asin, sqrt
 
-def haversine(lon1, lat1, lon2, lat2):
-    # Calculate the great circle distance between two points on the earth (specified in decimal degrees)
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    dlon = lon2 - lon1 
-    dlat = lat2 - lat1 
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a)) 
-    km = 6371 * c
-    return km
-
-class TutorSearchAPIView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        input_location = request.data.get("location", "").strip()
-        subject_query = request.data.get("subject", "").strip().lower()
-
-        geolocator = Nominatim(user_agent="your_app_name")
-        input_lat, input_lon = None, None
-
-        if input_location:
-            try:
-                loc = geolocator.geocode(input_location)
-                if loc:
-                    input_lat, input_lon = loc.latitude, loc.longitude
-            except (GeocoderUnavailable, GeocoderTimedOut):
-                pass
-
-        tutors = User.objects.filter(user_type="tutor").exclude(location__isnull=True).exclude(location__exact="")
-
-        matched_tutors = []
-
-        for tutor in tutors:
-            try:
-                # Filter gigs by subject to ensure tutor is relevant
-                gigs_qs = Gig.objects.filter(teacher=tutor)
-                if subject_query:
-                    gigs_qs = gigs_qs.filter(subject__icontains=subject_query)
-
-                if gigs_qs.count() == 0:
-                    continue  # Skip if no matching gigs
-
-                # Get credit count for tutor (adjust field name as per your model)
-                credit_count = getattr(tutor, "credit_count", 0)
-
-                # Optionally calculate distance
-                distance_km = None
-                if input_lat is not None and input_lon is not None:
-                    tutor_loc = geolocator.geocode(tutor.location)
-                    if tutor_loc:
-                        tutor_lat, tutor_lon = tutor_loc.latitude, tutor_loc.longitude
-                        distance_km = haversine(input_lon, input_lat, tutor_lon, tutor_lat)
-
-                matched_tutors.append((tutor, credit_count, distance_km))
-
-            except Exception:
-                continue
-
-        # Sort by credit_count descending
-        matched_tutors.sort(key=lambda x: x[1], reverse=True)
-
-        combined_tutors = [t[0] for t in matched_tutors]
-
-        serializer = UserSerializer(combined_tutors, many=True)
-
-        return Response({
-            "count": len(combined_tutors),
-            "results": serializer.data
-        })
-
 # --- GigViewSet ---
 class GigViewSet(viewsets.ModelViewSet):
     serializer_class = GigSerializer
@@ -620,7 +532,7 @@ class GigViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description', 'subject', 'location']
 
     def get_queryset(self):
-        queryset = Gig.objects.filter(teacher__user_type='teacher')
+        queryset = Gig.objects.filter(teacher__user_type='tutor')
         premium_only = self.request.query_params.get('premium_only')
         premium_first = self.request.query_params.get('premium_first')
         if premium_only == '1':
@@ -658,7 +570,7 @@ class GigViewSet(viewsets.ModelViewSet):
         return queryset
 
     def create(self, request, *args, **kwargs):
-        if request.user.user_type != 'teacher':
+        if request.user.user_type != 'tutor':
             return Response({'error': 'Only teachers can create gigs'}, status=status.HTTP_403_FORBIDDEN)
         if Gig.objects.filter(teacher=request.user).count() >= 15:
             return Response({'error': 'Maximum limit of 15 gigs reached'}, status=status.HTTP_400_BAD_REQUEST)
@@ -687,46 +599,39 @@ class GigViewSet(viewsets.ModelViewSet):
         return Response({'contact_info': gig.contact_info})
 
 # --- CreditViewSet ---
+
 class CreditViewSet(viewsets.ModelViewSet):
     serializer_class = CreditSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        # NOTE: For testing purposes, you might want to mock request.user here
-        # if not using actual authentication. For now, it relies on request.user.
         return Credit.objects.filter(user=self.request.user)
 
-    # TEMPORARY: Changed permission_classes to AllowAny for testing without authentication
-    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
+    def list(self, request, *args, **kwargs):
+        credits = self.get_queryset()
+        if not credits.exists():
+            return Response({}, status=status.HTTP_200_OK)
+        credit = credits.first()
+        serializer = self.get_serializer(credit)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # Secure purchase endpoint: only authenticated users
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def purchase(self, request):
-        credits_to_add = int(request.data.get('credits', 0))
-        amount = float(request.data.get('amount', 0))
-
-        # IMPORTANT: For unauthenticated testing, you NEED a user object.
-        # You could fetch a specific test user or create a temporary one if needed.
-        # For now, let's try to get user by ID passed from frontend or default to a mock user.
-        # This is a dangerous temporary bypass for testing purposes only!
-        user_id = request.data.get('user_id') # Expect user_id from frontend if no token
         try:
-            if user_id:
-                user = User.objects.get(id=user_id)
-            else:
-                # Fallback for local testing without user_id or token: use an existing user
-                # Replace with a known user ID from your database for testing
-                user = User.objects.first() # DANGER: Do not do this in production!
-                if not user:
-                    return Response({'error': 'No user found for testing. Please create one.'}, status=status.HTTP_400_BAD_REQUEST)
-        except User.DoesNotExist:
-            return Response({'error': 'Test user not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            credits_to_add = int(request.data.get('credits', 0))
+            amount = Decimal(request.data.get('amount', '0'))
+        except (ValueError, InvalidOperation):
+            return Response({'error': 'Invalid credits or amount'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Use the obtained 'user' object for Order creation
-        # All other logic remains the same
-        if not credits_to_add or not amount:
-            return Response({'error': 'Both credits and amount are required.'}, status=status.HTTP_400_BAD_REQUEST)
+        if credits_to_add <= 0 or amount <= 0:
+            return Response({'error': 'Credits and amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
 
         order = Order.objects.create(
-            user=user, # Use the acquired user object
-            total_amount=Decimal(amount),
+            user=user,
+            total_amount=amount,
             is_paid=False
         )
 
@@ -736,7 +641,7 @@ class CreditViewSet(viewsets.ModelViewSet):
         payment = Payment.objects.create(
             order=order,
             transaction_id=transaction_id,
-            amount=Decimal(amount),
+            amount=amount,
             status='PENDING',
             currency='BDT',
         )
@@ -749,8 +654,8 @@ class CreditViewSet(viewsets.ModelViewSet):
             'fail_url': request.build_absolute_uri(reverse('payment_fail')),
             'cancel_url': request.build_absolute_uri(reverse('payment_cancel')),
             'ipn_url': request.build_absolute_uri(reverse('sslcommerz_ipn')),
-            'cus_name': user.get_full_name() or user.username, # Use the acquired user object
-            'cus_email': user.email, # Use the acquired user object
+            'cus_name': user.get_full_name() or user.username,
+            'cus_email': user.email,
             'value_a': str(user.id),
             'value_b': str(credits_to_add),
             'value_c': str(order.id),
@@ -766,7 +671,6 @@ class CreditViewSet(viewsets.ModelViewSet):
         if response_data and response_data.get('status') == 'SUCCESS':
             payment.bank_transaction_id = response_data.get('tran_id')
             payment.save()
-
             return Response({
                 'status': 'SUCCESS',
                 'payment_url': response_data.get('GatewayPageURL'),
@@ -787,19 +691,37 @@ class CreditViewSet(viewsets.ModelViewSet):
     def transfer(self, request):
         recipient_id = request.data.get('recipient_id')
         amount = request.data.get('amount')
+
+        # Validate amount as Decimal and positive
+        try:
+            amount = Decimal(amount)
+            if amount <= 0:
+                return Response({'error': 'Amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+        except (TypeError, InvalidOperation):
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             recipient = User.objects.get(id=recipient_id)
-            sender_credit = Credit.objects.get(user=request.user)
-            recipient_credit, created = Credit.objects.get_or_create(user=recipient)
-            if sender_credit.balance < amount:
-                return Response({'error': 'Insufficient credits'}, status=status.HTTP_400_BAD_REQUEST)
-            sender_credit.balance -= amount
-            recipient_credit.balance += amount
-            sender_credit.save()
-            recipient_credit.save()
-            return Response({'message': 'Credits transferred successfully'})
         except User.DoesNotExist:
             return Response({'error': 'Recipient not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            with transaction.atomic():
+                sender_credit = Credit.objects.select_for_update().get(user=request.user)
+                recipient_credit, created = Credit.objects.select_for_update().get_or_create(user=recipient)
+
+                if sender_credit.balance < amount:
+                    return Response({'error': 'Insufficient credits'}, status=status.HTTP_400_BAD_REQUEST)
+
+                sender_credit.balance -= amount
+                recipient_credit.balance += amount
+
+                sender_credit.save()
+                recipient_credit.save()
+        except Credit.DoesNotExist:
+            return Response({'error': 'Sender credit account not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Credits transferred successfully'})
 
 # --- JobViewSet ---
 class JobViewSet(viewsets.ModelViewSet):
@@ -935,21 +857,20 @@ class ApplicationViewSet(viewsets.ModelViewSet):
 # --- NotificationViewSet ---
 class NotificationViewSet(viewsets.ModelViewSet):
     serializer_class = NotificationSerializer
+    queryset = Notification.objects.all()
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user)
+    @action(detail=False, methods=['get'], url_path='unread')
+    def unread(self, request):
+        unread_notifications = self.queryset.filter(to_user=request.user, is_read=False)
+        serializer = self.get_serializer(unread_notifications, many=True)
+        return Response(serializer.data)
 
-    def perform_create(self, serializer):
-        notification = serializer.save()
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            f"notifications_{notification.user.id}",
-            {
-                "type": "send_notification",
-                "message": notification.message
-            }
-        )
+    @action(detail=False, methods=['post'], url_path='mark-read')
+    def mark_read(self, request):
+        updated_count = self.queryset.filter(to_user=request.user, is_read=False).update(is_read=True)
+        return Response({'marked_read_count': updated_count})
+
 
 # --- MessageViewSet ---
 class MessageViewSet(viewsets.ModelViewSet):

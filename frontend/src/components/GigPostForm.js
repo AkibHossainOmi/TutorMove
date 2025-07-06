@@ -1,8 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-
-const GIG_CREATION_ENDPOINT = `${process.env.REACT_APP_API_URL}/api/gigs/create/`;
-const SUBJECTS_API = `${process.env.REACT_APP_API_URL}/api/subjects`;
+import { gigApi, subjectApi } from '../utils/apiService';
 
 const GigPostForm = ({ onClose, onGigCreated }) => {
   const [title, setTitle] = useState('');
@@ -21,7 +18,7 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
-        const response = await axios.get(SUBJECTS_API);
+        const response = await subjectApi.getSubjects();
         setSubjects(response.data);
       } catch (err) {
         console.error('Failed to fetch subjects:', err);
@@ -69,11 +66,7 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
         teacher: teacherId,
       };
 
-      const response = await axios.post(GIG_CREATION_ENDPOINT, newGigData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await gigApi.createGig(newGigData);
 
       setSuccess('Gig created successfully!');
       onGigCreated(response.data);
