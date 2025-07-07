@@ -2,7 +2,7 @@ export default class ChatSocket {
   constructor(userId, onMessage) {
     this.userId = userId;
     this.onMessage = onMessage;
-    this.host = "ws://127.0.0.1:8001";
+    this.host = "ws://127.0.0.1:8000";
     this.reconnectDelay = 1000;
     this.maxReconnectDelay = 16000;
     this.messageQueue = [];
@@ -23,7 +23,8 @@ export default class ChatSocket {
     this.connecting = true;
     console.log("[ChatSocket] Connecting...");
 
-    this.socket = new WebSocket(`${this.host}/ws/chat/${this.userId}/`);
+    this.socket = new WebSocket(`ws://localhost:8000/ws/chat/5/?token=${localStorage.getItem('token')}`);
+
 
     this.socket.onopen = () => {
       console.log("[ChatSocket] WebSocket connected");
