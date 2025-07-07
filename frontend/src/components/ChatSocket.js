@@ -23,7 +23,7 @@ export default class ChatSocket {
     this.connecting = true;
     console.log("[ChatSocket] Connecting...");
 
-    this.socket = new WebSocket(`ws://localhost:8000/ws/chat/5/?token=${localStorage.getItem('token')}`);
+    this.socket = new WebSocket(`ws://localhost:8000/ws/chat/${this.userId}/?token=${localStorage.getItem('token')}`);
 
 
     this.socket.onopen = () => {
