@@ -40,6 +40,7 @@ Thumbs.db
 # Media/Static files (optional)
 media/
 staticfiles/
+static/
 
 # Test coverage
 htmlcov/

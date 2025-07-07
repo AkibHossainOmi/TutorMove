@@ -6,11 +6,14 @@ import core.routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
+from django.contrib.staticfiles.handlers import ASGIStaticFilesHandler
+
+django_asgi_app = get_asgi_application()
+django_asgi_app = ASGIStaticFilesHandler(django_asgi_app)
+
 application = ProtocolTypeRouter({
-    "http": get_asgi_application(),
+    "http": django_asgi_app,
     "websocket": AuthMiddlewareStack(
-        URLRouter(
-            core.routing.websocket_urlpatterns
-        )
+        URLRouter(core.routing.websocket_urlpatterns)
     ),
 })
