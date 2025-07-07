@@ -15,34 +15,30 @@ export default function WhatsAppLikeMessagingWS() {
   const [partnerTyping, setPartnerTyping] = useState(false);
 
   const socketRef = useRef(null);
-  const messagesEndRef = useRef(null);
+  const messageContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const handleWSMessageRef = useRef(null); // Ref to latest WS message handler
+  const handleWSMessageRef = useRef(null);
 
   const location = useLocation();
   const usernameFromQuery = new URLSearchParams(location.search).get('username');
 
-  // Helper: get the other participant of a conversation
   const getOtherUser = useCallback(
-    (conv) => {
-      return conv.participants
+    (conv) =>
+      conv.participants
         ?.map((p) => ({
           id: p.id ?? p.user__id,
           username: p.username ?? p.user__username,
         }))
-        .find((u) => u.id !== user?.user_id);
-    },
+        .find((u) => u.id !== user?.user_id),
     [user]
   );
 
-  // Stable sendMessageWS
   const sendMessageWS = useCallback((msg) => {
     if (socketRef.current?.connected) {
       socketRef.current.send(msg);
     }
   }, []);
 
-  // Main WS message handler
   const handleWSMessage = useCallback(
     (data) => {
       switch (data.type) {
@@ -51,7 +47,6 @@ export default function WhatsAppLikeMessagingWS() {
             setMessages((prev) => [...prev, data.message]);
           }
           break;
-
         case 'chat.typing':
           setPartnerTyping(data.is_typing);
           if (data.is_typing) {
@@ -59,30 +54,26 @@ export default function WhatsAppLikeMessagingWS() {
             typingTimeoutRef.current = setTimeout(() => setPartnerTyping(false), 2000);
           }
           break;
-
         case 'chat.conversations':
           setConversations(data.conversations);
           break;
-
         case 'chat.messages':
           setMessages(data.messages);
           break;
-
         case 'chat.search_results':
           setSearchResults(data.results);
           break;
-
-        case 'chat.conversation_started': {
+        case 'chat.conversation_started':
           const conv = data.conversation;
           setActiveConversation(conv);
           setMessages([]);
           sendMessageWS({ type: 'chat.get_messages', conversation_id: conv.id });
-          setConversations((prev) => (prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev]));
-          setSearchResults([]);
+          setConversations((prev) =>
+            prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev]
+          );
           setSearchTerm('');
+          setSearchResults([]);
           break;
-        }
-
         default:
           break;
       }
@@ -90,27 +81,21 @@ export default function WhatsAppLikeMessagingWS() {
     [activeConversation, sendMessageWS]
   );
 
-  // Keep ref updated with latest WS message handler
   useEffect(() => {
     handleWSMessageRef.current = handleWSMessage;
   }, [handleWSMessage]);
 
-  // Load user once on mount
   useEffect(() => {
     const userStr = localStorage.getItem('user');
-    if (userStr) {
-      setUser(JSON.parse(userStr));
-    }
+    if (userStr) setUser(JSON.parse(userStr));
   }, []);
 
-  // Setup WebSocket once user is ready, only once
   useEffect(() => {
     if (!user || socketRef.current) return;
 
-    const ws = new ChatSocket(user.user_id, (data) => {
-      // Always call latest handler from ref
-      handleWSMessageRef.current && handleWSMessageRef.current(data);
-    });
+    const ws = new ChatSocket(user.user_id, (data) =>
+      handleWSMessageRef.current?.(data)
+    );
     socketRef.current = ws;
 
     ws.socket.addEventListener('open', () => {
@@ -124,20 +109,18 @@ export default function WhatsAppLikeMessagingWS() {
     };
   }, [user, sendMessageWS]);
 
-  // Scroll messages to bottom when messages update
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [messages]);
-
-  // Perform initial search if URL param and user exist
   useEffect(() => {
     if (!user || !usernameFromQuery) return;
     sendMessageWS({ type: 'chat.search_user', keyword: usernameFromQuery });
   }, [user, usernameFromQuery, sendMessageWS]);
 
-  // Send message to active conversation
+  useEffect(() => {
+    const container = messageContainerRef.current;
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [messages]);
+
   const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !activeConversation) return;
 
@@ -149,7 +132,6 @@ export default function WhatsAppLikeMessagingWS() {
     setNewMessage('');
   }, [newMessage, activeConversation, sendMessageWS]);
 
-  // Notify typing event to partner
   const handleTyping = useCallback(() => {
     if (!activeConversation) return;
 
@@ -164,13 +146,11 @@ export default function WhatsAppLikeMessagingWS() {
     }, 2000);
   }, [activeConversation, getOtherUser, sendMessageWS]);
 
-  // Trigger user search on button or enter
   const handleSearch = useCallback(() => {
     if (!searchTerm.trim()) return;
     sendMessageWS({ type: 'chat.search_user', keyword: searchTerm.trim() });
   }, [searchTerm, sendMessageWS]);
 
-  // Start a new conversation
   const startConversation = useCallback(
     (user) => {
       sendMessageWS({ type: 'chat.start_conversation', receiver_id: user.id });
@@ -211,8 +191,6 @@ export default function WhatsAppLikeMessagingWS() {
             <div className="flex-grow overflow-y-auto">
               {conversations.map((conv) => {
                 const other = getOtherUser(conv);
-                console.log("Other user:", other);
-
                 return (
                   <div
                     key={conv.id}
@@ -231,14 +209,17 @@ export default function WhatsAppLikeMessagingWS() {
             </div>
           </div>
 
-          {/* Chat area */}
+          {/* Chat Area */}
           <div className="flex-1 flex flex-col">
             {activeConversation ? (
               <>
                 <div className="p-4 border-b font-semibold text-lg">
                   {getOtherUser(activeConversation)?.username}
                 </div>
-                <div className="flex-grow overflow-y-auto px-6 py-4 space-y-3 bg-gray-50">
+                <div
+                  ref={messageContainerRef}
+                  className="flex-grow overflow-y-auto px-6 py-4 space-y-3 bg-gray-50"
+                >
                   {messages.map((msg) => {
                     const isSelf = msg.sender.id === user?.user_id;
                     return (
@@ -261,8 +242,9 @@ export default function WhatsAppLikeMessagingWS() {
                       </div>
                     );
                   })}
-                  {partnerTyping && <div className="text-xs text-gray-400 italic">Typing...</div>}
-                  <div ref={messagesEndRef} />
+                  {partnerTyping && (
+                    <div className="text-xs text-gray-400 italic">Typing...</div>
+                  )}
                 </div>
                 <div className="p-4 flex gap-3 border-t">
                   <input
