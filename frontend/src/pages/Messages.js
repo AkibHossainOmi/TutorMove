@@ -24,7 +24,14 @@ export default function WhatsAppLikeMessagingWS() {
 
   // Helper: get the other participant of a conversation
   const getOtherUser = useCallback(
-    (conv) => conv.participants.find((u) => u.id !== user?.user_id),
+    (conv) => {
+      return conv.participants
+        ?.map((p) => ({
+          id: p.id ?? p.user__id,
+          username: p.username ?? p.user__username,
+        }))
+        .find((u) => u.id !== user?.user_id);
+    },
     [user]
   );
 
@@ -204,6 +211,8 @@ export default function WhatsAppLikeMessagingWS() {
             <div className="flex-grow overflow-y-auto">
               {conversations.map((conv) => {
                 const other = getOtherUser(conv);
+                console.log("Other user:", other);
+
                 return (
                   <div
                     key={conv.id}
