@@ -3,12 +3,12 @@ import { useNavigate, useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { tutorAPI } from "../utils/apiService";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 export default function TutorProfilePage() {
   const { tutorId } = useParams();
 
   const [profile, setProfile] = useState(null);
-  const [averageRating, setAverageRating] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -36,11 +36,6 @@ export default function TutorProfilePage() {
         setLoading(true);
         const profileData = await tutorAPI.getTutorProfile(tutorId);
         setProfile(profileData.data);
-
-        const ratingRes = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${tutorId}/`);
-        if (!ratingRes.ok) throw new Error("Failed to fetch rating");
-        const ratingData = await ratingRes.json();
-        setAverageRating(ratingData.average_rating || null);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -51,7 +46,7 @@ export default function TutorProfilePage() {
     fetchData();
   }, [tutorId]);
 
-  if (loading) return <div className="p-6 text-center text-lg">Loading profile...</div>;
+  if (loading) return <div className="p-6 text-center text-lg"><LoadingSpinner/></div>;
   if (error) return <div className="p-6 text-center text-red-600 font-semibold">{error}</div>;
   if (!profile) return null;
 
@@ -77,9 +72,6 @@ export default function TutorProfilePage() {
               <p className="text-gray-600">{profile.location || "Location not specified"}</p>
               <p className={`mt-1 text-sm font-medium ${profile.is_verified ? "text-green-600" : "text-gray-500"}`}>
                 {profile.is_verified ? "Verified Tutor" : ""}
-              </p>
-              <p className="text-yellow-600 font-semibold mt-1">
-                Average Rating: {averageRating !== null ? averageRating.toFixed(1) : "N/A"}
               </p>
             </div>
           </div>
@@ -143,63 +135,6 @@ export default function TutorProfilePage() {
               <p className="text-gray-600 italic">No gigs listed.</p>
             )}
           </section>
-
-          {/* Review Form */}
-          {JSON.parse(localStorage.getItem("user"))?.user_type === "student" && (
-            <section className="mt-10 pt-8 border-t border-gray-200">
-              <h3 className="text-xl font-semibold mb-4 text-gray-800">Leave a Review</h3>
-              <form
-                className="space-y-4"
-                onSubmit={async (e) => {
-                  e.preventDefault();
-                  const formData = new FormData(e.target);
-                  const comment = formData.get("comment");
-                  const rating = parseInt(formData.get("rating"), 10);
-                  const studentId = getStudentId();
-
-                  try {
-                    const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ student: studentId, teacher: tutorId, comment, rating })
-                    });
-
-                    if (!res.ok) {
-                      const errData = await res.json();
-                      throw new Error(errData.error || "Failed to submit review");
-                    }
-
-                    e.target.reset();
-                  } catch (err) {
-                    alert(err.message);
-                  }
-                }}
-              >
-                <textarea
-                  name="comment"
-                  required
-                  rows="3"
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-200"
-                  placeholder="Write your feedback..."
-                ></textarea>
-
-                <select
-                  name="rating"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring focus:ring-indigo-200"
-                  required
-                >
-                  <option value="">Select rating</option>
-                  {[1, 2, 3, 4, 5].map((r) => (
-                    <option key={r} value={r}>{r} Star{r > 1 ? "s" : ""}</option>
-                  ))}
-                </select>
-
-                <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition">
-                  Submit Review
-                </button>
-              </form>
-            </section>
-          )}
         </div>
       </main>
       <Footer />
@@ -240,13 +175,13 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
   return (
     <div className="absolute top-4 right-4">
       <button
-      onClick={() => navigate(`/messages/?username=${encodeURIComponent(tutorUsername)}`)}
-      className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
-        hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
-      } text-indigo-600`}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-    >
+        onClick={() => navigate(`/messages/?username=${encodeURIComponent(tutorUsername)}`)}
+        className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
+          hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
+        } text-indigo-600`}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+      >
         <svg
           className="w-5 h-5 mr-2"
           fill="none"
