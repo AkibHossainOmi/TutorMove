@@ -1,5 +1,5 @@
 // Updated JobPostForm Component with Scrollable 60% Height and Close Button
-import React, { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
 
@@ -8,7 +8,6 @@ const educationLevels = ["Primary", "Secondary", "Higher Secondary", "Bachelor",
 const budgetTypes = ["Fixed", "Per Hour", "Per Month", "Per Week", "Per Year"];
 
 const JobPostForm = ({ onClose, onJobCreated }) => {
-  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     location: "",
     phone: "",
@@ -95,7 +94,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
           &times;
         </button>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <h2 className="text-xl font-bold mb-2">Post a Tutoring Job</h2>
+          <h2 className="text-xl font-bold mb-2">Get a Tutor</h2>
 
           <input type="text" name="location" placeholder="Location" value={formData.location} onChange={handleChange} className="w-full border p-2 rounded" required />
 
