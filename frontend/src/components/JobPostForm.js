@@ -1,7 +1,5 @@
-// Updated JobPostForm Component with Scrollable 60% Height and Close Button
 import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import axios from "axios";
+import { jobAPI } from "../utils/apiService";
 
 const countries = ["Bangladesh", "India", "USA", "UK", "Canada"];
 const educationLevels = ["Primary", "Secondary", "Higher Secondary", "Bachelor", "Masters", "PhD"];
@@ -16,7 +14,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     educationLevel: "",
     serviceType: "Tutoring",
     mode: [],
-    distance: "",
+    distance: null,
     budget: "",
     budgetType: "",
     genderPreference: "",
@@ -71,9 +69,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
         ...formData
       };
 
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/jobs`, payload);
-      if (response.status === 201) {
-        onJobCreated && onJobCreated(response.data);
+      const response = await jobAPI.createJob(payload);
+      if (response?.status === 201 || response?.id) {
+        onJobCreated && onJobCreated(response);
         setTimeout(() => onClose(), 1500);
       }
     } catch (error) {
@@ -82,6 +80,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">

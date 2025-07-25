@@ -704,13 +704,26 @@ class JobViewSet(viewsets.ModelViewSet):
         return queryset
 
     def perform_create(self, serializer):
-        job = serializer.save(student=self.request.user)
+        user = self.request.user
+
+        # Check credit balance
+        if user.credit.balance < 1:
+            raise ValidationError({"detail": "You don't have enough credits to post a job."})
+
+        # Save job
+        job = serializer.save(student=user)
+
+        # Deduct 1 credit
+        user.credit.balance -= 1
+        user.credit.save(update_fields=["balance"])  # ✅ Save the Credit model, not the User model
+
+        # Optional: Notify teachers
         teachers = User.objects.filter(user_type='teacher')
         for teacher in teachers:
             if teacher.email:
                 send_mail(
                     'New Job Posted',
-                    f'A new job matching your profile has been posted: {job.title}',
+                    f'A new job matching your profile has been posted: {job.description}',
                     'from@example.com',
                     [teacher.email],
                     fail_silently=True,

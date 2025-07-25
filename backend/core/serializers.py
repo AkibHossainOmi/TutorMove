@@ -185,18 +185,66 @@ class CreditSerializer(serializers.ModelSerializer):
 # === JOB SERIALIZER ===
 
 class JobSerializer(serializers.ModelSerializer):
-    student_name = serializers.SerializerMethodField()  # Add this field
+    subjects = serializers.ListField(
+        child=serializers.CharField(),
+        write_only=True,
+        required=True
+    )
+    subject_details = serializers.SerializerMethodField(read_only=True)
+    student = serializers.ReadOnlyField(source='student.id')
 
     class Meta:
         model = Job
         fields = [
-            'id', 'student', 'student_name', 'title', 'description', 'subject',
-            'location', 'latitude', 'longitude', 'created_at', 'is_active', 'subjects'
+            'id', 'student', 'description', 'location', 'country',
+            'service_type', 'education_level', 'gender_preference', 'budget',
+            'budget_type', 'phone', 'mode', 'distance', 'languages',
+            'subjects', 'subject_details',
+            'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'created_at']
+        read_only_fields = ['id', 'student', 'created_at', 'updated_at']
 
-    def get_student_name(self, obj):
-        return obj.student.username if obj.student else None
+    def get_subject_details(self, obj):
+        return [subject.name for subject in obj.subjects.all()]
+
+    def validate_distance(self, value):
+        if value in ['', None]:
+            return None
+        try:
+            return int(value)
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("A valid integer is required.")
+
+    def create(self, validated_data):
+        subject_names = validated_data.pop('subjects', [])
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['student'] = request.user
+
+        job = Job.objects.create(**validated_data)
+
+        subjects = []
+        for name in subject_names:
+            subject, _ = Subject.objects.get_or_create(name=name.strip())
+            subjects.append(subject)
+        job.subjects.set(subjects)
+        return job
+
+    def update(self, instance, validated_data):
+        subject_names = validated_data.pop('subjects', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if subject_names is not None:
+            subjects = []
+            for name in subject_names:
+                subject, _ = Subject.objects.get_or_create(name=name.strip())
+                subjects.append(subject)
+            instance.subjects.set(subjects)
+
+        return instance
 
 
 # === APPLICATION SERIALIZER ===

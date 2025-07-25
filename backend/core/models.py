@@ -208,19 +208,71 @@ class Credit(models.Model):
         return f"{self.user.username} - {self.balance} credits"
 
 class Job(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'student'})
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    subject = models.TextField()
-    subjects = models.ManyToManyField(Subject, blank=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+    SERVICE_TYPE_CHOICES = [
+        ('Tutoring', 'Tutoring'),
+        ('Assignment Help', 'Assignment Help'),
+    ]
+
+    BUDGET_TYPE_CHOICES = [
+        ('Fixed', 'Fixed'),
+        ('Per Hour', 'Per Hour'),
+        ('Per Month', 'Per Month'),
+        ('Per Week', 'Per Week'),
+        ('Per Year', 'Per Year'),
+    ]
+
+    GENDER_PREFERENCE_CHOICES = [
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Any', 'Any'),
+    ]
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jobs_posted')
+
+    location = models.CharField(max_length=255, default='Unknown')
+    phone = models.CharField(max_length=30, default='N/A')
+    description = models.TextField(default='')
+
+    subjects = models.ManyToManyField('Subject', related_name='jobs')
+
+    languages = models.JSONField(default=list, blank=True)
+    mode = models.JSONField(default=list, blank=True)
+
+    education_level = models.CharField(
+        max_length=50,
+        choices=[
+            ('Primary', 'Primary'),
+            ('Secondary', 'Secondary'),
+            ('Higher Secondary', 'Higher Secondary'),
+            ('Bachelor', 'Bachelor'),
+            ('Masters', 'Masters'),
+            ('PhD', 'PhD'),
+        ],
+        default='Primary',  # Default value here
+    )
+
+    service_type = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES, default='Tutoring')
+
+    distance = models.PositiveIntegerField(null=True, blank=True, help_text="Distance in kilometers if Travel to Tutor")
+
+    budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    budget_type = models.CharField(max_length=20, choices=BUDGET_TYPE_CHOICES, blank=True, default='Fixed')
+
+    gender_preference = models.CharField(
+        max_length=10,
+        choices=GENDER_PREFERENCE_CHOICES,
+        default='Any',
+        blank=True
+    )
+
+    country = models.CharField(max_length=100, blank=True, default='Unknown')
+
     created_at = models.DateTimeField(auto_now_add=True)
-    is_active = models.BooleanField(default=True)
-    location = models.CharField(max_length=255, null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.title} by {self.student.username}"
+        return f"Job {self.id} by {self.student.username} - {self.service_type}"
+
 
 class Application(models.Model):
     STATUS_CHOICES = (

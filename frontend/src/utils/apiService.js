@@ -128,16 +128,20 @@ export const tutorAPI = {
 // Job API calls
 export const jobAPI = {
   getJobs: (params) => apiService.get('/api/jobs/', { params }),
+
   getJobDetail: (id) => apiService.get(`/api/jobs/${id}/`),
+
   createJob: (jobData) => apiService.post('/api/jobs/', jobData),
+
   updateJob: (id, jobData) => apiService.patch(`/api/jobs/${id}/`, jobData),
+
   deleteJob: (id) => apiService.delete(`/api/jobs/${id}/`),
-  applyToJob: (applicationData) => apiService.post('/api/applications/', applicationData),
-  getApplicationStatus: (id) => apiService.get(`/api/applications/${id}/`),
-  getMyApplications: (params) => apiService.get('/api/applications/', { params }),
-  updateApplicationStatus: (id, status) => apiService.patch(`/applications/${id}/`, { status }),
-  getJobsBySubject: (subject) => apiService.get('/api/jobs/by-subject/', { params: { subject } }),
-  getJobsByLocation: (location) => apiService.get('/api/jobs/by-location/', { params: { location } }),
+
+  getJobsBySubject: (subject) =>
+    apiService.get('/api/jobs/by-subject/', { params: { subject } }),
+
+  getJobsByLocation: (location) =>
+    apiService.get('/api/jobs/by-location/', { params: { location } }),
 };
 
 export const gigApi = {
