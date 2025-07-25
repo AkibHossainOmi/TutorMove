@@ -1,4 +1,4 @@
-// Updated JobPostForm Component with Additional Fields
+// Updated JobPostForm Component with Scrollable 60% Height and Close Button
 import React, { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import axios from "axios";
@@ -85,107 +85,116 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-xl max-w-3xl w-full space-y-4">
-        <h2 className="text-xl font-bold">Post a Tutoring Job</h2>
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white w-full max-w-3xl rounded-xl shadow-lg max-h-[60vh] overflow-y-auto relative">
+        <button
+          type="button"
+          onClick={onClose}
+          className="absolute top-2 right-3 text-2xl text-red-600 hover:text-red-800"
+        >
+          &times;
+        </button>
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          <h2 className="text-xl font-bold mb-2">Post a Tutoring Job</h2>
 
-        <input type="text" name="location" placeholder="Location" value={formData.location} onChange={handleChange} className="w-full border p-2 rounded" required />
+          <input type="text" name="location" placeholder="Location" value={formData.location} onChange={handleChange} className="w-full border p-2 rounded" required />
 
-        <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full border p-2 rounded" required />
+          <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleChange} className="w-full border p-2 rounded" required />
 
-        <textarea name="description" placeholder="Details of your Requirements" value={formData.description} onChange={handleChange} className="w-full border p-2 rounded" required rows={4}></textarea>
+          <textarea name="description" placeholder="Details of your Requirements" value={formData.description} onChange={handleChange} className="w-full border p-2 rounded" required rows={4}></textarea>
 
-        <div>
-          <label>Subjects:</label>
-          <div className="flex gap-2">
-            <input type="text" value={subjectInput} onChange={(e) => setSubjectInput(e.target.value)} className="border p-2 rounded w-full" placeholder="Add a subject" />
-            <button type="button" onClick={() => handleAddItem(subjectInput, "subjects", setSubjectInput)} className="bg-blue-500 text-white px-4 py-1 rounded">Add</button>
+          <div>
+            <label>Subjects:</label>
+            <div className="flex gap-2">
+              <input type="text" value={subjectInput} onChange={(e) => setSubjectInput(e.target.value)} className="border p-2 rounded w-full" placeholder="Add a subject" />
+              <button type="button" onClick={() => handleAddItem(subjectInput, "subjects", setSubjectInput)} className="bg-blue-500 text-white px-4 py-1 rounded">Add</button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.subjects.map((subj, i) => (
+                <span key={i} className="bg-gray-200 px-3 py-1 rounded-full flex items-center">
+                  {subj} <button type="button" onClick={() => handleRemoveItem(subj, "subjects" )} className="ml-2 text-red-500">×</button>
+                </span>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {formData.subjects.map((subj, i) => (
-              <span key={i} className="bg-gray-200 px-3 py-1 rounded-full flex items-center">
-                {subj} <button type="button" onClick={() => handleRemoveItem(subj, "subjects")} className="ml-2 text-red-500">×</button>
-              </span>
-            ))}
-          </div>
-        </div>
 
-        <select name="educationLevel" value={formData.educationLevel} onChange={handleChange} className="w-full border p-2 rounded" required>
-          <option value="">Your Level of Education</option>
-          {educationLevels.map((level, i) => (
-            <option key={i} value={level}>{level}</option>
-          ))}
-        </select>
-
-        <select name="serviceType" value={formData.serviceType} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value="Tutoring">Tutoring</option>
-          <option value="Assignment Help">Assignment Help</option>
-        </select>
-
-        <div>
-          <label>I want:</label>
-          <div className="flex gap-4 mt-1">
-            {['Online', 'At My Place', 'Travel to Tutor'].map((opt) => (
-              <label key={opt} className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  value={opt}
-                  checked={formData.mode.includes(opt)}
-                  onChange={(e) => handleCheckboxChange(e, "mode")}
-                />
-                {opt}
-              </label>
-            ))}
-          </div>
-          {showDistanceInput && (
-            <input type="number" name="distance" placeholder="Distance in km" value={formData.distance} onChange={handleChange} className="w-full border p-2 mt-2 rounded" />
-          )}
-        </div>
-
-        <div className="flex gap-2 items-center">
-          <input type="number" name="budget" placeholder="Budget Amount" value={formData.budget} onChange={handleChange} className="border p-2 rounded w-full" />
-          <select name="budgetType" value={formData.budgetType} onChange={handleChange} className="border p-2 rounded">
-            <option value="">Select Type</option>
-            {budgetTypes.map((type) => (
-              <option key={type} value={type}>{type}</option>
+          <select name="educationLevel" value={formData.educationLevel} onChange={handleChange} className="w-full border p-2 rounded" required>
+            <option value="">Your Level of Education</option>
+            {educationLevels.map((level, i) => (
+              <option key={i} value={level}>{level}</option>
             ))}
           </select>
-        </div>
 
-        <select name="genderPreference" value={formData.genderPreference} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value="">Gender Preference</option>
-          <option value="Male">Male</option>
-          <option value="Female">Female</option>
-        </select>
+          <select name="serviceType" value={formData.serviceType} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value="Tutoring">Tutoring</option>
+            <option value="Assignment Help">Assignment Help</option>
+          </select>
 
-        <div>
-          <label>Languages:</label>
-          <div className="flex gap-2">
-            <input type="text" value={languageInput} onChange={(e) => setLanguageInput(e.target.value)} className="border p-2 rounded w-full" placeholder="Add a language" />
-            <button type="button" onClick={() => handleAddItem(languageInput, "languages", setLanguageInput)} className="bg-blue-500 text-white px-4 py-1 rounded">Add</button>
+          <div>
+            <label>I want:</label>
+            <div className="flex gap-4 mt-1">
+              {["Online", "At My Place", "Travel to Tutor"].map((opt) => (
+                <label key={opt} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    value={opt}
+                    checked={formData.mode.includes(opt)}
+                    onChange={(e) => handleCheckboxChange(e, "mode")}
+                  />
+                  {opt}
+                </label>
+              ))}
+            </div>
+            {showDistanceInput && (
+              <input type="number" name="distance" placeholder="Distance in km" value={formData.distance} onChange={handleChange} className="w-full border p-2 mt-2 rounded" />
+            )}
           </div>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {formData.languages.map((lang, i) => (
-              <span key={i} className="bg-gray-200 px-3 py-1 rounded-full flex items-center">
-                {lang} <button type="button" onClick={() => handleRemoveItem(lang, "languages")} className="ml-2 text-red-500">×</button>
-              </span>
+
+          <div className="flex gap-2 items-center">
+            <input type="number" name="budget" placeholder="Budget Amount" value={formData.budget} onChange={handleChange} className="border p-2 rounded w-full" />
+            <select name="budgetType" value={formData.budgetType} onChange={handleChange} className="border p-2 rounded">
+              <option value="">Select Type</option>
+              {budgetTypes.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+          </div>
+
+          <select name="genderPreference" value={formData.genderPreference} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value="">Gender Preference</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+
+          <div>
+            <label>Languages:</label>
+            <div className="flex gap-2">
+              <input type="text" value={languageInput} onChange={(e) => setLanguageInput(e.target.value)} className="border p-2 rounded w-full" placeholder="Add a language" />
+              <button type="button" onClick={() => handleAddItem(languageInput, "languages", setLanguageInput)} className="bg-blue-500 text-white px-4 py-1 rounded">Add</button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.languages.map((lang, i) => (
+                <span key={i} className="bg-gray-200 px-3 py-1 rounded-full flex items-center">
+                  {lang} <button type="button" onClick={() => handleRemoveItem(lang, "languages")} className="ml-2 text-red-500">×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <select name="country" value={formData.country} onChange={handleChange} className="w-full border p-2 rounded">
+            <option value="">Select Country</option>
+            {countries.map((c) => (
+              <option key={c} value={c}>{c}</option>
             ))}
+          </select>
+
+          <div className="flex justify-end">
+            <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50" disabled={isSubmitting}>
+              {isSubmitting ? "Posting..." : "Post Job"}
+            </button>
           </div>
-        </div>
-
-        <select name="country" value={formData.country} onChange={handleChange} className="w-full border p-2 rounded">
-          <option value="">Select Country</option>
-          {countries.map((c) => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-
-        <div className="flex justify-end">
-          <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50" disabled={isSubmitting}>
-            {isSubmitting ? "Posting..." : "Post Job"}
-          </button>
-        </div>
-      </form>
+        </form>
+      </div>
     </div>
   );
 };
