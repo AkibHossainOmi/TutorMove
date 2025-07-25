@@ -29,8 +29,11 @@ const JobList = () => {
 
   // Filter jobs based on search term and filter
   const filteredJobs = jobs.filter(job => {
-    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         job.subject.toLowerCase().includes(searchTerm.toLowerCase());
+  const title = job.title || '';
+  const subject = job.subject || '';
+  const matchesSearch =
+      title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      subject.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filter === 'all' || job.job_type === filter;
     return matchesSearch && matchesFilter;
   });
