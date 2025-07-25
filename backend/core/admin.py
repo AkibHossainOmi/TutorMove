@@ -38,9 +38,31 @@ class CreditAdmin(admin.ModelAdmin):
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ('title', 'student', 'subject',  'is_active')  #'location',
-    list_filter = ('is_active', 'created_at')
-    search_fields = ('title', 'description', 'subject', 'location')
+    list_display = [
+        'id',
+        'student',
+        'get_subjects',
+        'service_type',
+        'education_level',
+        'gender_preference',
+        'location',
+        'budget',
+        'budget_type',
+        'country',
+        'created_at',
+    ]
+    list_filter = [
+        'service_type',
+        'education_level',
+        'gender_preference',
+        'country',
+        'created_at',
+    ]
+    search_fields = ['description', 'location', 'subjects__name', 'student__username']
+
+    def get_subjects(self, obj):
+        return ", ".join([subject.name for subject in obj.subjects.all()])
+    get_subjects.short_description = 'Subjects'
 
 @admin.register(Application)
 class ApplicationAdmin(admin.ModelAdmin):
