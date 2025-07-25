@@ -36,22 +36,8 @@ const Profile = () => {
   const handleProfileUpdate = async () => {
     setUpdateStatus('Updating...');
     try {
-      const token = localStorage.getItem('token');
-      const user = JSON.parse(localStorage.getItem('user'));
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/profile/edit/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Token ${token}` }),
-        },
-        body: JSON.stringify({
-          id: user.user_id,
-          ...editData
-        }),
-      });
-
-      if (!res.ok) throw new Error('Failed to update profile.');
-      const updated = await res.json();
+      const res = await userApi.editProfile(editData);
+      const updated = res.data;
       setUserData(updated);
       setIsEditing(false);
       setUpdateStatus('Profile updated!');
@@ -61,9 +47,11 @@ const Profile = () => {
         fetchAverageRating(updated.id);
       }
     } catch (err) {
-      setUpdateStatus(`Error: ${err.message}`);
+      setUpdateStatus(`Error: ${err.response?.data?.detail || err.message}`);
     }
   };
+
+
 
   const toggleEdit = () => {
     if (isEditing) {

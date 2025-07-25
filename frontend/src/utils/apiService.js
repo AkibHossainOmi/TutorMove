@@ -151,6 +151,7 @@ export const subjectApi = {
 
 export const userApi = {
   getUser: () => apiService.get('/api/users/me/'),
+  editProfile: (profileData) => apiService.post('/api/users/edit_profile/', profileData),
 };
 
 // Credit API calls
@@ -163,7 +164,7 @@ export const creditAPI = {
   getEarnings: () => apiService.get('/api/credit/earnings/'),
   withdrawEarnings: (data) => apiService.post('/api/credit/withdraw/', data),
   getPendingPayments: () => apiService.get('/api/credit/pending-payments/'),
-  purchaseCredits: (purchaseData) => apiService.post('/api/credit/purchase/', purchaseData),
+  purchaseCredits: (purchaseData) => apiService.post('/api/credits/purchase/', purchaseData),
 };
 
 // Review API calls
