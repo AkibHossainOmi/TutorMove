@@ -109,7 +109,7 @@ export const authAPI = {
 
 // Tutor API calls
 export const tutorAPI = {
-  searchTutors: (params) => apiService.get('/api/tutors/search/', { params }),
+  searchTutors: (params) => apiService.post('/api/tutors/search/', params),
   getTutorProfile: (id) => apiService.get(`/api/tutors/${id}/`),
   getTutors: () => apiService.get(`/api/tutors/`),
   createGig: (gigData) => apiService.post('/api/tutors/', gigData),

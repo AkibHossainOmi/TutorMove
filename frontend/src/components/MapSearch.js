@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { tutorAPI } from "../utils/apiService";
 
 const SEARCH_RADIUS_KM = 20;
 
@@ -50,7 +51,7 @@ const TutorMapSearch = () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await axios.post(`${process.env.REACT_APP_API_URL}/api/tutors/search/`, {
+      const res = await tutorAPI.searchTutors({
         location: selectedLocation ? selectedLocation.display_name : "",
         subject: subject.trim(),
         radius_km: SEARCH_RADIUS_KM,
