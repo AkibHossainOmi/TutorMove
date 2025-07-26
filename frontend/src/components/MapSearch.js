@@ -65,35 +65,33 @@ const TutorMapSearch = () => {
       setLoading(false);
     }
   };
-  
 
   return (
-    <div style={{ maxWidth: 960, margin: "40px auto", padding: 24, fontFamily: "Segoe UI, sans-serif" }}>
-      <h1 style={{ textAlign: "center", fontSize: "2rem", fontWeight: 700, marginBottom: 30 }}>
-        Find Tutors by Location and Subject
+    <div style={{ maxWidth: 960, margin: "40px auto", padding: "0 16px", fontFamily: "Segoe UI, sans-serif" }}>
+      <h1 style={{ textAlign: "center", fontSize: "2rem", fontWeight: 600, marginBottom: 30 }}>
+        Search Tutors by Location & Subject
       </h1>
 
-      {/* Input Fields */}
-      <div style={{ display: "flex", gap: 10, maxWidth: 700, margin: "0 auto", marginBottom: 20 }}>
-        <div style={{ flexGrow: 1, position: "relative" }}>
+      {/* Input Group */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24, justifyContent: "center" }}>
+        {/* Location input */}
+        <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
           <input
             type="text"
-            placeholder="Enter location..."
             value={query}
+            placeholder="Enter location..."
             onChange={(e) => {
               setQuery(e.target.value);
               fetchSuggestions(e.target.value);
-              if (e.target.value.trim() === "") {
-                setSelectedLocation(null);
-              }
-            }}            
+              if (e.target.value.trim() === "") setSelectedLocation(null);
+            }}
             onFocus={() => setShowSuggestions(true)}
             style={{
               width: "100%",
-              padding: "12px 16px",
-              borderRadius: 8,
+              padding: "12px 14px",
+              fontSize: 15,
               border: "1.5px solid #ccc",
-              fontSize: 16,
+              borderRadius: 8,
               outline: "none",
             }}
           />
@@ -107,12 +105,12 @@ const TutorMapSearch = () => {
                 background: "#fff",
                 border: "1px solid #ddd",
                 borderRadius: 8,
+                zIndex: 20,
                 maxHeight: 200,
                 overflowY: "auto",
                 marginTop: 4,
-                padding: 0,
                 listStyle: "none",
-                zIndex: 10,
+                padding: 0,
               }}
             >
               {suggestions.map((sugg) => (
@@ -125,10 +123,10 @@ const TutorMapSearch = () => {
                   }}
                   style={{
                     padding: "10px 12px",
-                    cursor: "pointer",
                     borderBottom: "1px solid #eee",
+                    cursor: "pointer",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f0f8ff")}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f5faff")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
                 >
                   {sugg.display_name}
@@ -138,15 +136,18 @@ const TutorMapSearch = () => {
           )}
         </div>
 
+        {/* Subject select */}
         <select
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           style={{
-            flexGrow: 1,
-            padding: "12px 16px",
-            borderRadius: 8,
+            flex: 1,
+            minWidth: 180,
+            padding: "12px 14px",
+            fontSize: 15,
             border: "1.5px solid #ccc",
-            fontSize: 16,
+            borderRadius: 8,
+            background: "#fff",
           }}
         >
           <option value="">Select subject...</option>
@@ -157,16 +158,18 @@ const TutorMapSearch = () => {
           ))}
         </select>
 
+        {/* Search button */}
         <button
           onClick={handleSearch}
           disabled={loading}
           style={{
-            padding: "12px 24px",
+            padding: "12px 20px",
+            fontSize: 15,
             backgroundColor: loading ? "#ccc" : "#007bff",
             color: "#fff",
-            borderRadius: 8,
             border: "none",
-            fontWeight: "bold",
+            borderRadius: 8,
+            fontWeight: 600,
             cursor: loading ? "not-allowed" : "pointer",
           }}
         >
@@ -175,67 +178,68 @@ const TutorMapSearch = () => {
       </div>
 
       {/* Error */}
-      {error && <p style={{ color: "red", textAlign: "center", marginTop: 10 }}>{error}</p>}
+      {error && (
+        <div style={{ color: "red", textAlign: "center", fontSize: 14, marginBottom: 16 }}>{error}</div>
+      )}
 
-      {/* Tutors List */}
+      {/* Tutors Grid */}
       {tutors.length > 0 && (
         <div
           style={{
-            marginTop: 30,
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: 24,
+            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+            gap: 20,
+            marginTop: 30,
           }}
         >
           {tutors.map((tutor) => (
             <div
               key={tutor.id}
               style={{
-                border: "1px solid #ddd",
-                borderRadius: 10,
                 padding: 20,
+                backgroundColor: "#fff",
+                borderRadius: 12,
+                border: "1px solid #ddd",
+                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
                 textAlign: "center",
-                background: "#fff",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
               }}
             >
               <div
                 style={{
-                  width: 70,
-                  height: 70,
+                  width: 64,
+                  height: 64,
                   borderRadius: "50%",
                   backgroundColor: "#007bff",
                   color: "#fff",
-                  fontSize: 28,
+                  fontSize: 26,
                   fontWeight: 700,
                   display: "flex",
-                  justifyContent: "center",
                   alignItems: "center",
-                  margin: "0 auto 14px auto",
+                  justifyContent: "center",
+                  margin: "0 auto 12px",
                   textTransform: "uppercase",
                 }}
-                aria-label={`Avatar for ${tutor.username || "Tutor"}`}
               >
                 {(tutor.username || "T")[0]}
               </div>
-              <h3 style={{ margin: 0, fontSize: 18 }}>{tutor.username || "Tutor"}</h3>
-              <p style={{ color: "#666", fontSize: 14, margin: "4px 0" }}>
+              <h3 style={{ fontSize: 17, marginBottom: 6 }}>{tutor.username || "Tutor"}</h3>
+              <p style={{ fontSize: 14, color: "#555", margin: "4px 0" }}>
                 Location: {tutor.location || "Unknown"}
               </p>
-              <p style={{ color: "#666", fontSize: 14, margin: "4px 0" }}>
+              <p style={{ fontSize: 14, color: "#555", margin: "4px 0" }}>
                 Trust Score: {tutor.trust_score ?? 0}
               </p>
               <a
                 href={`/tutors/${tutor.id}`}
                 style={{
-                  marginTop: 10,
                   display: "inline-block",
+                  marginTop: 10,
                   padding: "8px 16px",
                   backgroundColor: "#007bff",
                   color: "#fff",
                   textDecoration: "none",
                   borderRadius: 6,
-                  fontWeight: 600,
+                  fontWeight: 500,
                 }}
               >
                 View Profile
@@ -245,9 +249,11 @@ const TutorMapSearch = () => {
         </div>
       )}
 
-      {/* No tutors message only after search */}
+      {/* No Results */}
       {tutors.length === 0 && !loading && hasSearched && (
-        <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>No tutors found</p>
+        <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>
+          No tutors found near your location.
+        </p>
       )}
     </div>
   );

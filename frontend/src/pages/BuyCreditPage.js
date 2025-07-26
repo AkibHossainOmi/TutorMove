@@ -1,10 +1,10 @@
+// pages/BuyCreditPage.jsx
 import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Footer from '../components/Footer';
 import { creditAPI } from '../utils/apiService';
 
-// Custom hook for notifications
 const useNotification = () => {
   const showNotification = (message, type) => {
     console.log(`Notification (${type}): ${message}`);
@@ -21,10 +21,10 @@ const BuyCreditPage = () => {
   const [error, setError] = useState(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [selectedPackage, setSelectedPackage] = useState(null);
-  
+
+  const USD_CONVERSION_RATE = 122.33;
   const PRICE_PER_CREDIT = 10;
 
-  // Credit packages with discounts for bulk purchases
   const creditPackages = [
     { id: 1, credits: 10, price: 10, discount: 0, bonus: 0 },
     { id: 2, credits: 50, price: 45, discount: 10, bonus: 5 },
@@ -42,7 +42,6 @@ const BuyCreditPage = () => {
       }
       setIsLoading(false);
     } catch (err) {
-      console.error("Failed to parse user:", err);
       setError("Failed to load user data. Please log in again.");
       setIsLoading(false);
     }
@@ -59,17 +58,12 @@ const BuyCreditPage = () => {
 
   const handleCreditsChange = (e) => {
     const value = parseInt(e.target.value);
-    setSelectedPackage(null); // Clear package selection when manually entering credits
-    
+    setSelectedPackage(null);
     if (!isNaN(value) && value >= 1) {
       setCreditsToBuy(value);
     } else {
       setCreditsToBuy(1);
     }
-  };
-
-  const selectPackage = (pkg) => {
-    setSelectedPackage(pkg);
   };
 
   const handlePurchaseCredits = async () => {
@@ -89,9 +83,7 @@ const BuyCreditPage = () => {
         amount: totalAmount,
         user_id: currentUser.user_id
       };
-
       const response = await creditAPI.purchaseCredits(purchaseData);
-
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
         setStatusMessage('Redirecting to payment gateway...');
         window.location.href = response.data.payment_url;
@@ -99,12 +91,16 @@ const BuyCreditPage = () => {
         throw new Error(response.data.error || 'Payment initiation failed');
       }
     } catch (err) {
-      console.error('Purchase error:', err);
       setError(err.response?.data?.error || err.message || 'Payment failed');
       showNotification('Payment failed', 'error');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const renderPriceInUSD = (taka) => {
+    const usd = (taka / USD_CONVERSION_RATE).toFixed(2);
+    return <span className="text-sm text-gray-500 ml-2">(${usd} USD)</span>;
   };
 
   if (isLoading && !currentUser && !error) {
@@ -119,18 +115,12 @@ const BuyCreditPage = () => {
     return (
       <>
         <Navbar />
-        <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-gray-50 p-4">
-          <div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
-            <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Error</h2>
-            <p className="text-gray-600 mb-6">{error}</p>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="bg-white p-8 rounded-xl shadow text-center max-w-sm">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">{error}</h2>
             <button
               onClick={() => window.location.href = '/login'}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md w-full"
+              className="bg-blue-600 text-white py-2 px-6 rounded hover:bg-blue-700"
             >
               Go to Login
             </button>
@@ -141,159 +131,61 @@ const BuyCreditPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      
-      <main className="container mx-auto px-4 py-12 max-w-6xl mt-20">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">Buy Credits</h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Purchase credits to unlock premium features and opportunities on our platform
-          </p>
-        </div>
+      <main className="max-w-4xl mx-auto px-4 py-10">
+        <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Buy Credits</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Credit Packages */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-blue-600 to-blue-800 text-white">
-              <h2 className="text-2xl font-bold">Credit Packages</h2>
-              <p className="opacity-90">Save more with our bulk packages</p>
-            </div>
-            
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              {creditPackages.map((pkg) => (
-                <div 
-                  key={pkg.id}
-                  onClick={() => selectPackage(pkg)}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all duration-300 ${
-                    selectedPackage?.id === pkg.id 
-                      ? 'border-blue-500 bg-blue-50 shadow-md ring-2 ring-blue-200'
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                  }`}
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg text-gray-800">{pkg.credits} Credits</h3>
-                      <p className="text-gray-600 text-sm">
-                        {pkg.discount > 0 ? `${pkg.discount}% discount` : 'Standard rate'}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-blue-600">{pkg.price} Taka</p>
-                      {pkg.bonus > 0 && (
-                        <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full mt-1">
-                          +{pkg.bonus} bonus
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Purchase Form */}
-          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-            <div className="p-6 bg-gradient-to-r from-green-600 to-green-700 text-white">
-              <h2 className="text-2xl font-bold">Purchase Summary</h2>
-              <p>Complete your credit purchase</p>
-            </div>
-            
-            <div className="p-6 space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Custom Amount (Credits)
-                </label>
-                <input
-                  type="number"
-                  value={selectedPackage ? selectedPackage.credits : creditsToBuy}
-                  onChange={handleCreditsChange}
-                  min="1"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
-                  disabled={!!selectedPackage}
-                />
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-gray-600">Credits:</span>
-                  <span className="font-semibold">{selectedPackage ? selectedPackage.credits : creditsToBuy}</span>
-                </div>
-                {selectedPackage?.discount > 0 && (
-                  <div className="flex justify-between items-center mb-2 text-green-600">
-                    <span>Discount:</span>
-                    <span className="font-semibold">{selectedPackage.discount}%</span>
-                  </div>
-                )}
-                {selectedPackage?.bonus > 0 && (
-                  <div className="flex justify-between items-center mb-2 text-blue-600">
-                    <span>Bonus Credits:</span>
-                    <span className="font-semibold">+{selectedPackage.bonus}</span>
-                  </div>
-                )}
-                <div className="border-t border-gray-200 pt-3 mt-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-800 font-medium">Total:</span>
-                    <span className="text-2xl font-bold text-blue-600">
-                      {totalAmount} Taka
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handlePurchaseCredits}
-                disabled={isLoading}
-                className={`w-full py-4 px-6 rounded-lg text-lg font-bold text-white transition-all ${
-                  isLoading 
-                    ? 'bg-gray-400 cursor-not-allowed' 
-                    : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-md hover:shadow-lg'
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            {creditPackages.map(pkg => (
+              <div
+                key={pkg.id}
+                onClick={() => setSelectedPackage(pkg)}
+                className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                  selectedPackage?.id === pkg.id ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-300'
                 }`}
               >
-                {isLoading ? (
-                  <span className="flex items-center justify-center">
-                    <LoadingSpinner size="sm" className="mr-2" />
-                    Processing...
-                  </span>
-                ) : (
-                  'Proceed to Payment'
-                )}
-              </button>
-
-              {error && (
-                <div className="bg-red-50 border-l-4 border-red-500 p-4">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
-                    <p className="text-red-700">{error}</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-lg font-semibold">{pkg.credits} Credits</h2>
+                    <p className="text-sm text-gray-500">{pkg.discount > 0 ? `${pkg.discount}% off` : 'Standard price'}</p>
                   </div>
-                </div>
-              )}
-
-              {statusMessage && !error && (
-                <div className="bg-blue-50 border-l-4 border-blue-500 p-4">
-                  <div className="flex items-center">
-                    <svg className="w-5 h-5 text-blue-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2h-1V9z" clipRule="evenodd" />
-                    </svg>
-                    <p className="text-blue-700">{statusMessage}</p>
+                  <div className="text-right">
+                    <p className="text-blue-600 font-semibold">{pkg.price} Taka {renderPriceInUSD(pkg.price)}</p>
+                    {pkg.bonus > 0 && <span className="text-xs text-green-600">+{pkg.bonus} Bonus</span>}
                   </div>
-                </div>
-              )}
-
-              <div className="text-center text-sm text-gray-500 mt-4">
-                <p>Secure payment processing powered by our trusted partners</p>
-                <div className="flex justify-center space-x-4 mt-2">
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">SSL Secure</span>
-                  <span className="text-xs bg-gray-100 px-2 py-1 rounded">PCI Compliant</span>
                 </div>
               </div>
-            </div>
+            ))}
+          </div>
+
+          <div className="bg-white p-6 rounded-lg shadow">
+            <h2 className="text-xl font-semibold mb-4 text-gray-800">Purchase Summary</h2>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Custom Credits</label>
+            <input
+              type="number"
+              className="w-full px-4 py-2 border rounded-lg mb-4"
+              value={selectedPackage ? selectedPackage.credits : creditsToBuy}
+              onChange={handleCreditsChange}
+              disabled={!!selectedPackage}
+            />
+
+            <div className="text-sm text-gray-600 mb-2">Total: <span className="font-semibold text-blue-600">{totalAmount} Taka</span> {renderPriceInUSD(totalAmount)}</div>
+
+            <button
+              onClick={handlePurchaseCredits}
+              disabled={isLoading}
+              className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            >
+              {isLoading ? 'Processing...' : 'Proceed to Payment'}
+            </button>
+
+            {statusMessage && <p className="text-sm text-blue-600 mt-2">{statusMessage}</p>}
+            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
           </div>
         </div>
       </main>
-
       <Footer />
     </div>
   );

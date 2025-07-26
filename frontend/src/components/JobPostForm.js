@@ -93,7 +93,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
           &times;
         </button>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          <h2 className="text-xl font-bold mb-2">Get a Tutor</h2>
+          <h2 className="text-xl font-bold mb-2">Get a Tutor For You</h2>
 
           <input type="text" name="location" placeholder="Location" value={formData.location} onChange={handleChange} className="w-full border p-2 rounded" required />
 

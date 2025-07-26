@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import MapSearch from '../components/MapSearch';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import HomeSections from '../components/HomeSections';
 
 const Home = () => {
   const [tab] = useState('map');
@@ -17,8 +18,8 @@ const Home = () => {
           <MapSearch mode="gigs" radiusKm={20} />
         </div>
       )}
-      
-      <div style={{ height: '100px' }}></div>
+    
+      <HomeSections/>
       <Footer />
     </div>
   );
