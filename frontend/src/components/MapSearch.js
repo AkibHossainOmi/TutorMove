@@ -72,9 +72,8 @@ const TutorMapSearch = () => {
         Search Tutors by Location & Subject
       </h1>
 
-      {/* Input Group */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24, justifyContent: "center" }}>
-        {/* Location input */}
+        {/* Location Input */}
         <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
           <input
             type="text"
@@ -136,7 +135,7 @@ const TutorMapSearch = () => {
           )}
         </div>
 
-        {/* Subject select */}
+        {/* Subject Dropdown */}
         <select
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
@@ -152,13 +151,13 @@ const TutorMapSearch = () => {
         >
           <option value="">Select subject...</option>
           {subjects.map((s) => (
-            <option key={s.id} value={s.aliases}>
+            <option key={s.id} value={s.name}> {/* Use `s.name` or `s.id` */}
               {s.name}
             </option>
           ))}
         </select>
 
-        {/* Search button */}
+        {/* Search Button */}
         <button
           onClick={handleSearch}
           disabled={loading}
@@ -177,12 +176,10 @@ const TutorMapSearch = () => {
         </button>
       </div>
 
-      {/* Error */}
       {error && (
         <div style={{ color: "red", textAlign: "center", fontSize: 14, marginBottom: 16 }}>{error}</div>
       )}
 
-      {/* Tutors Grid */}
       {tutors.length > 0 && (
         <div
           style={{
@@ -249,7 +246,6 @@ const TutorMapSearch = () => {
         </div>
       )}
 
-      {/* No Results */}
       {tutors.length === 0 && !loading && hasSearched && (
         <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>
           No tutors found near your location.
