@@ -60,8 +60,23 @@ class ChatConsumer(AsyncWebsocketConsumer):
         msg_type = data.get("type")
 
         if msg_type == "chat.message":
+            # Save message first
             msg = await self.save_message(data)
+
+            # Get other participants
             other_ids = await self.get_other_participant_ids(msg.conversation.id, self.user_id)
+
+            # Check contact unlock for each recipient
+            for receiver_id in other_ids:
+                unlocked = await self.is_contact_unlocked(self.user_id, receiver_id)
+                if not unlocked:
+                    await self.send(text_data=json.dumps({
+                        "type": "chat.error",
+                        "error": f"Contact between users {self.user_id} and {receiver_id} is not unlocked."
+                    }))
+                    return  # Abort sending
+
+            # Serialize and send message if passed
             serialized_msg = await self.serialize_message(msg)
 
             # Send message to other participants
@@ -71,10 +86,10 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     {"type": "chat.message", "message": serialized_msg},
                 )
 
-            # Echo back to sender
-            await self.send(
-                text_data=json.dumps({"type": "chat.message", "message": serialized_msg})
-            )
+            await self.send(text_data=json.dumps({
+                "type": "chat.message",
+                "message": serialized_msg
+            }))
 
         elif msg_type == "chat.typing":
             receiver_id = data.get("receiver_id")
@@ -142,12 +157,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
         elif msg_type == "chat.start_conversation":
             other_user_id = data.get("receiver_id") or data.get("user_id")
             if other_user_id:
+                unlocked = await self.is_contact_unlocked(self.user_id, int(other_user_id))
+                if not unlocked:
+                    await self.send(text_data=json.dumps({
+                        "type": "chat.error",
+                        "error": f"Cannot start conversation. Contact not unlocked."
+                    }))
+                    return
+
                 conv_data = await self.get_or_create_conversation(int(other_user_id))
-                await self.send(
-                    text_data=json.dumps(
-                        {"type": "chat.conversation_started", "conversation": conv_data}
-                    )
-                )
+                await self.send(text_data=json.dumps({
+                    "type": "chat.conversation_started",
+                    "conversation": conv_data
+                }))
 
         elif msg_type == "chat.get_conversations":
             conversations = await self.get_user_conversations()
@@ -355,3 +377,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "attachment": msg.attachment.url if getattr(msg, "attachment", None) else None,
             "is_read": is_read,
         }
+
+    @sync_to_async
+    def is_contact_unlocked(self, user1_id, user2_id):
+        from core.models import ContactUnlock
+        from django.db.models import Q
+        return ContactUnlock.objects.filter(
+            Q(student_id=user1_id, tutor_id=user2_id) |
+            Q(student_id=user2_id, tutor_id=user1_id)
+        ).exists()
