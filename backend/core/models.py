@@ -351,6 +351,9 @@ class MessageRead(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     read_at = models.DateTimeField(auto_now_add=True)
 
+    def is_read_by(self, user):
+        return self.reads.filter(user=user).exists()
+
     class Meta:
         unique_together = ('message', 'user')
 
