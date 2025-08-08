@@ -157,6 +157,10 @@ export const gigApi = {
   createGig: (gigData) => apiService.post('/api/gigs/', gigData),
   updateGig: (id, gigData) => apiService.put(`/api/gigs/${id}/`, gigData),
   deleteGig: (id) => apiService.delete(`/api/gigs/${id}/`),
+  boostGig: (id) => apiService.post(`/api/gigs/${id}/boost/`),
+  getGigRank: (id) => apiService.get(`/api/gigs/${id}/rank/`),
+  getGig: (gigId) => apiService.get(`/api/gigs/${gigId}/`),
+  getPredictedRank: (gigId, credits) => apiService.get(`/api/gigs/${gigId}/predicted_rank/`, { params: { credits } }),
 };
 
 export const subjectApi = {

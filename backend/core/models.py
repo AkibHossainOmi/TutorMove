@@ -186,6 +186,7 @@ User = get_user_model()
 
 class Gig(models.Model):
     tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gigs')
+    subject = models.CharField(max_length=255, default='')
     title = models.CharField(max_length=255, default='')  # default empty string
     description = models.TextField(default='')            # default empty string
     message = models.TextField(blank=True, null=True)

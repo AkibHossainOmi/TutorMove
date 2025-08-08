@@ -29,6 +29,7 @@ import ProtectedRoute from './contexts/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import TutorMapSearch from './components/MapSearch';
 import BuyCreditPage from './pages/BuyCreditPage';
+import TutorGigPage from './pages/TutorGigPage';
 
 
 // Additional Policy Pages
@@ -70,6 +71,7 @@ function App() {
             <Route path="/buy-credits" element={<BuyCreditPage />} />
 
             {/* Gigs and Job Listings */}
+            <Route path="/tutor/gig/:id" element={<TutorGigPage />} />
             <Route path="/gigs/:id" element={<GigDetails />} />
             <Route path="/jobs" element={<JobList />} />
             <Route path="/jobs/:id" element={<JobDetail />} />

@@ -483,21 +483,98 @@ class GigViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        # Check credit
         try:
             credit = Credit.objects.get(user=user)
             if credit.balance < 1:
-                # Not enough credits, raise error
-                from rest_framework.exceptions import ValidationError
                 raise ValidationError("Insufficient credits to create gig.")
-            # Deduct 1 credit
             credit.balance -= 1
             credit.save()
         except Credit.DoesNotExist:
-            from rest_framework.exceptions import ValidationError
             raise ValidationError("Credit record not found.")
 
         serializer.save(tutor=user)
+
+    @action(detail=True, methods=['post'])
+    def boost(self, request, pk=None):
+        gig = self.get_object()
+        user = request.user
+
+        if user != gig.tutor:
+            raise PermissionDenied("Only gig owner can boost.")
+
+        try:
+            credit = Credit.objects.get(user=user)
+            if credit.balance < 2:
+                raise ValidationError("Insufficient credits to boost gig.")
+            credit.balance -= 2
+            credit.save()
+        except Credit.DoesNotExist:
+            raise ValidationError("Credit record not found.")
+
+        gig.used_credits += 1
+        gig.save()
+
+        return Response({"detail": "Gig boosted successfully."})
+
+    @action(detail=True, methods=['get'])
+    def rank(self, request, pk=None):
+        gig = self.get_object()
+
+        if request.user != gig.tutor:
+            raise PermissionDenied("You can only view rank for your own gig.")
+
+        # Sort gigs by used_credits and created_at
+        all_gigs = Gig.objects.filter(title=gig.title).order_by('-used_credits', '-created_at')
+        gig_ids = list(all_gigs.values_list('id', flat=True))
+
+        try:
+            rank = gig_ids.index(gig.id) + 1
+        except ValueError:
+            rank = -1
+
+        return Response({
+            "rank": rank,
+            "total": len(gig_ids),
+            "gig_id": gig.id,
+            "subject": gig.title,
+        })
+
+    @action(detail=True, methods=['get'])
+    def predicted_rank(self, request, pk=None):
+        gig = self.get_object()
+
+        if request.user != gig.tutor:
+            raise PermissionDenied("You can only view rank for your own gig.")
+
+        try:
+            credits_to_spend = int(request.query_params.get('credits', 0))
+            if credits_to_spend < 0:
+                credits_to_spend = 0
+        except (TypeError, ValueError):
+            credits_to_spend = 0
+
+        simulated_used_credits = gig.used_credits + credits_to_spend
+
+        all_gigs = list(Gig.objects.filter(title=gig.title))
+
+        all_gigs_sorted = sorted(
+            all_gigs,
+            key=lambda g: (-(g.used_credits if g.id != gig.id else simulated_used_credits), -g.created_at.timestamp())
+        )
+
+        try:
+            new_rank = [g.id for g in all_gigs_sorted].index(gig.id) + 1
+        except ValueError:
+            new_rank = -1
+
+        return Response({
+            "predicted_rank": new_rank,
+            "total": len(all_gigs_sorted),
+            "gig_id": gig.id,
+            "subject": gig.title,
+            "simulated_used_credits": simulated_used_credits,
+            "credits_spent": credits_to_spend,
+        })
 
 # --- CreditViewSet ---
 
