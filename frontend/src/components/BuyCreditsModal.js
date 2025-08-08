@@ -1,17 +1,16 @@
-
 import React, { useEffect, useRef } from 'react';
 
 const BuyCreditsModal = ({ show, onClose, onBuyCredits, message }) => {
   const modalRef = useRef();
 
-  // Close on Esc key
+  // Close on Escape
   useEffect(() => {
     if (!show) return;
-    const onEsc = (e) => {
+    const handleEsc = (e) => {
       if (e.key === 'Escape') onClose();
     };
-    window.addEventListener('keydown', onEsc);
-    return () => window.removeEventListener('keydown', onEsc);
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
   }, [show, onClose]);
 
   // Close on click outside
@@ -27,79 +26,40 @@ const BuyCreditsModal = ({ show, onClose, onBuyCredits, message }) => {
   }, [show, onClose]);
 
   if (!show) return null;
+
   return (
-    <div
-      style={{
-        position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.35)', zIndex: 1200,
-        display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}
-      aria-modal="true"
-      role="dialog"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div
         ref={modalRef}
-        style={{
-          background: '#fff',
-          borderRadius: 12,
-          padding: 36,
-          minWidth: 320,
-          boxShadow: '0 6px 24px rgba(0,0,0,0.18)',
-          textAlign: 'center',
-          maxWidth: 400,
-          position: 'relative'
-        }}
+        className="bg-white rounded-lg p-6 max-w-sm w-full relative"
       >
         <button
-          aria-label="Close"
           onClick={onClose}
-          style={{
-            position: 'absolute',
-            right: 16,
-            top: 16,
-            background: 'none',
-            border: 'none',
-            fontSize: 24,
-            color: '#adb5bd',
-            cursor: 'pointer',
-            lineHeight: 1
-          }}
-        >×</button>
-        <h3 style={{ marginBottom: 10, color: '#212529', fontWeight: 600 }}>Not enough credits</h3>
-        <p style={{ margin: '15px 0', color: '#495057', fontSize: 16 }}>
+          className="absolute top-2 right-3 text-gray-400 hover:text-gray-600 text-2xl font-bold"
+          aria-label="Close"
+        >
+          &times;
+        </button>
+
+        <h3 className="text-lg font-semibold mb-4">Not Enough Credits</h3>
+        <p className="mb-4 text-gray-700 text-sm leading-6">
           {message || "You need more credits to perform this action."}
         </p>
-        <button
-          onClick={onBuyCredits}
-          style={{
-            background: '#007bff',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '10px 26px',
-            fontSize: 17,
-            cursor: 'pointer',
-            marginRight: 10,
-            fontWeight: 500
-          }}
-        >
-          Buy Credits
-        </button>
-        <button
-          onClick={onClose}
-          style={{
-            background: '#6c757d',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 6,
-            padding: '10px 20px',
-            fontSize: 17,
-            cursor: 'pointer',
-            fontWeight: 500
-          }}
-        >
-          Cancel
-        </button>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 rounded border border-gray-300 text-gray-700 hover:bg-gray-100"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onBuyCredits}
+            className="px-4 py-2 rounded text-white font-medium bg-blue-600 hover:bg-blue-700"
+          >
+            Buy Credits
+          </button>
+        </div>
       </div>
     </div>
   );

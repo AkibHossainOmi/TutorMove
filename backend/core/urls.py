@@ -8,7 +8,7 @@ from .views import (
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, 
-    EmailVerifyView, UnlockContactInfoView, CheckUnlockStatusView, SubmitReview, 
+    EmailVerifyView, SubmitReview, ContactUnlockViewSet,
     TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
@@ -33,6 +33,7 @@ router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'premium', PremiumViewSet, basename='premium')
 router.register(r'escrow', EscrowPaymentViewSet, basename='escrow')
 router.register(r'subjects', SubjectViewSet, basename='subject')
+router.register('contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
 # If you decide to expose a PaymentViewSet, register it here:
 # router.register(r'payments', PaymentViewSet, basename='payment')
 
@@ -55,8 +56,6 @@ urlpatterns = [
     # path('conversations/', ConversationListView.as_view(), name='conversation-list'),
     # path('conversations/messages/', ConversationMessagesView.as_view(), name='conversation-messages'),
     # path('messages/send/', SendMessageView.as_view(), name='send-message'),
-    path('unlock-contact/', UnlockContactInfoView.as_view(), name='unlock-contact'),
-    path('check-unlock-status/', CheckUnlockStatusView.as_view(), name='check-unlock-status'),
     # path('teacher/<int:tutor_id>/', TeacherProfileView.as_view(), name='teacher-profile'),
     path('reviews/', SubmitReview.as_view(), name='submit-review'),
     path('reviews/<int:tutor_id>/', TutorAverageRating.as_view(), name='tutor-average-rating'),

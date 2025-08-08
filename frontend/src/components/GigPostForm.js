@@ -4,6 +4,11 @@ import { gigApi, subjectApi } from '../utils/apiService';
 const GigPostForm = ({ onClose, onGigCreated }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [message, setMessage] = useState('');
+  const [phone, setPhone] = useState('');
+  const [education, setEducation] = useState('');
+  const [experience, setExperience] = useState('');
+  const [feeDetails, setFeeDetails] = useState('');
   const [subject, setSubject] = useState('');
   const [subjects, setSubjects] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -12,6 +17,7 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
   const [touchedFields, setTouchedFields] = useState({
     title: false,
     description: false,
+    feeDetails: false,
     subject: false,
   });
 
@@ -38,10 +44,12 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
     setError(null);
     setSuccess(null);
 
-    if (!title || !description || !subject) {
+    // Basic validations for required fields
+    if (!title || !description || !feeDetails || !subject) {
       setTouchedFields({
         title: true,
         description: true,
+        feeDetails: true,
         subject: true,
       });
       setError('Please fill in all required fields.');
@@ -51,19 +59,24 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
 
     try {
       const storedUser = JSON.parse(localStorage.getItem('user'));
-      const teacherId = storedUser?.user_id;
+      const tutorId = storedUser?.user_id;
 
-      if (!teacherId) {
-        setError('User not logged in or teacher ID not found.');
+      if (!tutorId) {
+        setError('User not logged in or tutor ID not found.');
         setIsLoading(false);
         return;
       }
 
       const newGigData = {
+        tutor: tutorId,
         title,
         description,
+        message,
+        phone,
+        education,
+        experience,
+        fee_details: feeDetails,
         subject,
-        teacher: teacherId,
       };
 
       const response = await gigApi.createGig(newGigData);
@@ -83,12 +96,13 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
 
   const isTitleValid = title.trim().length > 0;
   const isDescriptionValid = description.trim().length >= 20;
+  const isFeeDetailsValid = feeDetails.trim().length > 0;
   const isSubjectValid = subject.trim().length > 0;
-  const isFormValid = isTitleValid && isDescriptionValid && isSubjectValid;
+  const isFormValid = isTitleValid && isDescriptionValid && isFeeDetailsValid && isSubjectValid;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 backdrop-blur-sm">
-      <div className="bg-white rounded-xl p-8 max-w-lg w-[95%] max-h-[90vh] overflow-y-auto shadow-2xl relative animate-fade-in">
+      <div className="mt-24 bg-white rounded-xl p-8 max-w-lg w-[95%] max-h-[80vh] overflow-y-auto shadow-2xl relative animate-fade-in">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-3xl leading-none transition-colors duration-200 rounded-full p-1 hover:bg-gray-100"
@@ -97,8 +111,8 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
           &times;
         </button>
 
-        <header className="mb-6 text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-1">Post a New Gig</h2>
+        <header className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-1">Post Gig</h2>
           <p className="text-gray-500 text-sm">Showcase your expertise and connect with students</p>
         </header>
 
@@ -178,6 +192,88 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
               )}
               <p className="text-xs text-gray-500">{description.length}/500</p>
             </div>
+          </div>
+
+          {/* Message */}
+          <div>
+            <label htmlFor="gigMessage" className="block text-sm font-medium text-gray-700 mb-1">
+              Message (optional)
+            </label>
+            <textarea
+              id="gigMessage"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition min-h-[80px] resize-y border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+              placeholder="Any additional message for students"
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label htmlFor="gigPhone" className="block text-sm font-medium text-gray-700 mb-1">
+              Phone (optional)
+            </label>
+            <input
+              type="text"
+              id="gigPhone"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+              placeholder="Your phone number"
+            />
+          </div>
+
+          {/* Education */}
+          <div>
+            <label htmlFor="gigEducation" className="block text-sm font-medium text-gray-700 mb-1">
+              Education (optional)
+            </label>
+            <input
+              type="text"
+              id="gigEducation"
+              value={education}
+              onChange={(e) => setEducation(e.target.value)}
+              className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+              placeholder="Your education details"
+            />
+          </div>
+
+          {/* Experience */}
+          <div>
+            <label htmlFor="gigExperience" className="block text-sm font-medium text-gray-700 mb-1">
+              Experience (optional)
+            </label>
+            <input
+              type="text"
+              id="gigExperience"
+              value={experience}
+              onChange={(e) => setExperience(e.target.value)}
+              className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition border-gray-300 focus:ring-blue-200 focus:border-blue-500"
+              placeholder="Your experience details"
+            />
+          </div>
+
+          {/* Fee Details */}
+          <div>
+            <label htmlFor="gigFeeDetails" className="block text-sm font-medium text-gray-700 mb-1">
+              Fee Details <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id="gigFeeDetails"
+              value={feeDetails}
+              onChange={(e) => setFeeDetails(e.target.value)}
+              onBlur={() => handleBlur('feeDetails')}
+              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition min-h-[80px] resize-y ${
+                touchedFields.feeDetails && !isFeeDetailsValid
+                  ? 'border-red-300 focus:ring-red-200'
+                  : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
+              }`}
+              placeholder="Specify your fees, payment methods, etc."
+              required
+            />
+            {touchedFields.feeDetails && !isFeeDetailsValid && (
+              <p className="mt-1 text-sm text-red-600">Please provide fee details</p>
+            )}
           </div>
 
           {/* Subject Dropdown */}

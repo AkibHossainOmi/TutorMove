@@ -26,9 +26,10 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(Gig)
 class GigAdmin(admin.ModelAdmin):
-    list_display = ('title', 'teacher', 'subject', 'created_at')
-    list_filter = ('subject', 'created_at')
-    search_fields = ('title', 'description', 'subject')
+    list_display = ('title', 'tutor', 'created_at', 'used_credits')
+    list_filter = ('created_at',)
+    search_fields = ('title', 'description', 'education', 'experience')
+    ordering = ('-created_at',)
 
 @admin.register(Credit)
 class CreditAdmin(admin.ModelAdmin):

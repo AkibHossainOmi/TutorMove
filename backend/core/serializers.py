@@ -9,7 +9,7 @@ from django.core.mail import EmailMultiAlternatives
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
-    User, Gig, Credit, Job, Application, Notification,
+    ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
     Order, Payment,
 )
@@ -49,6 +49,21 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             data['email'] = None
             data['phone_number'] = None
         return data
+
+class ContactUnlockSerializer(serializers.ModelSerializer):
+    student = serializers.PrimaryKeyRelatedField(read_only=True)
+    tutor = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(user_type='tutor'))
+
+    class Meta:
+        model = ContactUnlock
+        fields = ['id', 'student', 'tutor', 'timestamp']
+        read_only_fields = ['id', 'student', 'timestamp']
+
+    def create(self, validated_data):
+        # Automatically set the student to the logged-in user
+        user = self.context['request'].user
+        validated_data['student'] = user
+        return super().create(validated_data)
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -143,11 +158,8 @@ class SubjectSerializer(serializers.ModelSerializer):
 class GigSerializer(serializers.ModelSerializer):
     class Meta:
         model = Gig
-        fields = [
-            'id', 'teacher', 'title', 'description', 'subject',
-            'latitude', 'longitude', 'created_at', 'contact_info'
-        ]
-        read_only_fields = ['id', 'created_at']
+        fields = '__all__'
+        read_only_fields = ['tutor', 'used_credits']
 
 
 # === CREDIT SERIALIZER ===

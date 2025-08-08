@@ -1,9 +1,10 @@
-// [imports]
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ChatSocket from '../components/ChatSocket';
+import UnlockContactModal from '../components/UnlockContactModal';
+import BuyCreditsModal from '../components/BuyCreditsModal';
 
 export default function WhatsAppLikeMessagingWS() {
   const [user, setUser] = useState(null);
@@ -15,6 +16,10 @@ export default function WhatsAppLikeMessagingWS() {
   const [newMessage, setNewMessage] = useState('');
   const [partnerTyping, setPartnerTyping] = useState(false);
 
+  const [showUnlockModal, setShowUnlockModal] = useState(false);
+  const [unlockTutorId, setUnlockTutorId] = useState(null);
+  const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
+
   const socketRef = useRef(null);
   const messageContainerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -23,7 +28,14 @@ export default function WhatsAppLikeMessagingWS() {
   const location = useLocation();
   const usernameFromQuery = new URLSearchParams(location.search).get('username');
 
-  // Get opposite user
+  // Helper to safely send JSON stringified WS messages
+  const sendMessageWS = useCallback((msg) => {
+    if (socketRef.current?.connected) {
+      socketRef.current.send(msg);
+    }
+  }, []);
+
+  // Extract the "other user" from conversation participants except self
   const getOtherUser = useCallback(
     (conv) =>
       conv.participants
@@ -35,14 +47,7 @@ export default function WhatsAppLikeMessagingWS() {
     [user]
   );
 
-  // WebSocket sender
-  const sendMessageWS = useCallback((msg) => {
-    if (socketRef.current?.connected) {
-      socketRef.current.send(msg);
-    }
-  }, []);
-
-  // Handle WebSocket Events
+  // WS message handler
   const handleWSMessage = useCallback(
     (data) => {
       switch (data.type) {
@@ -50,7 +55,7 @@ export default function WhatsAppLikeMessagingWS() {
           const incomingConvId = data.message.conversation_id;
           const isFromOther = data.message.sender.id !== user?.user_id;
 
-          const convExists = conversations.some(c => c.id === incomingConvId);
+          const convExists = conversations.some((c) => c.id === incomingConvId);
 
           if (!convExists) {
             const newConv = {
@@ -59,42 +64,48 @@ export default function WhatsAppLikeMessagingWS() {
               last_message: data.message,
               has_unread: isFromOther,
             };
-            setConversations(prev => [newConv, ...prev]);
+            setConversations((prev) => [newConv, ...prev]);
           } else {
-            setConversations(prev =>
-              prev.map(conv =>
-                conv.id === incomingConvId
-                  ? { ...conv, last_message: data.message }
-                  : conv
+            setConversations((prev) =>
+              prev.map((conv) =>
+                conv.id === incomingConvId ? { ...conv, last_message: data.message } : conv
               )
             );
           }
 
           const isActive = incomingConvId === activeConversation?.id;
           if (isActive) {
-            setMessages(prev => [...prev, {
-              ...data.message,
-              status: isFromOther ? "delivered" : "sent",
-            }]);
+            setMessages((prev) => [
+              ...prev,
+              {
+                ...data.message,
+                status: isFromOther ? 'delivered' : 'sent',
+              },
+            ]);
 
             if (isFromOther) {
               sendMessageWS({ type: 'chat.delivered', message_id: data.message.id });
               sendMessageWS({ type: 'chat.read', conversation_id: incomingConvId });
-              setConversations(prev =>
-                prev.map(conv =>
+              setConversations((prev) =>
+                prev.map((conv) =>
                   conv.id === incomingConvId ? { ...conv, has_unread: false } : conv
                 )
               );
             }
           } else if (isFromOther) {
-            setConversations(prev =>
-              prev.map(conv =>
+            setConversations((prev) =>
+              prev.map((conv) =>
                 conv.id === incomingConvId ? { ...conv, has_unread: true } : conv
               )
             );
           }
           break;
         }
+
+        case 'chat.unlock':
+          setUnlockTutorId(data.tutor_id);
+          setShowUnlockModal(true);
+          break;
 
         case 'chat.conversations':
           setConversations(data.conversations);
@@ -112,38 +123,33 @@ export default function WhatsAppLikeMessagingWS() {
           }
           break;
 
-        case 'chat.conversation_started':
+        case 'chat.conversation_started': {
           const conv = data.conversation;
           setActiveConversation(conv);
           setMessages([]);
           sendMessageWS({ type: 'chat.get_messages', conversation_id: conv.id });
-          setConversations((prev) =>
-            prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev]
-          );
+          setConversations((prev) => (prev.some((c) => c.id === conv.id) ? prev : [conv, ...prev]));
           sendMessageWS({ type: 'chat.read', conversation_id: conv.id });
-          setConversations(prev =>
-            prev.map(c =>
-              c.id === conv.id ? { ...c, has_unread: false } : c
-            )
+          setConversations((prev) =>
+            prev.map((c) => (c.id === conv.id ? { ...c, has_unread: false } : c))
           );
           setSearchTerm('');
           setSearchResults([]);
           break;
+        }
 
         case 'chat.read':
-          setConversations(prev =>
-            prev.map(conv =>
-              conv.id === data.conversation_id
-                ? { ...conv, has_unread: false }
-                : conv
+          setConversations((prev) =>
+            prev.map((conv) =>
+              conv.id === data.conversation_id ? { ...conv, has_unread: false } : conv
             )
           );
           break;
 
         case 'chat.message_status':
-          setMessages(prev =>
-            prev.map(msg =>
-              msg.id === data.message_id
+          setMessages((prev) =>
+            prev.map((msg) =>
+              Number(msg.id) === Number(data.message_id)
                 ? {
                     ...msg,
                     status: data.status,
@@ -165,45 +171,41 @@ export default function WhatsAppLikeMessagingWS() {
     [activeConversation, conversations, sendMessageWS, user]
   );
 
-  // Sync handleWSMessage ref
   useEffect(() => {
     handleWSMessageRef.current = handleWSMessage;
   }, [handleWSMessage]);
 
-  // Load user
+  // Load user info once on mount
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) setUser(JSON.parse(userStr));
   }, []);
 
-  // Connect WebSocket
+  // Setup WS connection once user is loaded
   useEffect(() => {
     if (!user || socketRef.current) return;
 
-    const ws = new ChatSocket(user.user_id, (data) =>
-      handleWSMessageRef.current?.(data)
-    );
+    const ws = new ChatSocket(user.user_id, (data) => handleWSMessageRef.current?.(data));
     socketRef.current = ws;
 
-    ws.socket.addEventListener('open', () => {
+    const onOpen = () => {
       sendMessageWS({ type: 'chat.get_conversations' });
-    });
+      if (usernameFromQuery) {
+        sendMessageWS({ type: 'chat.search_user', keyword: usernameFromQuery });
+      }
+    };
+
+    ws.socket.addEventListener('open', onOpen);
 
     return () => {
+      ws.socket.removeEventListener('open', onOpen);
       ws.close();
       socketRef.current = null;
       clearTimeout(typingTimeoutRef.current);
     };
-  }, [user, sendMessageWS]);
+  }, [user, sendMessageWS, usernameFromQuery]);
 
-  // Handle pre-selected user from query param
-  useEffect(() => {
-    if (user && usernameFromQuery) {
-      sendMessageWS({ type: 'chat.search_user', keyword: usernameFromQuery });
-    }
-  }, [user, usernameFromQuery, sendMessageWS]);
-
-  // Auto scroll
+  // Scroll messages container to bottom when messages change
   useEffect(() => {
     const container = messageContainerRef.current;
     if (container) {
@@ -211,7 +213,6 @@ export default function WhatsAppLikeMessagingWS() {
     }
   }, [messages]);
 
-  // Send message
   const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !activeConversation) return;
 
@@ -223,6 +224,7 @@ export default function WhatsAppLikeMessagingWS() {
     setNewMessage('');
   }, [newMessage, activeConversation, sendMessageWS]);
 
+  // Debounced typing indicator
   const handleTyping = useCallback(() => {
     if (!activeConversation) return;
 
@@ -250,16 +252,24 @@ export default function WhatsAppLikeMessagingWS() {
     [sendMessageWS]
   );
 
-  const selectConversation = useCallback((conv) => {
-    setActiveConversation(conv);
-    sendMessageWS({ type: 'chat.get_messages', conversation_id: conv.id });
-    sendMessageWS({ type: 'chat.read', conversation_id: conv.id });
-    setConversations(prev =>
-      prev.map(c =>
-        c.id === conv.id ? { ...c, has_unread: false } : c
-      )
-    );
-  }, [sendMessageWS]);
+  const selectConversation = useCallback(
+    (conv) => {
+      setActiveConversation(conv);
+      sendMessageWS({ type: 'chat.get_messages', conversation_id: conv.id });
+      sendMessageWS({ type: 'chat.read', conversation_id: conv.id });
+      setConversations((prev) =>
+        prev.map((c) => (c.id === conv.id ? { ...c, has_unread: false } : c))
+      );
+    },
+    [sendMessageWS]
+  );
+
+  // When unlock contact is successful, start conversation and close modal
+  const handleUnlockSuccess = useCallback(() => {
+    if (!unlockTutorId) return;
+    sendMessageWS({ type: 'chat.start_conversation', receiver_id: unlockTutorId });
+    setShowUnlockModal(false);
+  }, [sendMessageWS, unlockTutorId]);
 
   return (
     <>
@@ -351,14 +361,39 @@ export default function WhatsAppLikeMessagingWS() {
                               })}
                             </span>
                             {isSelf && (
-                              <span>
-                                {msg.is_read ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                              <span className="flex items-center">
+                                {msg.status === 'seen' ? (
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-4 h-4 text-white relative -top-[1px]"
+                                    fill="currentColor"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 17l4 4L19 11" />
                                   </svg>
+                                ) : msg.status === 'delivered' ? (
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-4 h-4 text-white relative -top-[1px]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                  </svg>
                                 ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="w-4 h-4 text-white relative -top-[1px]"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    strokeWidth={2}
+                                  >
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                   </svg>
                                 )}
@@ -401,6 +436,28 @@ export default function WhatsAppLikeMessagingWS() {
           </div>
         </div>
       </div>
+
+      <UnlockContactModal
+        show={showUnlockModal}
+        tutorId={unlockTutorId}
+        onClose={() => setShowUnlockModal(false)}
+        onUnlockSuccess={handleUnlockSuccess}
+        onNeedBuyCredits={() => {
+          setShowUnlockModal(false);
+          setShowBuyCreditsModal(true);
+        }}
+      />
+
+      <BuyCreditsModal
+        show={showBuyCreditsModal}
+        onClose={() => setShowBuyCreditsModal(false)}
+        onBuyCredits={() => {
+          setShowBuyCreditsModal(false);
+          window.location.href = '/buy-credits';
+        }}
+        message="You don’t have enough credits to unlock this contact."
+      />
+
       <Footer />
     </>
   );

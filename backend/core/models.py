@@ -179,24 +179,28 @@ class Subject(models.Model):
 
 
 # models.py
-class Gig(models.Model):
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, limit_choices_to={'user_type': 'tutor'})
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    subject = models.TextField()  # Changed from ForeignKey to TextField
-    created_at = models.DateTimeField(auto_now_add=True)
-    contact_info = models.TextField(blank=True, null=True)
-    latitude = models.FloatField(null=True, blank=True)
-    longitude = models.FloatField(null=True, blank=True)
+from django.db import models
+from django.contrib.auth import get_user_model
 
-    def save(self, *args, **kwargs):
-        if self.contact_info:
-            self.contact_info = re.sub(r'[\w\.-]+@[\w\.-]+', '[hidden email]', self.contact_info)
-            self.contact_info = re.sub(r'\b\d{10,}\b', '[hidden phone]', self.contact_info)
-        super().save(*args, **kwargs)
+User = get_user_model()
+
+class Gig(models.Model):
+    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='gigs')
+    title = models.CharField(max_length=255, default='')  # default empty string
+    description = models.TextField(default='')            # default empty string
+    message = models.TextField(blank=True, null=True)
+    phone = models.CharField(max_length=20, blank=True, null=True)
+
+    education = models.CharField(max_length=255, blank=True, null=True)
+    experience = models.CharField(max_length=255, blank=True, null=True)
+
+    fee_details = models.TextField(default='')            # default empty string
+    used_credits = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} by {self.teacher.username}"
+        return f"{self.title} by {self.tutor.username}"
 
 class Credit(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -347,12 +351,16 @@ class Message(models.Model):
         return f"{self.sender.username}: {self.content[:30]}"
 
 class MessageRead(models.Model):
+    STATUS_CHOICES = [
+        ('sent', 'Sent'),
+        ('delivered', 'Delivered'),
+        ('seen', 'Seen'),
+    ]
+
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="reads")
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     read_at = models.DateTimeField(auto_now_add=True)
-
-    def is_read_by(self, user):
-        return self.reads.filter(user=user).exists()
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='sent')
 
     class Meta:
         unique_together = ('message', 'user')

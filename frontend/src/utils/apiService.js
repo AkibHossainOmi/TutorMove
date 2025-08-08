@@ -107,6 +107,14 @@ export const authAPI = {
   verifyEmail: (uid, token) => apiService.get(`/api/auth/verify/${uid}/${token}/`),
 };
 
+export const contactUnlockAPI = {
+  unlockContact: (tutorId) =>
+    apiService.post('/api/contact-unlock/unlock/', { tutor_id: tutorId }),
+
+  checkUnlockStatus: (tutorId) =>
+    apiService.get('/api/contact-unlock/status/', { params: { tutor_id: tutorId } }),
+};
+
 // Tutor API calls
 export const tutorAPI = {
   searchTutors: (params) => apiService.post('/api/tutors/search/', params),
@@ -147,6 +155,8 @@ export const jobAPI = {
 export const gigApi = {
   getGigs: () => apiService.get('/api/gigs/'),
   createGig: (gigData) => apiService.post('/api/gigs/', gigData),
+  updateGig: (id, gigData) => apiService.put(`/api/gigs/${id}/`, gigData),
+  deleteGig: (id) => apiService.delete(`/api/gigs/${id}/`),
 };
 
 export const subjectApi = {

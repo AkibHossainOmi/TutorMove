@@ -41,7 +41,7 @@ from .models import (
     Order, Payment, ContactUnlock,
 )
 from .serializers import (
-    UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
+    ContactUnlockSerializer, UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
     ApplicationSerializer, NotificationSerializer, 
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
@@ -477,75 +477,27 @@ from math import radians, cos, sin, asin, sqrt
 class GigViewSet(viewsets.ModelViewSet):
     serializer_class = GigSerializer
     permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description', 'subject', 'location']
 
     def get_queryset(self):
-        queryset = Gig.objects.filter(teacher__user_type='tutor')
-        premium_only = self.request.query_params.get('premium_only')
-        premium_first = self.request.query_params.get('premium_first')
-        if premium_only == '1':
-            queryset = queryset.filter(teacher__usersettings__is_premium=True)
-        else:
-            if premium_first == '1':
-                from django.db import models
-                queryset = queryset.annotate(
-                    premium_sort=models.Case(
-                        models.When(teacher__usersettings__is_premium=True, then=0),
-                        default=1,
-                        output_field=models.IntegerField(),
-                    )
-                ).order_by('premium_sort', '-created_at')
-        subject = self.request.query_params.get('subject')
-        location = self.request.query_params.get('location')
-        if subject:
-            queryset = queryset.filter(subject__icontains=subject)
-        if location:
-            queryset = queryset.filter(location__icontains=location)
-        lat = self.request.query_params.get('lat')
-        lng = self.request.query_params.get('lng')
-        radius_km = float(self.request.query_params.get('radius_km', 20))
-        if lat and lng:
-            lat, lng = float(lat), float(lng)
-            results = []
-            for gig in queryset:
-                if hasattr(gig, 'latitude') and hasattr(gig, 'longitude') and gig.latitude and gig.longitude:
-                    distance = haversine(lat, lng, gig.latitude, gig.longitude)
-                    if distance <= radius_km:
-                        gig._distance = distance
-                        results.append(gig)
-            results.sort(key=lambda g: getattr(g, '_distance', 0))
-            return results
-        return queryset
+        return Gig.objects.filter(tutor=self.request.user)
 
-    def create(self, request, *args, **kwargs):
-        if request.user.user_type != 'tutor':
-            return Response({'error': 'Only teachers can create gigs'}, status=status.HTTP_403_FORBIDDEN)
-        if Gig.objects.filter(teacher=request.user).count() >= 15:
-            return Response({'error': 'Maximum limit of 15 gigs reached'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        serializer.save(teacher=request.user)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def perform_create(self, serializer):
+        user = self.request.user
+        # Check credit
+        try:
+            credit = Credit.objects.get(user=user)
+            if credit.balance < 1:
+                # Not enough credits, raise error
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError("Insufficient credits to create gig.")
+            # Deduct 1 credit
+            credit.balance -= 1
+            credit.save()
+        except Credit.DoesNotExist:
+            from rest_framework.exceptions import ValidationError
+            raise ValidationError("Credit record not found.")
 
-    @action(detail=True, methods=['post'])
-    def unlock_contact(self, request, pk=None):
-        gig = self.get_object()
-        user = request.user
-        if user.user_type != 'student':
-            return Response({'error': 'Only students can unlock contact info'}, status=status.HTTP_403_FORBIDDEN)
-        credit = Credit.objects.filter(user=user).first()
-        if not credit or credit.balance < 1:
-            return Response({'error': 'Insufficient credits'}, status=status.HTTP_403_FORBIDDEN)
-        already_unlocked = Notification.objects.filter(
-            user=user, message__icontains=f"Unlocked contact for gig {gig.id}"
-        ).exists()
-        if already_unlocked:
-            return Response({'contact_info': gig.contact_info})
-        credit.balance -= 1
-        credit.save()
-        Notification.objects.create(user=user, message=f"Unlocked contact for gig {gig.id}")
-        return Response({'contact_info': gig.contact_info})
+        serializer.save(tutor=user)
 
 # --- CreditViewSet ---
 
@@ -1449,62 +1401,54 @@ class AdminViewSet(viewsets.ViewSet):
 
 # ------------------ AUTH API: Registration, Email Verify, Login, Password Reset -------------------
 
-class CheckUnlockStatusView(APIView):
-    permission_classes = [AllowAny]
+class ContactUnlockViewSet(viewsets.ViewSet):
+    permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        student_id = request.query_params.get('student_id')
-        tutor_id = request.query_params.get('tutor_id')
-
-        if not student_id or not tutor_id:
-            return Response({'error': 'Missing student_id or tutor_id'}, status=400)
-
-        unlocked = ContactUnlock.objects.filter(student_id=student_id, tutor_id=tutor_id).exists()
-        return Response({'unlocked': unlocked})
-
-class UnlockContactInfoView(APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        student_id = request.data.get('student_id')
+    @action(detail=False, methods=['post'], url_path='unlock')
+    def unlock_contact(self, request):
         tutor_id = request.data.get('tutor_id')
+        if not tutor_id:
+            return Response({'detail': 'tutor_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            student = User.objects.get(id=student_id, user_type='student')
             tutor = User.objects.get(id=tutor_id, user_type='tutor')
         except User.DoesNotExist:
-            return Response({'error': 'Invalid student or tutor ID'}, status=400)
+            return Response({'detail': 'Tutor not found.'}, status=status.HTTP_404_NOT_FOUND)
 
-        if ContactUnlock.objects.filter(student=student, tutor=tutor).exists():
-            return Response({
-                'detail': 'Already unlocked.',
-                'phone': str(tutor.phone_number) if tutor.phone_number else None,
-                'email': tutor.email
-            })
-
-        credit = Credit.objects.filter(user=student).first()
-        if not credit or credit.balance < 1:
-            return Response({'error': 'Not enough credits.'}, status=402)
-
-        # Deduct 1 credit
-        credit.balance -= 1
-        credit.save()
-
-        # Record unlock
-        ContactUnlock.objects.create(student=student, tutor=tutor)
-
-        # 🔔 Create notification for the tutor
-        Notification.objects.create(
-            from_user=student,
-            to_user=tutor,
-            message=f"{student.username} has unlocked your contact information."
+        # Check if already unlocked
+        unlock, created = ContactUnlock.objects.get_or_create(
+            student=request.user, tutor=tutor
         )
+        if not created:
+            return Response({'detail': 'Contact already unlocked.'}, status=status.HTTP_200_OK)
 
-        return Response({
-            'detail': 'Contact info unlocked.',
-            'phone': str(tutor.phone_number) if tutor.phone_number else None,
-            'email': tutor.email
-        })
+        # 🧾 Deduct 1 credit (only if newly unlocking)
+        try:
+            credit = Credit.objects.get(user=request.user)
+            if credit.balance >= 1:
+                credit.balance -= 1
+                credit.save()
+            else:
+                unlock.delete()  # rollback unlock if not enough credits
+                return Response({'detail': 'Insufficient credits'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+        except Credit.DoesNotExist:
+            unlock.delete()
+            return Response({'detail': 'Credit record not found'}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = ContactUnlockSerializer(unlock)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    @action(detail=False, methods=['get'], url_path='status')
+    def check_status(self, request):
+        tutor_id = request.query_params.get('tutor_id')
+        if not tutor_id:
+            return Response({'detail': 'tutor_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        is_unlocked = ContactUnlock.objects.filter(
+            student=request.user, tutor_id=tutor_id
+        ).exists()
+
+        return Response({'unlocked': is_unlocked})
 
 # NEW: Payment ViewSet to list payments
 class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
