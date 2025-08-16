@@ -262,6 +262,7 @@ class Job(models.Model):
 
     budget = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     budget_type = models.CharField(max_length=20, choices=BUDGET_TYPE_CHOICES, blank=True, default='Fixed')
+    total_hours = models.PositiveIntegerField(null=True, blank=True, help_text="Total hours for the job") 
 
     gender_preference = models.CharField(
         max_length=10,
@@ -278,6 +279,59 @@ class Job(models.Model):
     def __str__(self):
         return f"Job {self.id} by {self.student.username} - {self.service_type}"
 
+class UnlockPricingTier(models.Model):
+    min_rate = models.DecimalField(max_digits=10, decimal_places=2)
+    max_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Leave null for no upper limit")
+    points = models.PositiveIntegerField()
+
+    def __str__(self):
+        if self.max_rate:
+            return f"${self.min_rate} - ${self.max_rate} → {self.points} pts"
+        return f"${self.min_rate}+ → {self.points} pts"
+
+class JobUnlock(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name='unlocks')
+    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='jobs_unlocked')
+    points_spent = models.PositiveIntegerField()
+    unlocked_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('job', 'tutor')
+
+    def __str__(self):
+        return f"{self.tutor.username} unlocked Job {self.job.id} for {self.points_spent} pts"
+
+class PointPackage(models.Model):
+    name = models.CharField(max_length=100)
+    price_usd = models.DecimalField(max_digits=6, decimal_places=2)
+    base_points = models.PositiveIntegerField()
+    bonus_points = models.PositiveIntegerField(default=0)
+
+    @property
+    def total_points(self):
+        return self.base_points + self.bonus_points
+
+    @property
+    def savings_percentage(self):
+        base_price_per_point = self.price_usd / self.base_points
+        new_price_per_point = self.price_usd / self.total_points
+        return round(((base_price_per_point - new_price_per_point) / base_price_per_point) * 100, 2)
+
+    def __str__(self):
+        return f"{self.name} - {self.total_points} pts for ${self.price_usd}"
+
+class CountryGroupPoint(models.Model):
+    group = models.CharField(max_length=5, unique=True)  # G1, G2, etc.
+    points = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.group} - {self.points} pts"
+class CountryGroup(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+    group = models.CharField(max_length=2)  # G1, G2, G3, G4, G5
+
+    def __str__(self):
+        return f"{self.name} ({self.group})"
 
 class Application(models.Model):
     STATUS_CHOICES = (

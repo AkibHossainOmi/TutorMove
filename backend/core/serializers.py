@@ -11,7 +11,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
-    Order, Payment,
+    Order, Payment, JobUnlock,
 )
 
 User = get_user_model()
@@ -161,6 +161,14 @@ class GigSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['tutor', 'used_credits']
 
+# === JOB UNLOCK SERIALIZER ===
+class JobUnlockSerializer(serializers.ModelSerializer):
+    tutor = serializers.StringRelatedField(read_only=True)
+    job = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = JobUnlock
+        fields = ['id', 'job', 'tutor', 'points_spent', 'unlocked_at']
 
 # === CREDIT SERIALIZER ===
 class CreditUpdateByUserSerializer(serializers.Serializer):
@@ -193,6 +201,11 @@ class CreditSerializer(serializers.ModelSerializer):
         model = Credit
         fields = '__all__'
 
+class StudentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'username']  # choose what you want
+
 
 # === JOB SERIALIZER ===
 
@@ -203,7 +216,7 @@ class JobSerializer(serializers.ModelSerializer):
         required=True
     )
     subject_details = serializers.SerializerMethodField(read_only=True)
-    student = serializers.ReadOnlyField(source='student.id')
+    student = StudentSerializer(read_only=True)
 
     class Meta:
         model = Job
@@ -211,7 +224,7 @@ class JobSerializer(serializers.ModelSerializer):
             'id', 'student', 'description', 'location', 'country',
             'service_type', 'education_level', 'gender_preference', 'budget',
             'budget_type', 'phone', 'mode', 'distance', 'languages',
-            'subjects', 'subject_details',
+            'subjects', 'subject_details', 'total_hours',
             'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'student', 'created_at', 'updated_at']

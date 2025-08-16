@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from django.db.models import Q
 from django.core.mail import send_mail
 from django.utils import timezone
-from datetime import timedelta
+from datetime import datetime, timedelta
 from rest_framework import viewsets, permissions, status, filters, views, generics
 from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
@@ -37,8 +37,8 @@ from core.modules.auth import ( RegisterView,
 
 from urllib.parse import urlencode
 from .models import (
-    User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, ContactUnlock,
+    CountryGroup, CountryGroupPoint, UnlockPricingTier, User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
+    Order, Payment, ContactUnlock, JobUnlock,
 )
 from .serializers import (
     ContactUnlockSerializer, UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
@@ -46,6 +46,7 @@ from .serializers import (
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     PaymentSerializer, CreditUpdateByUserSerializer,
+    JobUnlockSerializer,
 )
 
 from .payments import SSLCommerzPayment
@@ -574,7 +575,7 @@ class GigViewSet(viewsets.ModelViewSet):
             "subject": gig.title,
             "simulated_used_credits": simulated_used_credits,
             "credits_spent": credits_to_spend,
-        })
+        })# core/views.py
 
 # --- CreditViewSet ---
 
@@ -715,10 +716,12 @@ class JobViewSet(viewsets.ModelViewSet):
         lat = self.request.query_params.get('lat')
         lng = self.request.query_params.get('lng')
         radius_km = float(self.request.query_params.get('radius_km', 20))
+
         if subject:
             queryset = queryset.filter(subject__icontains=subject)
         if location:
             queryset = queryset.filter(location__icontains=location)
+
         if lat and lng:
             lat, lng = float(lat), float(lng)
             jobs_in_radius = []
@@ -730,23 +733,19 @@ class JobViewSet(viewsets.ModelViewSet):
                         jobs_in_radius.append(job)
             jobs_in_radius.sort(key=lambda j: getattr(j, '_distance', 0))
             return jobs_in_radius
+
         return queryset
 
     def perform_create(self, serializer):
         user = self.request.user
-
-        # Check credit balance
         if user.credit.balance < 1:
             raise ValidationError({"detail": "You don't have enough credits to post a job."})
 
-        # Save job
         job = serializer.save(student=user)
-
-        # Deduct 1 credit
         user.credit.balance -= 1
-        user.credit.save(update_fields=["balance"])  # ✅ Save the Credit model, not the User model
+        user.credit.save(update_fields=["balance"])
 
-        # Optional: Notify teachers
+        # Notify teachers (optional)
         teachers = User.objects.filter(user_type='teacher')
         for teacher in teachers:
             if teacher.email:
@@ -757,6 +756,147 @@ class JobViewSet(viewsets.ModelViewSet):
                     [teacher.email],
                     fail_silently=True,
                 )
+
+    # ---------------------------
+    # Job Unlock
+    # ---------------------------
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    def unlock(self, request, pk=None):
+        try:
+            job = Job.objects.get(pk=pk)
+            tutor = request.user
+        except Job.DoesNotExist:
+            return Response({"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        if JobUnlock.objects.filter(job=job, tutor=tutor).exists():
+            return Response({"detail": "Job already unlocked"}, status=status.HTTP_400_BAD_REQUEST)
+
+        points = self.calculate_unlock_points(job, tutor)
+
+        if tutor.credit.balance < points:
+            return Response({"detail": "Insufficient credits"}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            tutor.credit.balance -= points
+            tutor.credit.save(update_fields=["balance"])
+            unlock_obj = JobUnlock.objects.create(job=job, tutor=tutor, points_spent=points)
+
+        serializer = JobUnlockSerializer(unlock_obj)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # ---------------------------
+    # Preview unlock points
+    # ---------------------------
+    @action(detail=True, methods=['GET'])
+    def preview(self, request, pk=None):
+        try:
+            job = Job.objects.get(pk=pk)
+            tutor = request.user
+        except Job.DoesNotExist:
+            return Response({"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        unlocked = JobUnlock.objects.filter(job=job, tutor=tutor).exists()
+        points_needed = 0
+        if not unlocked:
+            points_needed = self.calculate_unlock_points(job, tutor)
+
+        return Response({
+            "unlocked": unlocked,
+            "points_needed": points_needed
+        }, status=status.HTTP_200_OK)
+
+    # ---------------------------
+    # Helper Methods
+    # ---------------------------
+    def calculate_unlock_points(self, job: Job, tutor: User) -> int:
+        """
+        Full calculation pipeline:
+        1. Use budget → normalize hourly → tier → base points
+        2. If no budget, fallback to country points
+        3. Apply bidding (10% increase per unlock, max 10 unlocks)
+        4. Apply decay (after 36h idle, -5% per 5h, min 20% of base)
+        """
+        # Step 1: Base points
+        if job.budget and job.total_hours:
+            hourly_rate = self.normalize_hourly_rate(job)
+            base_points = self.get_base_points_for_hourly(hourly_rate)
+        else:
+            base_points = self.get_country_group_points(job.country)
+
+        # Step 2 + 3: Dynamic pricing
+        final_points = self.calculate_dynamic_price(job, base_points)
+
+        return max(final_points, 1)
+
+    def normalize_hourly_rate(self, job: Job) -> float:
+        """
+        Convert any job budget type (Per Hour, Per Day, Per Week, etc.) to hourly.
+        """
+        total_hours = job.total_hours or 1
+        budget = float(job.budget or 0)
+
+        if job.budget_type == "Per Hour":
+            return budget
+        return budget / total_hours
+
+    def get_base_points_for_hourly(self, hourly_rate: float) -> int:
+        """
+        Find unlock tier based on hourly rate.
+        If not in range → clamp to lowest or highest tier.
+        """
+        tiers = UnlockPricingTier.objects.order_by('min_rate')
+        if not tiers.exists():
+            return 100  # fallback if no tiers defined
+
+        # Match tier
+        tier = tiers.filter(min_rate__lte=hourly_rate).filter(
+            Q(max_rate__gte=hourly_rate) | Q(max_rate__isnull=True)
+        ).first()
+        if tier:
+            return tier.points
+
+        lowest_tier = tiers.first()
+        highest_tier = tiers.last()
+
+        if hourly_rate < lowest_tier.min_rate:
+            return lowest_tier.points
+        if highest_tier.max_rate and hourly_rate > highest_tier.max_rate:
+            return highest_tier.points
+
+        return lowest_tier.points
+
+    def get_country_group_points(self, country: str) -> int:
+        group_obj = CountryGroup.objects.filter(name=country).first()
+        if not group_obj:
+            return 100
+        group_point_obj = CountryGroupPoint.objects.filter(group=group_obj.group).first()
+        return group_point_obj.points if group_point_obj else 100
+
+    def calculate_dynamic_price(self, job: Job, base_price: int) -> int:
+        """
+        Apply bidding increase & decay decrease.
+        """
+        price = base_price
+        unlock_count = job.unlocks.count()
+
+        # 1. Increment per unlock (10% each, cap at 10)
+        effective_unlocks = min(unlock_count, 10)
+        if effective_unlocks > 0:
+            price = int(price * (1.1 ** effective_unlocks))
+
+        # 2. Decay if idle for 36h
+        if unlock_count == 0 and job.created_at:
+            now = timezone.now()
+            idle_time = now - job.created_at
+
+            if idle_time > timedelta(hours=36):
+                five_hour_blocks = (idle_time - timedelta(hours=36)) // timedelta(hours=5)
+                for _ in range(int(five_hour_blocks)):
+                    price = int(price * 0.95)
+
+        # 3. Floor = 20% of base
+        min_price = int(base_price * 0.20)
+        return max(price, min_price)
 
 # --- ApplicationViewSet ---
 class ApplicationViewSet(viewsets.ModelViewSet):

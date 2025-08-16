@@ -17,6 +17,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     distance: null,
     budget: "",
     budgetType: "",
+    totalHours: "",
     genderPreference: "",
     languages: [],
     country: ""
@@ -81,7 +82,6 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     }
   };
 
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-3xl rounded-xl shadow-lg max-h-[60vh] overflow-y-auto relative">
@@ -101,6 +101,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           <textarea name="description" placeholder="Details of your Requirements" value={formData.description} onChange={handleChange} className="w-full border p-2 rounded" required rows={4}></textarea>
 
+          {/* Subjects */}
           <div>
             <label>Subjects:</label>
             <div className="flex gap-2">
@@ -116,6 +117,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
             </div>
           </div>
 
+          {/* Education Level */}
           <select name="educationLevel" value={formData.educationLevel} onChange={handleChange} className="w-full border p-2 rounded" required>
             <option value="">Your Level of Education</option>
             {educationLevels.map((level, i) => (
@@ -123,11 +125,13 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
             ))}
           </select>
 
+          {/* Service Type */}
           <select name="serviceType" value={formData.serviceType} onChange={handleChange} className="w-full border p-2 rounded">
             <option value="Tutoring">Tutoring</option>
             <option value="Assignment Help">Assignment Help</option>
           </select>
 
+          {/* Mode */}
           <div>
             <label>I want:</label>
             <div className="flex gap-4 mt-1">
@@ -148,6 +152,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
             )}
           </div>
 
+          {/* Budget */}
           <div className="flex gap-2 items-center">
             <input type="number" name="budget" placeholder="Budget Amount" value={formData.budget} onChange={handleChange} className="border p-2 rounded w-full" />
             <select name="budgetType" value={formData.budgetType} onChange={handleChange} className="border p-2 rounded">
@@ -158,12 +163,24 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
             </select>
           </div>
 
+          {/*Total Hours Input */}
+          <input
+            type="number"
+            name="totalHours"
+            placeholder="Total Hours"
+            value={formData.totalHours}
+            onChange={handleChange}
+            className="w-full border p-2 rounded"
+          />
+
+          {/* Gender Preference */}
           <select name="genderPreference" value={formData.genderPreference} onChange={handleChange} className="w-full border p-2 rounded">
             <option value="">Gender Preference</option>
             <option value="Male">Male</option>
             <option value="Female">Female</option>
           </select>
 
+          {/* Languages */}
           <div>
             <label>Languages:</label>
             <div className="flex gap-2">
@@ -179,6 +196,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
             </div>
           </div>
 
+          {/* Country */}
           <select name="country" value={formData.country} onChange={handleChange} className="w-full border p-2 rounded">
             <option value="">Select Country</option>
             {countries.map((c) => (
@@ -186,6 +204,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
             ))}
           </select>
 
+          {/* Submit */}
           <div className="flex justify-end">
             <button type="submit" className="bg-blue-600 text-white px-6 py-2 rounded disabled:opacity-50" disabled={isSubmitting}>
               {isSubmitting ? "Posting..." : "Post Job"}

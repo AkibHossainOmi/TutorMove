@@ -150,6 +150,10 @@ export const jobAPI = {
 
   getJobsByLocation: (location) =>
     apiService.get('/api/jobs/by-location/', { params: { location } }),
+
+  unlockJob: (id) => apiService.post(`/api/jobs/${id}/unlock/`),
+
+  getJobUnlockPreview: (jobId) => apiService.get(`/api/jobs/${jobId}/preview/`),
 };
 
 export const gigApi = {
