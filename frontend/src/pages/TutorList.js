@@ -19,7 +19,6 @@ const TutorList = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Fetch subjects separately
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
@@ -28,60 +27,44 @@ const TutorList = () => {
           ? response.data
           : response.data?.results || [];
         setSubjects(list);
-      } catch (err) {
-        console.warn('Failed to load subjects, ignoring...', err);
+      } catch {
         setSubjects([]);
       }
     };
     fetchSubjects();
   }, []);
 
-  // Fetch locations separately
   useEffect(() => {
     const fetchLocations = async () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/locations/`);
         setLocations(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.warn('Failed to load locations, ignoring...', err);
+      } catch {
         setLocations([]);
       }
     };
     fetchLocations();
   }, []);
 
-  // Fetch tutors based on available filters
   useEffect(() => {
-  const fetchTutors = async () => {
-    setLoading(true);
-    setError(null);
+    const fetchTutors = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await tutorAPI.getTutors();
+        const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
+        setTutors(page === 1 ? data : prev => [...prev, ...data]);
+        setHasMore(data.length === PAGE_SIZE);
+      } catch {
+        setError('Failed to fetch tutors. Please try again later.');
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchTutors();
+  }, [page, premiumOnly, selectedSubject, selectedLocation, subjects.length, locations.length]);
 
-    try {
-      // const params = {
-      //   page,
-      //   page_size: PAGE_SIZE,
-      //   ...(premiumOnly && { is_premium: true }),
-      //   ...(selectedSubject && subjects.length > 0 ? { subject: selectedSubject } : {}),
-      //   ...(selectedLocation && locations.length > 0 ? { location: selectedLocation } : {}),
-      // };
-
-      const res = await tutorAPI.getTutors();
-      const data = Array.isArray(res.data) ? res.data : (res.data.results || []);
-      setTutors(page === 1 ? data : prev => [...prev, ...data]);
-      setHasMore(data.length === PAGE_SIZE);
-    } catch (err) {
-      console.error('Failed to fetch tutors:', err);
-      setError('Failed to fetch tutors. Please try again later.');
-      setHasMore(false);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchTutors();
-}, [page, premiumOnly, selectedSubject, selectedLocation, subjects.length, locations.length]);
-
-  // Reset pagination when filters change
   useEffect(() => {
     setPage(1);
     setTutors([]);
@@ -97,93 +80,85 @@ const TutorList = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="h-24" />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <header className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900">Find Your Perfect Tutor</h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Explore our curated list of tutors and discover the right match for your learning needs.
-          </p>
-        </header>
+      {/* Hero */}
+      <section className="relative bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-20 text-center shadow-lg">
+        <h1 className="text-5xl md:text-6xl font-extrabold drop-shadow-lg">
+          Find Your Perfect Tutor
+        </h1>
+        <p className="mt-4 text-lg md:text-xl max-w-2xl mx-auto drop-shadow">
+          Explore our curated list of tutors and discover the right match for your learning needs.
+        </p>
+      </section>
 
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 -mt-16 relative z-10">
         {/* Filters */}
-        <section className="bg-white border border-gray-100 rounded-xl shadow-sm p-6 mb-10">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {/* Subject Filter */}
-              <div>
-                <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
-                <select
-                  id="subject"
-                  value={selectedSubject}
-                  onChange={e => setSelectedSubject(e.target.value)}
-                  disabled={subjects.length === 0}
-                  className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50"
-                >
-                  <option value="">All Subjects</option>
-                  {subjects.map(sub => (
-                    <option key={sub.id || sub} value={sub.name || sub}>
-                      {sub.name || sub}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Location Filter */}
-              <div>
-                <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <select
-                  id="location"
-                  value={selectedLocation}
-                  onChange={e => setSelectedLocation(e.target.value)}
-                  disabled={locations.length === 0}
-                  className="block w-full py-2 px-3 border border-gray-300 bg-white rounded-lg shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:opacity-50"
-                >
-                  <option value="">All Locations</option>
-                  {locations.map(loc => (
-                    <option key={loc} value={loc}>{loc}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Premium Checkbox */}
-              <div className="flex items-center mt-5">
-                <input
-                  type="checkbox"
-                  id="premium-only"
-                  checked={premiumOnly}
-                  onChange={e => setPremiumOnly(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label htmlFor="premium-only" className="ml-2 text-sm text-gray-700">
-                  Premium Tutors Only
-                </label>
-              </div>
-            </div>
-
-            <div className="flex items-end mt-2">
-              <button
-                onClick={resetFilters}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50"
+        <section className="bg-white rounded-3xl shadow-xl p-6 mb-12 border border-gray-100 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label htmlFor="subject" className="block text-sm font-semibold text-gray-700 mb-1">Subject</label>
+              <select
+                id="subject"
+                value={selectedSubject}
+                onChange={e => setSelectedSubject(e.target.value)}
+                disabled={subjects.length === 0}
+                className="w-full py-2 px-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition"
               >
-                Reset Filters
-              </button>
+                <option value="">All Subjects</option>
+                {subjects.map(sub => (
+                  <option key={sub.id || sub} value={sub.name || sub}>{sub.name || sub}</option>
+                ))}
+              </select>
             </div>
+
+            <div>
+              <label htmlFor="location" className="block text-sm font-semibold text-gray-700 mb-1">Location</label>
+              <select
+                id="location"
+                value={selectedLocation}
+                onChange={e => setSelectedLocation(e.target.value)}
+                disabled={locations.length === 0}
+                className="w-full py-2 px-3 border border-gray-300 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm transition"
+              >
+                <option value="">All Locations</option>
+                {locations.map(loc => (
+                  <option key={loc} value={loc}>{loc}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center mt-5 md:mt-0">
+              <input
+                type="checkbox"
+                id="premium-only"
+                checked={premiumOnly}
+                onChange={e => setPremiumOnly(e.target.checked)}
+                className="h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+              />
+              <label htmlFor="premium-only" className="ml-2 text-sm font-medium text-gray-700">Premium Tutors Only</label>
+            </div>
+          </div>
+
+          <div className="flex items-end md:mt-0 mt-4">
+            <button
+              onClick={resetFilters}
+              className="px-5 py-2 text-sm font-medium text-indigo-600 bg-indigo-100 hover:bg-indigo-200 rounded-xl transition"
+            >
+              Reset Filters
+            </button>
           </div>
         </section>
 
         {/* Loading */}
         {loading && (
           <div className="flex justify-center py-12">
-            <div className="animate-spin h-10 w-10 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin h-12 w-12 border-4 border-indigo-500 border-t-transparent rounded-full" />
           </div>
         )}
 
         {/* Error */}
         {error && (
-          <div className="bg-red-100 text-red-800 p-4 rounded mb-8">{error}</div>
+          <div className="bg-red-50 text-red-700 p-4 rounded mb-8 text-center">{error}</div>
         )}
 
         {/* Tutors */}
@@ -194,7 +169,7 @@ const TutorList = () => {
               <p>Try adjusting your filters</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
               {tutors.map(tutor => (
                 <TutorCard key={tutor.id} tutor={tutor} />
               ))}
@@ -207,7 +182,7 @@ const TutorList = () => {
           <div className="mt-12 text-center">
             <button
               onClick={() => setPage(p => p + 1)}
-              className="px-6 py-3 text-base font-medium text-white bg-blue-600 rounded-md shadow hover:bg-blue-700 transition"
+              className="px-8 py-3 text-base font-semibold text-white bg-gradient-to-r from-indigo-600 to-blue-500 rounded-2xl shadow-lg hover:from-indigo-700 hover:to-blue-600 transition"
             >
               Load More Tutors
             </button>

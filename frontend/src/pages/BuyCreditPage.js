@@ -15,7 +15,6 @@ const useNotification = () => {
 const BuyCreditPage = () => {
   const { showNotification } = useNotification();
   const [currentUser, setCurrentUser] = useState(null);
-  const [creditsToBuy, setCreditsToBuy] = useState(1);
   const [totalAmount, setTotalAmount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -23,7 +22,6 @@ const BuyCreditPage = () => {
   const [selectedPackage, setSelectedPackage] = useState(null);
 
   const USD_CONVERSION_RATE = 122.33;
-  const PRICE_PER_CREDIT = 10;
 
   const creditPackages = [
     { id: 1, credits: 10, price: 10, discount: 0, bonus: 0 },
@@ -50,26 +48,19 @@ const BuyCreditPage = () => {
   useEffect(() => {
     if (selectedPackage) {
       setTotalAmount(selectedPackage.price);
-      setCreditsToBuy(selectedPackage.credits);
     } else {
-      setTotalAmount(creditsToBuy * PRICE_PER_CREDIT);
+      setTotalAmount(0);
     }
-  }, [creditsToBuy, selectedPackage]);
-
-  const handleCreditsChange = (e) => {
-    const value = parseInt(e.target.value);
-    setSelectedPackage(null);
-    if (!isNaN(value) && value >= 1) {
-      setCreditsToBuy(value);
-    } else {
-      setCreditsToBuy(1);
-    }
-  };
+  }, [selectedPackage]);
 
   const handlePurchaseCredits = async () => {
     if (!currentUser?.user_id) {
       showNotification("Authentication required", 'error');
       setError("Please log in to continue");
+      return;
+    }
+    if (!selectedPackage) {
+      setError("Please select a package before proceeding.");
       return;
     }
 
@@ -79,7 +70,7 @@ const BuyCreditPage = () => {
 
     try {
       const purchaseData = {
-        credits: creditsToBuy,
+        credits: selectedPackage.credits,
         amount: totalAmount,
         user_id: currentUser.user_id
       };
@@ -111,7 +102,7 @@ const BuyCreditPage = () => {
     );
   }
 
-  if (error) {
+  if (error && !currentUser) {
     return (
       <>
         <Navbar />
@@ -133,57 +124,51 @@ const BuyCreditPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <main className="max-w-4xl mx-auto px-4 py-10">
+      <main className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-8">Buy Credits</h1>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            {creditPackages.map(pkg => (
-              <div
-                key={pkg.id}
-                onClick={() => setSelectedPackage(pkg)}
-                className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedPackage?.id === pkg.id ? 'border-blue-500 bg-blue-50' : 'hover:border-blue-300'
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div>
-                    <h2 className="text-lg font-semibold">{pkg.credits} Credits</h2>
-                    <p className="text-sm text-gray-500">{pkg.discount > 0 ? `${pkg.discount}% off` : 'Standard price'}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-blue-600 font-semibold">{pkg.price} Taka {renderPriceInUSD(pkg.price)}</p>
-                    {pkg.bonus > 0 && <span className="text-xs text-green-600">+{pkg.bonus} Bonus</span>}
-                  </div>
+        <div className="space-y-4">
+          {creditPackages.map(pkg => (
+            <div
+              key={pkg.id}
+              onClick={() => setSelectedPackage(pkg)}
+              className={`border rounded-lg p-5 cursor-pointer transition-all ${
+                selectedPackage?.id === pkg.id
+                  ? 'border-blue-500 bg-blue-50 shadow'
+                  : 'hover:border-blue-300'
+              }`}
+            >
+              <div className="flex justify-between items-center">
+                <div>
+                  <h2 className="text-lg font-semibold">{pkg.credits} Credits</h2>
+                  <p className="text-sm text-gray-500">
+                    {pkg.discount > 0 ? `${pkg.discount}% off` : 'Standard price'}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-blue-600 font-semibold">
+                    {pkg.price} Taka {renderPriceInUSD(pkg.price)}
+                  </p>
+                  {pkg.bonus > 0 && (
+                    <span className="text-xs text-green-600">+{pkg.bonus} Bonus</span>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
+        </div>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h2 className="text-xl font-semibold mb-4 text-gray-800">Purchase Summary</h2>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Custom Credits</label>
-            <input
-              type="number"
-              className="w-full px-4 py-2 border rounded-lg mb-4"
-              value={selectedPackage ? selectedPackage.credits : creditsToBuy}
-              onChange={handleCreditsChange}
-              disabled={!!selectedPackage}
-            />
-
-            <div className="text-sm text-gray-600 mb-2">Total: <span className="font-semibold text-blue-600">{totalAmount} Taka</span> {renderPriceInUSD(totalAmount)}</div>
-
-            <button
-              onClick={handlePurchaseCredits}
-              disabled={isLoading}
-              className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-            >
-              {isLoading ? 'Processing...' : 'Proceed to Payment'}
-            </button>
-
-            {statusMessage && <p className="text-sm text-blue-600 mt-2">{statusMessage}</p>}
-            {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
-          </div>
+        {/* Proceed button under packages */}
+        <div className="mt-6">
+          <button
+            onClick={handlePurchaseCredits}
+            disabled={isLoading}
+            className="w-full py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+          >
+            {isLoading ? 'Processing...' : 'Proceed to Payment'}
+          </button>
+          {statusMessage && <p className="text-sm text-blue-600 mt-2">{statusMessage}</p>}
+          {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
         </div>
       </main>
       <Footer />
