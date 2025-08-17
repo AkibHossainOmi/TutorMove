@@ -3,38 +3,20 @@ import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import {
-  FiBriefcase,
-  FiMapPin,
-  FiBook,
-  FiDollarSign,
-  FiSearch,
-} from "react-icons/fi";
-import { jobAPI } from "../utils/apiService";
+import { FiBriefcase, FiMapPin, FiBook, FiDollarSign } from "react-icons/fi";
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
-  const [filteredJobs, setFilteredJobs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState("all");
-
-  const jobTypes = [
-    { value: "all", label: "All" },
-    { value: "full-time", label: "Full-time" },
-    { value: "part-time", label: "Part-time" },
-    { value: "contract", label: "Contract" },
-    { value: "freelance", label: "Freelance" },
-  ];
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await jobAPI.getJobs();
-        setJobs(res.data || []);
-      } catch {
-        setError("Failed to fetch jobs. Please try again later.");
+        const res = await fetch("http://localhost:5000/api/jobs");
+        const data = await res.json();
+        setJobs(data);
+      } catch (err) {
+        console.error("Error fetching jobs:", err);
       } finally {
         setLoading(false);
       }
@@ -42,136 +24,69 @@ const JobList = () => {
     fetchJobs();
   }, []);
 
-  useEffect(() => {
-    const results = jobs.filter((job) => {
-      const title = job.title?.toLowerCase() || "";
-      const subject = job.subject?.toLowerCase() || "";
-      const searchMatch =
-        title.includes(search.toLowerCase()) ||
-        subject.includes(search.toLowerCase());
-      const filterMatch = filter === "all" || job.job_type === filter;
-      return searchMatch && filterMatch;
-    });
-    setFilteredJobs(results);
-  }, [jobs, search, filter]);
-
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <main className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pt-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          {/* Header */}
-          <header className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800">Browse Jobs</h1>
-            <p className="text-gray-600 mt-2">
-              Find your next opportunity from our job listings
-            </p>
-          </header>
-
-          {/* Search + Filter (Sticky) */}
-          <div className="sticky top-16 z-20 bg-white/80 backdrop-blur shadow-sm rounded-lg p-4 mb-8">
-            <div className="flex flex-col md:flex-row items-center gap-4">
-              {/* Search */}
-              <div className="relative w-full md:max-w-md">
-                <FiSearch className="absolute left-3 top-3.5 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search by title or subject..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-
-              {/* Filters */}
-              <div className="flex flex-wrap gap-2 justify-center">
-                {jobTypes.map((type) => (
-                  <button
-                    key={type.value}
-                    onClick={() => setFilter(type.value)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                      filter === type.value
-                        ? "bg-blue-600 text-white shadow"
-                        : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-100"
+      <main className="flex-grow container mx-auto px-4 md:px-8 lg:px-16 pt-28 pb-16">
+        <h1 className="text-3xl font-bold text-gray-800 mb-10 text-center">
+          Latest Job Posts
+        </h1>
+        {loading ? (
+          <p className="text-center text-gray-500">Loading jobs...</p>
+        ) : jobs.length === 0 ? (
+          <p className="text-center text-gray-500">No jobs found.</p>
+        ) : (
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {jobs.map((job) => (
+              <Link
+                to={`/jobs/${job.id}`}
+                key={job.id}
+                className="bg-white rounded-2xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition block"
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <h3 className="text-lg font-semibold text-gray-800">
+                    {job.title}
+                  </h3>
+                  <span
+                    className={`px-3 py-1 text-xs rounded-full font-medium ${
+                      job.status === "active"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-gray-100 text-gray-600"
                     }`}
                   >
-                    {type.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {job.status}
+                  </span>
+                </div>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <p className="flex items-center gap-2">
+                    <FiBook className="text-gray-400" />{" "}
+                    {job.subject || "Not specified"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiMapPin className="text-gray-400" />{" "}
+                    {job.location || "Remote"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiDollarSign className="text-gray-400" />{" "}
+                    {job.budget || "Negotiable"}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <FiBriefcase className="text-gray-400" /> Posted on{" "}
+                    {new Date(job.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="mt-5 text-right">
+                  <span className="inline-block bg-indigo-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    View Details
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
-
-          {/* Loading */}
-          {loading && (
-            <div className="flex justify-center py-20">
-              <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-blue-600"></div>
-            </div>
-          )}
-
-          {/* Error */}
-          {error && (
-            <div className="max-w-md mx-auto bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg text-center">
-              {error}
-            </div>
-          )}
-
-          {/* Empty */}
-          {!loading && !error && filteredJobs.length === 0 && (
-            <div className="text-center py-20 text-gray-500">
-              <FiBriefcase className="mx-auto text-4xl mb-2" />
-              <p>No jobs found</p>
-              <p className="text-sm">
-                {search || filter !== "all"
-                  ? "Try adjusting your search or filters."
-                  : "Check back later for new opportunities."}
-              </p>
-            </div>
-          )}
-
-          {/* Job Grid */}
-          {!loading && !error && filteredJobs.length > 0 && (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredJobs.map((job) => (
-                <Link
-                  to={`/jobs/${job.id}`}
-                  key={job.id}
-                  className="bg-white rounded-xl shadow hover:shadow-md border border-gray-200 hover:border-blue-300 transition p-6 flex flex-col"
-                >
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2 line-clamp-2">
-                      {job.title}
-                    </h3>
-                    <div className="flex items-center text-gray-600 text-sm mb-1">
-                      <FiBriefcase className="mr-2" />{" "}
-                      {job.job_type || "Not specified"}
-                    </div>
-                    <div className="flex items-center text-gray-600 text-sm mb-1">
-                      <FiBook className="mr-2" /> {job.subject}
-                    </div>
-                    <div className="flex items-center text-gray-600 text-sm mb-1">
-                      <FiMapPin className="mr-2" /> {job.location || "Remote"}
-                    </div>
-                    {job.salary && (
-                      <div className="flex items-center text-gray-600 text-sm mb-1">
-                        <FiDollarSign className="mr-2" /> {job.salary}
-                      </div>
-                    )}
-                  </div>
-                  <div className="mt-4 pt-3 border-t text-xs text-gray-500 flex justify-between">
-                    <span>
-                      Posted {new Date(job.created_at).toLocaleDateString()}
-                    </span>
-                    <span className="text-blue-600 font-medium">View →</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
+        )}
       </main>
       <Footer />
-    </>
+    </div>
   );
 };
 
