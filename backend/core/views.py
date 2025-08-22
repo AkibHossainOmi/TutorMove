@@ -3,7 +3,7 @@ from django.db.models import Avg
 from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 from geopy.geocoders import Nominatim
 from rest_framework.views import APIView
-from django.db.models import Q
+from django.db.models import Sum, Q
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import datetime, timedelta
@@ -751,17 +751,63 @@ class JobViewSet(viewsets.ModelViewSet):
         user.credit.balance -= 1
         user.credit.save(update_fields=["balance"])
 
-        # Notify teachers (optional)
-        teachers = User.objects.filter(user_type='teacher')
-        for teacher in teachers:
-            if teacher.email:
-                send_mail(
-                    'New Job Posted',
-                    f'A new job matching your profile has been posted: {job.description}',
-                    'from@example.com',
-                    [teacher.email],
-                    fail_silently=True,
+        # -------------------------------
+        # Notify tutors with active gigs and active subjects
+        # -------------------------------
+        active_job_subjects = job.subjects.filter(is_active=True).values_list("name", flat=True)
+
+        print(f"Active job subjects for job {job.id}: {list(active_job_subjects)}")
+        # Tutors who have active gigs with subjects matching the active job subjects
+        tutors = User.objects.filter(
+            user_type="tutor",
+            gigs__subject__in=active_job_subjects
+        ).distinct()
+
+        print(f"Tutors matching active subjects: {[t.username for t in tutors]}")
+
+        # Annotate with total points spent on those gigs
+        tutors = tutors.annotate(
+            total_points_spent=Sum(
+                'gigs__used_credits',
+                filter=Q(gigs__subject__in=active_job_subjects)
+            )
+        ).order_by('-total_points_spent')
+
+        # Sequentially send email to tutors
+        for tutor in tutors:
+            print(tutor)
+            if tutor.email:
+                verify_url = f"{settings.FRONTEND_SITE_URL}/jobs/{job.id}/"
+                html_content = f"""
+                <html>
+                <body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 40px;">
+                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
+                    <h2 style="color: #111827;">New Job Matching Your Gig!</h2>
+                    <p style="font-size: 16px; color: #374151;">A new job has been posted that matches your active gig:</p>
+                    <ul style="font-size: 14px; color: #374151;">
+                        <li><strong>Description:</strong> {job.description}</li>
+                        <li><strong>Location:</strong> {job.location}</li>
+                        <li><strong>Budget:</strong> {job.budget} USD</li>
+                        <li><strong>Subjects:</strong> {', '.join(active_job_subjects)}</li>
+                    </ul>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="{verify_url}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">View Job & Apply</a>
+                    </div>
+                    <p style="font-size: 14px; color: #6b7280;">If you are not interested in this type of job, you can safely ignore this email.</p>
+                    </div>
+                </body>
+                </html>
+                """
+                text_content = f"New job posted: {job.description}\nView & apply here: {verify_url}"
+                from django.core.mail import EmailMultiAlternatives
+                msg = EmailMultiAlternatives(
+                    subject="New Job Matching Your Gig",
+                    body=text_content,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[tutor.email],
                 )
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
     def matched_jobs(self, request):

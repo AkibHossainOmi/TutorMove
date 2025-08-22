@@ -19,6 +19,15 @@ const JobDetail = () => {
   const [unlockStatus, setUnlockStatus] = useState('idle'); // idle | loading | success | failed
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
   const [unlockErrorMessage, setUnlockErrorMessage] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
+
+  // Get logged-in user from localStorage
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) setCurrentUser(JSON.parse(userData));
+  }, []);
+
+  const isTutor = currentUser?.user_type === 'teacher';
 
   useEffect(() => {
     let isMounted = true;
@@ -29,10 +38,12 @@ const JobDetail = () => {
         if (!isMounted) return;
         setJob(response.data);
 
-        const unlockRes = await jobAPI.getJobUnlockPreview(id);
-        if (!isMounted) return;
-        setJobUnlocked(unlockRes.data.unlocked);
-        setCreditsNeeded(unlockRes.data.points_needed);
+        if (isTutor) {
+          const unlockRes = await jobAPI.getJobUnlockPreview(id);
+          if (!isMounted) return;
+          setJobUnlocked(unlockRes.data.unlocked);
+          setCreditsNeeded(unlockRes.data.points_needed);
+        }
       } catch (err) {
         if (!isMounted) return;
         console.error('Error fetching job:', err);
@@ -45,7 +56,7 @@ const JobDetail = () => {
 
     fetchJobData();
     return () => { isMounted = false; };
-  }, [id]);
+  }, [id, isTutor]);
 
   const handleUnlockJob = async () => {
     setUnlockStatus('loading');
@@ -145,12 +156,12 @@ const JobDetail = () => {
             <DetailItem icon={<FiUsers />} label="Gender Preference" value={job.gender_preference} bg="yellow" />
             <DetailItem icon={<FiUsers />} label="Applicants" value={job.applicants_count || 0} bg="cyan" />
             <div className="flex items-start space-x-3">
-              <div className={`p-2 rounded-lg ${jobUnlocked ? "bg-gray-100 text-gray-700" : "bg-gray-100 text-gray-400"}`}>
+              <div className={`p-2 rounded-lg ${jobUnlocked || !isTutor ? "bg-gray-100 text-gray-700" : "bg-gray-100 text-gray-400"}`}>
                 <FiPhone className="text-lg" />
               </div>
               <div>
                 <p className="text-sm">Phone</p>
-                <p className="font-medium">{jobUnlocked ? (job.phone || "N/A") : "Unlock to view"}</p>
+                <p className="font-medium">{jobUnlocked || !isTutor ? (job.phone || "N/A") : "Unlock to view"}</p>
               </div>
             </div>
             {job.distance && <DetailItem icon={<FiMapPin />} label="Distance" value={`${job.distance} km`} bg="red" />}
@@ -162,8 +173,8 @@ const JobDetail = () => {
             <p className="text-slate-700">{job.description}</p>
           </div>
 
-          {/* Unlock Section */}
-          {!jobUnlocked && (
+          {/* Unlock Section (tutor only) */}
+          {isTutor && !jobUnlocked && (
             <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl text-center space-y-4">
               <p className="text-slate-700 text-lg">
                 Unlock this job for <span className="font-semibold">{creditsNeeded} credits</span>
@@ -189,7 +200,7 @@ const JobDetail = () => {
             </div>
           )}
 
-          {jobUnlocked && (
+          {isTutor && jobUnlocked && (
             <div className="p-6 sm:p-8 bg-green-50 rounded-b-xl text-center text-green-700 font-semibold">
               You have unlocked this job!
             </div>
@@ -197,12 +208,14 @@ const JobDetail = () => {
         </div>
 
         {/* Buy Credits Modal */}
-        <BuyCreditsModal
-          show={showBuyCreditsModal}
-          onClose={() => setShowBuyCreditsModal(false)}
-          onBuyCredits={() => { window.location.href = '/buy-credits'; }}
-          message={`You need ${creditsNeeded} credits to unlock this job.`}
-        />
+        {isTutor && (
+          <BuyCreditsModal
+            show={showBuyCreditsModal}
+            onClose={() => setShowBuyCreditsModal(false)}
+            onBuyCredits={() => { window.location.href = '/buy-credits'; }}
+            message={`You need ${creditsNeeded} credits to unlock this job.`}
+          />
+        )}
       </div>
     );
   };

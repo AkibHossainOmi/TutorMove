@@ -50,9 +50,7 @@ const JobCard = ({ job, onView }) => {
   // Safely handle status and subject
   const status = typeof job?.status === 'string' ? job.status.toLowerCase() : 'active';
   const subject =
-    typeof job?.subject === 'string'
-      ? job.subject
-      : job?.subject?.title || job?.subject?.name || job?.subject_name || job?.subject__c || '—';
+    job.subject_details;
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md hover:border-gray-200 transition">
