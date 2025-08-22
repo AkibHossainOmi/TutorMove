@@ -235,14 +235,14 @@ const JobCard = ({ job }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '10px' }}>
           <span style={{
-            backgroundColor: job.status === 'open' ? '#d1ecf1' : '#f8d7da',
-            color: job.status === 'open' ? '#0c5460' : '#721c24',
+            backgroundColor: job.status === 'Open' ? '#d1ecf1' : '#f8d7da',
+            color: job.status === 'Open' ? '#0c5460' : '#721c24',
             padding: '4px 8px',
             borderRadius: '12px',
             fontSize: '12px',
             fontWeight: '500'
           }}>
-            {job.status === 'open' ? '🟢 Open' : '🔴 Closed'}
+            {job.status === 'Open' ? '🟢 Open' : '🔴 Closed'}
           </span>
           <span style={{
             backgroundColor: '#e9ecef',
@@ -270,7 +270,7 @@ const JobCard = ({ job }) => {
           >
             View Details
           </Link>
-          {job.status === 'open' && (
+          {job.status === 'Open' && (
             <button
               onClick={handleApply}
               disabled={applying || applied}

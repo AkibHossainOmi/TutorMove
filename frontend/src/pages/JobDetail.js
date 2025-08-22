@@ -3,7 +3,10 @@ import { useParams } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import BuyCreditsModal from '../components/BuyCreditsModal';
-import { FiBriefcase, FiMapPin, FiBook, FiUser, FiCalendar, FiAlertCircle, FiDollarSign, FiClock, FiGlobe, FiPhone, FiUsers } from 'react-icons/fi';
+import { 
+  FiBriefcase, FiMapPin, FiBook, FiUser, FiCalendar, 
+  FiAlertCircle, FiDollarSign, FiClock, FiGlobe, FiPhone, FiUsers 
+} from 'react-icons/fi';
 import { jobAPI } from '../utils/apiService';
 
 const JobDetail = () => {
@@ -15,6 +18,7 @@ const JobDetail = () => {
   const [creditsNeeded, setCreditsNeeded] = useState(0);
   const [unlockStatus, setUnlockStatus] = useState('idle'); // idle | loading | success | failed
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
+  const [unlockErrorMessage, setUnlockErrorMessage] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -45,15 +49,22 @@ const JobDetail = () => {
 
   const handleUnlockJob = async () => {
     setUnlockStatus('loading');
+    setUnlockErrorMessage('');
     try {
       await jobAPI.unlockJob(id);
       setJobUnlocked(true);
       setUnlockStatus('success');
       setCreditsNeeded(0);
+
+      // Update applicants count after unlock
+      setJob(prev => ({ ...prev, applicants_count: (prev.applicants_count || 0) + 1 }));
     } catch (err) {
       console.error('Error unlocking job:', err);
       if (err.response?.data?.detail === 'Insufficient credits') {
         setShowBuyCreditsModal(true);
+      } else if (err.response?.data?.detail === 'You need an active gig with a matching subject to unlock this job.') {
+        setUnlockErrorMessage(err.response.data.detail);
+        setUnlockStatus('failed');
       } else {
         setUnlockStatus('failed');
       }
@@ -97,9 +108,9 @@ const JobDetail = () => {
     );
 
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Job Header */}
-        <div className="bg-blue-900 rounded-t-xl p-8 text-white">
+        <div className="bg-blue-900 rounded-xl p-8 text-white shadow-lg">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h1 className="text-3xl font-bold mb-2">{job.service_type}</h1>
@@ -122,90 +133,27 @@ const JobDetail = () => {
         </div>
 
         {/* Job Details */}
-        <div className="bg-white rounded-b-xl shadow-md divide-y divide-slate-200">
-          <div className="p-6 sm:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-slate-700">
+        <div className="bg-white rounded-xl shadow-md divide-y divide-slate-200 overflow-hidden">
+          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-slate-700">
+            <DetailItem icon={<FiCalendar />} label="Posted on" value={formatDate(job.created_at)} bg="blue" />
+            <DetailItem icon={<FiDollarSign />} label="Budget" value={`${job.budget} USD`} bg="green" />
+            <DetailItem icon={<FiClock />} label="Budget Type" value={job.budget_type} bg="purple" />
+            <DetailItem icon={<FiBook />} label="Subjects" value={job.subject_details?.join(', ')} bg="amber" />
+            <DetailItem icon={<FiUsers />} label="Mode" value={job.mode?.join(', ')} bg="indigo" />
+            <DetailItem icon={<FiBook />} label="Languages" value={job.languages?.join(', ')} bg="teal" />
+            <DetailItem icon={<FiBook />} label="Education Level" value={job.education_level} bg="pink" />
+            <DetailItem icon={<FiUsers />} label="Gender Preference" value={job.gender_preference} bg="yellow" />
+            <DetailItem icon={<FiUsers />} label="Applicants" value={job.applicants_count || 0} bg="cyan" />
             <div className="flex items-start space-x-3">
-              <div className="bg-blue-100 p-2 rounded-lg text-blue-900"><FiCalendar className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Posted on</p>
-                <p className="font-medium">{formatDate(job.created_at)}</p>
+              <div className={`p-2 rounded-lg ${jobUnlocked ? "bg-gray-100 text-gray-700" : "bg-gray-100 text-gray-400"}`}>
+                <FiPhone className="text-lg" />
               </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-green-100 p-2 rounded-lg text-green-700"><FiDollarSign className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Budget</p>
-                <p className="font-medium">{job.budget} USD</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-purple-100 p-2 rounded-lg text-purple-700"><FiClock className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Budget Type</p>
-                <p className="font-medium">{job.budget_type}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-amber-100 p-2 rounded-lg text-amber-700"><FiBook className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Subjects</p>
-                <p className="font-medium">{job.subject_details?.join(', ')}</p>
-              </div>
-            </div>
-
-            {/* Additional Fields */}
-            <div className="flex items-start space-x-3">
-              <div className="bg-indigo-100 p-2 rounded-lg text-indigo-700"><FiUsers className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Mode</p>
-                <p className="font-medium">{job.mode?.join(', ')}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-teal-100 p-2 rounded-lg text-teal-700"><FiBook className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Languages</p>
-                <p className="font-medium">{job.languages?.join(', ')}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-pink-100 p-2 rounded-lg text-pink-700"><FiBook className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Education Level</p>
-                <p className="font-medium">{job.education_level}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-yellow-100 p-2 rounded-lg text-yellow-700"><FiUsers className="text-lg" /></div>
-              <div>
-                <p className="text-sm">Gender Preference</p>
-                <p className="font-medium">{job.gender_preference}</p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-3">
-              <div className="bg-gray-100 p-2 rounded-lg text-gray-700"><FiPhone className="text-lg" /></div>
               <div>
                 <p className="text-sm">Phone</p>
-                <p className="font-medium">{job.phone || 'N/A'}</p>
+                <p className="font-medium">{jobUnlocked ? (job.phone || "N/A") : "Unlock to view"}</p>
               </div>
             </div>
-
-            {job.distance && (
-              <div className="flex items-start space-x-3">
-                <div className="bg-red-100 p-2 rounded-lg text-red-700"><FiMapPin className="text-lg" /></div>
-                <div>
-                  <p className="text-sm">Distance</p>
-                  <p className="font-medium">{job.distance} km</p>
-                </div>
-              </div>
-            )}
+            {job.distance && <DetailItem icon={<FiMapPin />} label="Distance" value={`${job.distance} km`} bg="red" />}
           </div>
 
           {/* Description */}
@@ -216,22 +164,28 @@ const JobDetail = () => {
 
           {/* Unlock Section */}
           {!jobUnlocked && (
-            <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl text-center">
-              <p className="mb-4 text-slate-700">
+            <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl text-center space-y-4">
+              <p className="text-slate-700 text-lg">
                 Unlock this job for <span className="font-semibold">{creditsNeeded} credits</span>
               </p>
               <button
                 onClick={handleUnlockJob}
-                disabled={unlockStatus === 'loading' || unlockStatus === 'success'}
+                disabled={unlockStatus === 'loading' || unlockStatus === 'success' || unlockErrorMessage}
                 className={`px-6 py-3 rounded-lg font-semibold text-white ${
                   unlockStatus === 'success'
                     ? 'bg-green-700 hover:bg-green-800'
                     : 'bg-blue-900 hover:bg-blue-800'
-                } ${unlockStatus === 'loading' ? 'opacity-90 cursor-not-allowed' : ''}`}
+                } ${unlockStatus === 'loading' ? 'opacity-90 cursor-not-allowed' : ''} ${unlockErrorMessage ? 'bg-gray-400 cursor-not-allowed' : ''}`}
               >
                 {unlockStatus === 'loading' ? 'Unlocking...' : unlockStatus === 'success' ? 'Unlocked!' : 'Unlock Job'}
               </button>
-              {unlockStatus === 'failed' && <p className="mt-2 text-red-600">Unlock failed. Try again.</p>}
+
+              {unlockErrorMessage && (
+                <div className="mt-4 flex items-center justify-center bg-yellow-50 border-l-4 border-yellow-400 p-4 text-yellow-800 rounded-md shadow-sm">
+                  <FiAlertCircle className="mr-2 text-xl" />
+                  <span className="text-sm font-medium">{unlockErrorMessage}</span>
+                </div>
+              )}
             </div>
           )}
 
@@ -263,5 +217,16 @@ const JobDetail = () => {
     </>
   );
 };
+
+// Small reusable detail card
+const DetailItem = ({ icon, label, value, bg }) => (
+  <div className="flex items-start space-x-3">
+    <div className={`bg-${bg}-100 p-2 rounded-lg text-${bg}-700 flex-shrink-0`}>{icon}</div>
+    <div>
+      <p className="text-sm text-slate-500">{label}</p>
+      <p className="font-medium text-slate-800">{value || 'N/A'}</p>
+    </div>
+  </div>
+);
 
 export default JobDetail;

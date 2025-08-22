@@ -3,7 +3,7 @@ import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { creditAPI, gigApi, notificationAPI } from '../utils/apiService';
+import { creditAPI, gigApi, notificationAPI, jobAPI } from '../utils/apiService';
 
 // Import components
 import DashboardHeader from '../components/Dashboard/Teacher/DashboardHeader';
@@ -20,28 +20,6 @@ const useChat = () => ({
   openChat: (chatId) => console.log(`Opening chat ${chatId}`),
   unreadCount: 0
 });
-
-/**
- * API functions for job-related operations.
- */
-const jobAPI = {
-  getMatchedJobs: async () => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return {
-      data: {
-        results: []
-      }
-    };
-  },
-  getMyApplications: async () => {
-    await new Promise(resolve => setTimeout(resolve, 400));
-    return {
-      data: {
-        results: []
-      }
-    };
-  }
-};
 
 /**
  * API functions for tutor-related operations.
@@ -89,7 +67,6 @@ const TeacherDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     myGigs: [],
     matchedJobs: [],
-    applications: [],
     earnings: {
       total: 0,
       pending: 0,
@@ -141,23 +118,19 @@ const TeacherDashboard = () => {
         return;
       }
 
-      const [gigsData, creditBalanceData, matchedJobsResponse, applicationsResponse] = await Promise.all([
+      const [gigsData, creditBalanceData, matchedJobsResponse] = await Promise.all([
         tutorAPI.getTutorGigs(currentUser.user_id),
         credit.getUserCredits(currentUser.user_id),
         jobAPI.getMatchedJobs(),
-        jobAPI.getMyApplications(),
       ]);
 
       const myGigs = gigsData || [];
-      const matchedJobs = matchedJobsResponse.data?.results || [];
-      const applications = applicationsResponse.data?.results || [];
+      const matchedJobs = matchedJobsResponse.data || [];
       const creditBalance = creditBalanceData.balance || 0;
-
       setDashboardData(prev => ({
         ...prev,
         myGigs: myGigs,
         matchedJobs: matchedJobs,
-        applications: applications,
         earnings: {
           total: creditBalance,
           pending: myGigs.filter(gig => gig.status === 'pending').length * 20,
@@ -165,7 +138,6 @@ const TeacherDashboard = () => {
         },
         stats: {
           activeGigs: myGigs.filter(gig => gig.status === 'active').length || 0,
-          completedJobs: applications.filter(app => app.status === 'completed').length || 0,
           creditBalance: creditBalance,
         }
       }));

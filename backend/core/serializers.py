@@ -155,11 +155,21 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 # === GIG SERIALIZER ===
 
+
 class GigSerializer(serializers.ModelSerializer):
+    subject_active = serializers.SerializerMethodField()
+
     class Meta:
         model = Gig
         fields = '__all__'
         read_only_fields = ['tutor', 'used_credits']
+
+    def get_subject_active(self, obj):
+        try:
+            subject = Subject.objects.get(name__iexact=obj.subject)
+            return subject.is_active
+        except Subject.DoesNotExist:
+            return False
 
 # === JOB UNLOCK SERIALIZER ===
 class JobUnlockSerializer(serializers.ModelSerializer):
@@ -217,6 +227,8 @@ class JobSerializer(serializers.ModelSerializer):
     )
     subject_details = serializers.SerializerMethodField(read_only=True)
     student = StudentSerializer(read_only=True)
+    can_unlock = serializers.SerializerMethodField(read_only=True)
+    applicants_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Job
@@ -224,10 +236,28 @@ class JobSerializer(serializers.ModelSerializer):
             'id', 'student', 'description', 'location', 'country',
             'service_type', 'education_level', 'gender_preference', 'budget',
             'budget_type', 'phone', 'mode', 'distance', 'languages',
-            'subjects', 'subject_details', 'total_hours',
-            'created_at', 'updated_at'
+            'subjects', 'subject_details', 'total_hours', 'status', 'assigned_tutor',
+            'created_at', 'updated_at', 'can_unlock', 'applicants_count'
         ]
         read_only_fields = ['id', 'student', 'created_at', 'updated_at']
+
+    def get_applicants_count(self, obj):
+        return obj.unlocks.count()
+
+    def get_can_unlock(self, obj):
+        request = self.context.get('request')
+        if not request or not request.user.is_authenticated:
+            return False
+
+        user = request.user
+        if user.user_type != "tutor":
+            return False
+
+        # Get all subject names from tutor's gigs (string field)
+        gig_subjects = user.gigs.values_list("subject", flat=True)
+
+        # Check if any of the job's subjects match tutor's gig subjects
+        return obj.subjects.filter(name__in=gig_subjects, is_active=True).exists()
 
     def get_subject_details(self, obj):
         return [subject.name for subject in obj.subjects.all()]

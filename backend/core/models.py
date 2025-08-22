@@ -169,7 +169,7 @@ class Payment(models.Model):
 class Subject(models.Model):
     name = models.CharField(max_length=100, unique=True)
     aliases = models.CharField(max_length=255, blank=True, help_text="Comma-separated list of alternate names")
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=False)
 
     def alias_list(self):
         return [a.strip() for a in self.aliases.split(',') if a.strip()]
@@ -256,6 +256,13 @@ class Job(models.Model):
         default='Primary',  # Default value here
     )
 
+    STATUS_CHOICES = [
+        ("Open", "Open"),
+        ("Assigned", "Assigned"),
+        ("Completed", "Completed"),
+        ("Cancelled", "Cancelled"),
+    ]
+
     service_type = models.CharField(max_length=20, choices=SERVICE_TYPE_CHOICES, default='Tutoring')
 
     distance = models.PositiveIntegerField(null=True, blank=True, help_text="Distance in kilometers if Travel to Tutor")
@@ -272,6 +279,16 @@ class Job(models.Model):
     )
 
     country = models.CharField(max_length=100, blank=True, default='Unknown')
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Open")
+
+    assigned_tutor = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_jobs"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

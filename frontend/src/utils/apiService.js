@@ -126,7 +126,6 @@ export const tutorAPI = {
   getFavoriteTutors: () => apiService.get('/api/tutors/favorites/'),
   addToFavorites: (tutorId) => apiService.post(`/api/tutors/${tutorId}/favorite/`),
   removeFromFavorites: (tutorId) => apiService.delete(`/api/tutors/${tutorId}/favorite/`),
-  getMatchedJobs: () => apiService.get('/api/tutors/matched-jobs/'),
   updateTeachingDetails: (details) => apiService.patch('/api/tutors/teaching-details/', details),
   updateEducation: (eduData) => apiService.patch('/api/tutors/education/', eduData),
   toggleGigVisibility: (gigId, isVisible) => apiService.patch(`/api/tutors/${gigId}/visibility/`, { is_visible: isVisible }),
@@ -154,6 +153,8 @@ export const jobAPI = {
   unlockJob: (id) => apiService.post(`/api/jobs/${id}/unlock/`),
 
   getJobUnlockPreview: (jobId) => apiService.get(`/api/jobs/${jobId}/preview/`),
+
+  getMatchedJobs: () => apiService.get('/api/jobs/matched_jobs/'),
 };
 
 export const gigApi = {

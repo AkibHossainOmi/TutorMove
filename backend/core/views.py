@@ -492,7 +492,13 @@ class GigViewSet(viewsets.ModelViewSet):
             credit.save()
         except Credit.DoesNotExist:
             raise ValidationError("Credit record not found.")
-
+        
+        # --- Handle Subject insertion ---
+        subject_name = serializer.validated_data.get("subject")
+        subject, created = Subject.objects.get_or_create(
+            name=subject_name,
+            defaults={"is_active": False}
+        )
         serializer.save(tutor=user)
 
     @action(detail=True, methods=['post'])
@@ -757,6 +763,36 @@ class JobViewSet(viewsets.ModelViewSet):
                     fail_silently=True,
                 )
 
+    @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
+    def matched_jobs(self, request):
+        user = request.user
+        if user.user_type != "tutor":
+            return Response(
+                {"detail": "Only tutors can access this endpoint."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        # Step 1: Get all active Subject names
+        active_subjects = Subject.objects.filter(is_active=True).values_list("name", flat=True)
+
+        # Step 2: Collect tutor's gigs whose subject is active
+        gig_subject_names = user.gigs.filter(subject__in=active_subjects).values_list("subject", flat=True).distinct()
+
+        if not gig_subject_names:
+            return Response([], status=status.HTTP_200_OK)
+
+        # Step 3: Get jobs with those subjects
+        jobs = Job.objects.filter(subjects__name__in=gig_subject_names).distinct().order_by("-created_at")
+
+        # Step 4: Paginate & serialize
+        page = self.paginate_queryset(jobs)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(jobs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     # ---------------------------
     # Job Unlock
     # ---------------------------
@@ -767,6 +803,16 @@ class JobViewSet(viewsets.ModelViewSet):
             tutor = request.user
         except Job.DoesNotExist:
             return Response({"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Get active gig subject names (strings)
+        gig_subjects = tutor.gigs.values_list("subject", flat=True).distinct()
+
+        # Check if job has at least one matching subject
+        if not job.subjects.filter(name__in=gig_subjects, is_active=True).exists():
+            return Response(
+                {"detail": "You need an active gig with a matching subject to unlock this job."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         if JobUnlock.objects.filter(job=job, tutor=tutor).exists():
             return Response({"detail": "Job already unlocked"}, status=status.HTTP_400_BAD_REQUEST)

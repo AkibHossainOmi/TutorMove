@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { gigApi, subjectApi } from '../utils/apiService';
+import CreatableSelect from "react-select/creatable";
 
 const GigPostForm = ({ onClose, onGigCreated }) => {
   const [title, setTitle] = useState('');
@@ -281,25 +282,16 @@ const GigPostForm = ({ onClose, onGigCreated }) => {
             <label htmlFor="gigSubject" className="block text-sm font-medium text-gray-700 mb-1">
               Subject <span className="text-red-500">*</span>
             </label>
-            <select
+            <CreatableSelect
               id="gigSubject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              onBlur={() => handleBlur('subject')}
-              className={`w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 transition ${
-                touchedFields.subject && !isSubjectValid
-                  ? 'border-red-300 focus:ring-red-200'
-                  : 'border-gray-300 focus:ring-blue-200 focus:border-blue-500'
-              }`}
-              required
-            >
-              <option value="">Select a subject</option>
-              {subjects.map((item) => (
-                <option key={item.id} value={item.name}>
-                  {item.name}
-                </option>
-              ))}
-            </select>
+              isClearable
+              placeholder="Type or select a subject"
+              value={subject ? { value: subject, label: subject } : null}
+              onChange={(selected) => setSubject(selected ? selected.value : "")}
+              onBlur={() => handleBlur("subject")}
+              options={subjects.map((item) => ({ value: item.name, label: item.name }))}
+              classNamePrefix="react-select"
+            />
             {touchedFields.subject && !isSubjectValid && (
               <p className="mt-1 text-sm text-red-600">Please select a subject</p>
             )}

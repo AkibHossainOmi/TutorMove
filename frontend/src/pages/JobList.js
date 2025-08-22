@@ -1,20 +1,43 @@
 // pages/JobList.jsx
 import React, { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { FiBriefcase, FiMapPin, FiBook, FiDollarSign } from "react-icons/fi";
+import { jobAPI } from "../utils/apiService";
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const location = useLocation();
+
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/jobs");
-        const data = await res.json();
-        setJobs(data);
+        const res = await jobAPI.getJobs();
+        let allJobs = res.data;
+
+        // Get query params
+        const params = new URLSearchParams(location.search);
+        const type = params.get("type");
+
+        // Apply filtering
+        if (type === "online") {
+          allJobs = allJobs.filter((job) =>
+            job.mode?.includes("Online")
+          );
+        } else if (type === "offline") {
+          allJobs = allJobs.filter((job) =>
+            job.mode?.includes("Offline")
+          );
+        } else if (type === "assignment") {
+          allJobs = allJobs.filter(
+            (job) => job.service_type?.toLowerCase() === "assignment help"
+          );
+        }
+
+        setJobs(allJobs);
       } catch (err) {
         console.error("Error fetching jobs:", err);
       } finally {
@@ -22,7 +45,7 @@ const JobList = () => {
       }
     };
     fetchJobs();
-  }, []);
+  }, [location.search]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
@@ -45,22 +68,18 @@ const JobList = () => {
               >
                 <div className="flex justify-between items-start mb-3">
                   <h3 className="text-lg font-semibold text-gray-800">
-                    {job.title}
+                    {job.description}
                   </h3>
                   <span
-                    className={`px-3 py-1 text-xs rounded-full font-medium ${
-                      job.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-600"
-                    }`}
+                    className={`px-3 py-1 text-xs rounded-full font-medium bg-green-100 text-green-700`}
                   >
-                    {job.status}
+                    {job.service_type}
                   </span>
                 </div>
                 <div className="space-y-2 text-sm text-gray-600">
                   <p className="flex items-center gap-2">
                     <FiBook className="text-gray-400" />{" "}
-                    {job.subject || "Not specified"}
+                    {job.subject_details?.join(", ") || "Not specified"}
                   </p>
                   <p className="flex items-center gap-2">
                     <FiMapPin className="text-gray-400" />{" "}
