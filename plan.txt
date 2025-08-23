@@ -1,0 +1,7 @@
+Messaging (unlock from teacher side)
+Gig (send mail, edit, buy credit, free gig)
+Profile Picture  upload
+
+Job Unlock (Assign, Close, Review)
+
+Register form (update, forget password, change password)
