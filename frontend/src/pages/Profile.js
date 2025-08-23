@@ -40,7 +40,7 @@ const Profile = () => {
       const updated = res.data;
       setUserData(updated);
       setIsEditing(false);
-      setUpdateStatus('Profile updated!');
+      setUpdateStatus('Profile updated successfully!');
       setTimeout(() => setUpdateStatus(''), 3000);
 
       if (updated.user_type === 'tutor') {
@@ -50,8 +50,6 @@ const Profile = () => {
       setUpdateStatus(`Error: ${err.response?.data?.detail || err.message}`);
     }
   };
-
-
 
   const toggleEdit = () => {
     if (isEditing) {
@@ -109,163 +107,254 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex justify-center items-center text-blue-600 text-lg">
-        <LoadingSpinner/>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center">
+          <div className="text-center">
+            <LoadingSpinner />
+            <p className="mt-4 text-gray-600">Loading your profile...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex justify-center items-center text-red-600 text-lg">{error}</div>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center px-4">
+          <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
+            <div className="text-red-500 text-5xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Error</h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      <div style={{ height: '100px' }}></div>
-      <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-        <div className="bg-white shadow-md rounded-lg border max-w-3xl w-full p-8">
-          <div className="flex justify-between items-center mb-8">
-            <h1 className="text-3xl font-semibold text-gray-800">Your Profile</h1>
-            {(userType === 'tutor' || userType === 'student') && (
-              <button
-                onClick={toggleEdit}
-                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
-              >
-                {isEditing ? (
-                  <>
-                    <FaSave /> Save
-                  </>
-                ) : (
-                  <>
-                    <FaEdit /> Edit
-                  </>
-                )}
-              </button>
-            )}
-          </div>
-
-          {/* Display User Info */}
-          <div className="space-y-6 mb-10">
-            {[
-              { label: 'Username', value: userData.username, icon: <FaUser className="text-gray-600" /> },
-              {
-                label: 'User Type',
-                value: userType.charAt(0).toUpperCase() + userType.slice(1),
-                icon: <MdVerifiedUser className="text-gray-600" />,
-              },
-              { 
-                label: 'Location', 
-                value: isEditing ? (
-                  <input
-                    className="w-full p-2 border rounded"
-                    value={editData.location}
-                    onChange={(e) => handleEditChange('location', e.target.value)}
-                  />
-                ) : userData.location || 'Not Provided', 
-                icon: <FaMapMarkerAlt className="text-gray-600" /> 
-              },
-              { label: 'Trust Score', value: (userData.trust_score ?? 0).toFixed(1), icon: <FaUserShield className="text-gray-600" /> },
-              ...(userType === 'tutor' ? [{
-                label: 'Overall Rating',
-                value: avgRating ?? 'No reviews yet',
-                icon: <FaStar className="text-gray-600" />,
-              }] : [])
-            ].map(({ label, value, icon, bgClass = 'bg-gray-100', textClass = 'text-gray-900' }) => (
-              <div
-                key={label}
-                className={`flex justify-between items-center ${bgClass} p-4 rounded-md border`}
-              >
-                <div className={`flex items-center gap-2 text-sm font-medium ${textClass}`}>
-                  {icon} {label}
-                </div>
-                <div className="text-lg font-semibold text-gray-900">{value}</div>
+      
+      <main className="flex-grow max-w-4xl mx-auto w-full p-6 mt-20 mb-10">
+        {/* Profile Header Card */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-bold">Your Profile</h1>
+                <p className="text-blue-100 mt-1">Manage your account information and preferences</p>
               </div>
-            ))}
+              
+              {(userType === 'tutor' || userType === 'student') && (
+                <button
+                  onClick={toggleEdit}
+                  className={`mt-4 sm:mt-0 flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
+                    isEditing 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-white text-indigo-700 hover:bg-gray-100'
+                  }`}
+                >
+                  {isEditing ? (
+                    <>
+                      <FaSave className="text-sm" /> Save Changes
+                    </>
+                  ) : (
+                    <>
+                      <FaEdit className="text-sm" /> Edit Profile
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
 
-            {/* Additional fields for tutors */}
-            {userType === 'tutor' && (
-              <>
+        {/* Main Profile Content */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Basic Information Card */}
+          <div className="lg:col-span-2">
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
+                <FaUser className="text-indigo-500 mr-2" />
+                Basic Information
+              </h2>
+              
+              <div className="space-y-4">
                 {[
                   { 
-                    label: 'Bio', 
-                    value: isEditing ? (
-                      <textarea
-                        className="w-full p-2 border rounded"
-                        rows="3"
-                        value={editData.bio}
-                        onChange={(e) => handleEditChange('bio', e.target.value)}
-                      />
-                    ) : userData.bio || 'Not provided', 
-                    icon: <FaInfoCircle className="text-gray-600" /> 
-                  },
-                  { 
-                    label: 'Education', 
-                    value: isEditing ? (
-                      <input
-                        className="w-full p-2 border rounded"
-                        value={editData.education}
-                        onChange={(e) => handleEditChange('education', e.target.value)}
-                      />
-                    ) : userData.education || 'Not provided', 
-                    icon: <FaUserGraduate className="text-gray-600" /> 
-                  },
-                  { 
-                    label: 'Experience', 
-                    value: isEditing ? (
-                      <input
-                        className="w-full p-2 border rounded"
-                        value={editData.experience}
-                        onChange={(e) => handleEditChange('experience', e.target.value)}
-                      />
-                    ) : userData.experience || 'Not provided', 
-                    icon: <FaBriefcase className="text-gray-600" /> 
-                  },
-                  { 
-                    label: 'Phone', 
-                    value: isEditing ? (
-                      <input
-                        className="w-full p-2 border rounded"
-                        value={editData.phone_number}
-                        onChange={(e) => handleEditChange('phone_number', e.target.value)}
-                      />
-                    ) : userData.phone_number || 'Not Provided', 
-                    icon: <FaPhoneAlt className="text-gray-600" /> 
+                    label: 'Username', 
+                    value: userData.username, 
+                    icon: <FaUser className="text-gray-500" />,
+                    bgColor: 'bg-blue-50'
                   },
                   {
-                    label: 'Average Rating',
-                    value: avgRating !== null ? avgRating.toFixed(1) : 'No reviews',
-                    icon: <FaStar className="text-gray-600" />,
+                    label: 'User Type',
+                    value: userType.charAt(0).toUpperCase() + userType.slice(1),
+                    icon: <MdVerifiedUser className="text-gray-500" />,
+                    bgColor: 'bg-indigo-50'
                   },
-                ].map(({ label, value, icon }) => (
-                  <div key={label} className="bg-gray-100 p-4 rounded-md border">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-1">
-                      {icon} {label}
+                  { 
+                    label: 'Trust Score', 
+                    value: (userData.trust_score ?? 0).toFixed(1), 
+                    icon: <FaUserShield className="text-gray-500" />,
+                    bgColor: 'bg-purple-50'
+                  },
+                  ...(userType === 'tutor' ? [{
+                    label: 'Overall Rating',
+                    value: avgRating ? `${avgRating.toFixed(1)}/5.0` : 'No reviews yet',
+                    icon: <FaStar className="text-gray-500" />,
+                    bgColor: 'bg-amber-50'
+                  }] : [])
+                ].map(({ label, value, icon, bgColor }) => (
+                  <div key={label} className="flex justify-between items-center p-4 rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3 text-gray-700 font-medium">
+                      <span className={`p-2 rounded-full ${bgColor}`}>
+                        {icon}
+                      </span>
+                      {label}
                     </div>
-                    <div className="text-base text-gray-900">
-                      {value}
-                    </div>
+                    <div className="text-gray-900 font-semibold">{value}</div>
                   </div>
                 ))}
-              </>
+              </div>
+            </div>
+
+            {/* Additional Tutor Information */}
+            {userType === 'tutor' && (
+              <div className="bg-white rounded-xl shadow-md p-6 mt-6">
+                <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
+                  <FaUserGraduate className="text-indigo-500 mr-2" />
+                  Tutor Details
+                </h2>
+                
+                <div className="space-y-5">
+                  {[
+                    { 
+                      label: 'Education', 
+                      value: isEditing ? (
+                        <input
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          value={editData.education}
+                          onChange={(e) => handleEditChange('education', e.target.value)}
+                          placeholder="Enter your education"
+                        />
+                      ) : userData.education || 'Not provided', 
+                      icon: <FaUserGraduate className="text-gray-500" />
+                    },
+                    { 
+                      label: 'Experience', 
+                      value: isEditing ? (
+                        <input
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          value={editData.experience}
+                          onChange={(e) => handleEditChange('experience', e.target.value)}
+                          placeholder="Enter your experience"
+                        />
+                      ) : userData.experience || 'Not provided', 
+                      icon: <FaBriefcase className="text-gray-500" />
+                    },
+                    { 
+                      label: 'Phone Number', 
+                      value: isEditing ? (
+                        <input
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          value={editData.phone_number}
+                          onChange={(e) => handleEditChange('phone_number', e.target.value)}
+                          placeholder="Enter your phone number"
+                        />
+                      ) : userData.phone_number || 'Not provided', 
+                      icon: <FaPhoneAlt className="text-gray-500" />
+                    },
+                    { 
+                      label: 'Location', 
+                      value: isEditing ? (
+                        <input
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          value={editData.location}
+                          onChange={(e) => handleEditChange('location', e.target.value)}
+                          placeholder="Enter your location"
+                        />
+                      ) : userData.location || 'Not provided', 
+                      icon: <FaMapMarkerAlt className="text-gray-500" />
+                    },
+                  ].map(({ label, value, icon }) => (
+                    <div key={label}>
+                      <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
+                        {icon} {label}
+                      </div>
+                      <div className="text-gray-900">
+                        {value}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
           </div>
 
-          {updateStatus && (
-            <p
-              className={`text-sm text-center font-medium mt-2 ${
-                updateStatus.includes('Error') ? 'text-red-600' : 'text-green-600'
-              }`}
-            >
-              {updateStatus}
-            </p>
-          )}
+          {/* Bio/Status Card */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-xl shadow-md p-6 h-full">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
+                <FaInfoCircle className="text-indigo-500 mr-2" />
+                {userType === 'tutor' ? 'Professional Bio' : 'About Me'}
+              </h2>
+              
+              <div>
+                {isEditing ? (
+                  <textarea
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition h-40"
+                    value={editData.bio}
+                    onChange={(e) => handleEditChange('bio', e.target.value)}
+                    placeholder={`Tell us about yourself${userType === 'tutor' ? ' and your teaching approach' : ''}...`}
+                  />
+                ) : (
+                  <p className="text-gray-700 leading-relaxed">
+                    {userData.bio || `No ${userType === 'tutor' ? 'professional bio' : 'about me'} provided yet.`}
+                  </p>
+                )}
+              </div>
+              
+              {userType === 'tutor' && avgRating !== null && (
+                <div className="mt-6 pt-4 border-t border-gray-100">
+                  <div className="flex items-center justify-center">
+                    <div className="text-3xl font-bold text-amber-600">{avgRating.toFixed(1)}</div>
+                    <div className="ml-2">
+                      <div className="flex">
+                        {[...Array(5)].map((_, i) => (
+                          <FaStar 
+                            key={i} 
+                            className={i < Math.round(avgRating) ? "text-amber-400" : "text-gray-300"} 
+                            size={16} 
+                          />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">Average rating</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
+
+        {/* Update Status Notification */}
+        {updateStatus && (
+          <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg font-medium transition ${
+            updateStatus.includes('Error') 
+              ? 'bg-red-100 text-red-700 border-l-4 border-red-500' 
+              : 'bg-green-100 text-green-700 border-l-4 border-green-500'
+          }`}>
+            {updateStatus}
+          </div>
+        )}
+      </main>
+      
       <Footer />
-    </>
+    </div>
   );
 };
 

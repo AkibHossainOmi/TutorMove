@@ -42,99 +42,110 @@ export default function TutorProfilePage() {
         setLoading(false);
       }
     }
-
     fetchData();
   }, [tutorId]);
 
-  if (loading) return <div className="p-6 text-center text-lg"><LoadingSpinner/></div>;
+  if (loading) return <div className="p-6 text-center"><LoadingSpinner /></div>;
   if (error) return <div className="p-6 text-center text-red-600 font-semibold">{error}</div>;
   if (!profile) return null;
 
   return (
     <>
       <Navbar />
-      <main className="min-h-screen mt-20 bg-gray-100 p-8">
-        <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8 relative">
-          {JSON.parse(localStorage.getItem("user"))?.user_type === "student" && (
-            <UnlockedMessageButton
-              studentId={getStudentId()}
-              tutorId={tutorId}
-              tutorUsername={profile.username}
-            />
-          )}
+      <main className="min-h-screen mt-20 bg-gradient-to-b from-indigo-50 via-white to-gray-50 p-8">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          
+          {/* Left Side - Tutor Details */}
+          <div className="lg:col-span-2 space-y-6">
+            
+            {/* Hero Section */}
+            <div className="bg-white shadow-lg rounded-2xl p-6 flex items-center gap-6">
+              <div className="w-24 h-24 rounded-full bg-indigo-600 text-white text-4xl font-bold flex items-center justify-center">
+                {profile.username?.charAt(0).toUpperCase() || "T"}
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900">{profile.username}</h1>
+                <p className="text-gray-600">{profile.location || "Location not specified"}</p>
+                {profile.is_verified && (
+                  <span className="inline-block mt-2 bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full">
+                    ✅ Verified Tutor
+                  </span>
+                )}
+              </div>
+            </div>
 
-          <div className="flex items-center gap-6 mb-6">
-            <div className="w-[100px] h-[100px] rounded-full bg-blue-600 text-white text-4xl font-bold flex items-center justify-center select-none">
-              {profile.username ? profile.username.charAt(0).toUpperCase() : 'T'}
+            {/* Bio */}
+            <Card title="Bio">
+              <p className="text-gray-700 whitespace-pre-wrap">{profile.bio || "No bio available."}</p>
+            </Card>
+
+            {/* Education & Experience */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card title="Education">
+                <p className="text-gray-700">{profile.education || "Not specified"}</p>
+              </Card>
+              <Card title="Experience">
+                <p className="text-gray-700">{profile.experience || "Not specified"}</p>
+              </Card>
             </div>
-            <div>
-              <h1 className="text-3xl font-semibold text-gray-900">{profile.username}</h1>
-              <p className="text-gray-600">{profile.location || "Location not specified"}</p>
-              <p className={`mt-1 text-sm font-medium ${profile.is_verified ? "text-green-600" : "text-gray-500"}`}>
-                {profile.is_verified ? "Verified Tutor" : ""}
-              </p>
-            </div>
+
+            {/* Subjects */}
+            <Card title="Subjects">
+              {profile.subjects?.length > 0 ? (
+                <ul className="flex flex-wrap gap-2">
+                  {profile.subjects.map((subj, i) => (
+                    <li key={i} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
+                      {subj}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">No subjects listed.</p>
+              )}
+            </Card>
+
+            {/* Gigs */}
+            <Card title="Gigs">
+              {profile.gigs?.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {profile.gigs.map((gig) => (
+                    <div
+                      key={gig.id}
+                      className="p-4 border rounded-xl bg-white shadow hover:shadow-lg transition transform hover:-translate-y-1 cursor-pointer"
+                    >
+                      <h4 className="font-semibold text-indigo-700">{gig.title}</h4>
+                      <p className="text-gray-700">{gig.description}</p>
+                      <p className="text-sm text-gray-500 mt-2">Subject: {gig.subject}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 italic">No gigs listed.</p>
+              )}
+            </Card>
           </div>
 
-          <section className="mb-6">
-            <h2 className="text-xl font-semibold border-b border-gray-300 pb-1 mb-3">Bio</h2>
-            <p className="text-gray-700 whitespace-pre-wrap">{profile.bio || "No bio available."}</p>
-          </section>
+          {/* Right Side - Contact + Message */}
+          <aside className="space-y-6">
+            <Card title="Contact Info">
+              {profile.email || profile.phone_number ? (
+                <ul className="space-y-2 text-gray-700">
+                  <li><span className="font-medium">Email:</span> {profile.email || "Hidden"}</li>
+                  <li><span className="font-medium">Phone:</span> {profile.phone_number || "Hidden"}</li>
+                </ul>
+              ) : (
+                <p className="text-gray-500 italic">Contact not available</p>
+              )}
+            </Card>
 
-          <section className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Education</h3>
-              <p className="text-gray-700">{profile.education || "Not specified"}</p>
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold mb-2">Experience</h3>
-              <p className="text-gray-700">{profile.experience || "Not specified"}</p>
-            </div>
-          </section>
-
-          <section className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Subjects</h3>
-            {profile.subjects?.length > 0 ? (
-              <ul className="flex flex-wrap gap-2">
-                {profile.subjects.map((subj, i) => (
-                  <li key={i} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
-                    {subj}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600">No subjects listed.</p>
+            {JSON.parse(localStorage.getItem("user"))?.user_type === "student" && (
+              <UnlockedMessageButton
+                studentId={getStudentId()}
+                tutorId={tutorId}
+                tutorUsername={profile.username}
+              />
             )}
-          </section>
-
-          <section className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Contact Info</h3>
-            {profile.email || profile.phone_number ? (
-              <ul className="text-gray-700 space-y-1">
-                <li>Email: <span className="font-medium">{profile.email || "Hidden"}</span></li>
-                <li>Phone: <span className="font-medium">{profile.phone_number || "Hidden"}</span></li>
-              </ul>
-            ) : (
-              <p className="text-gray-500 italic">Contact not available</p>
-            )}
-          </section>
-
-          <section className="mb-6">
-            <h3 className="text-lg font-semibold mb-3">Gigs</h3>
-            {profile.gigs?.length > 0 ? (
-              <ul className="space-y-3">
-                {profile.gigs.map((gig) => (
-                  <li key={gig.id} className="border p-3 rounded-md hover:shadow-lg transition-shadow cursor-pointer">
-                    <h4 className="font-semibold text-indigo-700">{gig.title}</h4>
-                    <p className="text-gray-700">{gig.description}</p>
-                    <p className="text-sm text-gray-500 mt-1">Subject: {gig.subject}</p>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600 italic">No gigs listed.</p>
-            )}
-          </section>
+          </aside>
         </div>
       </main>
       <Footer />
@@ -142,10 +153,18 @@ export default function TutorProfilePage() {
   );
 }
 
+function Card({ title, children }) {
+  return (
+    <div className="bg-white shadow-md rounded-2xl p-6">
+      <h3 className="text-lg font-semibold text-gray-900 mb-3">{title}</h3>
+      {children}
+    </div>
+  );
+}
+
 function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
   const [unlocked, setUnlocked] = useState(false);
   const [checking, setChecking] = useState(true);
-  const [hovered, setHovered] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -153,11 +172,10 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
       try {
         const token = localStorage.getItem("token");
         if (!token || !studentId || !tutorId) return;
-
-        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
+        const res = await fetch(
+          `${process.env.REACT_APP_API_URL}/api/check-unlock-status/?student_id=${studentId}&tutor_id=${tutorId}`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
         const data = await res.json();
         setUnlocked(data.unlocked === true);
       } catch (err) {
@@ -166,38 +184,17 @@ function UnlockedMessageButton({ studentId, tutorId, tutorUsername }) {
         setChecking(false);
       }
     }
-
     checkUnlock();
   }, [studentId, tutorId]);
 
   if (checking || !unlocked) return null;
 
   return (
-    <div className="absolute top-4 right-4">
-      <button
-        onClick={() => navigate(`/messages/?username=${encodeURIComponent(tutorUsername)}`)}
-        className={`inline-flex items-center px-4 py-2 rounded-full shadow-md transition-all ${
-          hovered ? 'bg-slate-200' : 'bg-white border border-slate-200'
-        } text-indigo-600`}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-      >
-        <svg
-          className="w-5 h-5 mr-2"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth={2}
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-          />
-        </svg>
-        <span className="font-medium">Message</span>
-      </button>
-    </div>
+    <button
+      onClick={() => navigate(`/messages/?username=${encodeURIComponent(tutorUsername)}`)}
+      className="w-full inline-flex justify-center items-center px-5 py-3 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium shadow-md transition-all"
+    >
+      💬 Message Tutor
+    </button>
   );
 }
