@@ -31,16 +31,13 @@ import TutorMapSearch from './components/MapSearch';
 import BuyCreditPage from './pages/BuyCreditPage';
 import TutorGigPage from './pages/TutorGigPage';
 import BuyPremiumPage from './components/BuyPremiumPage';
+import About from './pages/About';
+import HowItWorks from './pages/HowItWorks';
+import Contact from './pages/Contact';
+import TeacherGuide from './pages/TeacherGuide';
+import FAQ from './pages/FAQ';
+import PostRequirement from './pages/PostRequirement';
 
-
-// Additional Policy Pages
-const RefundPolicy = () => (
-  <div style={{ padding: '40px 20px', maxWidth: '800px', margin: '0 auto' }}>
-    <h1>Refund Policy</h1>
-    <p>Our refund policy outlines the conditions under which refunds may be issued.</p>
-    {/* Add more content as needed */}
-  </div>
-);
 
 function App() {
   return (
@@ -56,7 +53,6 @@ function App() {
           <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/refund-policy" element={<RefundPolicy />} />
           {/* Fallback for unmatched public routes, redirects to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
 
@@ -91,6 +87,15 @@ function App() {
             {/* Map Search functionality */}
             <Route path="/map-search" element={<TutorMapSearch mode="gigs" radiusKm={20} />} />
             <Route path="/job-map" element={<TutorMapSearch mode="jobs" radiusKm={20} />} />
+
+
+            {/* Footer Routes */}
+            <Route path="/about" element={<About />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/teacher-guide" element={<TeacherGuide />} />
+            <Route path="/student-faq" element={<FAQ />} />
+            <Route path="/post-requirement" element={<PostRequirement />} />
           </Route>
         </Routes>
       </BrowserRouter>
