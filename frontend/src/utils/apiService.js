@@ -234,7 +234,7 @@ export const settingsAPI = {
 // Premium features API calls
 export const premiumAPI = {
   getPremiumStatus: () => apiService.get('/premium/status/'),
-  upgradeToPremium: (planData) => apiService.post('/premium/upgrade/', planData),
+  upgradeToPremium: (planData) => apiService.post('api/users/purchase_premium/', planData),
   cancelPremium: () => apiService.post('/premium/cancel/'),
   getPremiumFeatures: () => apiService.get('/premium/features/'),
   getPremiumAnalytics: () => apiService.get('/premium/analytics/'),

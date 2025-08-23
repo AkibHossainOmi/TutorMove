@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import LoadingSpinner from '../components/LoadingSpinner';
 import Footer from '../components/Footer';
-import { creditAPI } from '../utils/apiService';
+import { creditAPI, userApi } from '../utils/apiService';
 
 const useNotification = () => {
   const showNotification = (message, type) => {
@@ -38,22 +38,29 @@ const BuyCreditPage = () => {
     { id: 12, credits: 2000, price: 1000, discount: 50, bonus: 500 }
   ];
 
+  const premiumPackages = [
+    { id: 101, credits: 2500, price: 1000, discount: 55, bonus: 700 },
+    { id: 102, credits: 3000, price: 1200, discount: 60, bonus: 900 }
+  ];
+
+  // Load user from API or localStorage
   useEffect(() => {
-    const loadUser = async () => {
+    const fetchUser = async () => {
+      setIsLoading(true);
       try {
-        const storedUser = JSON.parse(localStorage.getItem('user'));
-        if (storedUser?.user_id) {
-          setCurrentUser(storedUser);
-        } else {
-          setError("You must be logged in to buy credits.");
-        }
+        // Try API first
+        const response = await userApi.getUser();
+        setCurrentUser(response.data);
       } catch (err) {
-        setError("Failed to load user data. Please log in again.");
+        // fallback to localStorage
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        if (storedUser?.user_id) setCurrentUser(storedUser);
+        else setError("Failed to load user data. Please log in again.");
       } finally {
         setIsLoading(false);
       }
     };
-    loadUser();
+    fetchUser();
   }, []);
 
   useEffect(() => {
@@ -61,7 +68,7 @@ const BuyCreditPage = () => {
   }, [selectedPackage]);
 
   const handlePurchaseCredits = async () => {
-    if (!currentUser?.user_id) {
+    if (!currentUser?.id) {
       showNotification("Authentication required", 'error');
       setError("Please log in to continue");
       return;
@@ -132,80 +139,128 @@ const BuyCreditPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      
-      <div className="flex-grow pt-20"> {/* Adjusted to pt-20 to ensure proper spacing */}
+      <div className="flex-grow pt-20">
         <main className="max-w-5xl mx-auto px-4 py-8">
+
+          {/* Page Title */}
           <div className="text-center mb-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Buy Credits</h1>
             <p className="text-gray-500 mt-2">Choose a package that fits your needs</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-8">
-            {creditPackages.map(pkg => (
-              <div
-                key={pkg.id}
-                onClick={() => setSelectedPackage(pkg)}
-                className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                  selectedPackage?.id === pkg.id
-                    ? 'border-blue-500 bg-blue-50 shadow-md'
-                    : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
-                }`}
-              >
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h2 className="font-semibold text-lg text-gray-800">
-                      {pkg.credits} Credits
-                    </h2>
+          {/* Premium Packages */}
+          {currentUser?.is_premium ? (
+            <div className="mb-6">
+              <h2 className="font-semibold text-lg mb-4 text-gray-700">Premium Packages</h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {premiumPackages.map(pkg => (
+                  <div
+                    key={pkg.id}
+                    onClick={() => setSelectedPackage(pkg)}
+                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                      selectedPackage?.id === pkg.id
+                        ? 'border-yellow-500 bg-yellow-50 shadow-md'
+                        : 'border-gray-200 hover:border-yellow-300 hover:shadow-sm'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <h2 className="font-semibold text-lg text-gray-800">{pkg.credits} Credits</h2>
+                      <div className="text-right">
+                        <span className="font-medium text-yellow-600">{pkg.price} BDT</span>
+                        {renderPriceInUSD(pkg.price)}
+                        {pkg.discount > 0 && (
+                          <div className="text-xs text-gray-500 line-through mt-1">
+                            {Math.round(pkg.price / (1 - pkg.discount / 100))} BDT
+                          </div>
+                        )}
+                      </div>
+                    </div>
                     {pkg.bonus > 0 && (
                       <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                         +{pkg.bonus} Bonus
                       </span>
                     )}
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center justify-end">
-                      <span className="font-medium text-blue-600">
-                        {pkg.price} Taka
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mb-6 text-center">
+              <p className="text-gray-500 bg-yellow-50 p-4 rounded-lg mb-4">
+                Upgrade to Premium to access special packages with higher discounts and bonus credits!
+              </p>
+              <button
+                onClick={() => window.location.href = '/buy-premium'}
+                className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+              >
+                Upgrade to Premium
+              </button>
+            </div>
+          )}
+
+          {/* Normal Credit Packages */}
+          <div className="mb-8">
+            <h2 className="font-semibold text-lg mb-4 text-gray-700">Credit Packages</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {creditPackages.map(pkg => (
+                <div
+                  key={pkg.id}
+                  onClick={() => setSelectedPackage(pkg)}
+                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                    selectedPackage?.id === pkg.id
+                      ? 'border-blue-500 bg-blue-50 shadow-md'
+                      : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                  }`}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="font-semibold text-lg text-gray-800">{pkg.credits} Credits</h2>
+                      {pkg.bonus > 0 && (
+                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
+                          +{pkg.bonus} Bonus
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <span className="font-medium text-blue-600">{pkg.price} BDT</span>
+                      {renderPriceInUSD(pkg.price)}
+                      {pkg.discount > 0 && (
+                        <div className="text-xs text-gray-500 line-through mt-1">
+                          {Math.round(pkg.price / (1 - pkg.discount / 100))} BDT
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {pkg.discount > 0 && (
+                    <div className="mt-2">
+                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                        Save {pkg.discount}%
                       </span>
                     </div>
-                    {renderPriceInUSD(pkg.price)}
-                    {pkg.discount > 0 && (
-                      <div className="text-xs text-gray-500 line-through mt-1">
-                        {Math.round(pkg.price / (1 - pkg.discount/100))} Taka
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
-                {pkg.discount > 0 && (
-                  <div className="mt-2">
-                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                      Save {pkg.discount}%
-                    </span>
-                  </div>
-                )}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
-          <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto">
-            <div className="mb-4">
-              <h3 className="font-medium text-gray-700 mb-1">Selected Package</h3>
-              {selectedPackage ? (
-                <div className="flex justify-between items-center">
-                  <span>
-                    {selectedPackage.credits} Credits
-                    {selectedPackage.bonus > 0 && (
-                      <span className="text-green-600 ml-2">+{selectedPackage.bonus} Bonus</span>
-                    )}
-                  </span>
-                  <span className="font-semibold">
-                    {selectedPackage.price} Taka {renderPriceInUSD(selectedPackage.price)}
-                  </span>
-                </div>
-              ) : (
-                <p className="text-gray-400">No package selected</p>
-              )}
-            </div>
+          {/* Selected Package & Payment Button */}
+          <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto mb-8">
+            <h3 className="font-medium text-gray-700 mb-2">Selected Package</h3>
+            {selectedPackage ? (
+              <div className="flex justify-between items-center mb-4">
+                <span>
+                  {selectedPackage.credits} Credits
+                  {selectedPackage.bonus > 0 && (
+                    <span className="text-green-600 ml-2">+{selectedPackage.bonus} Bonus</span>
+                  )}
+                </span>
+                <span className="font-semibold">
+                  {selectedPackage.price} BDT {renderPriceInUSD(selectedPackage.price)}
+                </span>
+              </div>
+            ) : (
+              <p className="text-gray-400 mb-4">No package selected</p>
+            )}
 
             <button
               onClick={handlePurchaseCredits}
@@ -226,9 +281,9 @@ const BuyCreditPage = () => {
               <p className="text-sm text-red-600 mt-2 text-center">{error}</p>
             )}
           </div>
+
         </main>
       </div>
-
       <Footer />
     </div>
   );

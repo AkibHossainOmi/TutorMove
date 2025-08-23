@@ -7,7 +7,6 @@ import {
   FiBriefcase, 
   FiMapPin, 
   FiBook, 
-  FiDollarSign, 
   FiClock,
   FiFilter,
   FiSearch,

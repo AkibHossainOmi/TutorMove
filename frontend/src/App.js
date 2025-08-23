@@ -30,6 +30,7 @@ import Dashboard from './pages/Dashboard';
 import TutorMapSearch from './components/MapSearch';
 import BuyCreditPage from './pages/BuyCreditPage';
 import TutorGigPage from './pages/TutorGigPage';
+import BuyPremiumPage from './components/BuyPremiumPage';
 
 
 // Additional Policy Pages
@@ -69,6 +70,7 @@ function App() {
             <Route path="/tutors" element={<TutorList />} />
             <Route path="/tutors/:tutorId" element={<TutorProfile />} />
             <Route path="/buy-credits" element={<BuyCreditPage />} />
+            <Route path="/buy-premium" element={<BuyPremiumPage />} />
 
             {/* Gigs and Job Listings */}
             <Route path="/tutor/gig/:id" element={<TutorGigPage />} />

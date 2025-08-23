@@ -389,6 +389,68 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def purchase_premium(self, request):
+        """
+        Buy premium subscription
+        """
+        try:
+            amount = Decimal(request.data.get('amount', '0'))
+        except (ValueError, InvalidOperation):
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if amount <= 0:
+            return Response({'error': 'Amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        order = Order.objects.create(user=user, total_amount=amount, is_paid=False)
+        transaction_id = generate_transaction_id()
+
+        sslcommerz = SSLCommerzPayment()
+        payment = Payment.objects.create(
+            order=order,
+            transaction_id=transaction_id,
+            amount=amount,
+            status='PENDING',
+            currency='BDT',
+        )
+
+        payment_data = {
+            'total_amount': str(amount),
+            'currency': "BDT",
+            'tran_id': transaction_id,
+            'success_url': request.build_absolute_uri(reverse('payment_success')),
+            'fail_url': request.build_absolute_uri(reverse('payment_fail')),
+            'cancel_url': request.build_absolute_uri(reverse('payment_cancel')),
+            'ipn_url': request.build_absolute_uri(reverse('sslcommerz_ipn')),
+            'cus_name': user.get_full_name() or user.username,
+            'cus_email': user.email,
+            'value_a': str(user.id),
+            'value_b': 'premium',
+            'value_c': str(order.id),
+            'product_name': "Premium Subscription",
+            'product_category': 'Digital Goods',
+            'product_profile': 'general',
+            'shipping_method': 'NO',
+            'num_of_item': 1,
+        }
+
+        response_data = sslcommerz.initiate_payment(payment_data)
+
+        if response_data.get('status') == 'SUCCESS':
+            payment.bank_transaction_id = response_data.get('tran_id')
+            payment.save()
+            return Response({
+                'status': 'SUCCESS',
+                'payment_url': response_data.get('GatewayPageURL'),
+                'sessionkey': response_data.get('sessionkey'),
+                'transaction_id': transaction_id
+            })
+        else:
+            payment.status = 'FAILED'
+            payment.error_message = response_data.get('failedreason', 'Unknown error')
+            payment.save()
+            return Response({'status': 'FAILED', 'error': payment.error_message}, status=status.HTTP_400_BAD_REQUEST)
 
 # --- Utility ---
 import math
@@ -603,6 +665,9 @@ class CreditViewSet(viewsets.ModelViewSet):
     # Secure purchase endpoint: only authenticated users
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def purchase(self, request):
+        """
+        Buy credits
+        """
         try:
             credits_to_add = int(request.data.get('credits', 0))
             amount = Decimal(request.data.get('amount', '0'))
@@ -613,16 +678,10 @@ class CreditViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Credits and amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = request.user
-
-        order = Order.objects.create(
-            user=user,
-            total_amount=amount,
-            is_paid=False
-        )
-
-        sslcommerz = SSLCommerzPayment()
+        order = Order.objects.create(user=user, total_amount=amount, is_paid=False)
         transaction_id = generate_transaction_id()
 
+        sslcommerz = SSLCommerzPayment()
         payment = Payment.objects.create(
             order=order,
             transaction_id=transaction_id,
@@ -642,9 +701,10 @@ class CreditViewSet(viewsets.ModelViewSet):
             'cus_name': user.get_full_name() or user.username,
             'cus_email': user.email,
             'value_a': str(user.id),
-            'value_b': str(credits_to_add),
+            'value_b': 'credits',
             'value_c': str(order.id),
-            'product_name': f"Credits purchase for {credits_to_add}",
+            'value_d': str(credits_to_add),
+            'product_name': f"Credits Purchase",
             'product_category': 'Digital Goods',
             'product_profile': 'general',
             'shipping_method': 'NO',
@@ -653,7 +713,7 @@ class CreditViewSet(viewsets.ModelViewSet):
 
         response_data = sslcommerz.initiate_payment(payment_data)
 
-        if response_data and response_data.get('status') == 'SUCCESS':
+        if response_data.get('status') == 'SUCCESS':
             payment.bank_transaction_id = response_data.get('tran_id')
             payment.save()
             return Response({
@@ -663,14 +723,10 @@ class CreditViewSet(viewsets.ModelViewSet):
                 'transaction_id': transaction_id
             })
         else:
-            error_message = response_data.get('failedreason', 'Unknown error initiating payment.')
             payment.status = 'FAILED'
-            payment.error_message = error_message
+            payment.error_message = response_data.get('failedreason', 'Unknown error')
             payment.save()
-            return Response({
-                'status': 'FAILED',
-                'error': error_message
-            }, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'status': 'FAILED', 'error': payment.error_message}, status=status.HTTP_400_BAD_REQUEST)
 
     @action(detail=False, methods=['post'])
     def transfer(self, request):
@@ -1314,6 +1370,39 @@ class SubjectViewSet(viewsets.ModelViewSet):
         serializer = SubjectSerializer(subjects[:10], many=True)
         return Response(serializer.data)
 
+def build_payment_data(request, user, order, transaction_id, amount, product_type, credits=0):
+    """
+    Returns consistent payment_data dict for SSLCommerz.
+    product_type: 'premium' or 'credits'
+    credits: number of credits (for credits purchase)
+    """
+    if product_type == 'premium':
+        value_b = 'premium'
+        product_name = "Premium Subscription"
+    else:
+        value_b = str(credits)
+        product_name = f"Credits purchase for {credits}"
+
+    return {
+        'total_amount': str(amount),
+        'currency': "BDT",
+        'tran_id': transaction_id,
+        'success_url': request.build_absolute_uri(reverse('payment_success')),
+        'fail_url': request.build_absolute_uri(reverse('payment_fail')),
+        'cancel_url': request.build_absolute_uri(reverse('payment_cancel')),
+        'ipn_url': request.build_absolute_uri(reverse('sslcommerz_ipn')),
+        'cus_name': user.get_full_name() or user.username,
+        'cus_email': user.email,
+        'value_a': str(user.id),
+        'value_b': value_b,
+        'value_c': str(order.id),
+        'product_name': product_name,
+        'product_category': 'Digital Goods',
+        'product_profile': 'general',
+        'shipping_method': 'NO',
+        'num_of_item': 1,
+    }
+
 # --- EscrowPaymentViewSet ---
 class EscrowPaymentViewSet(viewsets.ModelViewSet):
     queryset = EscrowPayment.objects.all()
@@ -1370,103 +1459,57 @@ def payment_success_view(request):
     """
     data = request.POST if request.method == 'POST' else request.GET
 
+    # Required fields
     tran_id = data.get('tran_id')
     val_id = data.get('val_id')
-    user_id_str = data.get('value_a')
-    payment_type = data.get('value_b')
-    order_id_str = data.get('value_c')
+    user_id_str = data.get('value_a')  # User ID
+    payment_type = data.get('value_b')  # 'credits' or 'premium'
+    order_id_str = data.get('value_c')  # Order ID
+    credits_amount_str = data.get('value_d', '0')  # Only for credit purchase
 
+    # Basic validation
     if not tran_id or not val_id:
         query = urlencode({'tran_id': tran_id or '', 'reason': 'Missing transaction or validation ID'})
         return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
+    # Safe conversion of numeric fields
     try:
-        order = Order.objects.get(id=order_id_str)
+        user_id = int(user_id_str)
+    except (ValueError, TypeError):
+        user_id = None
+
+    try:
+        order_id = int(order_id_str)
+    except (ValueError, TypeError):
+        order_id = None
+
+    try:
+        credits_amount = int(credits_amount_str or 0)
+    except ValueError:
+        credits_amount = 0
+
+    if user_id is None or order_id is None:
+        query = urlencode({'tran_id': tran_id, 'reason': 'Invalid User ID or Order ID'})
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
+
+    # Fetch records
+    try:
+        order = Order.objects.get(id=order_id)
         payment = Payment.objects.get(order=order, transaction_id=tran_id)
         user = order.user
     except (Order.DoesNotExist, Payment.DoesNotExist, User.DoesNotExist):
         query = urlencode({'tran_id': tran_id, 'reason': 'Order or payment not found'})
         return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
     except Exception as e:
-        print(f"Unexpected error retrieving records: {e}")
-        query = urlencode({'tran_id': tran_id, 'reason': 'Unexpected error occurred'})
+        query = urlencode({'tran_id': tran_id, 'reason': f'Unexpected error: {e}'})
         return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
+    # Validate transaction with SSLCommerz
     sslcommerz = SSLCommerzPayment()
     validation_response = sslcommerz.validate_transaction(val_id)
 
-    if validation_response and validation_response.get('status') == 'VALID':
-        validated_amount = Decimal(validation_response.get('amount', '0.00'))
-        validated_currency = validation_response.get('currency', '')
-
-        if payment.status in ['PENDING', 'FAILED']:
-            if validated_amount == payment.amount and validated_currency == payment.currency:
-                # Mark payment success
-                payment.status = 'SUCCESS'
-                payment.bank_transaction_id = validation_response.get('bank_tran_id', payment.bank_transaction_id)
-                payment.validation_status = 'VALIDATED'
-                payment.save()
-
-                order.is_paid = True
-                order.save()
-
-                if payment_type == 'credit_purchase':
-                    credits_to_add = int(data.get('value_b', 0))
-                    credit_obj, _ = Credit.objects.get_or_create(user=user)
-                    credit_obj.balance += credits_to_add
-                    credit_obj.save()
-                    Notification.objects.create(
-                        user=user,
-                        message=f"💰 Your purchase of {credits_to_add} credits was successful! New balance: {credit_obj.balance}"
-                    )
-
-                elif payment_type == 'premium_upgrade':
-                    user_settings, _ = UserSettings.objects.get_or_create(user=user)
-                    now = timezone.now()
-                    if not user_settings.premium_expires or user_settings.premium_expires < now:
-                        user_settings.premium_expires = now + timedelta(days=30)
-                    else:
-                        user_settings.premium_expires += timedelta(days=30)
-                    user_settings.is_premium = True
-                    user_settings.save()
-                    Notification.objects.create(
-                        user=user,
-                        message=f"✨ Premium upgraded! Expires on {user_settings.premium_expires.strftime('%Y-%m-%d')}."
-                    )
-
-                # Redirect to frontend with details
-                query = urlencode({
-                    'tran_id': tran_id,
-                    'val_id': val_id,
-                    'amount': str(validated_amount),
-                    'status': 'SUCCESS',
-                    'credit': payment_type,
-                })
-                update_user_credit(int(user_id_str), int(payment_type))
-                return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
-            else:
-                payment.status = 'FAILED'
-                payment.validation_status = 'AMOUNT_MISMATCH'
-                payment.error_message = 'Amount/currency mismatch'
-                payment.save()
-                query = urlencode({'tran_id': tran_id, 'reason': 'Amount/currency mismatch'})
-                return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
-        else:
-            # Already processed
-            query = urlencode({
-                'tran_id': tran_id,
-                'val_id': val_id,
-                'amount': str(payment.amount),
-                'status': payment.status,
-                'credit': payment_type,
-            })
-            print(query)
-            print("\n")
-            print(user_id)
-            return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
-    else:
-        # Validation failed
-        error_message = validation_response.get('failedreason', 'Payment validation failed.')
+    if not validation_response or validation_response.get('status') != 'VALID':
+        error_message = validation_response.get('failedreason', 'Payment validation failed.') if validation_response else 'Payment validation failed.'
         if payment.status == 'PENDING':
             payment.status = 'FAILED'
             payment.validation_status = 'NOT_VALIDATED'
@@ -1475,6 +1518,63 @@ def payment_success_view(request):
         query = urlencode({'tran_id': tran_id, 'reason': error_message})
         return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
+    # Check amount & currency
+    validated_amount = Decimal(validation_response.get('amount', '0.00'))
+    validated_currency = validation_response.get('currency', '')
+
+    if payment.status in ['PENDING', 'FAILED']:
+        if validated_amount == payment.amount and validated_currency == payment.currency:
+            # Payment success
+            payment.status = 'SUCCESS'
+            payment.bank_transaction_id = validation_response.get('bank_tran_id', payment.bank_transaction_id)
+            payment.validation_status = 'VALIDATED'
+            payment.save()
+
+            order.is_paid = True
+            order.save()
+
+            if payment_type == 'credits':
+                credit_obj, _ = Credit.objects.get_or_create(user=user)
+                credit_obj.balance += credits_amount
+                credit_obj.save()
+
+            elif payment_type == 'premium':
+                now = timezone.now()
+                if not user.premium_expires or user.premium_expires < now:
+                    user.premium_expires = now + timedelta(days=30)
+                else:
+                    user.premium_expires += timedelta(days=30)
+
+                user.is_premium = True
+                user.save()
+
+            query = urlencode({
+                'tran_id': tran_id,
+                'val_id': val_id,
+                'amount': str(validated_amount),
+                'status': 'SUCCESS',
+                'payment_type': payment_type,
+            })
+            return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
+
+        else:
+            payment.status = 'FAILED'
+            payment.validation_status = 'AMOUNT_MISMATCH'
+            payment.error_message = 'Amount/currency mismatch'
+            payment.save()
+            query = urlencode({'tran_id': tran_id, 'reason': 'Amount/currency mismatch'})
+            return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
+
+    else:
+        # Already processed
+        query = urlencode({
+            'tran_id': tran_id,
+            'val_id': val_id,
+            'amount': str(payment.amount),
+            'status': payment.status,
+            'payment_type': payment_type,
+        })
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/success?{query}")
 
 @csrf_exempt
 @api_view(['POST', 'GET'])

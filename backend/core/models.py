@@ -27,7 +27,7 @@ class User(AbstractUser):
     verification_requested = models.BooleanField(default=False)
     verification_doc = models.FileField(upload_to='verification_docs/', blank=True, null=True)
     verification_requested = models.BooleanField(default=False) # Reverted: Original duplicate field
-    is_verified = models.BooleanField(default=False) # Reverted: Original duplicate field
+    is_premium = models.BooleanField(default=False) # Reverted: Original duplicate field
     location = models.CharField(max_length=255, blank=True, null=True, help_text="e.g., City, Country or Region")
     bio = models.TextField(blank=True, null=True)
     education = models.CharField(max_length=255, blank=True, null=True)
@@ -35,6 +35,13 @@ class User(AbstractUser):
     profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
     subjects = models.JSONField(default=list, blank=True)
     jobcount = models.PositiveIntegerField(default=0)
+    premium_expires = models.DateTimeField(blank=True, null=True)
+
+    def has_premium(self):
+        """Check if user currently has active premium."""
+        if self.is_premium and self.premium_expires:
+            return self.premium_expires >= timezone.now()
+        return False
 
 class ContactUnlock(models.Model):
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocks')

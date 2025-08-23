@@ -7,16 +7,19 @@ const PaymentSuccess = () => {
   const transactionId = searchParams.get('tran_id') || 'N/A';
   const amount = searchParams.get('amount') || 'N/A';
   const currency = searchParams.get('currency') || 'BDT';
-  const credit = searchParams.get('credit') || 'purchase';
+  const paymentType = searchParams.get('payment_type') || 'credits'; // 'premium' or 'credits'
+  const creditAmount = searchParams.get('credit') || 'N/A'; // for credits
 
-  const successMessage = credit === 'premium_upgrade' 
+  // Message based on payment type
+  const successMessage = paymentType === 'premium'
     ? "Your account has been successfully upgraded to Premium!"
-    : `Your payment was successful! You've received ${amount} ${currency}.`;
+    : `Your payment was successful! You've received ${creditAmount} credits.`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-6 font-sans">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-emerald-400 animate-fade-in">
-        {/* Header with gradient background */}
+        
+        {/* Header */}
         <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6 text-center">
           <div className="w-20 h-20 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg 
@@ -25,12 +28,7 @@ const PaymentSuccess = () => {
               stroke="currentColor" 
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth="2" 
-                d="M5 13l4 4L19 7" 
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-white mb-1">Payment Successful!</h1>
@@ -46,19 +44,19 @@ const PaymentSuccess = () => {
                 <span className="text-gray-600">Transaction ID:</span>
                 <span className="font-medium text-gray-800">{transactionId}</span>
               </div>
-              {credit !== 'premium_upgrade' && (
-                <>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Amount:</span>
-                    <span className="font-medium text-gray-800">
-                      {amount} {currency}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Credit Added:</span>
-                    <span className="font-medium text-gray-800">{credit}</span>
-                  </div>
-                </>
+
+              {/* Show amount for both credit and premium */}
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount:</span>
+                <span className="font-medium text-gray-800">{amount} {currency}</span>
+              </div>
+
+              {/* Show credits only for credit purchase */}
+              {paymentType === 'credits' && (
+                <div className="flex justify-between">
+                  <span className="text-gray-600">Credits Added:</span>
+                  <span className="font-medium text-gray-800">{creditAmount}</span>
+                </div>
               )}
             </div>
           </div>
@@ -77,7 +75,7 @@ const PaymentSuccess = () => {
               />
             </svg>
             <p className="text-gray-600">
-              {credit === 'premium_upgrade' 
+              {paymentType === 'premium' 
                 ? "You now have access to all premium features!"
                 : "Your credits have been added to your account instantly."}
             </p>
@@ -87,7 +85,7 @@ const PaymentSuccess = () => {
           <div className="space-y-3">
             <Link
               to="/dashboard"
-              className="block w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:from-blue-700 hover:to-blue-800 text-center"
+              className="block w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-lg shadow-md hover:from-blue-700 hover:to-blue-800 hover:shadow-lg hover:text-white transition-all duration-300 text-center"
             >
               Go to Dashboard
             </Link>
@@ -103,30 +101,14 @@ const PaymentSuccess = () => {
           <div className="mt-8 pt-6 border-t border-gray-100">
             <div className="flex justify-center space-x-4">
               <div className="flex items-center text-xs text-gray-500">
-                <svg 
-                  className="w-4 h-4 mr-1 text-green-500" 
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
-                >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" 
-                    clipRule="evenodd" 
-                  />
+                <svg className="w-4 h-4 mr-1 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
                 </svg>
                 Secure Payment
               </div>
               <div className="flex items-center text-xs text-gray-500">
-                <svg 
-                  className="w-4 h-4 mr-1 text-blue-500" 
-                  fill="currentColor" 
-                  viewBox="0 0 20 20"
-                >
-                  <path 
-                    fillRule="evenodd" 
-                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" 
-                    clipRule="evenodd" 
-                  />
+                <svg className="w-4 h-4 mr-1 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
                 </svg>
                 Instant Delivery
               </div>

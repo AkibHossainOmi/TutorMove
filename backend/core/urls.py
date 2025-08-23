@@ -33,7 +33,7 @@ router.register(r'reviews', ReviewViewSet, basename='review')
 router.register(r'premium', PremiumViewSet, basename='premium')
 router.register(r'escrow', EscrowPaymentViewSet, basename='escrow')
 router.register(r'subjects', SubjectViewSet, basename='subject')
-router.register('contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
+router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
 # If you decide to expose a PaymentViewSet, register it here:
 # router.register(r'payments', PaymentViewSet, basename='payment')
 
