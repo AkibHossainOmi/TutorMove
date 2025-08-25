@@ -69,6 +69,6 @@ urlpatterns = [
     path('payments/cancel/', payment_cancel_view, name='payment_cancel'),
     # The IPN URL for server-to-server communication
     path('payments/sslcommerz-ipn/', sslcommerz_ipn, name='sslcommerz_ipn'),
-    path("send-whatsapp/", send_whatsapp, name="send_whatsapp"),
-    path("verify-otp/", verify_otp, name="verify_otp"),
+    path("whatsapp/send/", send_whatsapp, name="send_whatsapp"),
+    path("whatsapp/verify/", verify_otp, name="verify_otp"),
 ]

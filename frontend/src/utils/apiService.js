@@ -94,6 +94,15 @@ apiService.interceptors.response.use(
   }
 );
 
+export const whatsappAPI = {
+  // Send OTP to authenticated user's phone number
+  sendOTP: (phoneNumber) =>
+    apiService.post('/api/whatsapp/send/', { phone_number: phoneNumber }),
+
+  // Verify OTP submitted by authenticated user
+  verifyOTP: (otp) =>
+    apiService.post('/api/whatsapp/verify/', { otp }),
+};
 // Auth API calls
 export const authAPI = {
   login: (credentials) => apiService.post('/api/auth/login/', credentials),

@@ -1955,7 +1955,8 @@ def verify_otp(request):
     Verify OTP submitted by the authenticated user, with expiry check.
     """
     try:
-        user_id = request.user.id
+        user = request.user
+        user_id = user.id
         input_otp = request.data.get("otp")
 
         if not input_otp:
@@ -1977,6 +1978,11 @@ def verify_otp(request):
         # Verify OTP
         if str(input_otp) == str(otp):
             otp_store.pop(user_id)
+
+            # Update user field
+            user.phone_verified = True
+            user.save(update_fields=["phone_verified"])
+
             return Response({"status": "success", "message": "OTP verified successfully"})
         else:
             return Response({"status": "failed", "message": "Invalid OTP"}, status=400)

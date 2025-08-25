@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FaMapMarkerAlt, FaUser, FaStar, FaUserShield, FaPhoneAlt, FaInfoCircle, FaBriefcase, FaUserGraduate, FaEdit, FaSave } from 'react-icons/fa';
 import { MdVerifiedUser } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { userApi } from '../utils/apiService';
+import { userApi, whatsappAPI } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
 
 const Profile = () => {
@@ -21,6 +21,12 @@ const Profile = () => {
     location: '',
     phone_number: ''
   });
+
+  // OTP states
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [otpTimer, setOtpTimer] = useState(0);
+  const timerRef = useRef(null);
 
   const fetchAverageRating = async (tutorId) => {
     try {
@@ -43,40 +49,88 @@ const Profile = () => {
       setUpdateStatus('Profile updated successfully!');
       setTimeout(() => setUpdateStatus(''), 3000);
 
-      if (updated.user_type === 'tutor') {
-        fetchAverageRating(updated.id);
-      }
+      if (updated.user_type === 'tutor') fetchAverageRating(updated.id);
     } catch (err) {
       setUpdateStatus(`Error: ${err.response?.data?.detail || err.message}`);
     }
   };
 
   const toggleEdit = () => {
-    if (isEditing) {
-      handleProfileUpdate();
-    } else {
-      setIsEditing(true);
-    }
+    if (isEditing) handleProfileUpdate();
+    else setIsEditing(true);
   };
 
   const handleEditChange = (field, value) => {
-    setEditData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setEditData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // OTP functions
+  const handleSendOTP = async () => {
+    // Show OTP input immediately
+    setOtpSent(true);
+    setOtpTimer(300); // 5 minutes
+    setUpdateStatus('OTP sending...');
+
+    // Start timer immediately
+    timerRef.current = setInterval(() => {
+      setOtpTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    try {
+      const res = await whatsappAPI.sendOTP(editData.phone_number);
+      if (res.data.status === 'success') {
+        setUpdateStatus('OTP sent! Please enter the code.');
+      } else {
+        setUpdateStatus(`Failed: ${res.data.message}`);
+        setOtpSent(false); // hide input if failed
+        clearInterval(timerRef.current);
+        setOtpTimer(0);
+      }
+    } catch (err) {
+      setUpdateStatus(`Error: ${err.response?.data?.message || err.message}`);
+      setOtpSent(false); // hide input if error
+      clearInterval(timerRef.current);
+      setOtpTimer(0);
+    }
+
+    setTimeout(() => setUpdateStatus(''), 5000);
+  };
+
+  const handleVerifyOTP = async () => {
+    try {
+      const res = await whatsappAPI.verifyOTP(otp);
+      if (res.data.status === 'success') {
+        setUpdateStatus('Phone number verified!');
+        setUserData(prev => ({ ...prev, phone_verified: true }));
+        setOtpSent(false);
+        setOtp('');
+        clearInterval(timerRef.current);
+        setOtpTimer(0);
+      } else {
+        setUpdateStatus(`Verification failed: ${res.data.message}`);
+      }
+    } catch (err) {
+      setUpdateStatus(`Error: ${err.response?.data?.message || err.message}`);
+    }
+    setTimeout(() => setUpdateStatus(''), 5000);
+  };
+
+  const formatTimer = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
   };
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
       setError(null);
-
-      const storedUser = localStorage.getItem('user');
-      if (!storedUser) {
-        setError('User data not found. Please log in.');
-        setLoading(false);
-        return;
-      }
 
       try {
         const res = await userApi.getUser();
@@ -91,9 +145,7 @@ const Profile = () => {
           phone_number: data.phone_number || ''
         });
 
-        if (data.user_type === 'tutor') {
-          fetchAverageRating(data.id);
-        }
+        if (data.user_type === 'tutor') fetchAverageRating(data.id);
       } catch (err) {
         console.error(err);
         setError('Failed to load profile');
@@ -103,41 +155,37 @@ const Profile = () => {
     };
 
     fetchUserProfile();
+    return () => clearInterval(timerRef.current);
   }, []);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-grow flex justify-center items-center">
-          <div className="text-center">
-            <LoadingSpinner />
-            <p className="mt-4 text-gray-600">Loading your profile...</p>
-          </div>
-        </div>
+  if (loading) return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex justify-center items-center">
+        <LoadingSpinner />
       </div>
-    );
-  }
+      <Footer />
+    </div>
+  );
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-grow flex justify-center items-center px-4">
-          <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
-            <div className="text-red-500 text-5xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Error</h2>
-            <p className="text-gray-600">{error}</p>
-          </div>
+  if (error) return (
+    <div className="min-h-screen flex flex-col">
+      <Navbar />
+      <div className="flex-grow flex justify-center items-center px-4">
+        <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
+          <div className="text-red-500 text-5xl mb-4">⚠️</div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Error</h2>
+          <p className="text-gray-600">{error}</p>
         </div>
       </div>
-    );
-  }
+      <Footer />
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
-      
+
       <main className="flex-grow max-w-4xl mx-auto w-full p-6 mt-20 mb-10">
         {/* Profile Header Card */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
@@ -147,7 +195,7 @@ const Profile = () => {
                 <h1 className="text-2xl md:text-3xl font-bold">Your Profile</h1>
                 <p className="text-blue-100 mt-1">Manage your account information and preferences</p>
               </div>
-              
+
               {(userType === 'tutor' || userType === 'student') && (
                 <button
                   onClick={toggleEdit}
@@ -181,7 +229,7 @@ const Profile = () => {
                 <FaUser className="text-indigo-500 mr-2" />
                 Basic Information
               </h2>
-              
+
               <div className="space-y-4">
                 {[
                   { 
@@ -211,9 +259,7 @@ const Profile = () => {
                 ].map(({ label, value, icon, bgColor }) => (
                   <div key={label} className="flex justify-between items-center p-4 rounded-lg border border-gray-200">
                     <div className="flex items-center gap-3 text-gray-700 font-medium">
-                      <span className={`p-2 rounded-full ${bgColor}`}>
-                        {icon}
-                      </span>
+                      <span className={`p-2 rounded-full ${bgColor}`}>{icon}</span>
                       {label}
                     </div>
                     <div className="text-gray-900 font-semibold">{value}</div>
@@ -229,7 +275,7 @@ const Profile = () => {
                   <FaUserGraduate className="text-indigo-500 mr-2" />
                   Tutor Details
                 </h2>
-                
+
                 <div className="space-y-5">
                   {[
                     { 
@@ -256,16 +302,58 @@ const Profile = () => {
                       ) : userData.experience || 'Not provided', 
                       icon: <FaBriefcase className="text-gray-500" />
                     },
-                    { 
-                      label: 'Phone Number', 
+                    {
+                      label: 'Phone Number',
                       value: isEditing ? (
+                        // Editing mode: simple input to change phone number
                         <input
                           className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                          value={editData.phone_number}
-                          onChange={(e) => handleEditChange('phone_number', e.target.value)}
                           placeholder="Enter your phone number"
+                          value={editData.phone_number}
+                          onChange={e => handleEditChange('phone_number', e.target.value)}
                         />
-                      ) : userData.phone_number || 'Not provided', 
+                      ) : (
+                        // Non-editing mode: show phone number + OTP send/verify
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-2">
+                            <span>{userData.phone_number || 'Not provided'}</span>
+                            {userData.phone_verified && (
+                              <span className="text-green-600 flex items-center gap-1">
+                                Verified <MdVerifiedUser />
+                              </span>
+                            )}
+                          </div>
+
+                          {!userData.phone_verified && !otpSent && userData.phone_number && (
+                            <button
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                              onClick={handleSendOTP}
+                            >
+                              Verify
+                            </button>
+                          )}
+
+                          {otpSent && (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                className="border rounded-lg px-2 py-1 w-24"
+                                placeholder="Enter OTP"
+                                value={otp}
+                                onChange={e => setOtp(e.target.value)}
+                              />
+                              <button
+                                className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                                onClick={handleVerifyOTP}
+                                disabled={otpTimer === 0}
+                              >
+                                Verify
+                              </button>
+                              {otpTimer > 0 && <span className="text-sm text-gray-500">{formatTimer(otpTimer)}</span>}
+                            </div>
+                          )}
+                        </div>
+                      ),
                       icon: <FaPhoneAlt className="text-gray-500" />
                     },
                     { 
@@ -285,9 +373,7 @@ const Profile = () => {
                       <div className="flex items-center gap-2 text-sm font-medium text-gray-600 mb-2">
                         {icon} {label}
                       </div>
-                      <div className="text-gray-900">
-                        {value}
-                      </div>
+                      <div className="text-gray-900">{value}</div>
                     </div>
                   ))}
                 </div>
@@ -302,7 +388,7 @@ const Profile = () => {
                 <FaInfoCircle className="text-indigo-500 mr-2" />
                 {userType === 'tutor' ? 'Professional Bio' : 'About Me'}
               </h2>
-              
+
               <div>
                 {isEditing ? (
                   <textarea
@@ -317,7 +403,7 @@ const Profile = () => {
                   </p>
                 )}
               </div>
-              
+
               {userType === 'tutor' && avgRating !== null && (
                 <div className="mt-6 pt-4 border-t border-gray-100">
                   <div className="flex items-center justify-center">
@@ -352,7 +438,7 @@ const Profile = () => {
           </div>
         )}
       </main>
-      
+
       <Footer />
     </div>
   );
