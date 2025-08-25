@@ -1,4 +1,8 @@
 
+import subprocess
+import json
+import random
+import time
 from django.db.models import Avg
 from geopy.exc import GeocoderUnavailable, GeocoderTimedOut
 from geopy.geocoders import Nominatim
@@ -1871,3 +1875,111 @@ class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return Payment.objects.filter(order__user=self.request.user).order_by('-payment_date')
+
+otp_store = {} 
+
+# Configuration
+OTP_EXPIRY_SECONDS = 300  # OTP valid for 5 minutes
+OTP_MAX_REQUESTS = 2      # Max OTP requests per user per day
+RATE_LIMIT_WINDOW = 86400  # 1 day
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_whatsapp(request):
+    """
+    Send WhatsApp OTP via Mudslide with expiry and rate limiting.
+    Prevent sending new OTP before the current one expires.
+    """
+    try:
+        phone_number = request.data.get("phone_number")
+        message = request.data.get("message")  # optional
+
+        if not phone_number:
+            return Response({"error": "phone_number is required"}, status=400)
+
+        user_id = request.user.id
+        now = time.time()
+
+        # Rate limiting
+        user_data = otp_store.get(user_id, {})
+        last_requests = user_data.get("requests", [])
+
+        # Filter requests older than RATE_LIMIT_WINDOW
+        last_requests = [t for t in last_requests if now - t < RATE_LIMIT_WINDOW]
+        if len(last_requests) >= OTP_MAX_REQUESTS:
+            return Response({"status": "failed", "message": "OTP request limit reached. Try later."}, status=429)
+
+        # Check if a valid OTP already exists
+        existing_otp_data = otp_store.get(user_id)
+        if existing_otp_data:
+            otp_timestamp = existing_otp_data.get("timestamp", 0)
+            if now - otp_timestamp < OTP_EXPIRY_SECONDS:
+                remaining = int(OTP_EXPIRY_SECONDS - (now - otp_timestamp))
+                return Response({
+                    "status": "failed",
+                    "message": f"An OTP is already active. Please wait {remaining} seconds before requesting a new one."
+                }, status=400)
+
+        # Generate new OTP
+        otp = message if message else str(random.randint(100000, 999999))
+        otp_message = message if message else f"Your OTP is {otp}"
+
+        # Strip '+' from phone number
+        phone_number = phone_number.lstrip("+")
+
+        # Build Mudslide command
+        cmd = [r"C:\Program Files\nodejs\npx.cmd", "mudslide", "send", phone_number, otp_message]
+
+        # Run subprocess
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+        output = result.stdout if result.stdout else result.stderr
+
+        if result.returncode == 0:
+            # Store OTP with timestamp and update request history
+            otp_store[user_id] = {
+                "otp": otp,
+                "timestamp": now,
+                "requests": last_requests + [now]
+            }
+            return Response({"status": "success", "message": "OTP sent successfully"})
+        else:
+            return Response({"status": "failed", "error": output}, status=500)
+
+    except Exception as e:
+        return Response({"status": "failed", "error": str(e)}, status=500)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def verify_otp(request):
+    """
+    Verify OTP submitted by the authenticated user, with expiry check.
+    """
+    try:
+        user_id = request.user.id
+        input_otp = request.data.get("otp")
+
+        if not input_otp:
+            return Response({"error": "OTP is required"}, status=400)
+
+        user_data = otp_store.get(user_id)
+        if not user_data:
+            return Response({"status": "failed", "message": "No OTP found for this user"}, status=400)
+
+        otp = user_data.get("otp")
+        timestamp = user_data.get("timestamp", 0)
+        now = time.time()
+
+        # Check expiry
+        if now - timestamp > OTP_EXPIRY_SECONDS:
+            otp_store.pop(user_id)
+            return Response({"status": "failed", "message": "OTP expired"}, status=400)
+
+        # Verify OTP
+        if str(input_otp) == str(otp):
+            otp_store.pop(user_id)
+            return Response({"status": "success", "message": "OTP verified successfully"})
+        else:
+            return Response({"status": "failed", "message": "Invalid OTP"}, status=400)
+
+    except Exception as e:
+        return Response({"status": "failed", "error": str(e)}, status=500)

@@ -7,9 +7,9 @@ from .views import (
     AdminViewSet,
     RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
-    payment_success_view, payment_fail_view, payment_cancel_view, sslcommerz_ipn, 
+    payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn, 
     EmailVerifyView, SubmitReview, ContactUnlockViewSet,
-    TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet,
+    TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -69,4 +69,6 @@ urlpatterns = [
     path('payments/cancel/', payment_cancel_view, name='payment_cancel'),
     # The IPN URL for server-to-server communication
     path('payments/sslcommerz-ipn/', sslcommerz_ipn, name='sslcommerz_ipn'),
+    path("send-whatsapp/", send_whatsapp, name="send_whatsapp"),
+    path("verify-otp/", verify_otp, name="verify_otp"),
 ]
