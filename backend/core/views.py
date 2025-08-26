@@ -456,6 +456,27 @@ class UserViewSet(viewsets.ModelViewSet):
             payment.save()
             return Response({'status': 'FAILED', 'error': payment.error_message}, status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def upload_dp(self, request):
+        """
+        Upload or update user display picture.
+        """
+        user = request.user
+
+        # Check if file is present
+        dp_file = request.FILES.get('profile_picture')
+        if not dp_file:
+            return Response({'error': 'No file uploaded'}, status=400)
+
+        # Save file to user's profile_picture field
+        user.profile_picture = dp_file
+        user.save(update_fields=['profile_picture'])
+
+        return Response({
+            'detail': 'Display picture updated successfully',
+            'profile_picture_url': request.build_absolute_uri(user.profile_picture.url)
+        }, status=200)
+
 # --- Utility ---
 import math
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaMapMarkerAlt, FaUser, FaStar, FaUserShield, FaPhoneAlt, FaInfoCircle, FaBriefcase, FaUserGraduate, FaEdit, FaSave } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUser, FaStar, FaUserShield, FaPhoneAlt, FaInfoCircle, FaBriefcase, FaUserGraduate, FaEdit, FaSave, FaCamera } from 'react-icons/fa';
 import { MdVerifiedUser } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -21,6 +21,7 @@ const Profile = () => {
     location: '',
     phone_number: ''
   });
+  const [profileFile, setProfileFile] = useState(null);
 
   // OTP states
   const [otpSent, setOtpSent] = useState(false);
@@ -43,9 +44,17 @@ const Profile = () => {
     setUpdateStatus('Updating...');
     try {
       const res = await userApi.editProfile(editData);
-      const updated = res.data;
+      let updated = res.data;
+
+      // Upload profile picture if selected
+      if (profileFile) {
+        const dpRes = await userApi.uploadDp(profileFile);
+        updated.profile_picture = dpRes.data.profile_picture_url;
+      }
+
       setUserData(updated);
       setIsEditing(false);
+      setProfileFile(null);
       setUpdateStatus('Profile updated successfully!');
       setTimeout(() => setUpdateStatus(''), 3000);
 
@@ -64,14 +73,16 @@ const Profile = () => {
     setEditData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleProfileFileChange = (e) => {
+    setProfileFile(e.target.files[0]);
+  };
+
   // OTP functions
   const handleSendOTP = async () => {
-    // Show OTP input immediately
     setOtpSent(true);
     setOtpTimer(300); // 5 minutes
     setUpdateStatus('OTP sending...');
 
-    // Start timer immediately
     timerRef.current = setInterval(() => {
       setOtpTimer(prev => {
         if (prev <= 1) {
@@ -88,13 +99,13 @@ const Profile = () => {
         setUpdateStatus('OTP sent! Please enter the code.');
       } else {
         setUpdateStatus(`Failed: ${res.data.message}`);
-        setOtpSent(false); // hide input if failed
+        setOtpSent(false);
         clearInterval(timerRef.current);
         setOtpTimer(0);
       }
     } catch (err) {
       setUpdateStatus(`Error: ${err.response?.data?.message || err.message}`);
-      setOtpSent(false); // hide input if error
+      setOtpSent(false);
       clearInterval(timerRef.current);
       setOtpTimer(0);
     }
@@ -188,36 +199,50 @@ const Profile = () => {
 
       <main className="flex-grow max-w-4xl mx-auto w-full p-6 mt-20 mb-10">
         {/* Profile Header Card */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
-          <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-white">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold">Your Profile</h1>
-                <p className="text-blue-100 mt-1">Manage your account information and preferences</p>
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 p-6 flex items-center gap-6">
+          {/* Profile Picture */}
+          <div className="relative w-24 h-24 rounded-full bg-gray-300">
+            {userData.profile_picture ? (
+              <img
+                src={userData.profile_picture}
+                alt="Profile"
+                className="w-24 h-24 rounded-full object-contain"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                <FaUser size={36} />
               </div>
+            )}
 
-              {(userType === 'tutor' || userType === 'student') && (
-                <button
-                  onClick={toggleEdit}
-                  className={`mt-4 sm:mt-0 flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
-                    isEditing 
-                      ? 'bg-green-500 hover:bg-green-600' 
-                      : 'bg-white text-indigo-700 hover:bg-gray-100'
-                  }`}
-                >
-                  {isEditing ? (
-                    <>
-                      <FaSave className="text-sm" /> Save Changes
-                    </>
-                  ) : (
-                    <>
-                      <FaEdit className="text-sm" /> Edit Profile
-                    </>
-                  )}
-                </button>
-              )}
-            </div>
+            {isEditing && (
+              <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-700">
+                <FaCamera />
+                <input type="file" className="hidden" onChange={handleProfileFileChange} />
+              </label>
+            )}
           </div>
+
+          <div className="flex flex-col justify-center flex-grow">
+            <h1 className="text-2xl md:text-3xl font-bold">{userData.username}</h1>
+            <p className="text-gray-600">{userType.charAt(0).toUpperCase() + userType.slice(1)}</p>
+          </div>
+
+          <button
+            onClick={toggleEdit}
+            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
+              isEditing ? 'bg-green-500 hover:bg-green-600' : 'bg-white text-indigo-700 hover:bg-gray-100'
+            }`}
+          >
+            {isEditing ? (
+              <>
+                <FaSave className="text-sm" /> Save Changes
+              </>
+            ) : (
+              <>
+                <FaEdit className="text-sm" /> Edit Profile
+              </>
+            )}
+          </button>
         </div>
 
         {/* Main Profile Content */}

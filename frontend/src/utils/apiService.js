@@ -184,6 +184,15 @@ export const subjectApi = {
 export const userApi = {
   getUser: () => apiService.get('/api/users/me/'),
   editProfile: (profileData) => apiService.post('/api/users/edit_profile/', profileData),
+  uploadDp: (file) => {
+    const formData = new FormData();
+    formData.append('profile_picture', file);
+    return apiService.post('/api/users/upload_dp/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  }
 };
 
 // Credit API calls
