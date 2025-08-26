@@ -1,4 +1,5 @@
 
+import os
 import subprocess
 import json
 import random
@@ -468,7 +469,13 @@ class UserViewSet(viewsets.ModelViewSet):
         if not dp_file:
             return Response({'error': 'No file uploaded'}, status=400)
 
-        # Save file to user's profile_picture field
+        # Delete old profile picture if exists
+        if user.profile_picture:
+            old_path = user.profile_picture.path
+            if os.path.isfile(old_path):
+                os.remove(old_path)
+
+        # Save new file
         user.profile_picture = dp_file
         user.save(update_fields=['profile_picture'])
 

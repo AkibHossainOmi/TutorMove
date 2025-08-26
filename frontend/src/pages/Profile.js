@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { userApi, whatsappAPI } from '../utils/apiService';
 import LoadingSpinner from '../components/LoadingSpinner';
+import ProfileImageWithBg from '../components/ProfileImageWithBg';
 
 const Profile = () => {
   const [userData, setUserData] = useState(null);
@@ -201,23 +202,20 @@ const Profile = () => {
         {/* Profile Header Card */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 p-6 flex items-center gap-6">
           {/* Profile Picture */}
-          <div className="relative w-24 h-24 rounded-full bg-gray-300">
-            {userData.profile_picture ? (
-              <img
-                src={userData.profile_picture}
-                alt="Profile"
-                className="w-24 h-24 rounded-full object-contain"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                <FaUser size={36} />
-              </div>
-            )}
+          <div className="relative">
+            <ProfileImageWithBg
+              imageUrl={userData.profile_picture}
+              size={96} // same as w-24 h-24
+            />
 
             {isEditing && (
               <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-700">
                 <FaCamera />
-                <input type="file" className="hidden" onChange={handleProfileFileChange} />
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleProfileFileChange}
+                />
               </label>
             )}
           </div>
