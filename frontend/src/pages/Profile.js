@@ -1,5 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FaMapMarkerAlt, FaUser, FaStar, FaUserShield, FaPhoneAlt, FaInfoCircle, FaBriefcase, FaUserGraduate, FaEdit, FaSave, FaCamera } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import {
+  FaMapMarkerAlt,
+  FaUser,
+  FaStar,
+  FaUserShield,
+  FaPhoneAlt,
+  FaInfoCircle,
+  FaBriefcase,
+  FaUserGraduate,
+  FaEdit,
+  FaSave,
+  FaCamera,
+  FaKey,
+  FaTasks,
+} from 'react-icons/fa';
 import { MdVerifiedUser } from 'react-icons/md';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -20,9 +35,16 @@ const Profile = () => {
     education: '',
     experience: '',
     location: '',
-    phone_number: ''
+    phone_number: '',
   });
   const [profileFile, setProfileFile] = useState(null);
+
+  // Password states
+  const [showPasswordFields, setShowPasswordFields] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [passwordStatus, setPasswordStatus] = useState('');
 
   // OTP states
   const [otpSent, setOtpSent] = useState(false);
@@ -30,9 +52,13 @@ const Profile = () => {
   const [otpTimer, setOtpTimer] = useState(0);
   const timerRef = useRef(null);
 
+  const navigate = useNavigate();
+
   const fetchAverageRating = async (tutorId) => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${tutorId}/`);
+      const res = await fetch(
+        `${process.env.REACT_APP_API_URL}/api/reviews/${tutorId}/`
+      );
       if (!res.ok) throw new Error('Failed to fetch average rating');
       const data = await res.json();
       setAvgRating(data.average_rating);
@@ -41,51 +67,89 @@ const Profile = () => {
     }
   };
 
+  // ✅ FIX: merge updated fields instead of replacing userData
   const handleProfileUpdate = async () => {
     setUpdateStatus('Updating...');
     try {
-      const res = await userApi.editProfile(editData);
-      let updated = res.data;
+      let updatedData = { ...editData };
+      const res = await userApi.editProfile(updatedData);
+      let updatedUser = res.data;
 
-      // Upload profile picture if selected
       if (profileFile) {
         const dpRes = await userApi.uploadDp(profileFile);
-        updated.profile_picture = dpRes.data.profile_picture_url;
+        updatedUser.profile_picture = dpRes.data.profile_picture_url;
       }
 
-      setUserData(updated);
+      setUserData((prev) => ({
+        ...prev,
+        ...updatedUser,
+      }));
+
       setIsEditing(false);
       setProfileFile(null);
       setUpdateStatus('Profile updated successfully!');
       setTimeout(() => setUpdateStatus(''), 3000);
 
-      if (updated.user_type === 'tutor') fetchAverageRating(updated.id);
+      if ((updatedUser.user_type || userData?.user_type) === 'tutor') {
+        fetchAverageRating(updatedUser.id || userData?.id);
+      }
     } catch (err) {
       setUpdateStatus(`Error: ${err.response?.data?.detail || err.message}`);
     }
   };
 
   const toggleEdit = () => {
-    if (isEditing) handleProfileUpdate();
-    else setIsEditing(true);
+    if (isEditing) {
+      handleProfileUpdate();
+    } else {
+      setIsEditing(true);
+    }
   };
 
   const handleEditChange = (field, value) => {
-    setEditData(prev => ({ ...prev, [field]: value }));
+    setEditData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleProfileFileChange = (e) => {
     setProfileFile(e.target.files[0]);
   };
 
-  // OTP functions
+  // Password change
+  const handlePasswordChange = async () => {
+    if (newPassword !== confirmNewPassword) {
+      setPasswordStatus('Error: New passwords do not match!');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordStatus('Error: New password must be at least 8 characters long!');
+      return;
+    }
+
+    setPasswordStatus('Changing password...');
+    try {
+      await userApi.changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
+      setPasswordStatus('Password updated successfully!');
+      setShowPasswordFields(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+    } catch (err) {
+      setPasswordStatus(`Error: ${err.response?.data?.detail || err.message}`);
+    }
+    setTimeout(() => setPasswordStatus(''), 5000);
+  };
+
+  // OTP sending
   const handleSendOTP = async () => {
     setOtpSent(true);
-    setOtpTimer(300); // 5 minutes
+    setOtpTimer(300);
     setUpdateStatus('OTP sending...');
 
     timerRef.current = setInterval(() => {
-      setOtpTimer(prev => {
+      setOtpTimer((prev) => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
           return 0;
@@ -114,12 +178,23 @@ const Profile = () => {
     setTimeout(() => setUpdateStatus(''), 5000);
   };
 
+  // OTP verify
   const handleVerifyOTP = async () => {
+    setUpdateStatus('Verifying OTP...');
     try {
       const res = await whatsappAPI.verifyOTP(otp);
       if (res.data.status === 'success') {
         setUpdateStatus('Phone number verified!');
-        setUserData(prev => ({ ...prev, phone_verified: true }));
+        const updatedUser = await userApi.editProfile({
+          phone_number: editData.phone_number,
+          phone_verified: true,
+        });
+
+        setUserData((prev) => ({
+          ...prev,
+          ...updatedUser.data,
+        }));
+
         setOtpSent(false);
         setOtp('');
         clearInterval(timerRef.current);
@@ -136,9 +211,10 @@ const Profile = () => {
   const formatTimer = (sec) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
-    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // Initial fetch
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
@@ -154,13 +230,13 @@ const Profile = () => {
           education: data.education || '',
           experience: data.experience || '',
           location: data.location || '',
-          phone_number: data.phone_number || ''
+          phone_number: data.phone_number || '',
         });
 
         if (data.user_type === 'tutor') fetchAverageRating(data.id);
       } catch (err) {
         console.error(err);
-        setError('Failed to load profile');
+        setError('Failed to load profile. Please log in again.');
       } finally {
         setLoading(false);
       }
@@ -170,117 +246,116 @@ const Profile = () => {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  if (loading) return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-grow flex justify-center items-center">
-        <LoadingSpinner />
-      </div>
-      <Footer />
-    </div>
-  );
-
-  if (error) return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar />
-      <div className="flex-grow flex justify-center items-center px-4">
-        <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
-          <div className="text-red-500 text-5xl mb-4">⚠️</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Error</h2>
-          <p className="text-gray-600">{error}</p>
+  if (loading)
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center">
+          <LoadingSpinner />
         </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
-  );
+    );
+
+  if (error)
+    return (
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <div className="flex-grow flex justify-center items-center px-4">
+          <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
+            <div className="text-red-500 text-5xl mb-4">⚠️</div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-2">
+              Profile Error
+            </h2>
+            <p className="text-gray-600">{error}</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-inter">
       <Navbar />
 
       <main className="flex-grow max-w-4xl mx-auto w-full p-6 mt-20 mb-10">
-        {/* Profile Header Card */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 p-6 flex items-center gap-6">
-          {/* Profile Picture */}
-          <div className="relative">
-            <ProfileImageWithBg
-              imageUrl={userData.profile_picture}
-              size={96} // same as w-24 h-24
-            />
-
-            {isEditing && (
-              <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-700">
-                <FaCamera />
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleProfileFileChange}
-                />
-              </label>
-            )}
+        {/* Header */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6 p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-6 w-full md:w-auto">
+            <div className="relative">
+              <ProfileImageWithBg imageUrl={userData.profile_picture} size={96} />
+              {isEditing && (
+                <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-700">
+                  <FaCamera />
+                  <input type="file" className="hidden" onChange={handleProfileFileChange} />
+                </label>
+              )}
+            </div>
+            <div className="flex flex-col justify-center">
+              <h1 className="text-2xl md:text-3xl font-bold">{userData.username}</h1>
+              <p className="text-gray-600">{userType.charAt(0).toUpperCase() + userType.slice(1)}</p>
+            </div>
           </div>
 
-          <div className="flex flex-col justify-center flex-grow">
-            <h1 className="text-2xl md:text-3xl font-bold">{userData.username}</h1>
-            <p className="text-gray-600">{userType.charAt(0).toUpperCase() + userType.slice(1)}</p>
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <button
+              onClick={toggleEdit}
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition w-full sm:w-auto ${
+                isEditing
+                  ? 'bg-green-600 text-white hover:bg-green-700'
+                  : 'bg-white text-indigo-700 border border-indigo-700 hover:bg-indigo-50'
+              }`}
+            >
+              {isEditing ? (
+                <>
+                  <FaSave className="text-sm" /> Save Changes
+                </>
+              ) : (
+                <>
+                  <FaEdit className="text-sm" /> Edit Profile
+                </>
+              )}
+            </button>
           </div>
-
-          <button
-            onClick={toggleEdit}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium transition ${
-              isEditing ? 'bg-green-500 hover:bg-green-600' : 'bg-white text-indigo-700 hover:bg-gray-100'
-            }`}
-          >
-            {isEditing ? (
-              <>
-                <FaSave className="text-sm" /> Save Changes
-              </>
-            ) : (
-              <>
-                <FaEdit className="text-sm" /> Edit Profile
-              </>
-            )}
-          </button>
         </div>
 
-        {/* Main Profile Content */}
+        {/* Basic Info */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Basic Information Card */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-md p-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
-                <FaUser className="text-indigo-500 mr-2" />
-                Basic Information
+                <FaUser className="text-indigo-500 mr-2" /> Basic Information
               </h2>
-
               <div className="space-y-4">
                 {[
-                  { 
-                    label: 'Username', 
-                    value: userData.username, 
+                  {
+                    label: 'Username',
+                    value: userData.username,
                     icon: <FaUser className="text-gray-500" />,
-                    bgColor: 'bg-blue-50'
+                    bgColor: 'bg-blue-50',
                   },
                   {
                     label: 'User Type',
                     value: userType.charAt(0).toUpperCase() + userType.slice(1),
                     icon: <MdVerifiedUser className="text-gray-500" />,
-                    bgColor: 'bg-indigo-50'
+                    bgColor: 'bg-indigo-50',
                   },
-                  { 
-                    label: 'Trust Score', 
-                    value: (userData.trust_score ?? 0).toFixed(1), 
+                  {
+                    label: 'Trust Score',
+                    value: (userData.trust_score ?? 0).toFixed(1),
                     icon: <FaUserShield className="text-gray-500" />,
-                    bgColor: 'bg-purple-50'
+                    bgColor: 'bg-purple-50',
                   },
-                  ...(userType === 'tutor' ? [{
-                    label: 'Overall Rating',
-                    value: avgRating ? `${avgRating.toFixed(1)}/5.0` : 'No reviews yet',
-                    icon: <FaStar className="text-gray-500" />,
-                    bgColor: 'bg-amber-50'
-                  }] : [])
+                  ...(userType === 'tutor'
+                    ? [
+                        
+                      ]
+                    : []),
                 ].map(({ label, value, icon, bgColor }) => (
-                  <div key={label} className="flex justify-between items-center p-4 rounded-lg border border-gray-200">
+                  <div
+                    key={label}
+                    className="flex justify-between items-center p-4 rounded-lg border border-gray-200"
+                  >
                     <div className="flex items-center gap-3 text-gray-700 font-medium">
                       <span className={`p-2 rounded-full ${bgColor}`}>{icon}</span>
                       {label}
@@ -291,52 +366,49 @@ const Profile = () => {
               </div>
             </div>
 
-            {/* Additional Tutor Information */}
+            {/* Tutor Details */}
             {userType === 'tutor' && (
               <div className="bg-white rounded-xl shadow-md p-6 mt-6">
                 <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
-                  <FaUserGraduate className="text-indigo-500 mr-2" />
-                  Tutor Details
+                  <FaUserGraduate className="text-indigo-500 mr-2" /> Tutor Details
                 </h2>
-
                 <div className="space-y-5">
                   {[
-                    { 
-                      label: 'Education', 
+                    {
+                      label: 'Education',
                       value: isEditing ? (
                         <input
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                           value={editData.education}
                           onChange={(e) => handleEditChange('education', e.target.value)}
-                          placeholder="Enter your education"
                         />
-                      ) : userData.education || 'Not provided', 
-                      icon: <FaUserGraduate className="text-gray-500" />
+                      ) : (
+                        userData.education || 'Not provided'
+                      ),
+                      icon: <FaUserGraduate className="text-gray-500" />,
                     },
-                    { 
-                      label: 'Experience', 
+                    {
+                      label: 'Experience',
                       value: isEditing ? (
                         <input
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                           value={editData.experience}
                           onChange={(e) => handleEditChange('experience', e.target.value)}
-                          placeholder="Enter your experience"
                         />
-                      ) : userData.experience || 'Not provided', 
-                      icon: <FaBriefcase className="text-gray-500" />
+                      ) : (
+                        userData.experience || 'Not provided'
+                      ),
+                      icon: <FaBriefcase className="text-gray-500" />,
                     },
                     {
                       label: 'Phone Number',
                       value: isEditing ? (
-                        // Editing mode: simple input to change phone number
                         <input
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
-                          placeholder="Enter your phone number"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                           value={editData.phone_number}
-                          onChange={e => handleEditChange('phone_number', e.target.value)}
+                          onChange={(e) => handleEditChange('phone_number', e.target.value)}
                         />
                       ) : (
-                        // Non-editing mode: show phone number + OTP send/verify
                         <div className="flex flex-col gap-2">
                           <div className="flex items-center gap-2">
                             <span>{userData.phone_number || 'Not provided'}</span>
@@ -346,16 +418,14 @@ const Profile = () => {
                               </span>
                             )}
                           </div>
-
                           {!userData.phone_verified && !otpSent && userData.phone_number && (
                             <button
-                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                               onClick={handleSendOTP}
                             >
                               Verify
                             </button>
                           )}
-
                           {otpSent && (
                             <div className="flex items-center gap-2">
                               <input
@@ -363,33 +433,36 @@ const Profile = () => {
                                 className="border rounded-lg px-2 py-1 w-24"
                                 placeholder="Enter OTP"
                                 value={otp}
-                                onChange={e => setOtp(e.target.value)}
+                                onChange={(e) => setOtp(e.target.value)}
                               />
                               <button
-                                className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+                                className="px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700"
                                 onClick={handleVerifyOTP}
                                 disabled={otpTimer === 0}
                               >
                                 Verify
                               </button>
-                              {otpTimer > 0 && <span className="text-sm text-gray-500">{formatTimer(otpTimer)}</span>}
+                              {otpTimer > 0 && (
+                                <span className="text-sm text-gray-500">{formatTimer(otpTimer)}</span>
+                              )}
                             </div>
                           )}
                         </div>
                       ),
-                      icon: <FaPhoneAlt className="text-gray-500" />
+                      icon: <FaPhoneAlt className="text-gray-500" />,
                     },
-                    { 
-                      label: 'Location', 
+                    {
+                      label: 'Location',
                       value: isEditing ? (
                         <input
-                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+                          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                           value={editData.location}
                           onChange={(e) => handleEditChange('location', e.target.value)}
-                          placeholder="Enter your location"
                         />
-                      ) : userData.location || 'Not provided', 
-                      icon: <FaMapMarkerAlt className="text-gray-500" />
+                      ) : (
+                        userData.location || 'Not provided'
+                      ),
+                      icon: <FaMapMarkerAlt className="text-gray-500" />,
                     },
                   ].map(({ label, value, icon }) => (
                     <div key={label}>
@@ -404,60 +477,93 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Bio/Status Card */}
+          {/* Right side */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-md p-6 h-full">
+            <div className="bg-white rounded-xl shadow-md p-6 mb-6">
               <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
-                <FaInfoCircle className="text-indigo-500 mr-2" />
+                <FaInfoCircle className="text-indigo-500 mr-2" />{' '}
                 {userType === 'tutor' ? 'Professional Bio' : 'About Me'}
               </h2>
-
               <div>
                 {isEditing ? (
                   <textarea
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition h-40"
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 h-40"
                     value={editData.bio}
                     onChange={(e) => handleEditChange('bio', e.target.value)}
-                    placeholder={`Tell us about yourself${userType === 'tutor' ? ' and your teaching approach' : ''}...`}
                   />
                 ) : (
-                  <p className="text-gray-700 leading-relaxed">
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
                     {userData.bio || `No ${userType === 'tutor' ? 'professional bio' : 'about me'} provided yet.`}
                   </p>
                 )}
               </div>
+              
+            </div>
 
-              {userType === 'tutor' && avgRating !== null && (
-                <div className="mt-6 pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-center">
-                    <div className="text-3xl font-bold text-amber-600">{avgRating.toFixed(1)}</div>
-                    <div className="ml-2">
-                      <div className="flex">
-                        {[...Array(5)].map((_, i) => (
-                          <FaStar 
-                            key={i} 
-                            className={i < Math.round(avgRating) ? "text-amber-400" : "text-gray-300"} 
-                            size={16} 
-                          />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600 mt-1">Average rating</p>
-                    </div>
+            {/* Account Actions */}
+            <div className="bg-white rounded-xl shadow-md p-6">
+              <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
+                <FaKey className="text-indigo-500 mr-2" /> Account Actions
+              </h2>
+              <div className="space-y-4">
+                <button
+                  onClick={() => setShowPasswordFields((prev) => !prev)}
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-between"
+                >
+                  Change Password <FaKey />
+                </button>
+                {showPasswordFields && (
+                  <div className="space-y-3 mt-3">
+                    <input
+                      type="password"
+                      placeholder="Current Password"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <input
+                      type="password"
+                      placeholder="New Password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Confirm New Password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    />
+                    <button
+                      onClick={handlePasswordChange}
+                      className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                    >
+                      Update Password
+                    </button>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Update Status Notification */}
         {updateStatus && (
-          <div className={`fixed bottom-4 right-4 px-6 py-3 rounded-lg shadow-lg font-medium transition ${
-            updateStatus.includes('Error') 
-              ? 'bg-red-100 text-red-700 border-l-4 border-red-500' 
-              : 'bg-green-100 text-green-700 border-l-4 border-green-500'
-          }`}>
+          <div
+            className={`mt-6 p-4 rounded-lg shadow-md text-center ${
+              updateStatus.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            }`}
+          >
             {updateStatus}
+          </div>
+        )}
+        {passwordStatus && (
+          <div
+            className={`mt-4 p-4 rounded-lg shadow-md text-center ${
+              passwordStatus.includes('Error') ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
+            }`}
+          >
+            {passwordStatus}
           </div>
         )}
       </main>

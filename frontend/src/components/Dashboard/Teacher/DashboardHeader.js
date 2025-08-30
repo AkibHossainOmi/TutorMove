@@ -22,7 +22,7 @@ const DashboardHeader = ({
           </h1>
           <TeacherVerificationBadge verified={false} />
         </div>
-        <p className="text-gray-600">Manage your teaching gigs, applications, and earnings</p>
+        <p className="text-gray-600">Manage your teaching gigs, applications, and jobs</p>
       </div>
 
       <div className="flex flex-wrap gap-3">

@@ -13,7 +13,7 @@ const DashboardTabs = ({
       {/* Tab Navigation */}
       <div className="border-b border-gray-200">
         <nav className="flex -mb-px">
-          {['overview', 'gigs', 'jobs', 'earnings'].map((tab) => (
+          {['overview', 'gigs', 'jobs'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -182,48 +182,6 @@ const DashboardTabs = ({
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* Earnings Tab */}
-        {activeTab === 'earnings' && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Earnings Summary</h3>
-              <p className="mt-1 text-sm text-gray-500">Overview of your earnings and transactions.</p>
-            </div>
-
-            <div className="bg-gray-50 rounded-lg p-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="bg-white p-4 rounded-lg shadow-xs border border-gray-200">
-                  <p className="text-sm font-medium text-gray-500">Total Balance</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">${dashboardData.earnings.total}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-xs border border-gray-200">
-                  <p className="text-sm font-medium text-gray-500">Pending</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">${dashboardData.earnings.pending}</p>
-                </div>
-                <div className="bg-white p-4 rounded-lg shadow-xs border border-gray-200">
-                  <p className="text-sm font-medium text-gray-500">Completed</p>
-                  <p className="mt-1 text-2xl font-semibold text-gray-900">${dashboardData.earnings.completed}</p>
-                </div>
-              </div>
-
-              <div className="mt-8">
-                <h4 className="text-sm font-medium text-gray-900 mb-4">Recent Transactions</h4>
-                <div className="bg-white rounded-lg shadow-xs overflow-hidden border border-gray-200">
-                  <div className="p-4 border-b border-gray-200 bg-gray-50 text-sm font-medium text-gray-500">
-                    No recent transactions
-                  </div>
-                  <div className="p-8 text-center">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="mt-2 text-sm text-gray-500">Your transaction history will appear here</p>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>

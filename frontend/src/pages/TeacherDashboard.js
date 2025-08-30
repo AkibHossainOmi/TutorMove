@@ -67,11 +67,6 @@ const TeacherDashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     myGigs: [],
     matchedJobs: [],
-    earnings: {
-      total: 0,
-      pending: 0,
-      completed: 0
-    },
     stats: {
       activeGigs: 0,
       completedJobs: 0,
@@ -131,11 +126,6 @@ const TeacherDashboard = () => {
         ...prev,
         myGigs: myGigs,
         matchedJobs: matchedJobs,
-        earnings: {
-          total: creditBalance,
-          pending: myGigs.filter(gig => gig.status === 'pending').length * 20,
-          completed: myGigs.filter(gig => gig.status === 'completed').length * 50
-        },
         stats: {
           activeGigs: myGigs.filter(gig => gig.status === 'active').length || 0,
           creditBalance: creditBalance,

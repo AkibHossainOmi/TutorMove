@@ -5,3 +5,5 @@ Profile Picture  upload
 Job Unlock (Assign, Close, Review)
 
 Register form (update, forget password, change password)
+
+Premium Badge on profile

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Link, Navigate } from 'react-router-dom'; // Import Link for navigation
+import { useNavigate, Link, Navigate } from 'react-router-dom';
 import Footer from '../components/Footer';
 import Navbar from '../components/Navbar';
 import { useAuth } from '../contexts/UseAuth';
@@ -20,7 +20,6 @@ const Signup = () => {
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    // Clear messages on input change
     setError(null);
     setSuccess('');
   };
@@ -32,271 +31,157 @@ const Signup = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_API_URL}/api/auth/register/`, formData);
+      const response = await axios.post(
+        `${process.env.REACT_APP_API_URL}/api/auth/register/`,
+        formData
+      );
       console.debug('Registration response:', response.data);
-      // Backend typically sends an email verification link.
-      // So, we don't usually log in or set token immediately here.
-      setSuccess('Registration successful! Please check your email to verify your account.');
+
+      setSuccess('Registration successful! Please check your email to verify.');
       setLoading(false);
-      // Redirect to login page after a short delay
+
+      // Redirect after delay
       setTimeout(() => navigate('/login'), 2000);
     } catch (err) {
       setError(
         err.response?.data?.error ||
-        err.response?.data?.detail ||
-        (typeof err.response?.data === 'string' ? err.response.data : null) ||
-        'Registration failed. Please try again.'
+          err.response?.data?.detail ||
+          (typeof err.response?.data === 'string'
+            ? err.response.data
+            : null) ||
+          'Registration failed. Please try again.'
       );
       setLoading(false);
     }
   };
 
-  // Inline CSS Styles
-  const containerStyle = {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    backgroundColor: '#f5f7fa',
-    fontFamily: 'Roboto, Arial, sans-serif',
-    padding: '20px',
-  };
+  if (isAuthenticated) return <Navigate to="/dashboard" />;
 
-  const formCardStyle = {
-    backgroundColor: '#ffffff',
-    padding: '40px',
-    borderRadius: '10px',
-    boxShadow: '0 8px 20px rgba(0, 0, 0, 0.1)',
-    width: '100%',
-    maxWidth: '450px',
-    textAlign: 'center',
-  };
-
-  const headerStyle = {
-    color: '#333333',
-    fontSize: '32px',
-    marginBottom: '30px',
-    fontWeight: '700',
-  };
-
-  const inputGroupStyle = {
-    marginBottom: '20px',
-    textAlign: 'left',
-  };
-
-  const labelStyle = {
-    display: 'block',
-    marginBottom: '8px',
-    color: '#555555',
-    fontSize: '15px',
-    fontWeight: '600',
-  };
-
-  const inputStyle = {
-    width: '100%',
-    padding: '12px',
-    border: '1px solid #ced4da',
-    borderRadius: '6px',
-    fontSize: '16px',
-    boxSizing: 'border-box',
-    transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
-  };
-
-  const inputFocusStyle = {
-    borderColor: '#007bff',
-    boxShadow: '0 0 0 0.2rem rgba(0, 123, 255, 0.25)',
-  };
-
-  const selectStyle = {
-    ...inputStyle, // Inherit base input styles
-    appearance: 'none', // Remove default arrow
-    paddingRight: '30px', // Make space for custom arrow if needed
-    backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e")`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 12px center',
-    backgroundSize: '12px',
-  };
-
-  const buttonStyle = {
-    backgroundColor: '#28a745', // Green for signup
-    color: 'white',
-    padding: '14px 25px',
-    border: 'none',
-    borderRadius: '6px',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease, transform 0.1s ease',
-    outline: 'none',
-    width: '100%',
-    marginTop: '10px',
-  };
-
-  const buttonHoverStyle = {
-    backgroundColor: '#218838',
-    transform: 'translateY(-1px)',
-  };
-
-  const buttonDisabledStyle = {
-    backgroundColor: '#94d3a2',
-    cursor: 'not-allowed',
-  };
-
-  const errorMessageStyle = {
-    color: '#dc3545',
-    backgroundColor: '#f8d7da',
-    border: '1px solid #f5c6cb',
-    borderRadius: '6px',
-    padding: '12px 18px',
-    marginBottom: '20px',
-    fontSize: '14px',
-    textAlign: 'center',
-  };
-
-  const successMessageStyle = {
-    color: '#28a745',
-    backgroundColor: '#d4edda',
-    border: '1px solid #c3e6cb',
-    borderRadius: '6px',
-    padding: '12px 18px',
-    marginBottom: '20px',
-    fontSize: '14px',
-    textAlign: 'center',
-  };
-
-  const loginLinkContainerStyle = {
-    marginTop: '25px',
-    fontSize: '15px',
-    color: '#6c757d',
-  };
-
-  const loginLinkStyle = {
-    color: '#007bff',
-    textDecoration: 'none',
-    fontWeight: '600',
-    transition: 'color 0.2s ease',
-  };
-
-  const loginLinkHoverStyle = {
-    color: '#0056b3',
-    textDecoration: 'underline',
-  };
-
-  return !isAuthenticated? (
+  return (
     <>
-    <Navbar/>
-    <div style={{ height: '50px' }}></div>
-    <div style={containerStyle}>
-      <div style={formCardStyle}>
-        <h2 style={headerStyle}>Create Your Account</h2>
-        {error && <p style={errorMessageStyle}>{error}</p>}
-        {success && <p style={successMessageStyle}>{success}</p>}
+      <Navbar />
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-6">
+        <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+            Create an Account
+          </h2>
 
-        <form onSubmit={handleSubmit}>
-          <div style={inputGroupStyle}>
-            <label htmlFor="username" style={labelStyle}>
-              Username:
-            </label>
-            <input
-              type="text"
-              id="username"
-              name="username"
-              value={formData.username}
-              onChange={handleChange}
-              required
-              disabled={loading}
-              style={inputStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
-            />
-          </div>
+          {error && (
+            <div className="mb-4 text-sm text-red-700 bg-red-100 border border-red-300 rounded px-4 py-2">
+              {error}
+            </div>
+          )}
+          {success && (
+            <div className="mb-4 text-sm text-green-700 bg-green-100 border border-green-300 rounded px-4 py-2">
+              {success}
+            </div>
+          )}
 
-          <div style={inputGroupStyle}>
-            <label htmlFor="email" style={labelStyle}>
-              Email:
-            </label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              disabled={loading}
-              style={inputStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
-            />
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label
+                htmlFor="username"
+                className="block mb-1 text-sm font-medium text-gray-700"
+              >
+                Username
+              </label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                required
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              />
+            </div>
 
-          <div style={inputGroupStyle}>
-            <label htmlFor="password" style={labelStyle}>
-              Password:
-            </label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              disabled={loading}
-              style={inputStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, inputStyle)}
-            />
-          </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block mb-1 text-sm font-medium text-gray-700"
+              >
+                Email
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              />
+            </div>
 
-          <div style={inputGroupStyle}>
-            <label htmlFor="user_type" style={labelStyle}>
-              Join as:
-            </label>
-            <select
-              id="user_type"
-              name="user_type"
-              value={formData.user_type}
-              onChange={handleChange}
+            <div>
+              <label
+                htmlFor="password"
+                className="block mb-1 text-sm font-medium text-gray-700"
+              >
+                Password
+              </label>
+              <input
+                type="password"
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="user_type"
+                className="block mb-1 text-sm font-medium text-gray-700"
+              >
+                Account Type
+              </label>
+              <select
+                id="user_type"
+                name="user_type"
+                value={formData.user_type}
+                onChange={handleChange}
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              >
+                <option value="student">Student</option>
+                <option value="tutor">Tutor</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
               disabled={loading}
-              style={selectStyle}
-              onFocus={(e) => Object.assign(e.currentTarget.style, inputFocusStyle)}
-              onBlur={(e) => Object.assign(e.currentTarget.style, selectStyle)} // Reset to original select style
+              className={`w-full ${
+                loading
+                  ? 'bg-blue-400 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white py-2 rounded-md text-sm font-medium transition`}
             >
-              <option value="student">Student</option>
-              <option value="tutor">Tutor</option>
-            </select>
-          </div>
+              {loading ? 'Signing up...' : 'Sign Up'}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={loading}
-            style={loading ? { ...buttonStyle, ...buttonDisabledStyle } : buttonStyle}
-            onMouseEnter={loading ? null : (e) => Object.assign(e.currentTarget.style, buttonHoverStyle)}
-            onMouseLeave={loading ? null : (e) => Object.assign(e.currentTarget.style, buttonStyle)}
-          >
-            {loading ? 'Signing up...' : 'Sign Up'}
-          </button>
-        </form>
-
-        <div style={loginLinkContainerStyle}>
-          <p>
+          <p className="mt-6 text-sm text-gray-600 text-center">
             Already have an account?{' '}
             <Link
               to="/login"
-              style={loginLinkStyle}
-              onMouseEnter={(e) => Object.assign(e.currentTarget.style, loginLinkHoverStyle)}
-              onMouseLeave={(e) => Object.assign(e.currentTarget.style, loginLinkStyle)}
+              className="text-blue-600 hover:text-blue-800 font-medium"
             >
               Login here
             </Link>
           </p>
         </div>
       </div>
-    </div>
-    <div style={{ height: '100px' }}></div>
-    <Footer/>
+      <Footer />
     </>
-  ) : <Navigate to="/dashboard" /> ;
+  );
 };
 
 export default Signup;
