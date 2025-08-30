@@ -46,7 +46,7 @@ const credit = {
       return response.data;
     } catch (error) {
       console.error("Error fetching user credits:", error.response?.data || error.message);
-      return { user_id: userId, balance: 0 };
+      return { id: userId, balance: 0 };
     }
   }
 };
@@ -92,7 +92,7 @@ const TeacherDashboard = () => {
       if (storedUser && storedUser.user_type === 'tutor') {
         setUser(storedUser);
         loadDashboardData(storedUser);
-        fetchNotifications(storedUser.user_id);
+        fetchNotifications(storedUser.id);
       } else {
         setIsLoading(false);
         setUser(null);
@@ -107,15 +107,15 @@ const TeacherDashboard = () => {
   const loadDashboardData = async (currentUser) => {
     setIsLoading(true);
     try {
-      if (!currentUser || !currentUser.user_id) {
+      if (!currentUser || !currentUser.id) {
         console.error("User ID not found. Cannot fetch dashboard data.");
         setIsLoading(false);
         return;
       }
 
       const [gigsData, creditBalanceData, matchedJobsResponse] = await Promise.all([
-        tutorAPI.getTutorGigs(currentUser.user_id),
-        credit.getUserCredits(currentUser.user_id),
+        tutorAPI.getTutorGigs(currentUser.id),
+        credit.getUserCredits(currentUser.id),
         jobAPI.getMatchedJobs(),
       ]);
 
@@ -146,7 +146,7 @@ const TeacherDashboard = () => {
 
         if (currentGigCount >= freeGigsLimit) {
           const creditUpdateResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/credit/update/`, {
-            user_id: user.user_id,
+            id: user.id,
             amount: 1,
             isincrease: false
           });
