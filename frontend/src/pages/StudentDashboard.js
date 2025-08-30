@@ -112,7 +112,7 @@ const StudentDashboard = () => {
   }, []);
 
   useEffect(() => {
-    if (!user?.user_id) return;
+    if (!user?.id) return;
 
     const loadNotifications = async () => {
       try {
@@ -128,7 +128,7 @@ const StudentDashboard = () => {
         const [creditsData, jobsData, favoritesData] = await Promise.all([
           studentAPI.getCredits(),
           studentAPI.getPostedJobs(),
-          studentAPI.getFavoriteTeachers(user.user_id)
+          studentAPI.getFavoriteTeachers(user.id)
         ]);
 
         const activeJobs = jobsData.filter(j => j.status === 'active').length;
