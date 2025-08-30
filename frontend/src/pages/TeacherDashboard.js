@@ -11,7 +11,6 @@ import DashboardStats from '../components/Dashboard/Teacher/DashboardStats';
 import DashboardTabs from '../components/Dashboard/Teacher/DashboardTabs';
 import InsufficientCreditsModal from '../components/Dashboard/Teacher/InsufficientCreditsModal';
 import GigPostModal from '../components/Dashboard/Teacher/GigPostModal';
-import QuickActions from '../components/Dashboard/Teacher/QuickActions';
 
 /**
  * Custom hook for managing chat-related functionalities.
@@ -274,10 +273,7 @@ const TeacherDashboard = () => {
             handleCreateGigClick={handleCreateGigClick}
           />
 
-          <QuickActions 
-            handleCreateGigClick={handleCreateGigClick}
-            handleNavigateToBuyCredits={handleNavigateToBuyCredits}
-          />
+          
         </main>
 
         <GigPostModal 

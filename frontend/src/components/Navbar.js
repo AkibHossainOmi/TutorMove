@@ -5,10 +5,10 @@ import LanguageSwitcher from "./LanguageSwitcher";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
 import { userApi } from "../utils/apiService"; // same API as Profile.js
 
-// Chevron icon
+// Chevron
 const ChevronDownIcon = () => (
   <svg
-    className="ml-1 h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors"
+    className="ml-1 h-4 w-4 text-gray-400 group-hover:text-indigo-500 transition-colors"
     viewBox="0 0 20 20"
     fill="currentColor"
     aria-hidden="true"
@@ -21,22 +21,22 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-// Nav link
+// Modern Nav Link
 const NavLink = ({ to, text, onClick }) => (
   <Link
     to={to}
-    className="text-gray-700 hover:text-blue-600 font-medium text-base transition-colors"
+    className="text-gray-700 hover:text-indigo-600 font-medium text-sm px-3 py-2 rounded-lg transition-colors"
     onClick={onClick}
   >
     {text}
   </Link>
 );
 
-// Dropdown link
+// Dropdown Link
 const DropdownLink = ({ to, text, onClick }) => (
   <Link
     to={to}
-    className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 text-sm transition-all rounded-md"
+    className="block px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 text-sm rounded-md transition-colors"
     onClick={onClick}
   >
     {text}
@@ -53,14 +53,14 @@ const Navbar = () => {
   const navigate = useNavigate();
   const isAuthenticated = useAuth();
 
-  // Fetch user on login
+  // Fetch user details when logged in
   useEffect(() => {
     const fetchUser = async () => {
       if (!isAuthenticated) return;
       try {
         const res = await userApi.getUser();
         setUserData(res.data);
-        localStorage.setItem("user", JSON.stringify(res.data)); // keep in sync
+        localStorage.setItem("user", JSON.stringify(res.data));
       } catch (err) {
         console.error("Failed to fetch user:", err);
       }
@@ -73,7 +73,6 @@ const Navbar = () => {
     navigate("/login");
     setIsMenuOpen(false);
   };
-
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -81,26 +80,19 @@ const Navbar = () => {
     navigate("/");
     setIsMenuOpen(false);
   };
-
   const handleRequestTutor = () => {
     isAuthenticated ? navigate("/dashboard") : navigate("/signup");
     setIsMenuOpen(false);
   };
 
-  const closeAllDropdowns = () => {
-    setIsTutorsDropdownOpen(false);
-    setIsJobsDropdownOpen(false);
-    setIsAccountDropdownOpen(false);
-    setIsMenuOpen(false);
-  };
-
+  // Close refs
   const tutorsDropdownRef = useRef(null);
   const jobsDropdownRef = useRef(null);
   const accountDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const mobileMenuButtonRef = useRef(null);
 
-  // Close dropdowns on outside click
+  // Click outside to close
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (tutorsDropdownRef.current && !tutorsDropdownRef.current.contains(e.target)) {
@@ -125,67 +117,69 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // User data
   const userName = userData?.username || "User";
   const userType = userData?.user_type || null;
   const profilePicture = userData?.profile_picture || null;
   const userInitial = userName.charAt(0).toUpperCase();
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[1100] border-b border-gray-200 bg-white/90 backdrop-blur-sm shadow-md">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Navbar Flex */}
-        <div className="flex justify-between items-center h-12 sm:h-14">
+    <nav className="fixed top-0 left-0 right-0 z-[1100] bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-100">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Wrapper */}
+        <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
           <Link
             to="/"
-            className="text-2xl sm:text-3xl font-bold text-blue-600 hover:text-blue-800 transition-colors flex items-center"
+            className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-green-600 to-indigo-600 bg-clip-text text-transparent"
           >
             TutorMove
           </Link>
 
-          {/* Desktop Nav */}
-          <div className="hidden lg:flex items-center space-x-5">
-            <div className="flex items-center space-x-4">
-              {(userType === "student" || !isAuthenticated) && (
-                <div className="relative" ref={tutorsDropdownRef}>
-                  <button
-                    onClick={() => setIsTutorsDropdownOpen((prev) => !prev)}
-                    className="group flex items-center text-gray-700 hover:text-blue-600 font-medium text-base transition-colors"
-                  >
-                    Find Tutors
-                    <ChevronDownIcon />
-                  </button>
-                  {isTutorsDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-44 rounded-xl shadow-md py-2 px-2 z-20 border border-gray-200 bg-white top-full">
-                      <DropdownLink to="/tutors" text="All Tutors" onClick={closeAllDropdowns} />
-                      <DropdownLink to="/tutors?type=online" text="Online Tutors" onClick={closeAllDropdowns} />
-                      <DropdownLink to="/tutors?type=home" text="Home Tutors" onClick={closeAllDropdowns} />
-                    </div>
-                  )}
-                </div>
-              )}
+          {/* Desktop Navigation */}
+          <div className="hidden lg:flex items-center space-x-6">
+            {/* Tutors */}
+            {(userType === "student" || !isAuthenticated) && (
+              <div className="relative" ref={tutorsDropdownRef}>
+                <button
+                  onClick={() => setIsTutorsDropdownOpen((prev) => !prev)}
+                  className="group flex items-center text-gray-700 hover:text-indigo-600 font-medium text-sm"
+                >
+                  Find Tutors
+                  <ChevronDownIcon />
+                </button>
+                {isTutorsDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20">
+                    <DropdownLink to="/tutors" text="All Tutors" onClick={() => setIsTutorsDropdownOpen(false)} />
+                    <DropdownLink to="/tutors?type=online" text="Online Tutors" onClick={() => setIsTutorsDropdownOpen(false)} />
+                    <DropdownLink to="/tutors?type=home" text="Home Tutors" onClick={() => setIsTutorsDropdownOpen(false)} />
+                  </div>
+                )}
+              </div>
+            )}
 
-              {(userType === "tutor" || !isAuthenticated) && (
-                <div className="relative" ref={jobsDropdownRef}>
-                  <button
-                    onClick={() => setIsJobsDropdownOpen((prev) => !prev)}
-                    className="group flex items-center text-gray-700 hover:text-blue-600 font-medium text-base transition-colors"
-                  >
-                    Find Jobs
-                    <ChevronDownIcon />
-                  </button>
-                  {isJobsDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-44 rounded-xl shadow-md py-2 px-2 z-20 border border-gray-200 bg-white top-full">
-                      <DropdownLink to="/jobs" text="Teaching Jobs" onClick={closeAllDropdowns} />
-                      <DropdownLink to="/jobs?type=online" text="Online Teaching" onClick={closeAllDropdowns} />
-                      <DropdownLink to="/jobs?type=assignment" text="Assignment Jobs" onClick={closeAllDropdowns} />
-                    </div>
-                  )}
-                </div>
-              )}
+            {/* Jobs */}
+            {(userType === "tutor" || !isAuthenticated) && (
+              <div className="relative" ref={jobsDropdownRef}>
+                <button
+                  onClick={() => setIsJobsDropdownOpen((prev) => !prev)}
+                  className="group flex items-center text-gray-700 hover:text-indigo-600 font-medium text-sm"
+                >
+                  Find Jobs
+                  <ChevronDownIcon />
+                </button>
+                {isJobsDropdownOpen && (
+                  <div className="absolute left-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-20">
+                    <DropdownLink to="/jobs" text="All Jobs" onClick={() => setIsJobsDropdownOpen(false)} />
+                    <DropdownLink to="/jobs?type=online" text="Online Teaching" onClick={() => setIsJobsDropdownOpen(false)} />
+                    <DropdownLink to="/jobs?type=assignment" text="Assignment Jobs" onClick={() => setIsJobsDropdownOpen(false)} />
+                  </div>
+                )}
+              </div>
+            )}
 
-              {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" onClick={closeAllDropdowns} />}
-            </div>
+            {/* Dashboard */}
+            {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" />}
 
             {/* Auth */}
             <div className="flex items-center gap-3">
@@ -193,24 +187,24 @@ const Navbar = () => {
                 <div className="relative" ref={accountDropdownRef}>
                   <button
                     onClick={() => setIsAccountDropdownOpen((prev) => !prev)}
-                    className="flex items-center space-x-2 focus:outline-none"
+                    className="flex items-center space-x-2"
                   >
                     {profilePicture ? (
                       <ProfileImageWithBg imageUrl={profilePicture} size={32} />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium border border-gray-200">
+                      <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-medium">
                         {userInitial}
                       </div>
                     )}
-                    <span className="font-medium text-gray-700">{userName}</span>
+                    <span className="font-medium text-gray-700 text-sm">{userName}</span>
                     <ChevronDownIcon />
                   </button>
                   {isAccountDropdownOpen && (
-                    <div className="absolute right-0 mt-1 w-44 rounded-xl shadow-md py-2 px-2 z-30 border border-gray-200 bg-white top-full">
-                      <DropdownLink to="/profile" text="Profile" onClick={closeAllDropdowns} />
+                    <div className="absolute right-0 mt-2 w-44 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-30">
+                      <DropdownLink to="/profile" text="Profile" onClick={() => setIsAccountDropdownOpen(false)} />
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 rounded transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-100 rounded-md transition-colors"
                       >
                         Logout
                       </button>
@@ -221,13 +215,13 @@ const Navbar = () => {
                 <>
                   <button
                     onClick={handleLogin}
-                    className="px-4 py-1.5 border border-blue-600 text-blue-600 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors"
+                    className="px-4 py-2 text-sm font-medium border border-indigo-600 text-indigo-600 rounded-lg hover:bg-indigo-50 transition"
                   >
                     Login
                   </button>
                   <button
                     onClick={handleRequestTutor}
-                    className="px-4 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-sm font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md"
+                    className="px-4 py-2 text-sm font-medium rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow hover:from-indigo-700 hover:to-purple-700 transition"
                   >
                     Sign Up
                   </button>
@@ -236,13 +230,13 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Toggle */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 -mr-2 text-gray-600 hover:text-gray-900 focus:outline-none transition-colors"
+            className="lg:hidden p-2 text-gray-700 hover:text-indigo-600 transition"
             ref={mobileMenuButtonRef}
           >
-            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               {isMenuOpen ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -253,76 +247,36 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile Overlay */}
-      <div
-        className={`lg:hidden fixed inset-0 bg-black/50 z-40 transition-opacity duration-300 ${
-          isMenuOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-        }`}
-        onClick={() => setIsMenuOpen(false)}
-      />
-
-      {/* Mobile Drawer */}
+      {/* Mobile Menu */}
       <div
         ref={mobileMenuRef}
-        className={`lg:hidden fixed top-12 sm:top-14 right-0 w-60 h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)] rounded-l-2xl border-l border-gray-200 bg-white/95 backdrop-blur-sm shadow-2xl z-50 transform transition-transform duration-300 ease-in-out ${
-          isMenuOpen ? "translate-x-0" : "translate-x-full"
-        } overflow-y-auto`}
+        className={`lg:hidden fixed top-14 inset-x-0 w-full bg-white/95 backdrop-blur-md shadow-xl border-t border-gray-200 transform transition-all duration-300 ${
+          isMenuOpen ? "translate-y-0 opacity-100" : "-translate-y-5 opacity-0 pointer-events-none"
+        }`}
       >
-        <div className="px-4 py-6 space-y-4">
+        <div className="px-6 py-5 space-y-4">
           {/* Links */}
-          <div className="space-y-1">
-            {(userType === "student" || !isAuthenticated) && (
-              <Link
-                to="/tutors"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                onClick={closeAllDropdowns}
-              >
-                Find Tutors
-              </Link>
-            )}
-            {(userType === "tutor" || !isAuthenticated) && (
-              <Link
-                to="/jobs"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                onClick={closeAllDropdowns}
-              >
-                Find Jobs
-              </Link>
-            )}
-            {isAuthenticated && (
-              <Link
-                to="/dashboard"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                onClick={closeAllDropdowns}
-              >
-                Dashboard
-              </Link>
-            )}
-          </div>
+          {(userType === "student" || !isAuthenticated) && <NavLink to="/tutors" text="Find Tutors" onClick={() => setIsMenuOpen(false)} />}
+          {(userType === "tutor" || !isAuthenticated) && <NavLink to="/jobs" text="Find Jobs" onClick={() => setIsMenuOpen(false)} />}
+          {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" onClick={() => setIsMenuOpen(false)} />}
 
           {/* Account */}
           {isAuthenticated && userData ? (
-            <div className="pt-4 border-t border-gray-200 space-y-1">
-              <div className="flex items-center gap-2 px-3">
+            <div className="pt-4 border-t border-gray-200">
+              <div className="flex items-center gap-2 mb-3">
                 {profilePicture ? (
                   <ProfileImageWithBg imageUrl={profilePicture} size={32} />
                 ) : (
-                  <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-medium border border-gray-200">
+                  <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-medium">
                     {userInitial}
                   </div>
                 )}
                 <span className="font-medium text-gray-700">{userName}</span>
               </div>
-              <Link
-                to="/profile"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-all"
-                onClick={closeAllDropdowns}
-              >
-                Profile
-              </Link>
+              <DropdownLink to="/profile" text="Profile" onClick={() => setIsMenuOpen(false)} />
               <button
                 onClick={handleLogout}
-                className="w-full text-left px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-red-100 transition-all"
+                className="w-full mt-2 text-left px-3 py-2 rounded-md text-sm font-medium text-red-600 hover:bg-red-100 transition"
               >
                 Logout
               </button>
@@ -331,13 +285,13 @@ const Navbar = () => {
             <div className="pt-4 border-t border-gray-200 space-y-3">
               <button
                 onClick={handleLogin}
-                className="w-full px-4 py-1.5 border border-blue-600 text-blue-600 rounded-lg text-base font-medium hover:bg-blue-50 transition-all"
+                className="w-full px-4 py-2 border border-indigo-600 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-50 transition"
               >
                 Login
               </button>
               <button
                 onClick={handleRequestTutor}
-                className="w-full px-4 py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg text-base font-medium hover:from-blue-700 hover:to-blue-800 transition-all shadow-md"
+                className="w-full px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg text-sm font-medium shadow hover:from-indigo-700 hover:to-purple-700 transition"
               >
                 Sign Up
               </button>

@@ -7,7 +7,6 @@ import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
 import DashboardHeader from '../components/Dashboard/Student/DashboardHeader';
 import DashboardStats from '../components/Dashboard/Student/DashboardStats';
-import QuickActions from '../components/Dashboard/Student/QuickActions';
 import JobPostModal from '../components/Dashboard/Student/JobPostModal';
 import InsufficientCreditsModal from '../components/Dashboard/Student/InsufficientCreditsModal';
 import { creditAPI, jobAPI, notificationAPI } from '../utils/apiService';
@@ -247,10 +246,6 @@ const StudentDashboard = () => {
           </section>
         )}
         <div className="mt-16">
-          <QuickActions
-            onPostJobClick={handlePostJobClick}
-            onBuyCreditsClick={handleNavigateToBuyCredits}
-          />
         </div>
       </main>
       <JobPostModal

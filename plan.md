@@ -5,6 +5,7 @@
 * Job Unlock (Assign, Close, Review)
 * Register form (change \& forget password)
 * Average Rating on tutor profile
+* While any data is modified on profile (update dp, buy credits), the whole profile data shows 0 and blank, fixes automatically, after re-login.
 
 
 
@@ -12,5 +13,5 @@
 
 * Change Password UI added on user profile.
 * Navbar shows User's Profile Picture \& Username.
-* Redesigned Navbar, Login, SignUp
+* Redesigned Navbar, Login, SignUp.
 * 
