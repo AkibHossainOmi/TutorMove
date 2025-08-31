@@ -219,7 +219,7 @@ const StudentDashboard = () => {
               <p className="text-gray-700 font-medium">No jobs posted yet</p>
               <button
                 onClick={handlePostJobClick}
-                className="mt-4 inline-flex items-center rounded-xl bg-gray-900 text-white px-4 py-2 text-sm font-medium hover:bg-black"
+                className="mt-4 inline-flex items-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-2 text-sm font-medium hover:bg-black"
               >
                 Create Job
               </button>

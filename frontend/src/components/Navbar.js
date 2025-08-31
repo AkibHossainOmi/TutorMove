@@ -1,11 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
 import LanguageSwitcher from "./LanguageSwitcher";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
-import { userApi } from "../utils/apiService"; // same API as Profile.js
 
-// Chevron
+// Chevron Icon
 const ChevronDownIcon = () => (
   <svg
     className="ml-1 h-4 w-4 text-gray-400 group-hover:text-indigo-500 transition-colors"
@@ -21,7 +20,7 @@ const ChevronDownIcon = () => (
   </svg>
 );
 
-// Modern Nav Link
+// NavLink Component
 const NavLink = ({ to, text, onClick }) => (
   <Link
     to={to}
@@ -32,7 +31,7 @@ const NavLink = ({ to, text, onClick }) => (
   </Link>
 );
 
-// Dropdown Link
+// DropdownLink Component
 const DropdownLink = ({ to, text, onClick }) => (
   <Link
     to={to}
@@ -48,51 +47,24 @@ const Navbar = () => {
   const [isTutorsDropdownOpen, setIsTutorsDropdownOpen] = useState(false);
   const [isJobsDropdownOpen, setIsJobsDropdownOpen] = useState(false);
   const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
-  const [userData, setUserData] = useState(null);
 
   const navigate = useNavigate();
-  const isAuthenticated = useAuth();
+  const isAuthenticated = useAuth(); // true / false
+  const userData = JSON.parse(localStorage.getItem("user")) || {}; // for display only
 
-  // Fetch user details when logged in
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!isAuthenticated) return;
-      try {
-        const res = await userApi.getUser();
-        setUserData(res.data);
-        localStorage.setItem("user", JSON.stringify(res.data));
-      } catch (err) {
-        console.error("Failed to fetch user:", err);
-      }
-    };
-    fetchUser();
-  }, [isAuthenticated]);
+  const userName = userData?.username || "User";
+  const userType = userData?.user_type || null;
+  const profilePicture = userData?.profile_picture || null;
+  const userInitial = userName.charAt(0).toUpperCase();
 
-  // Handlers
-  const handleLogin = () => {
-    navigate("/login");
-    setIsMenuOpen(false);
-  };
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUserData(null);
-    navigate("/");
-    setIsMenuOpen(false);
-  };
-  const handleRequestTutor = () => {
-    isAuthenticated ? navigate("/dashboard") : navigate("/signup");
-    setIsMenuOpen(false);
-  };
-
-  // Close refs
+  // Refs for click outside
   const tutorsDropdownRef = useRef(null);
   const jobsDropdownRef = useRef(null);
   const accountDropdownRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const mobileMenuButtonRef = useRef(null);
 
-  // Click outside to close
+  // Click outside to close dropdowns / mobile menu
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (tutorsDropdownRef.current && !tutorsDropdownRef.current.contains(e.target)) {
@@ -117,16 +89,22 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // User data
-  const userName = userData?.username || "User";
-  const userType = userData?.user_type || null;
-  const profilePicture = userData?.profile_picture || null;
-  const userInitial = userName.charAt(0).toUpperCase();
+  // Handlers
+  const handleLogin = () => navigate("/login");
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+    setIsMenuOpen(false);
+  };
+  const handleRequestTutor = () => {
+    isAuthenticated ? navigate("/dashboard") : navigate("/signup");
+    setIsMenuOpen(false);
+  };
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-[1100] bg-white/80 backdrop-blur-md shadow-lg border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Wrapper */}
         <div className="flex justify-between items-center h-14 sm:h-16">
           {/* Logo */}
           <Link
@@ -138,7 +116,6 @@ const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center space-x-6">
-            {/* Tutors */}
             {(userType === "student" || !isAuthenticated) && (
               <div className="relative" ref={tutorsDropdownRef}>
                 <button
@@ -158,7 +135,6 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Jobs */}
             {(userType === "tutor" || !isAuthenticated) && (
               <div className="relative" ref={jobsDropdownRef}>
                 <button
@@ -178,12 +154,11 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Dashboard */}
             {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" />}
 
-            {/* Auth */}
+            {/* Auth Buttons */}
             <div className="flex items-center gap-3">
-              {isAuthenticated && userData ? (
+              {isAuthenticated ? (
                 <div className="relative" ref={accountDropdownRef}>
                   <button
                     onClick={() => setIsAccountDropdownOpen((prev) => !prev)}
@@ -230,7 +205,7 @@ const Navbar = () => {
             </div>
           </div>
 
-          {/* Mobile Menu Toggle */}
+          {/* Mobile Menu Button */}
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="lg:hidden p-2 text-gray-700 hover:text-indigo-600 transition"
@@ -255,13 +230,12 @@ const Navbar = () => {
         }`}
       >
         <div className="px-6 py-5 space-y-4">
-          {/* Links */}
           {(userType === "student" || !isAuthenticated) && <NavLink to="/tutors" text="Find Tutors" onClick={() => setIsMenuOpen(false)} />}
           {(userType === "tutor" || !isAuthenticated) && <NavLink to="/jobs" text="Find Jobs" onClick={() => setIsMenuOpen(false)} />}
           {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" onClick={() => setIsMenuOpen(false)} />}
 
-          {/* Account */}
-          {isAuthenticated && userData ? (
+          {/* Auth Buttons */}
+          {isAuthenticated ? (
             <div className="pt-4 border-t border-gray-200">
               <div className="flex items-center gap-2 mb-3">
                 {profilePicture ? (

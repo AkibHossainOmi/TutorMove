@@ -3,7 +3,7 @@ import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { authAPI } from "../utils/apiService"; // Backend API service
+import { authAPI, userApi } from "../utils/apiService"; // Backend API service
 
 /**
  * Modern, beautiful Login page, redesigned to match the Signup page's aesthetic and layout.
@@ -44,14 +44,9 @@ const Login = () => {
 
       // Store token
       localStorage.setItem("token", data.access);
-
-      // Store user info
-      const user = {
-        user_id: data.user_id,
-        username: data.username,
-        user_type: data.user_type,
-      };
-      localStorage.setItem("user", JSON.stringify(user));
+      const user = await userApi.getUser();
+      user.data.user_id = user.data.id;
+      localStorage.setItem("user", JSON.stringify(user.data));
 
       navigate("/dashboard");
     } catch (err) {
