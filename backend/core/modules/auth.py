@@ -1,4 +1,7 @@
-from django.core.mail import send_mail
+import random
+import threading
+from django.core.cache import cache
+from django.core.mail import send_mail, EmailMultiAlternatives
 from rest_framework import status, views, serializers
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -26,36 +29,84 @@ class RegisterView(views.APIView):
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
-            return Response(
-                {'detail': 'Registered successfully. Please check your email to verify your account.'},
-                status=status.HTTP_201_CREATED
-            )
+            email = serializer.validated_data['email']
+            otp = random.randint(100000, 999999)
+
+            # Store registration data + OTP in Redis for 5 minutes
+            cache.set(f"register:{email}", {
+                'user_data': serializer.validated_data,
+                'otp': otp
+            }, timeout=5*60)
+
+            # Prepare email sending function
+            def send_otp_email():
+                html_content = f"""
+                <html>
+                  <body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 40px;">
+                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
+                      <h2 style="color: #111827;">Your TutorMove OTP</h2>
+                      <p style="font-size: 16px; color: #374151;">
+                        Use the following OTP to complete your registration. It expires in 5 minutes.
+                      </p>
+                      <div style="text-align: center; margin: 30px 0;">
+                        <span style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 18px;">{otp}</span>
+                      </div>
+                      <p style="font-size: 14px; color: #6b7280;">If you did not register for TutorMove, you can safely ignore this email.</p>
+                    </div>
+                  </body>
+                </html>
+                """
+                text_content = f"Your OTP is {otp}. It expires in 5 minutes."
+
+                msg = EmailMultiAlternatives(
+                    subject="Your TutorMove OTP",
+                    body=text_content,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    to=[email],
+                )
+                msg.attach_alternative(html_content, "text/html")
+                msg.send()
+
+            # Send email in a separate thread
+            threading.Thread(target=send_otp_email).start()
+
+            # Immediately return success
+            return Response({
+                'detail': 'OTP is being sent to email.',
+                'email': email
+            }, status=status.HTTP_200_OK)
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-class EmailVerifyView(views.APIView):
+class VerifyOTPView(views.APIView):
     permission_classes = [AllowAny]
 
-    def get(self, request, uid, token):
-        try:
-            uid_decoded = force_str(urlsafe_base64_decode(uid))
-            user = UserModel.objects.get(pk=uid_decoded)
-        except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-            return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        email = request.data.get('email')
+        otp = request.data.get('otp')
 
-        if user.is_active:
-            return Response({'detail': 'Account already verified.'}, status=status.HTTP_200_OK)
+        cached = cache.get(f"register:{email}")
+        if not cached:
+            return Response({'error': 'OTP expired or invalid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if default_token_generator.check_token(user, token):
+        if str(cached['otp']) != str(otp):
+            return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # OTP valid, create user
+        user_data = cached['user_data']
+        serializer = RegisterSerializer(data=user_data)
+        if serializer.is_valid():
             with transaction.atomic():
-                user.is_active = True
-                user.save()
+                user = serializer.save()
+                # Create initial credit
                 Credit.objects.get_or_create(user=user, defaults={'balance': 5})
-            return Response({'detail': 'Email verified successfully. You can now log in.'}, status=status.HTTP_200_OK)
 
-        return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
+            # Remove from cache
+            cache.delete(f"register:{email}")
 
+            return Response({'detail': 'Registration complete.'}, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]

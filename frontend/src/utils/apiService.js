@@ -113,7 +113,8 @@ export const authAPI = {
   logout: () => apiService.post('/api/auth/logout/'),
   changePassword: (passwordData) => apiService.post('/api/auth/change-password/', passwordData),
   updateContactInfo: (contactData) => apiService.patch('/api/auth/contact-info/', contactData),
-  verifyEmail: (uid, token) => apiService.get(`/api/auth/verify/${uid}/${token}/`),
+  sendOtp: (data) => apiService.post('/api/auth/send-otp/', data),
+  verifyOtp: (data) => apiService.post('/api/auth/verify-otp/', data),
 };
 
 export const contactUnlockAPI = {

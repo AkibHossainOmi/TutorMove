@@ -36,7 +36,7 @@ import uuid
 import requests
 from django.http import JsonResponse
 from core.modules.auth import ( RegisterView,
-    EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView, 
+    VerifyOTPView, LoginView, PasswordResetRequestView, PasswordResetConfirmView, 
     CookieTokenObtainPairView, CookieTokenRefreshView,
 )
 
@@ -58,7 +58,7 @@ from .payments import SSLCommerzPayment
 
 __all__ = [
     "RegisterView",
-    "EmailVerifyView",
+    "VerifyOTPView",
     "LoginView",
     "PasswordResetRequestView",
     "PasswordResetConfirmView",

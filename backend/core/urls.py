@@ -5,10 +5,10 @@ from .views import (
     ApplicationViewSet, NotificationViewSet, UserSettingsViewSet,
     ReviewViewSet, PremiumViewSet, EscrowPaymentViewSet, SubjectViewSet,
     AdminViewSet,
-    RegisterView, EmailVerifyView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
+    RegisterView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn, 
-    EmailVerifyView, SubmitReview, ContactUnlockViewSet,
+    VerifyOTPView, SubmitReview, ContactUnlockViewSet,
     TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
@@ -40,8 +40,9 @@ router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unloc
 
 urlpatterns = [
     # Auth & account endpoints (JWT/session-based, email/password)
-    path('auth/register/', RegisterView.as_view(), name='register'),
-    path('auth/verify/<str:uid>/<str:token>/', EmailVerifyView.as_view(), name='verify-email'),
+    path('auth/register/', RegisterView.as_view(), name='send-otp'),
+    path('auth/send-otp/', RegisterView.as_view(), name='send-otp'),
+    path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
     path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
