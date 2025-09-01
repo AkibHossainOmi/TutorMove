@@ -35,11 +35,12 @@ const globalStyles = `
 
   a:hover {
     color: #0056b3;
-    text-decoration: underline;
   }
 
   button {
     cursor: pointer;
+    color: inherit;
+    background: none;
   }
 
   button:disabled {

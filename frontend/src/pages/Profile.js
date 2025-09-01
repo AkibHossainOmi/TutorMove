@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import React from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import LoadingSpinner from '../components/LoadingSpinner';
@@ -9,12 +9,30 @@ import BasicInfoCard from '../components/Profile/BasicInfoCard';
 import TutorDetailsCard from '../components/Profile/TutorDetailsCard';
 import BioCard from '../components/Profile/BioCard';
 import AccountActionsCard from '../components/Profile/AccountActionsCard';
-import StatusMessage from '../components/Profile/StatusMessage';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Profile = () => {
   const profile = useProfile();
 
-  if (profile.loading)
+  // Show error toast if profile fails to load
+  useEffect(() => {
+    if (profile.error) {
+      toast.error(
+        profile.error || 'Something went wrong loading your profile.',
+        {
+          position: 'bottom-center',
+          autoClose: 4000,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+        }
+      );
+    }
+  }, [profile.error]);
+
+  if (profile.loading) {
     return (
       <div className="min-h-screen flex flex-col">
         <Navbar />
@@ -22,23 +40,11 @@ const Profile = () => {
           <LoadingSpinner />
         </div>
         <Footer />
+        {/* Toast container always mounted */}
+        <ToastContainer position="bottom-center" />
       </div>
     );
-
-  if (profile.error)
-    return (
-      <div className="min-h-screen flex flex-col">
-        <Navbar />
-        <div className="flex-grow flex justify-center items-center px-4">
-          <div className="bg-white rounded-xl shadow-md p-8 max-w-md w-full text-center">
-            <div className="text-red-500 text-5xl mb-4">⚠️</div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-2">Profile Error</h2>
-            <p className="text-gray-600">{profile.error}</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-inter">
@@ -48,16 +54,31 @@ const Profile = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <BasicInfoCard profile={profile} />
-            {profile.userType === 'tutor' && <TutorDetailsCard profile={profile} />}
+            {profile.userType === 'tutor' && (
+              <TutorDetailsCard profile={profile} />
+            )}
           </div>
           <div className="lg:col-span-1 space-y-6">
             <BioCard profile={profile} />
+            {/* AccountActionsCard should call toast.success/error internally */}
             <AccountActionsCard profile={profile} />
           </div>
         </div>
-        <StatusMessage profile={profile} />
       </main>
       <Footer />
+
+      {/* Global toast container - fixed mid bottom */}
+      <ToastContainer
+        position="bottom-center"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </div>
   );
 };

@@ -24,14 +24,7 @@ def root_view(request):
     <html>
         <head>
             <title>TeacherOn Clone API</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 40px; }
-                h1 { color: #333; }
-                ul { list-style-type: none; padding: 0; }
-                li { margin: 10px 0; }
-                a { color: #007bff; text-decoration: none; }
-                a:hover { text-decoration: underline; }
-            </style>
+            
         </head>
         <body>
             <h1>Welcome to TeacherOn Clone API</h1>
