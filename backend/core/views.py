@@ -35,9 +35,8 @@ from decimal import Decimal, InvalidOperation
 import uuid
 import requests
 from django.http import JsonResponse
-from core.modules.auth import ( RegisterView,
-    VerifyOTPView, LoginView, PasswordResetRequestView, PasswordResetConfirmView, 
-    CookieTokenObtainPairView, CookieTokenRefreshView,
+from core.modules.auth import ( SendOTPView, ResetPasswordView,
+    VerifyOTPView, LoginView, CookieTokenObtainPairView, CookieTokenRefreshView,
 )
 
 from urllib.parse import urlencode
@@ -57,11 +56,10 @@ from .serializers import (
 from .payments import SSLCommerzPayment
 
 __all__ = [
-    "RegisterView",
+    "SendOTPView",
+    "ResetPasswordView",
     "VerifyOTPView",
     "LoginView",
-    "PasswordResetRequestView",
-    "PasswordResetConfirmView",
     "CookieTokenObtainPairView",
     "CookieTokenRefreshView",
 ]
@@ -336,6 +334,21 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def change_password(self, request):
+        old_password = request.data.get("old_password")
+        new_password = request.data.get("new_password")
+        user = request.user
+
+        if not all([old_password, new_password]):
+            return Response({"error": "Old and new password required"}, status=status.HTTP_409_CONFLICT)
+        if not user.check_password(old_password):
+            return Response({"error": "Old password is incorrect"}, status=status.HTTP_409_CONFLICT)
+
+        user.set_password(new_password)
+        user.save()
+        return Response({"detail": "Password changed successfully"}, status=status.HTTP_200_OK)
 
     @action(detail=True, methods=['post'])
     def unlock_profile(self, request, pk=None):

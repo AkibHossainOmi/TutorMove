@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
@@ -25,6 +25,15 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [resendTimeout, setResendTimeout] = useState(0);
+
+  useEffect(() => {
+    let timer;
+    if (resendTimeout > 0) {
+      timer = setTimeout(() => setResendTimeout(resendTimeout - 1), 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [resendTimeout]);
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -45,21 +54,42 @@ const Signup = () => {
       setError("Passwords do not match");
       return;
     }
+    if (resendTimeout > 0) return; // throttle resend
 
     setLoading(true);
     try {
-      await authAPI.sendOtp(form);
+      await authAPI.sendOtp({
+        email: form.email,
+        purpose: "register",
+        user_data: form,
+      });
       setOtpSent(true);
+      setResendTimeout(300); // 30s cooldown before resend
       setSuccess("OTP sent to your email. Please check your inbox.");
     } catch (err) {
       const data = err.response?.data;
-      if (data) {
-        const fieldErrors = Object.entries(data)
-          .map(([key, value]) => (Array.isArray(value) ? `${key}: ${value.join(", ")}` : `${key}: ${value}`))
-          .join(" | ");
-        setError(fieldErrors);
-      } else {
-        setError("Failed to send OTP");
+      if(err.response?.status === 409)
+      {
+         setSuccess("Email is already registered.");
+         setError(null);
+      }
+      else if(err.response?.status === 429)
+      {
+         setSuccess("You requested OTP too frequently.\nPlease wait a moment before trying again.");
+         setError(null);
+      }
+      else
+      {
+        if (data) {
+          const fieldErrors = Object.entries(data)
+            .map(([key, value]) =>
+              Array.isArray(value) ? `${key}: ${value.join(", ")}` : `${key}: ${value}`
+            )
+            .join(" | ");
+          setError(fieldErrors);
+        } else {
+          setError("Failed to send OTP");
+        }
       }
     } finally {
       setLoading(false);
@@ -74,7 +104,7 @@ const Signup = () => {
 
     setLoading(true);
     try {
-      await authAPI.verifyOtp({ email: form.email, otp });
+      await authAPI.verifyOtp({ email: form.email, otp, purpose: "register" });
       setSuccess("Registration complete! Redirecting to login...");
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
@@ -238,7 +268,7 @@ const Signup = () => {
                         loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
                       }`}
                     >
-                      Sign Up
+                      {loading ? "Sending OTP..." : "Send OTP"}
                     </button>
                   ) : (
                     <>
@@ -259,6 +289,16 @@ const Signup = () => {
                         }`}
                       >
                         {loading ? "Verifying..." : "Verify & Register"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={resendTimeout > 0}
+                        onClick={sendOtp}
+                        className={`w-full rounded-xl px-4 py-3 text-sm font-semibold text-white mt-2 transition shadow ${
+                          resendTimeout > 0 ? "bg-gray-400 cursor-not-allowed" : "bg-indigo-500 hover:bg-indigo-600"
+                        }`}
+                      >
+                        {resendTimeout > 0 ? `Resend OTP in ${resendTimeout}s` : "Resend OTP"}
                       </button>
                     </>
                   )}

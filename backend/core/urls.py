@@ -4,11 +4,10 @@ from .views import (
     UserViewSet, GigViewSet, CreditViewSet, JobViewSet,
     ApplicationViewSet, NotificationViewSet, UserSettingsViewSet,
     ReviewViewSet, PremiumViewSet, EscrowPaymentViewSet, SubjectViewSet,
-    AdminViewSet,
-    RegisterView, LoginView, PasswordResetRequestView, PasswordResetConfirmView,
+    AdminViewSet, LoginView,
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn, 
-    VerifyOTPView, SubmitReview, ContactUnlockViewSet,
+    SendOTPView, ResetPasswordView, VerifyOTPView, SubmitReview, ContactUnlockViewSet,
     TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
@@ -40,12 +39,13 @@ router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unloc
 
 urlpatterns = [
     # Auth & account endpoints (JWT/session-based, email/password)
-    path('auth/register/', RegisterView.as_view(), name='send-otp'),
-    path('auth/send-otp/', RegisterView.as_view(), name='send-otp'),
-    path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),
+    path('auth/register/', SendOTPView.as_view(), name='register'),  # send OTP for signup
+    path('auth/send-otp/', SendOTPView.as_view(), name='send-otp'),  # reusable for resend OTP
+    path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify-otp'),  # verify OTP
+
+    # Password reset
+    path('auth/reset-password/', ResetPasswordView.as_view(), name='reset-password'),
     path('auth/login/', LoginView.as_view(), name='login'),
-    path('auth/password-reset/', PasswordResetRequestView.as_view(), name='password-reset-request'),
-    path('auth/password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password-reset-confirm'),
     path('auth/token/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     # path('profile/', UserProfileView.as_view(), name='user-profile'),

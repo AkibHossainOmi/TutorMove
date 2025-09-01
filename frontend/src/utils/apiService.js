@@ -103,18 +103,23 @@ export const whatsappAPI = {
   verifyOTP: (otp) =>
     apiService.post('/api/whatsapp/verify/', { otp }),
 };
-// Auth API calls
 export const authAPI = {
   login: (credentials) => apiService.post('/api/auth/login/', credentials),
-  signup: (userData) => apiService.post('/api/auth/register/', userData),
+  signup: (userData) => apiService.post('/api/auth/register/', userData), // sends OTP for signup
+  sendOtp: (data) => apiService.post('/api/auth/send-otp/', data), // reusable for resend OTP
+  verifyOtp: (data) => apiService.post('/api/auth/verify-otp/', data),
+  
   googleLogin: (tokenId) => apiService.post('/auth/google-login/', { token_id: tokenId }),
   getCurrentUser: () => apiService.get('/api/auth/user/'),
   updateProfile: (profileData) => apiService.patch('/api/auth/user/', profileData),
   logout: () => apiService.post('/api/auth/logout/'),
   changePassword: (passwordData) => apiService.post('/api/auth/change-password/', passwordData),
   updateContactInfo: (contactData) => apiService.patch('/api/auth/contact-info/', contactData),
-  sendOtp: (data) => apiService.post('/api/auth/send-otp/', data),
-  verifyOtp: (data) => apiService.post('/api/auth/verify-otp/', data),
+
+  // Password reset endpoints
+  sendPasswordResetOtp: (data) =>
+    apiService.post('/api/auth/send-otp/', { ...data, purpose: 'password-reset' }),
+  resetPassword: (data) => apiService.post('/api/auth/reset-password/', data),
 };
 
 export const contactUnlockAPI = {
@@ -193,7 +198,9 @@ export const userApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
-  }
+  },
+  
+  changePassword: (passwords) => apiService.post('/api/users/change_password/', passwords),
 };
 
 // Credit API calls

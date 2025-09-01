@@ -1,5 +1,6 @@
 import random
 import threading
+import time
 from django.core.cache import cache
 from django.core.mail import send_mail, EmailMultiAlternatives
 from rest_framework import status, views, serializers
@@ -23,148 +24,164 @@ from ..models import Credit
 
 UserModel = get_user_model()
 
-class RegisterView(views.APIView):
+
+# --- Reusable OTP utils ---
+
+def generate_otp():
+    return random.randint(100000, 999999)
+
+def set_otp(email, purpose="register", user_data=None, timeout=300, throttle_seconds=300):
+    """
+    Stores OTP in cache and prevents sending too frequently.
+    Returns tuple: (otp, is_throttled)
+    """
+    key = f"otp:{purpose}:{email}"
+    existing = cache.get(key)
+
+    now_ts = int(time.time())
+    if existing and "last_sent" in existing:
+        elapsed = now_ts - existing["last_sent"]
+        if elapsed < throttle_seconds:
+            # Too soon to resend
+            return existing["otp"], True
+
+    otp = generate_otp()
+    value = {"otp": otp, "last_sent": now_ts}
+    if user_data:
+        value["user_data"] = user_data
+
+    cache.set(key, value, timeout=timeout)
+    return otp, False
+
+
+def get_otp(email, purpose="register"):
+    key = f"otp:{purpose}:{email}"
+    return cache.get(key)
+
+def delete_otp(email, purpose="register"):
+    key = f"otp:{purpose}:{email}"
+    cache.delete(key)
+
+def send_otp_email(email, otp, purpose="register"):
+    subject = "Your TutorMove OTP"
+    action_text = "register your account"
+    if purpose == "password-reset":
+        subject = "Reset your TutorMove password"
+        action_text = "reset your password"
+
+    html_content = f"""
+    <html>
+      <body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 40px;">
+        <div style="max-width: 600px; margin: auto; background: #fff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
+          <h2 style="color: #111827;">Your OTP Code</h2>
+          <p style="font-size: 16px; color: #374151;">
+            Use this OTP to {action_text}. It expires in 5 minutes.
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <span style="background-color: #3b82f6; color: #fff; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 18px;">{otp}</span>
+          </div>
+          <p style="font-size: 14px; color: #6b7280;">If you did not request this, ignore this email.</p>
+        </div>
+      </body>
+    </html>
+    """
+    text_content = f"Your OTP is {otp}. It expires in 5 minutes."
+
+    def send_email():
+        msg = EmailMultiAlternatives(subject=subject, body=text_content,
+                                     from_email=settings.DEFAULT_FROM_EMAIL, to=[email])
+        msg.attach_alternative(html_content, "text/html")
+        msg.send()
+
+    threading.Thread(target=send_email).start()
+
+# --- API Views ---
+
+class SendOTPView(views.APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            otp = random.randint(100000, 999999)
+        email = request.data.get("email")
+        purpose = request.data.get("purpose", "register")
+        user_data = request.data.get("user_data")  # optional for signup
 
-            # Store registration data + OTP in Redis for 5 minutes
-            cache.set(f"register:{email}", {
-                'user_data': serializer.validated_data,
-                'otp': otp
-            }, timeout=5*60)
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Prepare email sending function
-            def send_otp_email():
-                html_content = f"""
-                <html>
-                  <body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 40px;">
-                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
-                      <h2 style="color: #111827;">Your TutorMove OTP</h2>
-                      <p style="font-size: 16px; color: #374151;">
-                        Use the following OTP to complete your registration. It expires in 5 minutes.
-                      </p>
-                      <div style="text-align: center; margin: 30px 0;">
-                        <span style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 18px;">{otp}</span>
-                      </div>
-                      <p style="font-size: 14px; color: #6b7280;">If you did not register for TutorMove, you can safely ignore this email.</p>
-                    </div>
-                  </body>
-                </html>
-                """
-                text_content = f"Your OTP is {otp}. It expires in 5 minutes."
-
-                msg = EmailMultiAlternatives(
-                    subject="Your TutorMove OTP",
-                    body=text_content,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[email],
+        # Check email existence
+        if purpose == "register":
+            if UserModel.objects.filter(email=email).exists():
+                return Response(
+                    {"error": "Email is already registered."},
+                    status=status.HTTP_409_CONFLICT
                 )
-                msg.attach_alternative(html_content, "text/html")
-                msg.send()
+        elif purpose == "password-reset":
+            if not UserModel.objects.filter(email=email).exists():
+                return Response({"error": "Email not found."},
+                                status=status.HTTP_404_NOT_FOUND)
 
-            # Send email in a separate thread
-            threading.Thread(target=send_otp_email).start()
+        otp, throttled = set_otp(email, purpose=purpose, user_data=user_data)
+        if throttled:
+            return Response({"error": "Please wait a while before requesting again."},
+                            status=status.HTTP_429_TOO_MANY_REQUESTS)
 
-            # Immediately return success
-            return Response({
-                'detail': 'OTP is being sent to email.',
-                'email': email
-            }, status=status.HTTP_200_OK)
+        send_otp_email(email, otp, purpose=purpose)
+        return Response({"detail": f"OTP sent for {purpose}"}, status=status.HTTP_200_OK)
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class VerifyOTPView(views.APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        email = request.data.get('email')
-        otp = request.data.get('otp')
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        purpose = request.data.get("purpose", "register")
+        if not all([email, otp]):
+            return Response({"error": "Email and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        cached = cache.get(f"register:{email}")
-        if not cached:
-            return Response({'error': 'OTP expired or invalid.'}, status=status.HTTP_400_BAD_REQUEST)
+        cached = get_otp(email, purpose=purpose)
+        if not cached or str(cached["otp"]) != str(otp):
+            return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if str(cached['otp']) != str(otp):
-            return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+        if purpose == "register":
+            serializer = RegisterSerializer(data=cached.get("user_data"))
+            if serializer.is_valid():
+                with transaction.atomic():
+                    user = serializer.save()
+                    Credit.objects.get_or_create(user=user, defaults={"balance": 5})
+                delete_otp(email, purpose)
+                return Response({"detail": "Registration complete"}, status=status.HTTP_201_CREATED)
 
-        # OTP valid, create user
-        user_data = cached['user_data']
-        serializer = RegisterSerializer(data=user_data)
-        if serializer.is_valid():
-            with transaction.atomic():
-                user = serializer.save()
-                # Create initial credit
-                Credit.objects.get_or_create(user=user, defaults={'balance': 5})
+        delete_otp(email, purpose)
+        return Response({"detail": f"OTP verified for {purpose}"}, status=status.HTTP_200_OK)
 
-            # Remove from cache
-            cache.delete(f"register:{email}")
 
-            return Response({'detail': 'Registration complete.'}, status=status.HTTP_201_CREATED)
+class ResetPasswordView(views.APIView):
+    permission_classes = [AllowAny]
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    def post(self, request):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        new_password = request.data.get("new_password")
+        if not all([email, otp, new_password]):
+            return Response({"error": "Email, OTP, and new password are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        cached = get_otp(email, purpose="password-reset")
+        if not cached or str(cached["otp"]) != str(otp):
+            return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = UserModel.objects.get(email=email)
+            user.set_password(new_password)
+            user.save()
+            delete_otp(email, purpose="password-reset")
+            return Response({"detail": "Password reset successfully"}, status=status.HTTP_200_OK)
+        except UserModel.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_404_NOT_FOUND)
 
 class LoginView(TokenObtainPairView):
     permission_classes = [AllowAny]
     serializer_class = UserTokenSerializer
-
-
-class PasswordResetRequestView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetRequestSerializer(data=request.data)
-        if serializer.is_valid():
-            email = serializer.validated_data['email']
-            try:
-                user = UserModel.objects.get(email=email)
-            except UserModel.DoesNotExist:
-                # Do not reveal email existence
-                return Response({'detail': 'If the email exists, you will get a reset link.'})
-
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(force_bytes(user.pk))
-            reset_url = f"{settings.FRONTEND_SITE_URL}/reset-password/{uid}/{token}"
-
-            send_mail(
-                "TutorMove Password Reset",
-                f"Hi {user.username},\n\nReset your password here: {reset_url}",
-                settings.DEFAULT_FROM_EMAIL,
-                [user.email],
-                fail_silently=False,
-            )
-            return Response({'detail': 'If the email exists, you will get a reset link.'})
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class PasswordResetConfirmView(views.APIView):
-    permission_classes = [AllowAny]
-
-    def post(self, request):
-        serializer = PasswordResetConfirmSerializer(data=request.data)
-        if serializer.is_valid():
-            uid = serializer.validated_data['uid']
-            token = serializer.validated_data['token']
-            new_password = serializer.validated_data['new_password']
-            try:
-                uid_decoded = force_str(urlsafe_base64_decode(uid))
-                user = UserModel.objects.get(pk=uid_decoded)
-            except (TypeError, ValueError, OverflowError, UserModel.DoesNotExist):
-                return Response({'error': 'Invalid link.'}, status=status.HTTP_400_BAD_REQUEST)
-
-            if default_token_generator.check_token(user, token):
-                user.set_password(new_password)
-                user.save()
-                return Response({'detail': 'Password reset successful.'})
-
-            return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CookieTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
