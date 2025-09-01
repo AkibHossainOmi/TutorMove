@@ -75,7 +75,7 @@ const Signup = () => {
       }
       else if(err.response?.status === 429)
       {
-         setSuccess("You requested OTP too frequently.\nPlease wait a moment before trying again.");
+         setSuccess("Please wait a moment before trying again.");
          setError(null);
       }
       else

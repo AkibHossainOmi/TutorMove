@@ -35,7 +35,7 @@ const ForgotPassword = () => {
       setSuccess("OTP sent to your email. It expires in 5 minutes.");
     } catch (err) {
       if (err.response?.status === 429) {
-        setError("OTP already sent recently. Please wait a while before requesting again.");
+        setError("Please wait a moment before trying again.");
       } else {
         setError(err.response?.data?.error || "Failed to send OTP.");
       }

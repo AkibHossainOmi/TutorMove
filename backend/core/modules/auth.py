@@ -42,11 +42,10 @@ def set_otp(email, purpose="register", user_data=None, timeout=300, throttle_sec
     if existing and "last_sent" in existing:
         elapsed = now_ts - existing["last_sent"]
         if elapsed < throttle_seconds:
-            # Too soon to resend
             return existing["otp"], True
 
     otp = generate_otp()
-    value = {"otp": otp, "last_sent": now_ts}
+    value = {"otp": otp, "last_sent": now_ts, "attempts": 0}  # initialize attempts
     if user_data:
         value["user_data"] = user_data
 
@@ -122,7 +121,7 @@ class SendOTPView(views.APIView):
 
         otp, throttled = set_otp(email, purpose=purpose, user_data=user_data)
         if throttled:
-            return Response({"error": "Please wait a while before requesting again."},
+            return Response({"error": "Please wait a moment before trying again."},
                             status=status.HTTP_429_TOO_MANY_REQUESTS)
 
         send_otp_email(email, otp, purpose=purpose)
@@ -136,13 +135,29 @@ class VerifyOTPView(views.APIView):
         email = request.data.get("email")
         otp = request.data.get("otp")
         purpose = request.data.get("purpose", "register")
+
         if not all([email, otp]):
             return Response({"error": "Email and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        key = f"otp:{purpose}:{email}"
         cached = get_otp(email, purpose=purpose)
-        if not cached or str(cached["otp"]) != str(otp):
-            return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
 
+        if not cached:
+            return Response({"error": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Increment attempts
+        cached["attempts"] = cached.get("attempts", 0) + 1
+        cache.set(key, cached, timeout=300)  # refresh cache timeout
+
+        if cached["attempts"] > 3:
+            delete_otp(email, purpose)
+            return Response({"error": "Too many failed attempts. OTP invalidated."},
+                            status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        if str(cached["otp"]) != str(otp):
+            return Response({"error": "Invalid OTP"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # OTP correct
         if purpose == "register":
             serializer = RegisterSerializer(data=cached.get("user_data"))
             if serializer.is_valid():
@@ -159,17 +174,41 @@ class VerifyOTPView(views.APIView):
 class ResetPasswordView(views.APIView):
     permission_classes = [AllowAny]
 
+    MAX_ATTEMPTS = 3  # maximum OTP attempts
+
     def post(self, request):
         email = request.data.get("email")
         otp = request.data.get("otp")
         new_password = request.data.get("new_password")
         if not all([email, otp, new_password]):
-            return Response({"error": "Email, OTP, and new password are required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Email, OTP, and new password are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         cached = get_otp(email, purpose="password-reset")
-        if not cached or str(cached["otp"]) != str(otp):
-            return Response({"error": "Invalid or expired OTP"}, status=status.HTTP_400_BAD_REQUEST)
+        if not cached:
+            return Response({"error": "OTP expired"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # Initialize attempts if not present
+        attempts = cached.get("attempts", 0)
+
+        # Check OTP
+        if str(cached["otp"]) != str(otp):
+            attempts += 1
+            # Save updated attempts
+            cache.set(f"otp:password-reset:{email}", {**cached, "attempts": attempts}, timeout=300)
+            if attempts >= self.MAX_ATTEMPTS:
+                return Response(
+                    {"error": "Maximum attempts reached. Please request a new OTP."},
+                    status=status.HTTP_429_TOO_MANY_REQUESTS,
+                )
+            return Response(
+                {"error": f"Invalid OTP. You have {self.MAX_ATTEMPTS - attempts} attempts left."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # OTP correct, reset password
         try:
             user = UserModel.objects.get(email=email)
             user.set_password(new_password)
