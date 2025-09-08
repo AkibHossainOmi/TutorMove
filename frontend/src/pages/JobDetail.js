@@ -27,7 +27,7 @@ const JobDetail = () => {
     if (userData) setCurrentUser(JSON.parse(userData));
   }, []);
 
-  const isTutor = currentUser?.user_type === 'teacher';
+  const isTutor = currentUser?.user_type === 'tutor';
 
   useEffect(() => {
     let isMounted = true;
