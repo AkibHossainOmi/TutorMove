@@ -5,9 +5,10 @@
 * Job Unlock (Assign, Close, Review)
 * Register form (change \& forget password)
 * Average Rating on tutor profile
-* While any data is modified on profile (update dp, buy credits), the whole profile data shows 0 and blank, fixes automatically, after re-login.
 * Registration form info update
-
+* Use mail to login
+* One column in joblist
+* Home Page Search
 
 
 ***# Fixed:***
