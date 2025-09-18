@@ -93,14 +93,41 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
 
 class UserTokenSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate(attrs)
-        if not self.user.is_active:
-            raise serializers.ValidationError({'error': 'Email not verified.'})
+        username_or_email = attrs.get("username", "").strip()
+        password = attrs.get("password")
+
+        if not username_or_email or not password:
+            raise serializers.ValidationError({"error": "Both username/email and password are required."})
+
+        # Try to get user by username first
+        try:
+            user = User.objects.get(username=username_or_email)
+        except User.DoesNotExist:
+            # If not found, try email
+            try:
+                user = User.objects.get(email=username_or_email)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({"error": "Invalid credentials."})
+
+        # Check password
+        if not user.check_password(password):
+            raise serializers.ValidationError({"error": "Invalid credentials."})
+
+        if not user.is_active:
+            raise serializers.ValidationError({"error": "Email not verified."})
+
+        self.user = user
+
+        # Pass correct username to parent for JWT token creation
+        data = super().validate({"username": user.username, "password": password})
+
+        # Add extra fields
         data.update({
-            'user_id': self.user.id,
-            'username': self.user.username,
-            'user_type': self.user.user_type,
+            "user_id": user.id,
+            "username": user.username,
+            "user_type": user.user_type,
         })
+
         return data
 
 # === SUBJECT SERIALIZER ===

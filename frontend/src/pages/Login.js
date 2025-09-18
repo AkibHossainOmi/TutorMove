@@ -5,10 +5,6 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { authAPI, userApi } from "../utils/apiService"; // Backend API service
 
-/**
- * Modern, beautiful Login page, redesigned to match the Signup page's aesthetic and layout.
- */
-
 const FIELD_BASE =
   "w-full rounded-xl border border-gray-200 bg-white/60 backdrop-blur px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500";
 
@@ -19,11 +15,11 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth(); // Destructure isAuthenticated from useAuth
+  const { isAuthenticated } = useAuth();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
-    setError(""); // Clear error on input change
+    setError("");
   };
 
   const handleSubmit = async (e) => {
@@ -31,19 +27,25 @@ const Login = () => {
     setError("");
     setLoading(true);
 
-    // Basic validation
     if (!formData.username.trim() || !formData.password.trim()) {
-      setError("Please enter both username and password.");
+      setError("Please enter both username/email and password.");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await authAPI.login(formData);
+      // Send username (can be actual username or email) and password
+      const response = await authAPI.login({
+        username: formData.username,
+        password: formData.password,
+      });
+
       const data = response.data;
 
       // Store token
       localStorage.setItem("token", data.access);
+
+      // Fetch and store user profile
       const user = await userApi.getUser();
       user.data.user_id = user.data.id;
       localStorage.setItem("user", JSON.stringify(user.data));
@@ -68,9 +70,8 @@ const Login = () => {
 
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-sky-50 flex items-center justify-center py-16">
         <div className="max-w-6xl mx-auto px-6">
-          {/* Shell */}
           <div className="grid md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
-            {/* Left: Marketing / Aesthetic - Reused from Signup */}
+            {/* Left Side */}
             <div className="hidden md:flex relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-sky-500 text-white p-10 shadow-2xl">
               <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
               <div className="relative z-10 flex flex-col justify-end">
@@ -81,35 +82,38 @@ const Login = () => {
                   Access your personalized dashboard, connect with students or tutors, and manage your learning journey.
                 </p>
                 <ul className="mt-8 space-y-3 text-white/90">
-                  <li className="flex items-center gap-3"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> Seamless return</li>
-                  <li className="flex items-center gap-3"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> Secure authentication</li>
-                  <li className="flex items-center gap-3"><span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> All your data, instantly</li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> Seamless return
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> Secure authentication
+                  </li>
+                  <li className="flex items-center gap-3">
+                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> All your data, instantly
+                  </li>
                 </ul>
               </div>
             </div>
 
-            {/* Right: Form Card - Adapted for Login */}
+            {/* Right Side: Form */}
             <div className="relative">
               <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-200 to-sky-200 blur opacity-60" />
               <div className="relative rounded-3xl bg-white shadow-xl p-8 md:p-10">
-                {/* Header */}
                 <div className="mb-8">
                   <h2 className="text-2xl font-bold text-gray-900">Welcome Back!</h2>
                   <p className="text-sm text-gray-500 mt-1">Sign in to your account.</p>
                 </div>
 
-                {/* Error Message */}
                 {error && (
                   <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {error}
                   </div>
                 )}
 
-                {/* Login Form */}
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label htmlFor="username" className={LABEL_BASE}>
-                      Username
+                      Username or Email
                     </label>
                     <input
                       type="text"
@@ -118,7 +122,7 @@ const Login = () => {
                       value={formData.username}
                       onChange={handleChange}
                       required
-                      placeholder="Your username"
+                      placeholder="Your username or email"
                       className={FIELD_BASE}
                       disabled={loading}
                     />
@@ -152,7 +156,6 @@ const Login = () => {
                   </button>
                 </form>
 
-                {/* Links */}
                 <div className="mt-6 text-center text-sm">
                   <Link
                     to="/forgot-password"

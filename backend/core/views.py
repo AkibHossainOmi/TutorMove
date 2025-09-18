@@ -18,7 +18,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny, IsAdminUser
 from django.views.decorators.csrf import csrf_exempt
 from django.utils.decorators import method_decorator
 from rest_framework.response import Response
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, PermissionDenied
 from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
 from math import radians, cos, sin, asin, sqrt
@@ -591,21 +591,28 @@ class GigViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        try:
-            credit = Credit.objects.get(user=user)
-            if credit.balance < 1:
-                raise ValidationError("Insufficient credits to create gig.")
-            credit.balance -= 1
-            credit.save()
-        except Credit.DoesNotExist:
-            raise ValidationError("Credit record not found.")
-        
+
+        # Count existing gigs by this user
+        user_gig_count = Gig.objects.filter(tutor=user).count()
+
+        # Deduct credit only if user has already created 5 or more gigs
+        if user_gig_count >= 5:
+            try:
+                credit = Credit.objects.get(user=user)
+                if credit.balance < 1:
+                    raise ValidationError("Insufficient credits to create gig.")
+                credit.balance -= 1
+                credit.save()
+            except Credit.DoesNotExist:
+                raise ValidationError("Credit record not found.")
+
         # --- Handle Subject insertion ---
         subject_name = serializer.validated_data.get("subject")
         subject, created = Subject.objects.get_or_create(
             name=subject_name,
             defaults={"is_active": False}
         )
+        
         serializer.save(tutor=user)
 
     @action(detail=True, methods=['post'])

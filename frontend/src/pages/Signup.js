@@ -268,7 +268,7 @@ const Signup = () => {
                         loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
                       }`}
                     >
-                      {loading ? "Sending OTP..." : "Send OTP"}
+                      {loading ? "Sending OTP..." : "Sign Up"}
                     </button>
                   ) : (
                     <>
