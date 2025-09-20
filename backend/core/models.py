@@ -44,12 +44,12 @@ class User(AbstractUser):
         return False
 
 class ContactUnlock(models.Model):
-    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocks')
-    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='unlocked_by')
+    unlocker = models.ForeignKey(User, on_delete=models.CASCADE, related_name="contacts_unlocked")
+    target = models.ForeignKey(User, on_delete=models.CASCADE, related_name="unlocked_by")
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('student', 'tutor')
+        unique_together = ("unlocker", "target")
 
 # ADDED: Order and Payment Models (These are new and remain as part of payment integration)
 class Order(models.Model):

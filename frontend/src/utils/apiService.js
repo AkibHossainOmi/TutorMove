@@ -82,7 +82,7 @@ apiService.interceptors.response.use(
       } catch (err) {
         processQueue(err, null);
         localStorage.removeItem('token');
-        // window.location.href = '/login';
+        window.location.href = '/login';
         return Promise.reject(err);
       } finally {
         isRefreshing = false;
@@ -122,11 +122,11 @@ export const authAPI = {
 };
 
 export const contactUnlockAPI = {
-  unlockContact: (tutorId) =>
-    apiService.post('/api/contact-unlock/unlock/', { tutor_id: tutorId }),
+  unlockContact: (targetId) =>
+    apiService.post('/api/contact-unlock/unlock/', { target_id: targetId }),
 
-  checkUnlockStatus: (tutorId) =>
-    apiService.get('/api/contact-unlock/status/', { params: { tutor_id: tutorId } }),
+  checkUnlockStatus: (targetId) =>
+    apiService.get('/api/contact-unlock/status/', { params: { target_id: targetId } }),
 };
 
 // Tutor API calls

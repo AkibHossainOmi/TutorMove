@@ -107,6 +107,7 @@ export default class ChatSocket {
 
     this.socket.onerror = (error) => {
       console.error("[ChatSocket] WebSocket error:", error);
+      window.location.href = '/login';
     };
   }
 

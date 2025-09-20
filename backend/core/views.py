@@ -977,9 +977,18 @@ class JobViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Insufficient credits"}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
+            # Deduct credits
             tutor.credit.balance -= points
             tutor.credit.save(update_fields=["balance"])
+
+            # Save job unlock
             unlock_obj = JobUnlock.objects.create(job=job, tutor=tutor, points_spent=points)
+
+            # Also unlock contact: tutor -> student (job poster)
+            ContactUnlock.objects.get_or_create(
+                unlocker=tutor,
+                target=job.student
+            )
 
         serializer = JobUnlockSerializer(unlock_obj)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -1867,18 +1876,22 @@ class ContactUnlockViewSet(viewsets.ViewSet):
 
     @action(detail=False, methods=['post'], url_path='unlock')
     def unlock_contact(self, request):
-        tutor_id = request.data.get('tutor_id')
-        if not tutor_id:
-            return Response({'detail': 'tutor_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        target_id = request.data.get('target_id')
+        if not target_id:
+            return Response({'detail': 'target_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            tutor = User.objects.get(id=tutor_id, user_type='tutor')
+            target_user = User.objects.get(id=target_id)
         except User.DoesNotExist:
-            return Response({'detail': 'Tutor not found.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Target user not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Prevent self-unlock
+        if request.user.id == target_user.id:
+            return Response({'detail': 'You cannot unlock yourself.'}, status=status.HTTP_400_BAD_REQUEST)
 
         # Check if already unlocked
         unlock, created = ContactUnlock.objects.get_or_create(
-            student=request.user, tutor=tutor
+            unlocker=request.user, target=target_user
         )
         if not created:
             return Response({'detail': 'Contact already unlocked.'}, status=status.HTTP_200_OK)
@@ -1896,17 +1909,17 @@ class ContactUnlockViewSet(viewsets.ViewSet):
             unlock.delete()
             return Response({'detail': 'Credit record not found'}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = ContactUnlockSerializer(unlock)
+        serializer = ContactUnlockSerializer(unlock, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     @action(detail=False, methods=['get'], url_path='status')
     def check_status(self, request):
-        tutor_id = request.query_params.get('tutor_id')
-        if not tutor_id:
-            return Response({'detail': 'tutor_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        target_id = request.query_params.get('target_id')
+        if not target_id:
+            return Response({'detail': 'target_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
 
         is_unlocked = ContactUnlock.objects.filter(
-            student=request.user, tutor_id=tutor_id
+            unlocker=request.user, target_id=target_id
         ).exists()
 
         return Response({'unlocked': is_unlocked})

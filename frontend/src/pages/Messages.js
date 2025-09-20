@@ -5,8 +5,11 @@ import Footer from '../components/Footer';
 import ChatSocket from '../components/ChatSocket';
 import UnlockContactModal from '../components/UnlockContactModal';
 import BuyCreditsModal from '../components/BuyCreditsModal';
+import UnlockJobModal from '../components/UnlockJobModal';
 
 export default function WhatsAppLikeMessagingWS() {
+  const [showUnlockJobModal, setShowUnlockJobModal] = useState(false);
+  const [unlockJobUserId, setUnlockJobUserId] = useState(null);
   const [user, setUser] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
@@ -103,8 +106,15 @@ export default function WhatsAppLikeMessagingWS() {
         }
 
         case 'chat.unlock':
-          setUnlockTutorId(data.tutor_id);
-          setShowUnlockModal(true);
+          if (user?.user_type === 'tutor') {
+            // Tutor unlocking a student → show unlock job modal
+            setUnlockJobUserId(data.student_id);
+            setShowUnlockJobModal(true);
+          } else {
+            // Student unlocking a tutor → show normal unlock modal
+            setUnlockTutorId(data.tutor_id);
+            setShowUnlockModal(true);
+          }
           break;
 
         case 'chat.conversations':
@@ -445,6 +455,17 @@ export default function WhatsAppLikeMessagingWS() {
         onNeedBuyCredits={() => {
           setShowUnlockModal(false);
           setShowBuyCreditsModal(true);
+        }}
+      />
+
+      <UnlockJobModal
+        show={showUnlockJobModal}
+        studentId={unlockJobUserId}
+        onClose={() => setShowUnlockJobModal(false)}
+        onJobUnlocked={() => {
+          // After job unlock, automatically unlock contact
+          sendMessageWS({ type: 'chat.start_conversation', receiver_id: unlockJobUserId });
+          setShowUnlockJobModal(false);
         }}
       />
 

@@ -47,18 +47,18 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
         return data
 
 class ContactUnlockSerializer(serializers.ModelSerializer):
-    student = serializers.PrimaryKeyRelatedField(read_only=True)
-    tutor = serializers.PrimaryKeyRelatedField(queryset=User.objects.filter(user_type='tutor'))
+    unlocker = serializers.PrimaryKeyRelatedField(read_only=True)
+    target = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
 
     class Meta:
         model = ContactUnlock
-        fields = ['id', 'student', 'tutor', 'timestamp']
-        read_only_fields = ['id', 'student', 'timestamp']
+        fields = ['id', 'unlocker', 'target', 'timestamp']
+        read_only_fields = ['id', 'unlocker', 'timestamp']
 
     def create(self, validated_data):
-        # Automatically set the student to the logged-in user
+        # Automatically set unlocker to the logged-in user
         user = self.context['request'].user
-        validated_data['student'] = user
+        validated_data['unlocker'] = user
         return super().create(validated_data)
 
 class UserSerializer(serializers.ModelSerializer):

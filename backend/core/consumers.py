@@ -444,7 +444,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
     def is_contact_unlocked(self, user1_id, user2_id):
         from core.models import ContactUnlock
         from django.db.models import Q
+
         return ContactUnlock.objects.filter(
-            Q(student_id=user1_id, tutor_id=user2_id) |
-            Q(student_id=user2_id, tutor_id=user1_id)
+            Q(unlocker_id=user1_id, target_id=user2_id) |
+            Q(unlocker_id=user2_id, target_id=user1_id)
         ).exists()
