@@ -23,39 +23,64 @@ const BuyCreditPage = () => {
 
   const USD_CONVERSION_RATE = 122.33;
 
-  const creditPackages = [
-    { id: 1, credits: 10, price: 10, discount: 0, bonus: 0 },
-    { id: 2, credits: 20, price: 18, discount: 10, bonus: 0 },
-    { id: 3, credits: 50, price: 45, discount: 10, bonus: 5 },
-    { id: 4, credits: 75, price: 65, discount: 13, bonus: 8 },
-    { id: 5, credits: 100, price: 80, discount: 20, bonus: 10 },
-    { id: 6, credits: 150, price: 120, discount: 20, bonus: 15 },
-    { id: 7, credits: 200, price: 150, discount: 25, bonus: 25 },
-    { id: 8, credits: 300, price: 210, discount: 30, bonus: 40 },
-    { id: 9, credits: 500, price: 325, discount: 35, bonus: 75 },
-    { id: 10, credits: 750, price: 450, discount: 40, bonus: 125 },
-    { id: 11, credits: 1000, price: 550, discount: 45, bonus: 200 },
-    { id: 12, credits: 2000, price: 1000, discount: 50, bonus: 500 }
+  const packages = [
+    {
+      id: 1,
+      name: 'Premium',
+      price: 2.99,
+      description: 'Everything you need to create your website.',
+      tools: [
+        'AI website builder',
+        'AI image generator',
+        'AI writer',
+        'AI blog generator',
+        'AI SEO tools',
+      ],
+      highlight: false,
+      discount: 0,
+    },
+    {
+      id: 2,
+      name: 'Business',
+      price: 3.79,
+      description: 'Level up with more power and enhanced features.',
+      tools: [
+        'AI website builder',
+        'AI image generator',
+        'AI writer',
+        'AI blog generator',
+        'AI SEO tools',
+      ],
+      highlight: true,
+      discount: 73,
+    },
+    {
+      id: 3,
+      name: 'Cloud Startup',
+      price: 7.99,
+      description: 'Enjoy optimized performance & powerful resources.',
+      tools: [
+        'AI website builder',
+        'AI image generator',
+        'AI writer',
+        'AI blog generator',
+        'AI SEO tools',
+      ],
+      highlight: false,
+      discount: 71,
+    },
   ];
 
-  const premiumPackages = [
-    { id: 101, credits: 2500, price: 1000, discount: 55, bonus: 700 },
-    { id: 102, credits: 3000, price: 1200, discount: 60, bonus: 900 }
-  ];
-
-  // Load user from API or localStorage
   useEffect(() => {
     const fetchUser = async () => {
       setIsLoading(true);
       try {
-        // Try API first
         const response = await userApi.getUser();
         setCurrentUser(response.data);
       } catch (err) {
-        // fallback to localStorage
         const storedUser = JSON.parse(localStorage.getItem('user'));
         if (storedUser?.user_id) setCurrentUser(storedUser);
-        else setError("Failed to load user data. Please log in again.");
+        else setError('Failed to load user data. Please log in again.');
       } finally {
         setIsLoading(false);
       }
@@ -69,13 +94,13 @@ const BuyCreditPage = () => {
 
   const handlePurchaseCredits = async () => {
     if (!currentUser?.id) {
-      showNotification("Authentication required", 'error');
-      setError("Please log in to continue");
+      showNotification('Authentication required', 'error');
+      setError('Please log in to continue');
       return;
     }
 
     if (!selectedPackage) {
-      setError("Please select a package before proceeding.");
+      setError('Please select a package before proceeding.');
       return;
     }
 
@@ -85,9 +110,9 @@ const BuyCreditPage = () => {
 
     try {
       const purchaseData = {
-        credits: selectedPackage.credits,
+        plan: selectedPackage.name,
         amount: totalAmount,
-        user_id: currentUser.user_id
+        user_id: currentUser.user_id,
       };
       const response = await creditAPI.purchaseCredits(purchaseData);
       if (response.data.status === 'SUCCESS' && response.data.payment_url) {
@@ -102,11 +127,6 @@ const BuyCreditPage = () => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const renderPriceInUSD = (taka) => {
-    const usd = (taka / USD_CONVERSION_RATE).toFixed(2);
-    return <span className="text-xs text-gray-400">(${usd})</span>;
   };
 
   if (isLoading && !currentUser && !error) {
@@ -125,7 +145,7 @@ const BuyCreditPage = () => {
           <div className="bg-white p-8 rounded-xl shadow-lg text-center max-w-sm w-full mx-4">
             <h2 className="text-xl font-semibold mb-4 text-red-600">{error}</h2>
             <button
-              onClick={() => window.location.href = '/login'}
+              onClick={() => (window.location.href = '/login')}
               className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
             >
               Go to Login
@@ -140,126 +160,72 @@ const BuyCreditPage = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
       <div className="flex-grow pt-20">
-        <main className="max-w-5xl mx-auto px-4 py-8">
-
-          {/* Page Title */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Buy Credits</h1>
-            <p className="text-gray-500 mt-2">Choose a package that fits your needs</p>
+        <main className="max-w-6xl mx-auto px-4 py-12">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-800">Choose Your Plan</h1>
+            <p className="text-gray-500 mt-2">Pick the plan that works best for you</p>
           </div>
 
-          {/* Premium Packages */}
-          {currentUser?.is_premium ? (
-            <div className="mb-6">
-              <h2 className="font-semibold text-lg mb-4 text-gray-700">Premium Packages</h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {premiumPackages.map(pkg => (
-                  <div
-                    key={pkg.id}
-                    onClick={() => setSelectedPackage(pkg)}
-                    className={`border rounded-lg p-4 cursor-pointer transition-all ${
-                      selectedPackage?.id === pkg.id
-                        ? 'border-yellow-500 bg-yellow-50 shadow-md'
-                        : 'border-gray-200 hover:border-yellow-300 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <h2 className="font-semibold text-lg text-gray-800">{pkg.credits} Credits</h2>
-                      <div className="text-right">
-                        <span className="font-medium text-yellow-600">{pkg.price} BDT</span>
-                        {renderPriceInUSD(pkg.price)}
-                        {pkg.discount > 0 && (
-                          <div className="text-xs text-gray-500 line-through mt-1">
-                            {Math.round(pkg.price / (1 - pkg.discount / 100))} BDT
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    {pkg.bonus > 0 && (
-                      <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                        +{pkg.bonus} Bonus
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="mb-6 text-center">
-              <p className="text-gray-500 bg-yellow-50 p-4 rounded-lg mb-4">
-                Upgrade to Premium to access special packages with higher discounts and bonus credits!
-              </p>
-              <button
-                onClick={() => window.location.href = '/buy-premium'}
-                className="bg-yellow-500 text-white px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {packages.map((pkg) => (
+              <div
+                key={pkg.id}
+                className={`relative border rounded-2xl shadow-sm bg-white p-6 flex flex-col ${
+                  pkg.highlight ? 'border-purple-500 ring-2 ring-purple-300' : 'border-gray-200'
+                }`}
               >
-                Upgrade to Premium
-              </button>
-            </div>
-          )}
-
-          {/* Normal Credit Packages */}
-          <div className="mb-8">
-            <h2 className="font-semibold text-lg mb-4 text-gray-700">Credit Packages</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {creditPackages.map(pkg => (
-                <div
-                  key={pkg.id}
+                {pkg.highlight && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-purple-600 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                      Best deal - Limited time only
+                    </span>
+                  </div>
+                )}
+                {pkg.discount > 0 && (
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
+                      {pkg.discount}% OFF
+                    </span>
+                  </div>
+                )}
+                <h2 className="text-xl font-bold text-gray-800 mb-2">{pkg.name}</h2>
+                <p className="text-gray-500 mb-4">{pkg.description}</p>
+                <div className="text-3xl font-extrabold text-gray-800">
+                  US${pkg.price}
+                  <span className="text-base font-normal">/mo</span>
+                </div>
+                <p className="text-sm text-purple-600 mt-1">+2 months free</p>
+                <button
                   onClick={() => setSelectedPackage(pkg)}
-                  className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                  className={`mt-6 w-full py-2 rounded-lg font-medium transition-colors ${
                     selectedPackage?.id === pkg.id
-                      ? 'border-blue-500 bg-blue-50 shadow-md'
-                      : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                      ? 'bg-purple-600 text-white'
+                      : 'border border-purple-600 text-purple-600 hover:bg-purple-50'
                   }`}
                 >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="font-semibold text-lg text-gray-800">{pkg.credits} Credits</h2>
-                      {pkg.bonus > 0 && (
-                        <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                          +{pkg.bonus} Bonus
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-right">
-                      <span className="font-medium text-blue-600">{pkg.price} BDT</span>
-                      {renderPriceInUSD(pkg.price)}
-                      {pkg.discount > 0 && (
-                        <div className="text-xs text-gray-500 line-through mt-1">
-                          {Math.round(pkg.price / (1 - pkg.discount / 100))} BDT
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  {pkg.discount > 0 && (
-                    <div className="mt-2">
-                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                        Save {pkg.discount}%
-                      </span>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+                  Choose plan
+                </button>
+                <ul className="mt-6 space-y-2 text-sm text-gray-600">
+                  {pkg.tools.map((tool, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      {tool}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
           </div>
 
-          {/* Selected Package & Payment Button */}
-          <div className="bg-white rounded-lg shadow-sm p-6 max-w-md mx-auto mb-8">
-            <h3 className="font-medium text-gray-700 mb-2">Selected Package</h3>
+          <div className="bg-white rounded-xl shadow-sm p-6 max-w-md mx-auto mt-12">
+            <h3 className="font-medium text-gray-700 mb-2">Selected Plan</h3>
             {selectedPackage ? (
               <div className="flex justify-between items-center mb-4">
-                <span>
-                  {selectedPackage.credits} Credits
-                  {selectedPackage.bonus > 0 && (
-                    <span className="text-green-600 ml-2">+{selectedPackage.bonus} Bonus</span>
-                  )}
-                </span>
-                <span className="font-semibold">
-                  {selectedPackage.price} BDT {renderPriceInUSD(selectedPackage.price)}
-                </span>
+                <span>{selectedPackage.name}</span>
+                <span className="font-semibold">US${selectedPackage.price}/mo</span>
               </div>
             ) : (
-              <p className="text-gray-400 mb-4">No package selected</p>
+              <p className="text-gray-400 mb-4">No plan selected</p>
             )}
 
             <button
@@ -277,11 +243,8 @@ const BuyCreditPage = () => {
             {statusMessage && (
               <p className="text-sm text-blue-600 mt-2 text-center">{statusMessage}</p>
             )}
-            {error && (
-              <p className="text-sm text-red-600 mt-2 text-center">{error}</p>
-            )}
+            {error && <p className="text-sm text-red-600 mt-2 text-center">{error}</p>}
           </div>
-
         </main>
       </div>
       <Footer />
