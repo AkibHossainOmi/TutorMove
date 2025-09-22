@@ -56,6 +56,11 @@ uvicorn backend.asgi:application --reload
 ```
 Backend will be available at: http://localhost:8000
 
+#### Run Worker
+```bash
+python manage.py rqworker default
+```
+
 #### Start Frontend Development Server (in a new terminal)
 ```bash
 npm start

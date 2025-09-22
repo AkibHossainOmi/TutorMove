@@ -28,7 +28,6 @@ import ResetPassword from './pages/ResetPassword';
 import ProtectedRoute from './contexts/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import TutorMapSearch from './components/MapSearch';
-import BuyCreditPage from './pages/BuyCreditPage';
 import TutorGigPage from './pages/TutorGigPage';
 import BuyPremiumPage from './components/BuyPremiumPage';
 import About from './pages/About';
@@ -37,6 +36,7 @@ import Contact from './pages/Contact';
 import TeacherGuide from './pages/TeacherGuide';
 import FAQ from './pages/FAQ';
 import PostRequirement from './pages/PostRequirement';
+import BuyCreditsAndPremiumPage from './pages/BuyCreditPage';
 
 
 function App() {
@@ -65,7 +65,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/tutors" element={<TutorList />} />
             <Route path="/tutors/:tutorId" element={<TutorProfile />} />
-            <Route path="/buy-credits" element={<BuyCreditPage />} />
+            <Route path="/buy-credits" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
 
             {/* Gigs and Job Listings */}

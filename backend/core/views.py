@@ -864,58 +864,40 @@ class JobViewSet(viewsets.ModelViewSet):
         # -------------------------------
         active_job_subjects = job.subjects.filter(is_active=True).values_list("name", flat=True)
 
-        print(f"Active job subjects for job {job.id}: {list(active_job_subjects)}")
+        # print(f"Active job subjects for job {job.id}: {list(active_job_subjects)}")
         # Tutors who have active gigs with subjects matching the active job subjects
         tutors = User.objects.filter(
             user_type="tutor",
             gigs__subject__in=active_job_subjects
-        ).distinct()
-
-        print(f"Tutors matching active subjects: {[t.username for t in tutors]}")
-
-        # Annotate with total points spent on those gigs
-        tutors = tutors.annotate(
+        ).distinct().annotate(
             total_points_spent=Sum(
                 'gigs__used_credits',
                 filter=Q(gigs__subject__in=active_job_subjects)
             )
         ).order_by('-total_points_spent')
 
-        # Sequentially send email to tutors
+        tutor_data = []
         for tutor in tutors:
-            print(tutor)
             if tutor.email:
                 verify_url = f"{settings.FRONTEND_SITE_URL}/jobs/{job.id}/"
                 html_content = f"""
-                <html>
-                <body style="font-family: Arial, sans-serif; background-color: #f9fafb; padding: 40px;">
-                    <div style="max-width: 600px; margin: auto; background: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.06);">
-                    <h2 style="color: #111827;">New Job Matching Your Gig!</h2>
-                    <p style="font-size: 16px; color: #374151;">A new job has been posted that matches your active gig:</p>
-                    <ul style="font-size: 14px; color: #374151;">
-                        <li><strong>Description:</strong> {job.description}</li>
-                        <li><strong>Location:</strong> {job.location}</li>
-                        <li><strong>Budget:</strong> {job.budget} USD</li>
-                        <li><strong>Subjects:</strong> {', '.join(active_job_subjects)}</li>
-                    </ul>
-                    <div style="text-align: center; margin: 30px 0;">
-                        <a href="{verify_url}" style="background-color: #3b82f6; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600;">View Job & Apply</a>
-                    </div>
-                    <p style="font-size: 14px; color: #6b7280;">If you are not interested in this type of job, you can safely ignore this email.</p>
-                    </div>
-                </body>
-                </html>
+                <html><body style="font-family: Arial, sans-serif; padding: 40px;">
+                <h2>New Job Matching Your Gig!</h2>
+                <p>{job.description}</p>
+                <p>Location: {job.location}, Budget: {job.budget} USD</p>
+                <p>Subjects: {', '.join(active_job_subjects)}</p>
+                <a href="{verify_url}">View Job & Apply</a>
+                </body></html>
                 """
                 text_content = f"New job posted: {job.description}\nView & apply here: {verify_url}"
-                from django.core.mail import EmailMultiAlternatives
-                msg = EmailMultiAlternatives(
-                    subject="New Job Matching Your Gig",
-                    body=text_content,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    to=[tutor.email],
-                )
-                msg.attach_alternative(html_content, "text/html")
-                msg.send()
+                tutor_data.append({
+                    'email': tutor.email,
+                    'html_content': html_content,
+                    'text_content': text_content
+                })
+
+        # Schedule emails in batches
+        schedule_job_emails(tutor_data)
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
     def matched_jobs(self, request):
@@ -1279,7 +1261,7 @@ class UserSettingsViewSet(viewsets.ModelViewSet):
         return Response({'status': 'privacy settings updated'})
 
 # --- ReviewViewSet (with trust_score update hook) ---
-from core.utils import update_trust_score
+from core.utils import schedule_job_emails, schedule_premium_expiry, update_trust_score
 class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
@@ -1608,6 +1590,8 @@ def payment_success_view(request):
 
                 user.is_premium = True
                 user.save()
+                # Schedule exact expiry
+                schedule_premium_expiry(user)
 
             query = urlencode({
                 'tran_id': tran_id,

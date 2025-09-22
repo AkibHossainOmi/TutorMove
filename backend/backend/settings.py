@@ -30,7 +30,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'phonenumber_field',
     "corsheaders",
-
+    "django_rq",
     'accounts',
 
     # Third party apps
@@ -247,4 +247,13 @@ JWT_COOKIE = {
     'SAMESITE': 'Lax',
     'MAX_AGE': 7 * 24 * 60 * 60,  # 7 days
     'PATH': '/api/auth/token/refresh/',
+}
+
+RQ_QUEUES = {
+    'default': {
+        'HOST': os.getenv("REDIS_HOST", "127.0.0.1"),
+        'PORT': int(os.getenv("REDIS_PORT", 6379)),
+        'DB': 0,
+        'DEFAULT_TIMEOUT': 3600,  # 1 hour timeout
+    }
 }
