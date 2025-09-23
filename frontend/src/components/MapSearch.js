@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import CreatableSelect from "react-select/creatable";
 import { tutorAPI } from "../utils/apiService";
 
 const SEARCH_RADIUS_KM = 20;
@@ -16,6 +17,7 @@ const TutorMapSearch = () => {
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Fetch subjects from API
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
@@ -29,6 +31,7 @@ const TutorMapSearch = () => {
     fetchSubjects();
   }, []);
 
+  // Fetch location suggestions from OpenStreetMap
   const fetchSuggestions = async (text) => {
     if (text.length < 3) return;
     try {
@@ -86,6 +89,7 @@ const TutorMapSearch = () => {
               if (e.target.value.trim() === "") setSelectedLocation(null);
             }}
             onFocus={() => setShowSuggestions(true)}
+            onBlur={() => setShowSuggestions(false)} // hide immediately when cursor leaves
             style={{
               width: "100%",
               padding: "12px 14px",
@@ -116,10 +120,9 @@ const TutorMapSearch = () => {
               {suggestions.map((sugg) => (
                 <li
                   key={sugg.place_id}
-                  onClick={() => {
+                  onMouseDown={() => { // use onMouseDown to select before blur
                     setSelectedLocation(sugg);
                     setQuery(sugg.display_name);
-                    setShowSuggestions(false);
                   }}
                   style={{
                     padding: "10px 12px",
@@ -136,27 +139,47 @@ const TutorMapSearch = () => {
           )}
         </div>
 
-        {/* Subject Dropdown */}
-        <select
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          style={{
-            flex: 1,
-            minWidth: 180,
-            padding: "12px 14px",
-            fontSize: 15,
-            border: "1.5px solid #ccc",
-            borderRadius: 8,
-            background: "#fff",
-          }}
-        >
-          <option value="">Select subject...</option>
-          {subjects.map((s) => (
-            <option key={s.id} value={s.name}> {/* Use `s.name` or `s.id` */}
-              {s.name}
-            </option>
-          ))}
-        </select>
+        {/* Subject Dropdown (Searchable + Creatable) */}
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <CreatableSelect
+            value={subject ? { value: subject, label: subject } : null}
+            onChange={(newValue) => setSubject(newValue?.value || "")}
+            options={subjects.map((s) => ({ value: s.name, label: s.name }))}
+            placeholder="Select or type subject..."
+            isClearable
+            isSearchable
+            onCreateOption={(inputValue) => setSubject(inputValue)}
+            formatCreateLabel={(inputValue) => inputValue} // show typed text instead of "Create ..."
+            styles={{
+              control: (provided) => ({
+                ...provided,
+                minHeight: 48,      // same as location input
+                height: 48,
+                fontSize: 15,
+                borderRadius: 8,
+                border: "1.5px solid #ccc",
+              }),
+              valueContainer: (provided) => ({
+                ...provided,
+                height: 48,
+                padding: "0 14px", // match location input padding
+              }),
+              input: (provided) => ({
+                ...provided,
+                margin: 0,
+                padding: 0,
+              }),
+              indicatorsContainer: (provided) => ({
+                ...provided,
+                height: 48,
+              }),
+              menu: (provided) => ({
+                ...provided,
+                zIndex: 9999,
+              }),
+            }}
+          />
+        </div>
 
         {/* Search Button */}
         <button

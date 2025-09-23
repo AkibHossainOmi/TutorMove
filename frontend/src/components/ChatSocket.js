@@ -4,7 +4,7 @@ export default class ChatSocket {
   constructor(userId, onMessage) {
     this.userId = userId;
     this.onMessage = onMessage;
-    this.host = "ws://localhost:8000"; // adjust if needed
+    this.host = `wss://${process.env.REACT_APP_WEBSOCKET_URL}`; // adjust if needed
     this.reconnectDelay = 1000;
     this.maxReconnectDelay = 16000;
     this.messageQueue = [];
@@ -20,7 +20,7 @@ export default class ChatSocket {
   async refreshToken() {
     try {
       const response = await axios.post(
-        `${process.env.REACT_APP_API_URL}/auth/token/refresh/`,
+        `${process.env.REACT_APP_WEBSOCKET_URL}/auth/token/refresh/`,
         {},
         { withCredentials: true }
       );
@@ -107,7 +107,7 @@ export default class ChatSocket {
 
     this.socket.onerror = (error) => {
       console.error("[ChatSocket] WebSocket error:", error);
-      window.location.href = '/login';
+      // window.location.href = '/login';
     };
   }
 

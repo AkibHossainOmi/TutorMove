@@ -5,7 +5,7 @@ export default function UnlockJobModal({ show, studentId, onClose, onJobUnlocked
 
   const handleGoToJob = () => {
     // Redirect tutor to the job unlock page for that student
-    window.location.href = `/jobs/unlock?student_id=${studentId}`;
+    window.location.href = `/jobs`;
   };
 
   return (
