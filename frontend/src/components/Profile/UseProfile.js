@@ -37,7 +37,7 @@ export const useProfile = () => {
           education: data.education || '',
           experience: data.experience || '',
           location: data.location || '',
-          phone_number: data.phone_number || '',
+          phone_number: data.phone_number || null,
         });
         setPreviewImage(data.profile_picture); // initial preview
 
@@ -84,7 +84,8 @@ export const useProfile = () => {
       const updatedData = { ...editData };
       const res = await userApi.editProfile(updatedData);
       let updatedUser = res.data;
-
+      updatedUser.user_id = updatedUser.id;
+      localStorage.setItem("user", JSON.stringify(updatedUser));
       if (profileFile) {
         const dpRes = await userApi.uploadDp(profileFile);
         updatedUser.profile_picture = dpRes.data.profile_picture_url;
