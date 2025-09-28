@@ -474,9 +474,9 @@ export default function WhatsAppLikeMessagingWS() {
         onClose={() => setShowBuyCreditsModal(false)}
         onBuyCredits={() => {
           setShowBuyCreditsModal(false);
-          window.location.href = '/buy-credits';
+          window.location.href = '/buy-points';
         }}
-        message="You don’t have enough credits to unlock this contact."
+        message="You don’t have enough points to unlock this contact."
       />
 
       <Footer />

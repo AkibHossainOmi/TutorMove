@@ -15,10 +15,10 @@ function WelcomeBanner() {
     //   return;
     // }
 
-    axios.get(`${process.env.REACT_APP_API_URL}/api/credits/`)
+    axios.get(`${process.env.REACT_APP_API_URL}/api/points/`)
       .then(res => {
         // Condition: Show ONLY if the user's balance is exactly the WELCOME_CREDIT amount
-        // This assumes these credits are a one-time welcome bonus
+        // This assumes these points are a one-time welcome bonus
         if (
           Array.isArray(res.data) &&
           res.data.length > 0 && // Ensure there's at least one credit entry
@@ -41,7 +41,7 @@ function WelcomeBanner() {
         }
       })
       .catch((error) => {
-        console.error("Error fetching credits for welcome banner:", error);
+        console.error("Error fetching points for welcome banner:", error);
         setShowBanner(false); // Hide banner if there's an error
       });
   }, []); // Empty dependency array means this runs once on mount
@@ -115,7 +115,7 @@ function WelcomeBanner() {
     <div style={currentBannerStyle}>
       <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         <span style={{ fontSize: '1.5em' }} role="img" aria-label="party popper">🎉</span>
-        Welcome! You've received <b style={{ color: '#0f5132' }}>{WELCOME_CREDIT} free credits</b> to try TutorMove. Happy learning!
+        Welcome! You've received <b style={{ color: '#0f5132' }}>{WELCOME_CREDIT} free points</b> to try TutorMove. Happy learning!
       </span>
       <button
         onClick={() => {

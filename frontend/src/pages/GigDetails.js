@@ -7,7 +7,7 @@ const GigDetails = ({ gig: initialGig }) => {
   // If navigating via router: get :id from URL
   const { id } = useParams();
   const [gig, setGig] = useState(initialGig || null);
-  const [contactInfo, setContactInfo] = useState(initialGig?.contact_info || '[Locked. Buy credits to view.]');
+  const [contactInfo, setContactInfo] = useState(initialGig?.contact_info || '[Locked. Buy points to view.]');
   const [unlocking, setUnlocking] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(!initialGig);
@@ -19,7 +19,7 @@ const GigDetails = ({ gig: initialGig }) => {
       axios.get(`${process.env.REACT_APP_API_URL}/api/tutors/${id}/`)
         .then(res => {
           setGig(res.data);
-          setContactInfo(res.data.contact_info || '[Locked. Buy credits to view.]');
+          setContactInfo(res.data.contact_info || '[Locked. Buy points to view.]');
         })
         .catch(() => setError('Failed to load gig.'))
         .finally(() => setLoading(false));

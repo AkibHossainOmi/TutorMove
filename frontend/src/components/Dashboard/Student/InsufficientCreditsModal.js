@@ -8,7 +8,7 @@ const InsufficientCreditsModal = ({ isOpen, onClose, onBuyCredits }) => {
     <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-lg shadow-xl max-w-md w-full">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Insufficient Credits</h3>
+          <h3 className="text-lg font-medium text-gray-900">Insufficient Points</h3>
         </div>
         <div className="p-6">
           <div className="flex items-center justify-center mb-4">
@@ -19,7 +19,7 @@ const InsufficientCreditsModal = ({ isOpen, onClose, onBuyCredits }) => {
             </div>
           </div>
           <p className="text-center text-gray-600 mb-6">
-            You don't have enough credits to post a new job. Please purchase more credits to continue.
+            You don't have enough points to post a new job. Please purchase more points to continue.
           </p>
           <div className="flex justify-center gap-4">
             <button
@@ -32,7 +32,7 @@ const InsufficientCreditsModal = ({ isOpen, onClose, onBuyCredits }) => {
               onClick={onBuyCredits}
               className="px-5 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
             >
-              Buy Credits
+              Buy Points
             </button>
           </div>
         </div>

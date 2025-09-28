@@ -90,11 +90,11 @@ const TutorGigPage = () => {
   };
 
   const fetchPredictedRank = async () => {
-    const credits = Number(creditsToSpend);
-    if (!gig || isNaN(credits) || credits < 0) return;
+    const points = Number(creditsToSpend);
+    if (!gig || isNaN(points) || points < 0) return;
     setPredictLoading(true);
     try {
-      const { data } = await gigApi.getPredictedRank(gig.id, credits);
+      const { data } = await gigApi.getPredictedRank(gig.id, points);
       setPredictedRank(data);
     } catch {
       toast.error('Failed to fetch predicted rank');
@@ -105,15 +105,15 @@ const TutorGigPage = () => {
   };
 
   const handleBoost = async () => {
-    const credits = Number(creditsToSpend);
-    if (!gig || isNaN(credits) || credits < 0) {
-      toast.error('Please enter a valid number of credits.');
+    const points = Number(creditsToSpend);
+    if (!gig || isNaN(points) || points < 0) {
+      toast.error('Please enter a valid number of points.');
       return;
     }
 
     setBoosting(true);
     try {
-      await gigApi.boostGig(gig.id, { credits });
+      await gigApi.boostGig(gig.id, { points });
       toast.success('Gig boosted successfully');
       await fetchGig();
       setPredictedRank(null);
@@ -284,7 +284,7 @@ const TutorGigPage = () => {
                     min={0}
                     value={creditsToSpend}
                     onChange={(e) => setCreditsToSpend(e.target.value)}
-                    placeholder="Credits to spend"
+                    placeholder="Points to spend"
                     className="border p-2 rounded w-32"
                   />
                   <button

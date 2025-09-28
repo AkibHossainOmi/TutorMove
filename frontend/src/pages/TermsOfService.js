@@ -75,16 +75,16 @@ const TermsOfService = () => {
 
       <section style={{ marginBottom: '30px' }}>
         <h2 style={{ marginBottom: '20px', color: '#343a40' }}>
-          {t('terms.payments.title', 'Payments and Credits')}
+          {t('terms.payments.title', 'Payments and Points')}
         </h2>
         <ul style={{ paddingLeft: '20px', color: '#495057' }}>
           <li style={{ marginBottom: '10px' }}>
             {t('terms.payments.item1', 
-              'All payments are processed in credits through our platform')}
+              'All payments are processed in points through our platform')}
           </li>
           <li style={{ marginBottom: '10px' }}>
             {t('terms.payments.item2', 
-              'Credits are non-refundable unless otherwise specified')}
+              'Points are non-refundable unless otherwise specified')}
           </li>
           <li style={{ marginBottom: '10px' }}>
             {t('terms.payments.item3', 

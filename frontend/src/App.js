@@ -65,7 +65,7 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/tutors" element={<TutorList />} />
             <Route path="/tutors/:tutorId" element={<TutorProfile />} />
-            <Route path="/buy-credits" element={<BuyCreditsAndPremiumPage />} />
+            <Route path="/buy-points" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
 
             {/* Gigs and Job Listings */}

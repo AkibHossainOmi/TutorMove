@@ -179,7 +179,7 @@ export const gigApi = {
   boostGig: (id) => apiService.post(`/api/gigs/${id}/boost/`),
   getGigRank: (id) => apiService.get(`/api/gigs/${id}/rank/`),
   getGig: (gigId) => apiService.get(`/api/gigs/${gigId}/`),
-  getPredictedRank: (gigId, credits) => apiService.get(`/api/gigs/${gigId}/predicted_rank/`, { params: { credits } }),
+  getPredictedRank: (gigId, points) => apiService.get(`/api/gigs/${gigId}/predicted_rank/`, { params: { points } }),
 };
 
 export const subjectApi = {
@@ -204,7 +204,7 @@ export const userApi = {
 
 // Credit API calls
 export const creditAPI = {
-  getCreditBalance: () => apiService.get(`/api/credits/`),
+  getCreditBalance: () => apiService.get(`/api/points/`),
   getCreditHistory: (params) => apiService.get('/api/credit/history/', { params }),
   transferCredits: (transferData) => apiService.post('/api/credit/transfer/', transferData),
   getReferralCode: () => apiService.get('/api/credit/referral-code/'),
@@ -212,7 +212,7 @@ export const creditAPI = {
   getEarnings: () => apiService.get('/api/credit/earnings/'),
   withdrawEarnings: (data) => apiService.post('/api/credit/withdraw/', data),
   getPendingPayments: () => apiService.get('/api/credit/pending-payments/'),
-  purchaseCredits: (purchaseData) => apiService.post('/api/credits/purchase/', purchaseData),
+  purchaseCredits: (purchaseData) => apiService.post('/api/points/purchase/', purchaseData),
 };
 
 // Review API calls

@@ -13,7 +13,7 @@ const faqs = [
   {
     question: "Is TutorMove free for students?",
     answer:
-      "Creating an account and browsing tutor profiles is completely free. You only spend credits when you want to contact a tutor directly.",
+      "Creating an account and browsing tutor profiles is completely free. You only spend points when you want to contact a tutor directly.",
   },
   {
     question: "What subjects can I learn?",
@@ -23,7 +23,7 @@ const faqs = [
   {
     question: "How do I contact a tutor?",
     answer:
-      "Once you find a tutor you like, you can use your credits to unlock their contact details and start a conversation.",
+      "Once you find a tutor you like, you can use your points to unlock their contact details and start a conversation.",
   },
   {
     question: "Are tutors verified?",

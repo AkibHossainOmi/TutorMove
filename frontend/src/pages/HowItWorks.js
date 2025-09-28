@@ -40,7 +40,7 @@ const HowItWorks = () => {
               </li>
               <li className="flex items-start gap-4">
                 <span className="bg-blue-600 text-white font-bold px-4 py-2 rounded-full">4</span>
-                <p><span className="font-semibold">Purchase credits</span> to securely contact tutors.</p>
+                <p><span className="font-semibold">Purchase points</span> to securely contact tutors.</p>
               </li>
               <li className="flex items-start gap-4">
                 <span className="bg-blue-600 text-white font-bold px-4 py-2 rounded-full">5</span>

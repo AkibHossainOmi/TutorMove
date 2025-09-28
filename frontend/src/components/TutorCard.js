@@ -3,12 +3,6 @@ import { Link } from 'react-router-dom';
 import BuyCreditsModal from './BuyCreditsModal';
 import { contactUnlockAPI } from '../utils/apiService';
 
-const getTrustLabel = (score) => {
-  const numericScore = parseFloat(score) || 1.0;
-  if (numericScore >= 1.5) return { label: 'High Trust', color: 'emerald', emoji: '⭐' };
-  if (numericScore >= 1.0) return { label: 'Moderate Trust', color: 'amber', emoji: '👍' };
-  return { label: 'Low Trust', color: 'rose', emoji: '⚠️' };
-};
 
 const TutorCard = ({ tutor, featured = false }) => {
   const [contactInfo, setContactInfo] = useState({ phone: '', email: '' });
@@ -18,7 +12,6 @@ const TutorCard = ({ tutor, featured = false }) => {
   const [currentUserType, setCurrentUserType] = useState('');
   const [error, setError] = useState('');
 
-  const trust = getTrustLabel(tutor.trust_score);
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -75,12 +68,6 @@ const TutorCard = ({ tutor, featured = false }) => {
     }
   };
 
-  const trustColor = {
-    emerald: 'bg-emerald-100 text-emerald-800 border-emerald-300',
-    amber: 'bg-amber-100 text-amber-800 border-amber-300',
-    rose: 'bg-rose-100 text-rose-800 border-rose-300',
-  }[trust.color] || 'bg-gray-100 text-gray-800 border-gray-300';
-
   return (
     <div
       className={`bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md ${
@@ -110,9 +97,6 @@ const TutorCard = ({ tutor, featured = false }) => {
                   🌟 Premium
                 </span>
               )}
-              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${trustColor}`}>
-                {trust.emoji} {trust.label}
-              </span>
             </div>
           </div>
         </div>
@@ -259,7 +243,7 @@ const TutorCard = ({ tutor, featured = false }) => {
         show={showBuyCredits}
         onClose={() => setShowBuyCredits(false)}
         onBuyCredits={() => (window.location.href = '/credit-purchase')}
-        message="You need more credits to unlock contact information. Please purchase credits to proceed."
+        message="You need more points to unlock contact information. Please purchase points to proceed."
       />
     </div>
   );

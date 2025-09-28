@@ -71,9 +71,9 @@ const SelectedPackageBox = ({ pkg, isLoading, onProceed }) => (
       <>
         <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
           <div className="flex justify-between items-center mb-2">
-            <span className="font-semibold text-gray-700">Total Credits</span>
+            <span className="font-semibold text-gray-700">Total Points</span>
             <span className="text-lg font-bold text-blue-600">
-              {pkg.credits + pkg.bonus}
+              {pkg.points + pkg.bonus}
               {pkg.bonus > 0 && (
                 <span className="text-sm text-green-600 ml-1">
                   (+{pkg.bonus} bonus)
@@ -140,10 +140,10 @@ const BuyCreditsAndPremiumPage = () => {
   const PREMIUM_PRICE = 500;
 
   const creditPackages = [
-    { id: 1, credits: 10, price: 10, discount: 0, bonus: 0 },
-    { id: 2, credits: 20, price: 18, discount: 10, bonus: 0 },
-    { id: 3, credits: 50, price: 45, discount: 10, bonus: 5 },
-    { id: 4, credits: 100, price: 80, discount: 20, bonus: 10 },
+    { id: 1, points: 10, price: 10, discount: 0, bonus: 0 },
+    { id: 2, points: 20, price: 18, discount: 10, bonus: 0 },
+    { id: 3, points: 50, price: 45, discount: 10, bonus: 5 },
+    { id: 4, points: 100, price: 80, discount: 20, bonus: 10 },
   ];
 
   // --- Load User ---
@@ -186,7 +186,7 @@ const BuyCreditsAndPremiumPage = () => {
     setIsLoading(true);
     try {
       const res = await creditAPI.purchaseCredits({
-        credits: selectedPackage.credits,
+        points: selectedPackage.points,
         amount: selectedPackage.price,
         user_id: currentUser?.id,
       });
@@ -243,7 +243,7 @@ const BuyCreditsAndPremiumPage = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Upgrade Your Experience</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Choose the plan that works best for you. Go premium for unlimited access or buy credits as you need.
+            Choose the plan that works best for you. Go premium for unlimited access or buy points as you need.
           </p>
         </div>
 
@@ -267,7 +267,7 @@ const BuyCreditsAndPremiumPage = () => {
               description="Perfect for getting started with basic features and exploring the platform."
               features={[
                 "Basic feature access",
-                "Limited monthly credits", 
+                "Limited monthly points", 
                 "Free job browsing",
                 "Standard support"
               ]}
@@ -301,16 +301,16 @@ const BuyCreditsAndPremiumPage = () => {
             <FaCoins className="text-yellow-500" />
             Credit Packages
           </h2>
-          <p className="text-gray-600 mb-6">Buy credits in bulk and save more. Perfect for power users.</p>
+          <p className="text-gray-600 mb-6">Buy points in bulk and save more. Perfect for power users.</p>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {creditPackages.map((pkg) => (
               <PlanCard
                 key={pkg.id}
-                title={`${pkg.credits} Credits`}
+                title={`${pkg.points} Points`}
                 price={`${pkg.price} BDT`}
                 features={[
                   pkg.discount > 0 ? `Save ${pkg.discount}%` : "Standard rate",
-                  pkg.bonus > 0 ? `+${pkg.bonus} bonus credits` : "No bonus",
+                  pkg.bonus > 0 ? `+${pkg.bonus} bonus points` : "No bonus",
                   "Instant delivery",
                   "No expiration"
                 ]}

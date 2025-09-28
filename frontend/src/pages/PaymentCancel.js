@@ -2,9 +2,9 @@ import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const PaymentCancel = () => {
-  const { type } = useParams(); // expected 'credits' or 'premium'
+  const { type } = useParams(); // expected 'points' or 'premium'
   const navigate = useNavigate();
-  const isCredits = type === 'credits';
+  const isCredits = type === 'points';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-amber-50 to-gray-50 flex items-center justify-center p-6 font-sans">
@@ -37,7 +37,7 @@ const PaymentCancel = () => {
           {/* Main message */}
           <div className="text-center mb-6">
             <p className="text-gray-600 mb-4">
-              Your {isCredits ? 'credits purchase' : 'premium subscription'} payment was cancelled.
+              Your {isCredits ? 'points purchase' : 'premium subscription'} payment was cancelled.
             </p>
             <p className="text-gray-600">
               You can try again or return to your dashboard.
@@ -47,7 +47,7 @@ const PaymentCancel = () => {
           {/* Action buttons */}
           <div className="space-y-3 mb-6">
             <button
-              onClick={() => navigate(isCredits ? '/credits/purchase' : '/premium')}
+              onClick={() => navigate(isCredits ? '/points/purchase' : '/premium')}
               className="w-full px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 text-gray-900 font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:from-amber-500 hover:to-amber-600"
             >
               Try Again

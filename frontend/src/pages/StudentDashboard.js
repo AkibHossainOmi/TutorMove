@@ -97,7 +97,7 @@ const StudentDashboard = () => {
   const [favoriteTeachers, setFavoriteTeachers] = useState([]);
   const [dashboardData, setDashboardData] = useState({
     postedJobs: [],
-    credits: 0,
+    points: 0,
     stats: { activeJobs: 0, completedJobs: 0 }
   });
   const [notifications, setNotifications] = useState([]);
@@ -135,7 +135,7 @@ const StudentDashboard = () => {
 
         setDashboardData({
           postedJobs: jobsData,
-          credits: creditsData.balance || 0,
+          points: creditsData.balance || 0,
           stats: { activeJobs, completedJobs }
         });
         setFavoriteTeachers(favoritesData);
@@ -153,17 +153,17 @@ const StudentDashboard = () => {
       ...prev,
       postedJobs: [newJob, ...prev.postedJobs],
       stats: { ...prev.stats, activeJobs: prev.stats.activeJobs + 1 },
-      credits: prev.credits - 1
+      points: prev.points - 1
     }));
     setIsJobFormOpen(false);
   };
 
   const handlePostJobClick = () => {
-    if (dashboardData.credits <= 0) setShowInsufficientCreditsModal(true);
+    if (dashboardData.points <= 0) setShowInsufficientCreditsModal(true);
     else setIsJobFormOpen(true);
   };
 
-  const handleNavigateToBuyCredits = () => window.location.href = '/buy-credits';
+  const handleNavigateToBuyCredits = () => window.location.href = '/buy-points';
   const handleToggleNotifications = () => {
     if (!showNotifications) handleMarkNotificationsRead();
     setShowNotifications(!showNotifications);
@@ -191,7 +191,7 @@ const StudentDashboard = () => {
       <main className="max-w-7xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 py-8">
         <DashboardHeader
           user={user}
-          creditBalance={dashboardData.credits}
+          creditBalance={dashboardData.points}
           onPostJobClick={handlePostJobClick}
           onBuyCreditsClick={handleNavigateToBuyCredits}
           notifications={notifications}
@@ -203,7 +203,7 @@ const StudentDashboard = () => {
         />
         <DashboardStats
           stats={{
-            creditBalance: dashboardData.credits,
+            creditBalance: dashboardData.points,
             activeJobs: dashboardData.stats.activeJobs,
             completedJobs: dashboardData.stats.completedJobs
           }}

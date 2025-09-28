@@ -44,7 +44,7 @@ const credit = {
       const response = await creditAPI.getCreditBalance();
       return response.data;
     } catch (error) {
-      console.error("Error fetching user credits:", error.response?.data || error.message);
+      console.error("Error fetching user points:", error.response?.data || error.message);
       return { id: userId, balance: 0 };
     }
   }
@@ -175,7 +175,7 @@ const TeacherDashboard = () => {
   };
 
   const handleNavigateToBuyCredits = () => {
-    window.location.href = '/buy-credits';
+    window.location.href = '/buy-points';
   };
 
   const markNotificationsRead = async () => {

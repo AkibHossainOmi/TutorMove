@@ -122,7 +122,7 @@ class TutorViewSet(viewsets.ModelViewSet):
             except Exception:
                 continue
 
-        # Sort: by credits DESC, then distance ASC (None distances go last)
+        # Sort: by points DESC, then distance ASC (None distances go last)
         matched_tutors.sort(
             key=lambda x: (-x[1], x[2] if x[2] is not None else float('inf'))
         )
@@ -155,7 +155,7 @@ class JobCreateAPIView(APIView):
                     credit.balance -= 1
                     credit.save()
                 else:
-                    return Response({"error": "Insufficient credits"}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({"error": "Insufficient points"}, status=status.HTTP_400_BAD_REQUEST)
             except Credit.DoesNotExist:
                 return Response({"error": "Credit record not found"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -321,7 +321,7 @@ class UserViewSet(viewsets.ModelViewSet):
             Credit.objects.create(user=user, balance=100)
             Notification.objects.create(
                 user=user,
-                message="🎉 Welcome! You have received 100 free credits to get started."
+                message="🎉 Welcome! You have received 100 free points to get started."
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -363,7 +363,7 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Only students can unlock profiles'}, status=403)
         credit = Credit.objects.filter(user=requesting_user).first()
         if not credit or credit.balance < 1:
-            return Response({'error': 'Insufficient credits'}, status=403)
+            return Response({'error': 'Insufficient points'}, status=403)
         credit.balance -= 1
         credit.save()
         Notification.objects.create(user=requesting_user, message=f"Unlocked profile for user {user.id}")
@@ -542,14 +542,14 @@ def credit_purchase(request):
     Proxy endpoint that forwards credit purchase request to the real internal API.
     """
     purchase_data = {
-        'credits': request.data.get('credits'),
+        'points': request.data.get('points'),
         'amount': request.data.get('amount'),
         'user_id': request.data.get('user_id'),
     }
 
     try:
         # Construct full URL to actual internal endpoint
-        actual_url = f"{settings.INTERNAL_API_BASE_URL}/api/credits/purchase/"
+        actual_url = f"{settings.INTERNAL_API_BASE_URL}/api/points/purchase/"
 
         # Include the current user's access token in the request if needed
         headers = {
@@ -608,7 +608,7 @@ class GigViewSet(viewsets.ModelViewSet):
             try:
                 credit = Credit.objects.get(user=user)
                 if credit.balance < 1:
-                    raise ValidationError("Insufficient credits to create gig.")
+                    raise ValidationError("Insufficient points to create gig.")
                 credit.balance -= 1
                 credit.save()
             except Credit.DoesNotExist:
@@ -634,7 +634,7 @@ class GigViewSet(viewsets.ModelViewSet):
         try:
             credit = Credit.objects.get(user=user)
             if credit.balance < 2:
-                raise ValidationError("Insufficient credits to boost gig.")
+                raise ValidationError("Insufficient points to boost gig.")
             credit.balance -= 2
             credit.save()
         except Credit.DoesNotExist:
@@ -676,7 +676,7 @@ class GigViewSet(viewsets.ModelViewSet):
             raise PermissionDenied("You can only view rank for your own gig.")
 
         try:
-            credits_to_spend = int(request.query_params.get('credits', 0))
+            credits_to_spend = int(request.query_params.get('points', 0))
             if credits_to_spend < 0:
                 credits_to_spend = 0
         except (TypeError, ValueError):
@@ -715,10 +715,10 @@ class CreditViewSet(viewsets.ModelViewSet):
         return Credit.objects.filter(user=self.request.user)
 
     def list(self, request, *args, **kwargs):
-        credits = self.get_queryset()
-        if not credits.exists():
+        points = self.get_queryset()
+        if not points.exists():
             return Response({}, status=status.HTTP_200_OK)
-        credit = credits.first()
+        credit = points.first()
         serializer = self.get_serializer(credit)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -726,16 +726,16 @@ class CreditViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def purchase(self, request):
         """
-        Buy credits
+        Buy points
         """
         try:
-            credits_to_add = int(request.data.get('credits', 0))
+            credits_to_add = int(request.data.get('points', 0))
             amount = Decimal(request.data.get('amount', '0'))
         except (ValueError, InvalidOperation):
-            return Response({'error': 'Invalid credits or amount'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Invalid points or amount'}, status=status.HTTP_400_BAD_REQUEST)
 
         if credits_to_add <= 0 or amount <= 0:
-            return Response({'error': 'Credits and amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'error': 'Points and amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
 
         user = request.user
         order = Order.objects.create(user=user, total_amount=amount, is_paid=False)
@@ -761,10 +761,10 @@ class CreditViewSet(viewsets.ModelViewSet):
             'cus_name': user.get_full_name() or user.username,
             'cus_email': user.email,
             'value_a': str(user.id),
-            'value_b': 'credits',
+            'value_b': 'points',
             'value_c': str(order.id),
             'value_d': str(credits_to_add),
-            'product_name': f"Credits Purchase",
+            'product_name': f"Points Purchase",
             'product_category': 'Digital Goods',
             'product_profile': 'general',
             'shipping_method': 'NO',
@@ -812,7 +812,7 @@ class CreditViewSet(viewsets.ModelViewSet):
                 recipient_credit, created = Credit.objects.select_for_update().get_or_create(user=recipient)
 
                 if sender_credit.balance < amount:
-                    return Response({'error': 'Insufficient credits'}, status=status.HTTP_400_BAD_REQUEST)
+                    return Response({'error': 'Insufficient points'}, status=status.HTTP_400_BAD_REQUEST)
 
                 sender_credit.balance -= amount
                 recipient_credit.balance += amount
@@ -822,7 +822,7 @@ class CreditViewSet(viewsets.ModelViewSet):
         except Credit.DoesNotExist:
             return Response({'error': 'Sender credit account not found'}, status=status.HTTP_400_BAD_REQUEST)
 
-        return Response({'message': 'Credits transferred successfully'})
+        return Response({'message': 'Points transferred successfully'})
 
 # --- JobViewSet ---
 class JobViewSet(viewsets.ModelViewSet):
@@ -861,7 +861,7 @@ class JobViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user
         if user.credit.balance < 1:
-            raise ValidationError({"detail": "You don't have enough credits to post a job."})
+            raise ValidationError({"detail": "You don't have enough points to post a job."})
 
         job = serializer.save(student=user)
         user.credit.balance -= 1
@@ -964,10 +964,10 @@ class JobViewSet(viewsets.ModelViewSet):
         points = self.calculate_unlock_points(job, tutor)
 
         if tutor.credit.balance < points:
-            return Response({"detail": "Insufficient credits"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"detail": "Insufficient points"}, status=status.HTTP_400_BAD_REQUEST)
 
         with transaction.atomic():
-            # Deduct credits
+            # Deduct points
             tutor.credit.balance -= points
             tutor.credit.save(update_fields=["balance"])
 
@@ -1149,7 +1149,7 @@ class ApplicationViewSet(viewsets.ModelViewSet):
             credit = Credit.objects.create(user=user)
         if credit.balance < 1:
             return Response(
-                {'error': 'Insufficient credits to apply'},
+                {'error': 'Insufficient points to apply'},
                 status=status.HTTP_400_BAD_REQUEST
             )
         application = Application.objects.create(
@@ -1216,9 +1216,9 @@ class NotificationViewSet(viewsets.ModelViewSet):
 #             try:
 #                 credit = Credit.objects.get(user=request.user)
 #             except Credit.DoesNotExist:
-#                 return Response({'error': 'You must buy credits to message tutors.'}, status=status.HTTP_403_FORBIDDEN)
+#                 return Response({'error': 'You must buy points to message tutors.'}, status=status.HTTP_403_FORBIDDEN)
 #             if credit.balance < 1:
-#                 return Response({'error': 'Insufficient credits. Buy credits to unlock messaging.'}, status=status.HTTP_403_FORBIDDEN)
+#                 return Response({'error': 'Insufficient points. Buy points to unlock messaging.'}, status=status.HTTP_403_FORBIDDEN)
 #             credit.balance -= 1
 #             credit.save()
 #         receiver_id = request.data.get('receiver')
@@ -1421,18 +1421,18 @@ class SubjectViewSet(viewsets.ModelViewSet):
         serializer = SubjectSerializer(subjects[:10], many=True)
         return Response(serializer.data)
 
-def build_payment_data(request, user, order, transaction_id, amount, product_type, credits=0):
+def build_payment_data(request, user, order, transaction_id, amount, product_type, points=0):
     """
     Returns consistent payment_data dict for SSLCommerz.
-    product_type: 'premium' or 'credits'
-    credits: number of credits (for credits purchase)
+    product_type: 'premium' or 'points'
+    points: number of points (for points purchase)
     """
     if product_type == 'premium':
         value_b = 'premium'
         product_name = "Premium Subscription"
     else:
-        value_b = str(credits)
-        product_name = f"Credits purchase for {credits}"
+        value_b = str(points)
+        product_name = f"Points purchase for {points}"
 
     return {
         'total_amount': str(amount),
@@ -1514,7 +1514,7 @@ def payment_success_view(request):
     tran_id = data.get('tran_id')
     val_id = data.get('val_id')
     user_id_str = data.get('value_a')  # User ID
-    payment_type = data.get('value_b')  # 'credits' or 'premium'
+    payment_type = data.get('value_b')  # 'points' or 'premium'
     order_id_str = data.get('value_c')  # Order ID
     credits_amount_str = data.get('value_d', '0')  # Only for credit purchase
 
@@ -1584,7 +1584,7 @@ def payment_success_view(request):
             order.is_paid = True
             order.save()
 
-            if payment_type == 'credits':
+            if payment_type == 'points':
                 credit_obj, _ = Credit.objects.get_or_create(user=user)
                 credit_obj.balance += credits_amount
                 credit_obj.save()
@@ -1774,7 +1774,7 @@ def sslcommerz_ipn(request):
                     credit_obj.save()
                     Notification.objects.create(
                         user=user,
-                        message=f"💰 Your purchase of {credits_to_add} credits was confirmed (IPN)! Your new balance is {credit_obj.balance}."
+                        message=f"💰 Your purchase of {credits_to_add} points was confirmed (IPN)! Your new balance is {credit_obj.balance}."
                     )
                 elif payment_type == 'premium_upgrade':
                     user_settings, _ = UserSettings.objects.get_or_create(user=user)
@@ -1895,8 +1895,8 @@ class ContactUnlockViewSet(viewsets.ViewSet):
                 credit.balance -= 1
                 credit.save()
             else:
-                unlock.delete()  # rollback unlock if not enough credits
-                return Response({'detail': 'Insufficient credits'}, status=status.HTTP_402_PAYMENT_REQUIRED)
+                unlock.delete()  # rollback unlock if not enough points
+                return Response({'detail': 'Insufficient points'}, status=status.HTTP_402_PAYMENT_REQUIRED)
         except Credit.DoesNotExist:
             unlock.delete()
             return Response({'detail': 'Credit record not found'}, status=status.HTTP_400_BAD_REQUEST)

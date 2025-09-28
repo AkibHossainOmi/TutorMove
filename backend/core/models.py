@@ -217,7 +217,7 @@ class Credit(models.Model):
     last_renewed = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.balance} credits"
+        return f"{self.user.username} - {self.balance} points"
 
 class Job(models.Model):
     SERVICE_TYPE_CHOICES = [

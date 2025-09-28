@@ -105,7 +105,7 @@ const PremiumTab = () => {
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <div className="text-yellow-500 text-2xl mb-3">🎁</div>
             <h4 className="font-semibold text-gray-900 mb-2">Exclusive Discounts</h4>
-            <p className="text-gray-600 text-sm">Save on credits and premium features</p>
+            <p className="text-gray-600 text-sm">Save on points and premium features</p>
           </div>
         </div>
 

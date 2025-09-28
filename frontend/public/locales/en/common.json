@@ -1,96 +1,96 @@
 {
-  "navigation": {
-    "findTutors": "Find Tutors",
-    "findJobs": "Find Jobs",
-    "assignmentHelp": "Assignment Help",
-    "dashboard": "Dashboard",
-    "messages": "Messages",
-    "login": "Login",
-    "logout": "Logout",
-    "signup": "Sign Up"
-  },
-  "dashboard": {
-    "welcome": "Welcome",
-    "postJob": "Post a Job",
-    "createGig": "Create a Gig",
-    "totalEarnings": "Total Earnings",
-    "activeJobs": "Active Jobs",
-    "activeGigs": "Active Gigs",
-    "totalViews": "Total Views",
-    "recentJobs": "Recent Jobs",
-    "recentGigs": "Recent Gigs",
-    "tabs": {
-      "overview": "Overview",
-      "jobs": "Jobs",
-      "gigs": "Gigs",
-      "applications": "Applications"
-    }
-  },
-  "forms": {
-    "job": {
-      "title": "Post a New Job",
-      "jobTitle": "Job Title",
-      "subject": "Subject",
-      "level": "Level",
-      "type": "Type",
-      "description": "Description",
-      "budget": "Budget (Credits)",
-      "duration": "Duration",
-      "location": "Location",
-      "requirements": "Requirements",
-      "deadline": "Deadline",
-      "submit": "Post Job",
-      "cancel": "Cancel"
+    "navigation": {
+        "findTutors": "Find Tutors",
+        "findJobs": "Find Jobs",
+        "assignmentHelp": "Assignment Help",
+        "dashboard": "Dashboard",
+        "messages": "Messages",
+        "login": "Login",
+        "logout": "Logout",
+        "signup": "Sign Up"
     },
-    "gig": {
-      "title": "Create a Teaching Gig",
-      "gigTitle": "Gig Title",
-      "subjects": "Subjects",
-      "teachingType": "Teaching Type",
-      "levels": "Levels",
-      "description": "Description",
-      "hourlyRate": "Hourly Rate (Credits)",
-      "availability": "Availability",
-      "location": "Location",
-      "qualifications": "Qualifications",
-      "experience": "Teaching Experience",
-      "submit": "Create Gig",
-      "cancel": "Cancel"
+    "dashboard": {
+        "welcome": "Welcome",
+        "postJob": "Post a Job",
+        "createGig": "Create a Gig",
+        "totalEarnings": "Total Earnings",
+        "activeJobs": "Active Jobs",
+        "activeGigs": "Active Gigs",
+        "totalViews": "Total Views",
+        "recentJobs": "Recent Jobs",
+        "recentGigs": "Recent Gigs",
+        "tabs": {
+            "overview": "Overview",
+            "jobs": "Jobs",
+            "gigs": "Gigs",
+            "applications": "Applications"
+        }
+    },
+    "forms": {
+        "job": {
+            "title": "Post a New Job",
+            "jobTitle": "Job Title",
+            "subject": "Subject",
+            "level": "Level",
+            "type": "Type",
+            "description": "Description",
+            "budget": "Budget (Points)",
+            "duration": "Duration",
+            "location": "Location",
+            "requirements": "Requirements",
+            "deadline": "Deadline",
+            "submit": "Post Job",
+            "cancel": "Cancel"
+        },
+        "gig": {
+            "title": "Create a Teaching Gig",
+            "gigTitle": "Gig Title",
+            "subjects": "Subjects",
+            "teachingType": "Teaching Type",
+            "levels": "Levels",
+            "description": "Description",
+            "hourlyRate": "Hourly Rate (Points)",
+            "availability": "Availability",
+            "location": "Location",
+            "qualifications": "Qualifications",
+            "experience": "Teaching Experience",
+            "submit": "Create Gig",
+            "cancel": "Cancel"
+        }
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "success": "Success",
+        "save": "Save",
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "confirm": "Confirm",
+        "select": "Select",
+        "search": "Search",
+        "filter": "Filter",
+        "sort": "Sort",
+        "view": "View",
+        "apply": "Apply",
+        "submit": "Submit",
+        "required": "Required"
+    },
+    "errors": {
+        "required": "This field is required",
+        "invalidEmail": "Please enter a valid email address",
+        "invalidPassword": "Password must be at least 8 characters long",
+        "networkError": "Network error. Please try again",
+        "unauthorized": "Please login to continue",
+        "forbidden": "You don't have permission to perform this action",
+        "notFound": "The requested resource was not found",
+        "serverError": "Server error. Please try again later"
+    },
+    "success": {
+        "jobPosted": "Job posted successfully",
+        "gigCreated": "Gig created successfully",
+        "applicationSubmitted": "Application submitted successfully",
+        "profileUpdated": "Profile updated successfully",
+        "settingsSaved": "Settings saved successfully"
     }
-  },
-  "common": {
-    "loading": "Loading...",
-    "error": "An error occurred",
-    "success": "Success",
-    "save": "Save",
-    "edit": "Edit",
-    "delete": "Delete",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "select": "Select",
-    "search": "Search",
-    "filter": "Filter",
-    "sort": "Sort",
-    "view": "View",
-    "apply": "Apply",
-    "submit": "Submit",
-    "required": "Required"
-  },
-  "errors": {
-    "required": "This field is required",
-    "invalidEmail": "Please enter a valid email address",
-    "invalidPassword": "Password must be at least 8 characters long",
-    "networkError": "Network error. Please try again",
-    "unauthorized": "Please login to continue",
-    "forbidden": "You don't have permission to perform this action",
-    "notFound": "The requested resource was not found",
-    "serverError": "Server error. Please try again later"
-  },
-  "success": {
-    "jobPosted": "Job posted successfully",
-    "gigCreated": "Gig created successfully",
-    "applicationSubmitted": "Application submitted successfully",
-    "profileUpdated": "Profile updated successfully",
-    "settingsSaved": "Settings saved successfully"
-  }
 }

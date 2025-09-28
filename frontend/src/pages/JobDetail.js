@@ -71,7 +71,7 @@ const JobDetail = () => {
       setJob(prev => ({ ...prev, applicants_count: (prev.applicants_count || 0) + 1 }));
     } catch (err) {
       console.error('Error unlocking job:', err);
-      if (err.response?.data?.detail === 'Insufficient credits') {
+      if (err.response?.data?.detail === 'Insufficient points') {
         setShowBuyCreditsModal(true);
       } else if (err.response?.data?.detail === 'You need an active gig with a matching subject to unlock this job.') {
         setUnlockErrorMessage(err.response.data.detail);
@@ -177,7 +177,7 @@ const JobDetail = () => {
           {isTutor && !jobUnlocked && (
             <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl text-center space-y-4">
               <p className="text-slate-700 text-lg">
-                Unlock this job for <span className="font-semibold">{creditsNeeded} credits</span>
+                Unlock this job for <span className="font-semibold">{creditsNeeded} points</span>
               </p>
               <button
                 onClick={handleUnlockJob}
@@ -207,13 +207,13 @@ const JobDetail = () => {
           )}
         </div>
 
-        {/* Buy Credits Modal */}
+        {/* Buy Points Modal */}
         {isTutor && (
           <BuyCreditsModal
             show={showBuyCreditsModal}
             onClose={() => setShowBuyCreditsModal(false)}
-            onBuyCredits={() => { window.location.href = '/buy-credits'; }}
-            message={`You need ${creditsNeeded} credits to unlock this job.`}
+            onBuyCredits={() => { window.location.href = '/buy-points'; }}
+            message={`You need ${creditsNeeded} points to unlock this job.`}
           />
         )}
       </div>

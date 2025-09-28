@@ -17,3 +17,20 @@
 * Navbar shows User's Profile Picture \& Username.
 * Redesigned Navbar, Login, SignUp.
 * 
+
+
+
+***# Issues:***
+* Username (Not Clear)
+* Show Points not Credits ✅
+* Remove Trust Score ✅
+* User verification -> WhatsApp verification (Omi)
+* Mobile number share (Not Clear)
+* New subject add (Omi)
+
+
+***# Future Update:***
+* Frontend Admin Panel
+* Coupon Code
+* Refer & Earn
+* Account Delete

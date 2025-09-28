@@ -7,13 +7,13 @@ const PaymentSuccess = () => {
   const transactionId = searchParams.get('tran_id') || 'N/A';
   const amount = searchParams.get('amount') || 'N/A';
   const currency = searchParams.get('currency') || 'BDT';
-  const paymentType = searchParams.get('payment_type') || 'credits'; // 'premium' or 'credits'
-  const creditAmount = searchParams.get('credit') || 'N/A'; // for credits
+  const paymentType = searchParams.get('payment_type') || 'points'; // 'premium' or 'points'
+  const creditAmount = searchParams.get('credit') || 'N/A'; // for points
 
   // Message based on payment type
   const successMessage = paymentType === 'premium'
     ? "Your account has been successfully upgraded to Premium!"
-    : `Your payment was successful! You've received ${creditAmount} credits.`;
+    : `Your payment was successful! You've received ${creditAmount} points.`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-green-50 flex items-center justify-center p-6 font-sans">
@@ -51,10 +51,10 @@ const PaymentSuccess = () => {
                 <span className="font-medium text-gray-800">{amount} {currency}</span>
               </div>
 
-              {/* Show credits only for credit purchase */}
-              {paymentType === 'credits' && (
+              {/* Show points only for credit purchase */}
+              {paymentType === 'points' && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Credits Added:</span>
+                  <span className="text-gray-600">Points Added:</span>
                   <span className="font-medium text-gray-800">{creditAmount}</span>
                 </div>
               )}
@@ -77,7 +77,7 @@ const PaymentSuccess = () => {
             <p className="text-gray-600">
               {paymentType === 'premium' 
                 ? "You now have access to all premium features!"
-                : "Your credits have been added to your account instantly."}
+                : "Your points have been added to your account instantly."}
             </p>
           </div>
 

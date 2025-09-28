@@ -41,9 +41,9 @@ const BuyCreditsModal = ({ show, onClose, onBuyCredits, message }) => {
           &times;
         </button>
 
-        <h3 className="text-lg font-semibold mb-4">Not Enough Credits</h3>
+        <h3 className="text-lg font-semibold mb-4">Not Enough Points</h3>
         <p className="mb-4 text-gray-700 text-sm leading-6">
-          {message || "You need more credits to perform this action."}
+          {message || "You need more points to perform this action."}
         </p>
 
         <div className="flex justify-end gap-3 mt-6">
@@ -57,7 +57,7 @@ const BuyCreditsModal = ({ show, onClose, onBuyCredits, message }) => {
             onClick={onBuyCredits}
             className="px-4 py-2 rounded text-white font-medium bg-blue-600 hover:bg-blue-700"
           >
-            Buy Credits
+            Buy Points
           </button>
         </div>
       </div>
