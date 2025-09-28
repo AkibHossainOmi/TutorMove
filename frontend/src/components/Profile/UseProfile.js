@@ -11,6 +11,7 @@ export const useProfile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState({});
   const [profileFile, setProfileFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null); // live preview
   const [showPasswordFields, setShowPasswordFields] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -21,7 +22,7 @@ export const useProfile = () => {
   const [avgRating, setAvgRating] = useState(null);
   const timerRef = useRef(null);
 
-  // Fetch user
+  // Fetch user profile
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
@@ -38,6 +39,7 @@ export const useProfile = () => {
           location: data.location || '',
           phone_number: data.phone_number || '',
         });
+        setPreviewImage(data.profile_picture); // initial preview
 
         if (data.user_type === 'tutor') fetchAverageRating(data.id);
       } catch (err) {
@@ -52,11 +54,11 @@ export const useProfile = () => {
     return () => clearInterval(timerRef.current);
   }, []);
 
-  // Average rating for tutors
+  // Average rating
   const fetchAverageRating = async (tutorId) => {
     try {
       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/reviews/${tutorId}/`);
-      if (!res.ok) throw new Error('Failed to fetch average rating');
+      if (!res.ok) throw new Error('Failed to fetch rating');
       const data = await res.json();
       setAvgRating(data.average_rating);
     } catch {
@@ -69,8 +71,11 @@ export const useProfile = () => {
     setEditData(prev => ({ ...prev, [field]: value }));
   };
 
-  // Profile picture upload
-  const handleProfileFileChange = (file) => setProfileFile(file);
+  // Profile picture live preview
+  const handleProfileFileChange = (file) => {
+    setProfileFile(file);
+    setPreviewImage(URL.createObjectURL(file));
+  };
 
   // Profile update
   const handleProfileUpdate = async () => {
@@ -88,6 +93,7 @@ export const useProfile = () => {
       setUserData(prev => ({ ...prev, ...updatedUser }));
       setIsEditing(false);
       setProfileFile(null);
+      setPreviewImage(updatedUser.profile_picture);
       setUpdateStatus({ message: 'Profile updated successfully!', type: 'success' });
 
       if ((updatedUser.user_type || userData?.user_type) === 'tutor') {
@@ -114,10 +120,7 @@ export const useProfile = () => {
       return;
     }
     if (newPassword.length < 8) {
-      setPasswordStatus({
-        message: 'New password must be at least 8 characters long',
-        type: 'error',
-      });
+      setPasswordStatus({ message: 'Password must be at least 8 chars', type: 'error' });
       return;
     }
 
@@ -127,20 +130,16 @@ export const useProfile = () => {
         old_password: currentPassword,
         new_password: newPassword,
       });
-console.log(res);
-      // Success response
-      setPasswordStatus({ message: res.data.detail || 'Password updated successfully!', type: 'success' });
+      setPasswordStatus({ message: res.data.detail || 'Password updated!', type: 'success' });
       setShowPasswordFields(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmNewPassword('');
     } catch (err) {
-      // Error response from backend
-      const errorMessage =
-        err.response?.data?.detail || // Django DRF default error field
-        err.response?.data?.error || // your custom error field
-        err.message;                 // fallback generic error
-      setPasswordStatus({ message: errorMessage, type: 'error' });
+      setPasswordStatus({
+        message: err.response?.data?.detail || err.response?.data?.error || err.message,
+        type: 'error',
+      });
     }
     setTimeout(() => setPasswordStatus({ message: '', type: '' }), 5000);
   };
@@ -158,7 +157,7 @@ console.log(res);
     try {
       const res = await whatsappAPI.sendOTP(editData.phone_number);
       if (res.data.status === 'success') {
-        setUpdateStatus({ message: 'OTP sent! Please enter the code.', type: 'success' });
+        setUpdateStatus({ message: 'OTP sent!', type: 'success' });
       } else {
         setUpdateStatus({ message: res.data.message, type: 'error' });
         setOtpSent(false);
@@ -180,7 +179,7 @@ console.log(res);
     try {
       const res = await whatsappAPI.verifyOTP(otp);
       if (res.data.status === 'success') {
-        setUpdateStatus({ message: 'Phone number verified!', type: 'success' });
+        setUpdateStatus({ message: 'Phone verified!', type: 'success' });
         const updatedUser = await userApi.editProfile({
           phone_number: editData.phone_number,
           phone_verified: true,
@@ -225,10 +224,12 @@ console.log(res);
     toggleEdit,
     handleEditChange,
     handleProfileFileChange,
+    handleProfileUpdate,
     handlePasswordChange,
     handleSendOTP,
     handleVerifyOTP,
     formatTimer,
+    previewImage,
     setShowPasswordFields,
     setCurrentPassword,
     setNewPassword,

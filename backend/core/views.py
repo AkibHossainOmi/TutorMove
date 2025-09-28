@@ -35,6 +35,7 @@ from decimal import Decimal, InvalidOperation
 import uuid
 import requests
 from django.http import JsonResponse
+from django.core.files.storage import default_storage
 from core.modules.auth import ( SendOTPView, ResetPasswordView,
     VerifyOTPView, LoginView, CookieTokenObtainPairView, CookieTokenRefreshView,
 )
@@ -63,6 +64,10 @@ __all__ = [
     "CookieTokenObtainPairView",
     "CookieTokenRefreshView",
 ]
+
+
+ALLOWED_IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif', '.webp']
+
 def generate_transaction_id():
     """Generates a unique transaction ID with a 'TRN-' prefix."""
     return 'TRN-' + str(uuid.uuid4().hex[:20]).upper()
@@ -477,19 +482,22 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         user = request.user
 
-        # Check if file is present
         dp_file = request.FILES.get('profile_picture')
         if not dp_file:
             return Response({'error': 'No file uploaded'}, status=400)
 
-        # Delete old profile picture if exists
-        if user.profile_picture:
-            old_path = user.profile_picture.path
-            if os.path.isfile(old_path):
-                os.remove(old_path)
+        # Validate file extension
+        ext = os.path.splitext(dp_file.name)[1].lower()
+        if ext not in ALLOWED_IMAGE_EXTENSIONS:
+            return Response({'error': 'Unsupported file type'}, status=400)
 
-        # Save new file
-        user.profile_picture = dp_file
+        # Delete old profile picture if exists
+        if user.profile_picture and default_storage.exists(user.profile_picture.name):
+            default_storage.delete(user.profile_picture.name)
+
+        # Generate a unique filename
+        new_name = f"{uuid.uuid4().hex}{ext}"
+        user.profile_picture.save(new_name, dp_file)
         user.save(update_fields=['profile_picture'])
 
         return Response({
