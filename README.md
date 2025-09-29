@@ -93,4 +93,3 @@ npm run build
 3. Configure any other frontend-specific environment variables
 
 For database migration from SQLite to MySQL, refer to [**SQLite to MySQL Migration Guide**](MIGRATION_GUIDE_SQLITE_TO_MYSQL.md)
- 
