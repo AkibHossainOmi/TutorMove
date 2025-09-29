@@ -268,7 +268,6 @@ const Navbar = () => {
               </button>
             </div>
           )}
-
           <div className="pt-4 border-t border-gray-200">
           </div>
         </div>

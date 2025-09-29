@@ -17,13 +17,7 @@ const BasicInfoCard = ({ profile }) => {
       value: userType.charAt(0).toUpperCase() + userType.slice(1),
       icon: <MdVerifiedUser className="text-gray-500" />,
       bgColor: 'bg-indigo-50',
-    },
-    {
-      label: 'Trust Score',
-      value: (userData.trust_score ?? 0).toFixed(1),
-      icon: <FaUserShield className="text-gray-500" />,
-      bgColor: 'bg-purple-50',
-    },
+    }
   ];
 
   return (
