@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
-import LanguageSwitcher from "./LanguageSwitcher";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
 
 // Chevron Icon
@@ -271,7 +270,6 @@ const Navbar = () => {
           )}
 
           <div className="pt-4 border-t border-gray-200">
-            <LanguageSwitcher mobile />
           </div>
         </div>
       </div>
