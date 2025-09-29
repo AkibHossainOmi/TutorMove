@@ -21,7 +21,7 @@ jobs:
           script: |
             cd /var/www/TutorMove
             git reset --hard
-            git pull origin main
+            git pull https://mrif449:${{ secrets.PAT }}@github.com/mrif449/TutorMove.git main
             source backend/venv/bin/activate
             pip install -r backend/requirements.txt
             python backend/manage.py migrate --noinput
