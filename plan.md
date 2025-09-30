@@ -25,7 +25,11 @@
 * New subject add (Omi)
 * Boost credit will cut as given in box
 * if whatsapp is verified, then is verified will be 1.
+* In job preference it’s showing wrong info in job details:     
+    * Gender Preference
+    * Education Level
 
+* All subjects should have gigs for unlocking the job, if multiple subjects are selected 
 
 ***# Future Update:***
 * Frontend Admin Panel
