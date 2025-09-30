@@ -21,12 +21,10 @@
 
 
 ***# Issues:***
-* Username (Not Clear)
-* Show Points not Credits ✅
-* Remove Trust Score ✅
-* User verification -> WhatsApp verification (Omi)
 * Mobile number share (Not Clear)
 * New subject add (Omi)
+* Boost credit will cut as given in box
+* if whatsapp is verified, then is verified will be 1.
 
 
 ***# Future Update:***
