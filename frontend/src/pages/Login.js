@@ -112,11 +112,11 @@ const Login = () => {
 
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
-                    <label htmlFor="username" className={LABEL_BASE}>
-                      Username or Email
+                    <label htmlFor="email" className={LABEL_BASE}>
+                      Email
                     </label>
                     <input
-                      type="text"
+                      type="email"
                       name="username"
                       id="username"
                       value={formData.username}

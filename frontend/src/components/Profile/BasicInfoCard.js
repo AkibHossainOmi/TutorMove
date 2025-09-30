@@ -1,5 +1,5 @@
 import React from 'react';
-import { FaUser, FaUserShield } from 'react-icons/fa';
+import { FaUser } from 'react-icons/fa';
 import { MdVerifiedUser } from 'react-icons/md';
 
 const BasicInfoCard = ({ profile }) => {
