@@ -254,7 +254,7 @@ export default function WhatsAppLikeMessagingWS() {
       <Navbar />
       <div className="min-h-[calc(100vh-160px)] bg-sky-50 p-6 mt-20">
         <div className="mx-auto max-w-7xl h-[82vh] bg-white rounded-3xl shadow-xl grid grid-cols-12 overflow-hidden">
-          <aside className="col-span-3 bg-gradient-to-b from-sky-600 to-sky-700 text-white p-5 flex flex-col gap-4">
+          <aside className="col-span-4 bg-gradient-to-b from-sky-600 to-sky-700 text-white p-5 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-semibold">M</div>
@@ -349,7 +349,7 @@ export default function WhatsAppLikeMessagingWS() {
             </div>
           </aside>
 
-          <main className="col-span-6 flex flex-col">
+          <main className="col-span-8 flex flex-col">
             {activeConversation ? (
               <>
                 <div className="flex items-center justify-between px-6 py-4 border-b">
@@ -384,15 +384,17 @@ export default function WhatsAppLikeMessagingWS() {
                             {isSelf && (
                               <div className="flex items-center">
                                 {msg.status === 'seen' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 17l4 4L19 11" />
                                   </svg>
                                 ) : msg.status === 'delivered' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 17l4 4L19 11" />
                                   </svg>
                                 ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                   </svg>
                                 )}
@@ -435,53 +437,6 @@ export default function WhatsAppLikeMessagingWS() {
               </div>
             )}
           </main>
-
-          <aside className="col-span-3 border-l bg-white p-5 flex flex-col">
-            <div className="flex items-center justify-between mb-4">
-              <div className="text-sm font-semibold">Conversation Info</div>
-              <div className="text-xs text-slate-500">Details</div>
-            </div>
-
-            {activeConversation ? (
-              <>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-semibold">
-                    {getOtherUser(activeConversation)?.username?.[0]?.toUpperCase() || 'U'}
-                  </div>
-                  <div>
-                    <div className="font-semibold">{getOtherUser(activeConversation)?.username}</div>
-                    <div className="text-xs text-slate-500">User ID: {getOtherUser(activeConversation)?.id}</div>
-                  </div>
-                </div>
-
-                <div className="mb-4 text-sm text-slate-700">
-                  {activeConversation?.last_message?.content || 'No messages yet in this conversation.'}
-                </div>
-
-                <div className="mt-auto">
-                  <button
-                    onClick={() => {
-                      setShowUnlockModal(true);
-                      setUnlockTutorId(getOtherUser(activeConversation)?.id ?? null);
-                    }}
-                    className="w-full py-3 rounded-md bg-sky-600 text-white hover:bg-sky-700"
-                  >
-                    Unlock Contact
-                  </button>
-                  <button
-                    onClick={() => {
-                      setShowBuyCreditsModal(true);
-                    }}
-                    className="w-full py-3 rounded-md mt-3 border border-slate-200 text-slate-700"
-                  >
-                    Buy Credits
-                  </button>
-                </div>
-              </>
-            ) : (
-              <div className="text-sm text-slate-500">Choose a conversation to view details and quick actions.</div>
-            )}
-          </aside>
         </div>
       </div>
 
