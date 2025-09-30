@@ -18,7 +18,6 @@ export default function WhatsAppLikeMessagingWS() {
   const [searchResults, setSearchResults] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [partnerTyping, setPartnerTyping] = useState(false);
-
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockTutorId, setUnlockTutorId] = useState(null);
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
@@ -31,14 +30,12 @@ export default function WhatsAppLikeMessagingWS() {
   const location = useLocation();
   const usernameFromQuery = new URLSearchParams(location.search).get('username');
 
-  // Helper to safely send JSON stringified WS messages
   const sendMessageWS = useCallback((msg) => {
     if (socketRef.current?.connected) {
       socketRef.current.send(msg);
     }
   }, []);
 
-  // Extract the "other user" from conversation participants except self
   const getOtherUser = useCallback(
     (conv) =>
       conv.participants
@@ -50,16 +47,13 @@ export default function WhatsAppLikeMessagingWS() {
     [user]
   );
 
-  // WS message handler
   const handleWSMessage = useCallback(
     (data) => {
       switch (data.type) {
         case 'chat.message': {
           const incomingConvId = data.message.conversation_id;
           const isFromOther = data.message.sender.id !== user?.user_id;
-
           const convExists = conversations.some((c) => c.id === incomingConvId);
-
           if (!convExists) {
             const newConv = {
               id: incomingConvId,
@@ -75,7 +69,6 @@ export default function WhatsAppLikeMessagingWS() {
               )
             );
           }
-
           const isActive = incomingConvId === activeConversation?.id;
           if (isActive) {
             setMessages((prev) => [
@@ -85,7 +78,6 @@ export default function WhatsAppLikeMessagingWS() {
                 status: isFromOther ? 'delivered' : 'sent',
               },
             ]);
-
             if (isFromOther) {
               sendMessageWS({ type: 'chat.delivered', message_id: data.message.id });
               sendMessageWS({ type: 'chat.read', conversation_id: incomingConvId });
@@ -104,27 +96,21 @@ export default function WhatsAppLikeMessagingWS() {
           }
           break;
         }
-
         case 'chat.unlock':
           if (user?.user_type === 'tutor') {
-            // Tutor unlocking a student → show unlock job modal
             setUnlockJobUserId(data.student_id);
             setShowUnlockJobModal(true);
           } else {
-            // Student unlocking a tutor → show normal unlock modal
             setUnlockTutorId(data.tutor_id);
             setShowUnlockModal(true);
           }
           break;
-
         case 'chat.conversations':
           setConversations(data.conversations);
           break;
-
         case 'chat.messages':
           setMessages(data.messages);
           break;
-
         case 'chat.typing':
           setPartnerTyping(data.is_typing);
           if (data.is_typing) {
@@ -132,7 +118,6 @@ export default function WhatsAppLikeMessagingWS() {
             typingTimeoutRef.current = setTimeout(() => setPartnerTyping(false), 2000);
           }
           break;
-
         case 'chat.conversation_started': {
           const conv = data.conversation;
           setActiveConversation(conv);
@@ -147,7 +132,6 @@ export default function WhatsAppLikeMessagingWS() {
           setSearchResults([]);
           break;
         }
-
         case 'chat.read':
           setConversations((prev) =>
             prev.map((conv) =>
@@ -155,7 +139,6 @@ export default function WhatsAppLikeMessagingWS() {
             )
           );
           break;
-
         case 'chat.message_status':
           setMessages((prev) =>
             prev.map((msg) =>
@@ -169,11 +152,9 @@ export default function WhatsAppLikeMessagingWS() {
             )
           );
           break;
-
         case 'chat.search_results':
           setSearchResults(data.results);
           break;
-
         default:
           break;
       }
@@ -185,28 +166,22 @@ export default function WhatsAppLikeMessagingWS() {
     handleWSMessageRef.current = handleWSMessage;
   }, [handleWSMessage]);
 
-  // Load user info once on mount
   useEffect(() => {
     const userStr = localStorage.getItem('user');
     if (userStr) setUser(JSON.parse(userStr));
   }, []);
 
-  // Setup WS connection once user is loaded
   useEffect(() => {
     if (!user || socketRef.current) return;
-
     const ws = new ChatSocket(user.user_id, (data) => handleWSMessageRef.current?.(data));
     socketRef.current = ws;
-
     const onOpen = () => {
       sendMessageWS({ type: 'chat.get_conversations' });
       if (usernameFromQuery) {
         sendMessageWS({ type: 'chat.search_user', keyword: usernameFromQuery });
       }
     };
-
     ws.socket.addEventListener('open', onOpen);
-
     return () => {
       ws.socket.removeEventListener('open', onOpen);
       ws.close();
@@ -215,7 +190,6 @@ export default function WhatsAppLikeMessagingWS() {
     };
   }, [user, sendMessageWS, usernameFromQuery]);
 
-  // Scroll messages container to bottom when messages change
   useEffect(() => {
     const container = messageContainerRef.current;
     if (container) {
@@ -225,7 +199,6 @@ export default function WhatsAppLikeMessagingWS() {
 
   const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !activeConversation) return;
-
     sendMessageWS({
       type: 'chat.message',
       conversation_id: activeConversation.id,
@@ -234,15 +207,11 @@ export default function WhatsAppLikeMessagingWS() {
     setNewMessage('');
   }, [newMessage, activeConversation, sendMessageWS]);
 
-  // Debounced typing indicator
   const handleTyping = useCallback(() => {
     if (!activeConversation) return;
-
     const partner = getOtherUser(activeConversation);
     if (!partner) return;
-
     sendMessageWS({ type: 'chat.typing', receiver_id: partner.id, is_typing: true });
-
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
       sendMessageWS({ type: 'chat.typing', receiver_id: partner.id, is_typing: false });
@@ -274,7 +243,6 @@ export default function WhatsAppLikeMessagingWS() {
     [sendMessageWS]
   );
 
-  // When unlock contact is successful, start conversation and close modal
   const handleUnlockSuccess = useCallback(() => {
     if (!unlockTutorId) return;
     sendMessageWS({ type: 'chat.start_conversation', receiver_id: unlockTutorId });
@@ -284,130 +252,151 @@ export default function WhatsAppLikeMessagingWS() {
   return (
     <>
       <Navbar />
-      <div className="min-h-[calc(100vh-160px)] flex items-center justify-center bg-gray-100 p-4 mt-20">
-        <div className="w-full max-w-6xl h-[80vh] bg-white rounded-2xl shadow-lg flex overflow-hidden">
-          {/* Sidebar */}
-          <div className="w-80 border-r border-gray-300 flex flex-col">
-            <div className="p-3 border-b">
+      <div className="min-h-[calc(100vh-160px)] bg-sky-50 p-6 mt-20">
+        <div className="mx-auto max-w-7xl h-[82vh] bg-white rounded-3xl shadow-xl grid grid-cols-12 overflow-hidden">
+          <aside className="col-span-3 bg-gradient-to-b from-sky-600 to-sky-700 text-white p-5 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-semibold">M</div>
+                <div>
+                  <div className="text-sm font-semibold">Messages</div>
+                  <div className="text-xs opacity-80">All chats</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative">
               <input
                 type="text"
-                placeholder="Search users..."
-                className="w-full border px-3 py-2 rounded"
+                placeholder="Search users or username"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="w-full rounded-md py-2 px-3 bg-white/10 placeholder-white/80 focus:outline-none"
               />
+              <button
+                onClick={handleSearch}
+                className="absolute right-2 top-2 bg-white/20 px-3 py-1 rounded-md text-xs"
+              >
+                Search
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
               {searchResults.length > 0 && (
-                <div className="mt-2 bg-white shadow rounded border max-h-64 overflow-y-auto">
+                <div className="mb-3 rounded-md bg-white/5 p-2">
                   {searchResults.map((u) => (
                     <div
                       key={u.id}
-                      className="p-2 cursor-pointer hover:bg-green-100"
                       onClick={() => startConversation(u)}
+                      className="py-2 px-3 rounded-md cursor-pointer hover:bg-white/10"
                     >
-                      {u.username}
+                      <div className="text-sm font-medium">{u.username}</div>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
-            <div className="flex-grow overflow-y-auto">
-              {conversations.map((conv) => {
-                const other = getOtherUser(conv);
-                const lastMsg = conv.last_message?.content || '';
-                const shouldBold =
-                  conv.has_unread &&
-                  conv.last_message?.sender?.id !== user?.user_id &&
-                  activeConversation?.id !== conv.id;
-
-                return (
-                  <div
-                    key={conv.id}
-                    className={`p-3 cursor-pointer hover:bg-green-100 ${
-                      activeConversation?.id === conv.id ? 'bg-green-50' : ''
-                    } ${shouldBold ? 'font-bold' : 'font-normal'}`}
-                    onClick={() => selectConversation(conv)}
-                  >
-                    <div className="flex flex-col">
-                      <span>{other?.username || 'Unknown'}</span>
-                      <span className="text-xs text-gray-500 truncate max-w-full">
-                        {lastMsg.length > 30 ? lastMsg.slice(0, 27) + '...' : lastMsg}
-                      </span>
+              <div className="space-y-2">
+                {conversations.map((conv) => {
+                  const other = getOtherUser(conv);
+                  const lastMsg = conv.last_message?.content || '';
+                  const shouldBold =
+                    conv.has_unread &&
+                    conv.last_message?.sender?.id !== user?.user_id &&
+                    activeConversation?.id !== conv.id;
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => selectConversation(conv)}
+                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition ${
+                        activeConversation?.id === conv.id ? 'bg-white/10' : 'hover:bg-white/5'
+                      }`}
+                    >
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-sm font-semibold">
+                        {other?.username?.[0]?.toUpperCase() || 'U'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className={`flex justify-between items-center`}>
+                          <div className={`truncate ${shouldBold ? 'font-semibold' : 'font-medium'}`}>
+                            {other?.username || 'Unknown'}
+                          </div>
+                          <div className="text-xs opacity-70">
+                            {conv.last_message?.timestamp
+                              ? new Date(conv.last_message.timestamp).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                })
+                              : ''}
+                          </div>
+                        </div>
+                        <div className="text-xs opacity-80 truncate">
+                          {lastMsg.length > 40 ? `${lastMsg.slice(0, 37)}...` : lastMsg}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
-          </div>
+            <div className="pt-3">
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setSearchResults([]);
+                }}
+                className="w-full py-2 rounded-md bg-white/10 hover:bg-white/20 text-sm"
+              >
+                Clear search
+              </button>
+            </div>
+          </aside>
 
-          {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <main className="col-span-6 flex flex-col">
             {activeConversation ? (
               <>
-                <div className="p-4 border-b font-semibold text-lg">
-                  {getOtherUser(activeConversation)?.username}
+                <div className="flex items-center justify-between px-6 py-4 border-b">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-semibold">
+                      {getOtherUser(activeConversation)?.username?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                    <div>
+                      <div className="text-lg font-semibold">
+                        {getOtherUser(activeConversation)?.username || 'Unknown'}
+                      </div>
+                      <div className="text-sm text-sky-600">
+                        {activeConversation?.last_active ? 'Active' : ''}
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div
-                  ref={messageContainerRef}
-                  className="flex-grow overflow-y-auto px-6 py-4 space-y-3 bg-gray-50"
-                >
+
+                <div ref={messageContainerRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-slate-50">
                   {messages.map((msg) => {
                     const isSelf = msg.sender.id === user?.user_id;
                     return (
-                      <div key={msg.id} className={`max-w-xs ${isSelf ? 'ml-auto' : ''}`}>
-                        <div
-                          className={`px-4 py-2 rounded-lg text-sm ${
-                            isSelf
-                              ? 'bg-green-500 text-white rounded-br-none'
-                              : 'bg-white border border-gray-300 rounded-bl-none'
-                          }`}
-                        >
-                          <div>{msg.content}</div>
-                          <div className="text-[10px] mt-1 text-gray-300 flex items-center justify-end space-x-1">
-                            <span>
-                              {new Date(msg.timestamp).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
-                            </span>
+                      <div key={msg.id} className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`max-w-[70%] break-words px-4 py-2 rounded-lg shadow-sm ${isSelf ? 'bg-sky-600 text-white rounded-br-none' : 'bg-white border border-slate-200 rounded-bl-none'}`}>
+                          <div className="text-sm">{msg.content}</div>
+                          <div className="flex items-center justify-end text-[11px] mt-1 opacity-70 space-x-2">
+                            <div>
+                              {msg.timestamp
+                                ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                                : ''}
+                            </div>
                             {isSelf && (
-                              <span className="flex items-center">
+                              <div className="flex items-center">
                                 {msg.status === 'seen' ? (
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-4 h-4 text-white relative -top-[1px]"
-                                    fill="currentColor"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                  >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 17l4 4L19 11" />
                                   </svg>
                                 ) : msg.status === 'delivered' ? (
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-4 h-4 text-white relative -top-[1px]"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                  >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                   </svg>
                                 ) : (
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="w-4 h-4 text-white relative -top-[1px]"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                    strokeWidth={2}
-                                  >
+                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                                   </svg>
                                 )}
-                              </span>
+                              </div>
                             )}
                           </div>
                         </div>
@@ -415,10 +404,11 @@ export default function WhatsAppLikeMessagingWS() {
                     );
                   })}
                   {partnerTyping && (
-                    <div className="text-xs text-gray-400 italic">Typing...</div>
+                    <div className="text-sm text-slate-500 italic">Typing...</div>
                   )}
                 </div>
-                <div className="p-4 flex gap-3 border-t">
+
+                <div className="px-6 py-4 border-t bg-white flex items-center gap-3">
                   <input
                     type="text"
                     value={newMessage}
@@ -427,23 +417,71 @@ export default function WhatsAppLikeMessagingWS() {
                       handleTyping();
                     }}
                     onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Type a message"
-                    className="flex-grow border border-gray-300 rounded-full px-4 py-2"
+                    placeholder="Write a message"
+                    className="flex-1 rounded-full border border-slate-200 px-4 py-3 focus:outline-none"
                   />
                   <button
                     onClick={sendMessage}
-                    className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-full"
+                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-sky-600 text-white hover:bg-sky-700"
                   >
                     Send
                   </button>
                 </div>
               </>
             ) : (
-              <div className="flex-grow flex items-center justify-center text-gray-400 italic">
-                Select a chat or search users to start messaging
+              <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
+                <div className="text-xl font-semibold">No conversation selected</div>
+                <div className="mt-2">Select a chat from the left or search users to start a conversation</div>
               </div>
             )}
-          </div>
+          </main>
+
+          <aside className="col-span-3 border-l bg-white p-5 flex flex-col">
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-sm font-semibold">Conversation Info</div>
+              <div className="text-xs text-slate-500">Details</div>
+            </div>
+
+            {activeConversation ? (
+              <>
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-14 h-14 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-semibold">
+                    {getOtherUser(activeConversation)?.username?.[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <div>
+                    <div className="font-semibold">{getOtherUser(activeConversation)?.username}</div>
+                    <div className="text-xs text-slate-500">User ID: {getOtherUser(activeConversation)?.id}</div>
+                  </div>
+                </div>
+
+                <div className="mb-4 text-sm text-slate-700">
+                  {activeConversation?.last_message?.content || 'No messages yet in this conversation.'}
+                </div>
+
+                <div className="mt-auto">
+                  <button
+                    onClick={() => {
+                      setShowUnlockModal(true);
+                      setUnlockTutorId(getOtherUser(activeConversation)?.id ?? null);
+                    }}
+                    className="w-full py-3 rounded-md bg-sky-600 text-white hover:bg-sky-700"
+                  >
+                    Unlock Contact
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowBuyCreditsModal(true);
+                    }}
+                    className="w-full py-3 rounded-md mt-3 border border-slate-200 text-slate-700"
+                  >
+                    Buy Credits
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-slate-500">Choose a conversation to view details and quick actions.</div>
+            )}
+          </aside>
         </div>
       </div>
 
@@ -463,7 +501,6 @@ export default function WhatsAppLikeMessagingWS() {
         studentId={unlockJobUserId}
         onClose={() => setShowUnlockJobModal(false)}
         onJobUnlocked={() => {
-          // After job unlock, automatically unlock contact
           sendMessageWS({ type: 'chat.start_conversation', receiver_id: unlockJobUserId });
           setShowUnlockJobModal(false);
         }}
