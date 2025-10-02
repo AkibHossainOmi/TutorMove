@@ -20,7 +20,7 @@ const DashboardHeader = ({
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
             Welcome back, {user?.username || 'Teacher'}!
           </h1>
-          <TeacherVerificationBadge verified={false} />
+          <TeacherVerificationBadge verified={user?.is_verified} />
         </div>
         <p className="text-gray-600">Manage your teaching gigs, applications, and jobs</p>
       </div>
