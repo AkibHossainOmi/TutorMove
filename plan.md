@@ -36,3 +36,4 @@
 * Coupon Code
 * Refer & Earn
 * Account Delete
+* Credits can go to negative (not supposed to)
