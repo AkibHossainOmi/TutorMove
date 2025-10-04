@@ -21,15 +21,25 @@
 
 
 ***# Issues:***
-* Mobile number share (Not Clear)
-* New subject add (Omi)
-* Boost credit will cut as given in box
-* if whatsapp is verified, then is verified will be 1.
-* In job preference it’s showing wrong info in job details:     
-    * Gender Preference
-    * Education Level
+## Teacher Part:
+⦁	watch tutor, jobs without login
+⦁	Homesearch will show subject while starts typing
+⦁	Matched Jobs not showing on profile
+⦁	Notifications not working
+⦁	Current gig rank will be come down
+⦁	User-> Full Name on profile
+⦁	Location API on profile
+⦁	User will request for deletation (Admin manual delete)
+⦁	All Jobs will be in list
+⦁	Phone number will be mandatory
 
-* All subjects should have gigs for unlocking the job, if multiple subjects are selected 
+## Student Part:
+⦁	Gigs sort not working
+⦁	from student profile gigs not showing in teacher profile
+⦁	Student can give reward to teacher 50 points (Teacher)
+⦁	Rating & Review implementation
+⦁	Filters not working on tutors
+⦁	Packages sorting
 
 ***# Future Update:***
 * Frontend Admin Panel
