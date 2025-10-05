@@ -22,8 +22,8 @@
 
 ***# Issues:***
 ## Teacher Part:
-⦁	watch tutor, jobs without login
-⦁	Homesearch will show subject while starts typing
+⦁	watch tutor, jobs without login ✅
+⦁	Homesearch will show subject while starts typing ✅
 ⦁	Matched Jobs not showing on profile
 ⦁	Notifications not working
 ⦁	Current gig rank will be come down
