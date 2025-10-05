@@ -232,7 +232,7 @@ const JobCard = ({ job }) => {
         </div>
         <Link
           to={`/jobs/${job.id}`}
-          className="inline-flex items-center rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-indigo-700"
+          className="inline-flex items-center rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-white"
         >
           View Details
           <svg
