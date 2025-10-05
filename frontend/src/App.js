@@ -53,6 +53,8 @@ function App() {
           <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/tutors" element={<TutorList />} />
+          <Route path="/jobs" element={<JobList />} />
           {/* Fallback for unmatched public routes, redirects to Home */}
           <Route path="*" element={<Navigate to="/" replace />} />
 
@@ -63,7 +65,6 @@ function App() {
 
             {/* User Profile and Tutor Listings */}
             <Route path="/profile" element={<Profile />} />
-            <Route path="/tutors" element={<TutorList />} />
             <Route path="/tutors/:tutorId" element={<TutorProfile />} />
             <Route path="/buy-points" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
@@ -71,7 +72,6 @@ function App() {
             {/* Gigs and Job Listings */}
             <Route path="/tutor/gig/:id" element={<TutorGigPage />} />
             <Route path="/gigs/:id" element={<GigDetails />} />
-            <Route path="/jobs" element={<JobList />} />
             <Route path="/jobs/:id" element={<JobDetail />} />
 
             

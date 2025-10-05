@@ -76,6 +76,11 @@ class TutorViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     queryset = User.objects.filter(user_type='tutor')
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
+
     @action(detail=False, methods=["post"], url_path="search", permission_classes=[AllowAny])
     def search(self, request):
         input_location = request.data.get("location", "").strip()
@@ -831,6 +836,10 @@ class JobViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'subject', 'location']
 
+    def get_permissions(self):
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
     def get_queryset(self):
         queryset = Job.objects.all()
         subject = self.request.query_params.get('subject', None)
