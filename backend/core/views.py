@@ -104,7 +104,7 @@ class TutorViewSet(viewsets.ModelViewSet):
         for tutor in tutors:
             try:
                 # Check if tutor has relevant subject
-                gigs_qs = Gig.objects.filter(teacher=tutor)
+                gigs_qs = Gig.objects.filter(tutor=tutor)
                 if subject_query:
                     gigs_qs = gigs_qs.filter(subject__icontains=subject_query)
 

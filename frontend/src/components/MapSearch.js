@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import CreatableSelect from "react-select/creatable";
 import { tutorAPI } from "../utils/apiService";
 
 const SEARCH_RADIUS_KM = 20;
@@ -9,21 +8,23 @@ const TutorMapSearch = () => {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("");
   const [subjects, setSubjects] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const [locationSuggestions, setLocationSuggestions] = useState([]);
+  const [showLocationSuggestions, setShowLocationSuggestions] = useState(false);
+  const [subjectSuggestions, setSubjectSuggestions] = useState([]);
+  const [showSubjectSuggestions, setShowSubjectSuggestions] = useState(false);
+
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Fetch subjects from API
   useEffect(() => {
     const fetchSubjects = async () => {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/subjects`);
-        const activeSubjects = res.data.filter((s) => s.is_active);
-        setSubjects(activeSubjects);
+        setSubjects(res.data.filter((s) => s.is_active));
       } catch (err) {
         console.error("Failed to fetch subjects", err);
       }
@@ -31,19 +32,27 @@ const TutorMapSearch = () => {
     fetchSubjects();
   }, []);
 
-  // Fetch location suggestions from OpenStreetMap
-  const fetchSuggestions = async (text) => {
+  const fetchLocationSuggestions = async (text) => {
     if (text.length < 3) return;
     try {
       const res = await axios.get("https://nominatim.openstreetmap.org/search", {
         params: { q: text, format: "json", limit: 5 },
       });
-      setSuggestions(res.data);
-      setShowSuggestions(true);
+      setLocationSuggestions(res.data);
+      setShowLocationSuggestions(true);
     } catch {
-      setSuggestions([]);
-      setShowSuggestions(false);
+      setLocationSuggestions([]);
+      setShowLocationSuggestions(false);
     }
+  };
+
+  const fetchSubjectSuggestions = (text) => {
+    if (!text.trim()) {
+      setSubjectSuggestions([]);
+      return;
+    }
+    setSubjectSuggestions(subjects.filter((s) => s.name.toLowerCase().includes(text.toLowerCase())));
+    setShowSubjectSuggestions(true);
   };
 
   const handleSearch = async () => {
@@ -55,13 +64,13 @@ const TutorMapSearch = () => {
     setError(null);
     try {
       const res = await tutorAPI.searchTutors({
-        location: selectedLocation ? selectedLocation.display_name : "",
+        location: selectedLocation?.display_name || "",
         subject: subject.trim(),
         radius_km: SEARCH_RADIUS_KM,
       });
       setTutors(res.data.results || []);
       setHasSearched(true);
-    } catch (err) {
+    } catch {
       setError("Failed to fetch tutors");
       setTutors([]);
       setHasSearched(true);
@@ -71,66 +80,68 @@ const TutorMapSearch = () => {
   };
 
   return (
-    <div style={{ maxWidth: 960, margin: "40px auto", padding: "0 16px", fontFamily: "Segoe UI, sans-serif" }}>
-      <h1 style={{ textAlign: "center", fontSize: "2rem", fontWeight: 600, marginBottom: 30 }}>
-        Search Tutors by Location & Subject
-      </h1>
+    <div className="max-w-4xl mx-auto px-4 py-10 font-sans">
+      <h1 className="text-center text-3xl font-semibold mb-8">Search Tutors by Location & Subject</h1>
 
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 24, justifyContent: "center" }}>
+      <div className="flex flex-wrap gap-4 justify-center mb-6">
+        {/* Subject Input */}
+        <div className="relative flex-1 min-w-[220px]">
+          <input
+            type="text"
+            value={subject}
+            placeholder="Enter subject..."
+            onChange={(e) => {
+              setSubject(e.target.value);
+              fetchSubjectSuggestions(e.target.value);
+            }}
+            onFocus={() => setShowSubjectSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowSubjectSuggestions(false), 200)}
+            className="w-full p-3 text-sm border-2 border-gray-300 rounded-lg focus:outline-none"
+          />
+          {showSubjectSuggestions && subject && subjectSuggestions.length > 0 && (
+            <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg max-h-52 overflow-y-auto z-20 mt-1">
+              {subjectSuggestions.map((sugg) => (
+                <li
+                  key={sugg.id}
+                  onMouseDown={() => {
+                    setSubject(sugg.name);
+                    setSubjectSuggestions([]);
+                  }}
+                  className="px-3 py-2 cursor-pointer hover:bg-blue-50"
+                >
+                  {sugg.name}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         {/* Location Input */}
-        <div style={{ position: "relative", flex: 1, minWidth: 220 }}>
+        <div className="relative flex-1 min-w-[220px]">
           <input
             type="text"
             value={query}
             placeholder="Enter location..."
             onChange={(e) => {
               setQuery(e.target.value);
-              fetchSuggestions(e.target.value);
-              if (e.target.value.trim() === "") setSelectedLocation(null);
+              fetchLocationSuggestions(e.target.value);
+              if (!e.target.value.trim()) setSelectedLocation(null);
             }}
-            onFocus={() => setShowSuggestions(true)}
-            onBlur={() => setShowSuggestions(false)} // hide immediately when cursor leaves
-            style={{
-              width: "100%",
-              padding: "12px 14px",
-              fontSize: 15,
-              border: "1.5px solid #ccc",
-              borderRadius: 8,
-              outline: "none",
-            }}
+            onFocus={() => setShowLocationSuggestions(true)}
+            onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
+            className="w-full p-3 text-sm border-2 border-gray-300 rounded-lg focus:outline-none"
           />
-          {showSuggestions && suggestions.length > 0 && (
-            <ul
-              style={{
-                position: "absolute",
-                top: "100%",
-                left: 0,
-                right: 0,
-                background: "#fff",
-                border: "1px solid #ddd",
-                borderRadius: 8,
-                zIndex: 20,
-                maxHeight: 200,
-                overflowY: "auto",
-                marginTop: 4,
-                listStyle: "none",
-                padding: 0,
-              }}
-            >
-              {suggestions.map((sugg) => (
+          {showLocationSuggestions && locationSuggestions.length > 0 && (
+            <ul className="absolute top-full left-0 right-0 bg-white border border-gray-300 rounded-lg max-h-52 overflow-y-auto z-20 mt-1">
+              {locationSuggestions.map((sugg) => (
                 <li
                   key={sugg.place_id}
-                  onMouseDown={() => { // use onMouseDown to select before blur
+                  onMouseDown={() => {
                     setSelectedLocation(sugg);
                     setQuery(sugg.display_name);
+                    setLocationSuggestions([]);
                   }}
-                  style={{
-                    padding: "10px 12px",
-                    borderBottom: "1px solid #eee",
-                    cursor: "pointer",
-                  }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = "#f5faff")}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
+                  className="px-3 py-2 cursor-pointer hover:bg-blue-50"
                 >
                   {sugg.display_name}
                 </li>
@@ -139,129 +150,46 @@ const TutorMapSearch = () => {
           )}
         </div>
 
-        {/* Subject Dropdown (Searchable + Creatable) */}
-        <div style={{ flex: 1, minWidth: 220 }}>
-          <CreatableSelect
-            value={subject ? { value: subject, label: subject } : null}
-            onChange={(newValue) => setSubject(newValue?.value || "")}
-            options={subjects.map((s) => ({ value: s.name, label: s.name }))}
-            placeholder="Select or type subject..."
-            isClearable
-            isSearchable
-            onCreateOption={(inputValue) => setSubject(inputValue)}
-            formatCreateLabel={(inputValue) => inputValue} // show typed text instead of "Create ..."
-            styles={{
-              control: (provided) => ({
-                ...provided,
-                minHeight: 48,      // same as location input
-                height: 48,
-                fontSize: 15,
-                borderRadius: 8,
-                border: "1.5px solid #ccc",
-              }),
-              valueContainer: (provided) => ({
-                ...provided,
-                height: 48,
-                padding: "0 14px", // match location input padding
-              }),
-              input: (provided) => ({
-                ...provided,
-                margin: 0,
-                padding: 0,
-              }),
-              indicatorsContainer: (provided) => ({
-                ...provided,
-                height: 48,
-              }),
-              menu: (provided) => ({
-                ...provided,
-                zIndex: 9999,
-              }),
-            }}
-          />
-        </div>
-
         {/* Search Button */}
         <button
           onClick={handleSearch}
           disabled={loading}
-          style={{
-            padding: "12px 20px",
-            fontSize: 15,
-            backgroundColor: loading ? "#ccc" : "#007bff",
-            color: "#fff",
-            border: "none",
-            borderRadius: 8,
-            fontWeight: 600,
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
+          className={`px-5 py-3 text-sm font-semibold rounded-lg ${
+            loading ? "bg-gray-300 cursor-not-allowed" : "bg-blue-600 text-white hover:bg-blue-700"
+          }`}
         >
           {loading ? "Searching..." : "Search"}
         </button>
       </div>
 
-      {error && (
-        <div style={{ color: "red", textAlign: "center", fontSize: 14, marginBottom: 16 }}>{error}</div>
-      )}
+      {error && <div className="text-red-500 text-center text-sm mb-4">{error}</div>}
 
       {tutors.length > 0 && (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: 20,
-            marginTop: 30,
-          }}
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mt-6">
           {tutors.map((tutor) => (
             <div
               key={tutor.id}
-              style={{
-                padding: 20,
-                backgroundColor: "#fff",
-                borderRadius: 12,
-                border: "1px solid #ddd",
-                boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
-                textAlign: "center",
-              }}
+              className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm text-center"
             >
-              <div
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: "50%",
-                  backgroundColor: "#007bff",
-                  color: "#fff",
-                  fontSize: 26,
-                  fontWeight: 700,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 12px",
-                  textTransform: "uppercase",
-                }}
-              >
+              <div className="w-16 h-16 rounded-full bg-blue-600 text-white text-2xl font-bold flex items-center justify-center mx-auto mb-3">
                 {(tutor.username || "T")[0]}
               </div>
-              <h3 style={{ fontSize: 17, marginBottom: 6 }}>{tutor.username || "Tutor"}</h3>
-              <p style={{ fontSize: 14, color: "#555", margin: "4px 0" }}>
-                Location: {tutor.location || "Unknown"}
+              <h3 className="text-lg font-semibold mb-1">{tutor.username || "Tutor"}</h3>
+              <p className="text-gray-600 text-sm mb-1">
+                Location: {tutor.location || "Not available"}
               </p>
-              <p style={{ fontSize: 14, color: "#555", margin: "4px 0" }}>
-                Trust Score: {tutor.trust_score ?? 0}
+              <p className="text-gray-600 text-sm mb-1">
+                Bio: {tutor.bio && tutor.bio.trim() !== "" ? tutor.bio : "Not available"}
+              </p>
+              <p className="text-gray-600 text-sm mb-1">
+                Education: {tutor.education && tutor.education.trim() !== "" ? tutor.education : "Not available"}
+              </p>
+              <p className="text-gray-600 text-sm mb-1">
+                Experience: {tutor.experience && tutor.experience.trim() !== "" ? tutor.experience : "Not available"}
               </p>
               <a
                 href={`/tutors/${tutor.id}`}
-                style={{
-                  display: "inline-block",
-                  marginTop: 10,
-                  padding: "8px 16px",
-                  backgroundColor: "#007bff",
-                  color: "#fff",
-                  textDecoration: "none",
-                  borderRadius: 6,
-                  fontWeight: 500,
-                }}
+                className="inline-block mt-2 px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700"
               >
                 View Profile
               </a>
@@ -271,9 +199,7 @@ const TutorMapSearch = () => {
       )}
 
       {tutors.length === 0 && !loading && hasSearched && (
-        <p style={{ marginTop: 40, textAlign: "center", color: "#777" }}>
-          No tutors found near your location.
-        </p>
+        <p className="text-center text-gray-500 mt-10">No tutors found near your location.</p>
       )}
     </div>
   );
