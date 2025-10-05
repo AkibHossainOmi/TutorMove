@@ -105,12 +105,6 @@ const TutorList = () => {
             Connect with qualified tutors tailored to your learning goals and
             schedule
           </p>
-          <button
-            onClick={() => setFiltersVisible(!filtersVisible)}
-            className="mt-6 inline-flex items-center rounded-xl bg-white/20 px-6 py-3 text-sm font-semibold text-white backdrop-blur hover:bg-white/30 transition"
-          >
-            {filtersVisible ? "Hide Filters" : "Show Filters"}
-          </button>
         </div>
       </div>
 
