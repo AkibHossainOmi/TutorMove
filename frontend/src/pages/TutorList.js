@@ -2,65 +2,23 @@ import React, { useEffect, useState } from "react";
 import TutorCard from "../components/TutorCard";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import axios from "axios";
-import { subjectApi, tutorAPI } from "../utils/apiService";
+import { tutorAPI } from "../utils/apiService";
 
 const PAGE_SIZE = 8;
 
 const TutorList = () => {
   const [tutors, setTutors] = useState([]);
-  const [subjects, setSubjects] = useState([]);
-  const [locations, setLocations] = useState([]);
-  const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedLocation, setSelectedLocation] = useState("");
-  const [premiumOnly, setPremiumOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [filtersVisible, setFiltersVisible] = useState(true);
-
-  useEffect(() => {
-    const fetchSubjects = async () => {
-      try {
-        const response = await subjectApi.getSubjects();
-        const list = Array.isArray(response.data)
-          ? response.data
-          : response.data?.results || [];
-        setSubjects(list);
-      } catch {
-        setSubjects([]);
-      }
-    };
-    fetchSubjects();
-  }, []);
-
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const res = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/locations/`
-        );
-        setLocations(Array.isArray(res.data) ? res.data : []);
-      } catch {
-        setLocations([]);
-      }
-    };
-    fetchLocations();
-  }, []);
 
   useEffect(() => {
     const fetchTutors = async () => {
       setLoading(true);
       setError(null);
       try {
-        const params = {
-          page,
-          page_size: PAGE_SIZE,
-          ...(selectedSubject && { subject: selectedSubject }),
-          ...(selectedLocation && { location: selectedLocation }),
-          ...(premiumOnly && { premium: true }),
-        };
+        const params = { page, page_size: PAGE_SIZE };
 
         const res = await tutorAPI.getTutors(params);
         const data = Array.isArray(res.data)
@@ -76,19 +34,7 @@ const TutorList = () => {
       }
     };
     fetchTutors();
-  }, [page, premiumOnly, selectedSubject, selectedLocation]);
-
-  useEffect(() => {
-    setPage(1);
-    setTutors([]);
-    setHasMore(true);
-  }, [premiumOnly, selectedSubject, selectedLocation]);
-
-  const resetFilters = () => {
-    setSelectedSubject("");
-    setSelectedLocation("");
-    setPremiumOnly(false);
-  };
+  }, [page]);
 
   return (
     <>
@@ -111,13 +57,6 @@ const TutorList = () => {
       {/* Main Content */}
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-sky-50 py-12">
         <div className="max-w-7xl mx-auto px-6">
-          {/* Filters */}
-          {filtersVisible && (
-            <div className="relative mb-10">
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-200 to-sky-200 blur opacity-60" />
-            </div>
-          )}
-
           {/* Loading */}
           {loading && (
             <div className="flex justify-center py-20">
@@ -140,15 +79,6 @@ const TutorList = () => {
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     No tutors found
                   </h3>
-                  <p className="text-gray-500 mb-6">
-                    Try adjusting your filters
-                  </p>
-                  <button
-                    onClick={resetFilters}
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition"
-                  >
-                    Reset Filters
-                  </button>
                 </div>
               ) : (
                 <>

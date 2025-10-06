@@ -27,8 +27,8 @@
 ⦁	Matched Jobs not showing on profile
 ⦁	Notifications not working
 ⦁	Current gig rank will be come down
-⦁	User-> Full Name on profile
-⦁	Location API on profile
+⦁	User-> Full Name on profile ✅
+⦁	Location API on profile ✅
 ⦁	User will request for deletation (Admin manual delete)
 ⦁	All Jobs will be in list
 ⦁	Phone number will be mandatory

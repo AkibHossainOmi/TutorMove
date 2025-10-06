@@ -32,7 +32,7 @@ const ProfileHeader = ({ profile }) => {
           )}
         </div>
         <div className="flex flex-col justify-center">
-          <h1 className="text-2xl md:text-3xl font-bold">{userData.username}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold">{userData.first_name} {userData.last_name}</h1>
           <p className="text-gray-600">{userType.charAt(0).toUpperCase() + userType.slice(1)}</p>
         </div>
       </div>

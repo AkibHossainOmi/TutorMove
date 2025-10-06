@@ -1,4 +1,3 @@
-// pages/JobList.jsx
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
@@ -8,7 +7,6 @@ import {
   FiMapPin,
   FiBook,
   FiClock,
-  FiFilter,
   FiSearch,
   FiAward,
   FiUser,
