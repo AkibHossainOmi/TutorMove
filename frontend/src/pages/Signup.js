@@ -213,6 +213,19 @@ const Signup = () => {
                       />
                     </div>
                   </div>
+                  {form.user_type === "tutor" && (
+                    <div>
+                      <label className={LABEL_BASE}>Phone Number</label>
+                      <input
+                        type="tel"
+                        name="phone_number"
+                        value={form.phone_number || ""}
+                        onChange={handleChange}
+                        placeholder="e.g. 017XXXXXXXX"
+                        className={FIELD_BASE}
+                      />
+                    </div>
+                  )}
 
                   {/* Password */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

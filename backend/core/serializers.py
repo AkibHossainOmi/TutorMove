@@ -71,10 +71,29 @@ class UserSerializer(serializers.ModelSerializer):
 class RegisterSerializer(serializers.ModelSerializer):
     user_type = serializers.ChoiceField(choices=[('student', 'Student'), ('tutor', 'Tutor')])
     password = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'username', 'user_type', 'email', 'password']
+        fields = [
+            'first_name',
+            'last_name',
+            'username',
+            'user_type',
+            'email',
+            'password',
+            'phone_number',
+        ]
+
+    def validate(self, attrs):
+        user_type = attrs.get("user_type")
+        phone_number = attrs.get("phone_number")
+
+        if user_type == "tutor" and not phone_number:
+            raise serializers.ValidationError({
+                "phone_number": "Phone number is required for tutors."
+            })
+        return attrs
 
     def create(self, validated_data):
         password = validated_data.pop('password')
