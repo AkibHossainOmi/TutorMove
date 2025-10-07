@@ -102,7 +102,7 @@ export const useProfile = () => {
       }
     } catch (err) {
       setUpdateStatus({
-        message: err.response?.data?.detail || err.message,
+        message: err.response?.data?.phone_number || err.message,
         type: 'error',
       });
     }

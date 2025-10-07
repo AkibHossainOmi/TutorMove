@@ -47,6 +47,13 @@ export default function WhatsAppLikeMessagingWS() {
     [user]
   );
 
+  const startConversation = useCallback(
+    (targetUser) => {
+      sendMessageWS({ type: 'chat.start_conversation', receiver_id: targetUser.id });
+    },
+    [sendMessageWS]
+  );
+
   const handleWSMessage = useCallback(
     (data) => {
       switch (data.type) {
@@ -154,12 +161,19 @@ export default function WhatsAppLikeMessagingWS() {
           break;
         case 'chat.search_results':
           setSearchResults(data.results);
+
+          if (usernameFromQuery) {
+            const targetUser = data.results.find(u => u.username === usernameFromQuery);
+            if (targetUser) {
+              startConversation(targetUser);
+            }
+          }
           break;
         default:
           break;
       }
     },
-    [activeConversation, conversations, sendMessageWS, user]
+    [activeConversation, conversations, sendMessageWS, user, usernameFromQuery, startConversation]
   );
 
   useEffect(() => {
@@ -223,13 +237,6 @@ export default function WhatsAppLikeMessagingWS() {
       sendMessageWS({ type: 'chat.search_user', keyword: searchTerm.trim() });
     }
   }, [searchTerm, sendMessageWS]);
-
-  const startConversation = useCallback(
-    (targetUser) => {
-      sendMessageWS({ type: 'chat.start_conversation', receiver_id: targetUser.id });
-    },
-    [sendMessageWS]
-  );
 
   const selectConversation = useCallback(
     (conv) => {

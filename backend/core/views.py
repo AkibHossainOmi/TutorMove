@@ -411,9 +411,14 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def edit_profile(self, request):
         user = request.user
+        old_phone = user.phone_number  # store old phone number
         serializer = self.get_serializer(user, data=request.data, partial=True)
         if serializer.is_valid():
-            serializer.save()
+            updated_user = serializer.save()
+            # If phone_number changed, mark phone_verified as False
+            if 'phone_number' in request.data and request.data['phone_number'] != old_phone:
+                updated_user.phone_verified = False
+                updated_user.save(update_fields=['phone_verified'])
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -18,7 +18,7 @@ const DashboardHeader = ({
       <div>
         <div className="flex items-center gap-4 mb-2">
           <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
-            Welcome back, {user?.username || 'Teacher'}!
+            Welcome back, {user?.first_name} {user?.last_name}!
           </h1>
           <TeacherVerificationBadge verified={user?.is_verified} />
         </div>
