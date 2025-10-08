@@ -25,13 +25,13 @@
 ⦁	watch tutor, jobs without login ✅
 ⦁	Homesearch will show subject while starts typing ✅
 ⦁	Matched Jobs not showing on profile
-⦁	Notifications not working
+⦁	Notifications not working ✅
 ⦁	Current gig rank will be come down
 ⦁	User-> Full Name on profile ✅
 ⦁	Location API on profile ✅
 ⦁	User will request for deletation (Admin manual delete)
 ⦁	All Jobs will be in list
-⦁	Phone number will be mandatory
+⦁	Phone number will be mandatory ✅
 
 ## Student Part:
 ⦁	Gigs sort not working

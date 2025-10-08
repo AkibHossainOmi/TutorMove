@@ -899,6 +899,8 @@ class JobViewSet(viewsets.ModelViewSet):
         ).order_by('-total_points_spent')
 
         tutor_data = []
+        notifications = []
+
         for tutor in tutors:
             if tutor.email:
                 verify_url = f"{settings.FRONTEND_SITE_URL}/jobs/{job.id}/"
@@ -912,13 +914,30 @@ class JobViewSet(viewsets.ModelViewSet):
                 </body></html>
                 """
                 text_content = f"New job posted: {job.description}\nView & apply here: {verify_url}"
+
+                # collect for bulk email
                 tutor_data.append({
                     'email': tutor.email,
                     'html_content': html_content,
                     'text_content': text_content
                 })
 
-        # Schedule emails in batches
+            # create in-app notification
+            notifications.append(Notification(
+                from_user=user,
+                to_user=tutor,
+                message=f"New job posted matching your subjects: {', '.join(active_job_subjects)}"
+            ))
+
+        # -------------------------------
+        # Save all notifications at once
+        # -------------------------------
+        if notifications:
+            Notification.objects.bulk_create(notifications)
+
+        # -------------------------------
+        # Send emails in batches
+        # -------------------------------
         schedule_job_emails(tutor_data)
 
     @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
