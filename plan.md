@@ -40,6 +40,9 @@
 ⦁	Rating & Review implementation
 ⦁	Filters not working on tutors
 ⦁	Packages sorting
+⦁ Active Job Count on dashboard is always 0
+⦁ Remove Favourite Tutors from Dashboard
+⦁ 
 
 ***# Future Update:***
 * Frontend Admin Panel
