@@ -73,18 +73,6 @@ const DashboardStats = ({ stats, favoriteTeachersCount }) => {
         icon={<JobIcon />}
         color="blue"
       />
-      <StatCard
-        title="Completed Jobs"
-        value={stats.completedJobs}
-        icon={<CompletedIcon />}
-        color="violet"
-      />
-      <StatCard
-        title="Favorite Tutors"
-        value={favoriteTeachersCount}
-        icon={<FavoriteIcon />}
-        color="amber"
-      />
     </div>
   );
 };

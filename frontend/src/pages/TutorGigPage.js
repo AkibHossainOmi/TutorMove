@@ -4,6 +4,7 @@ import { toast } from 'react-hot-toast';
 import { gigApi } from '../utils/apiService';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 const TutorGigPage = () => {
   const { id } = useParams();
@@ -16,6 +17,8 @@ const TutorGigPage = () => {
   const [predictedRank, setPredictedRank] = useState(null);
   const [predictLoading, setPredictLoading] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     subject: '',
@@ -134,25 +137,6 @@ const TutorGigPage = () => {
           <div className="h-4 bg-gray-200 rounded w-5/6 mb-2"></div>
           <div className="h-4 bg-gray-200 rounded w-4/6"></div>
         </div>
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          </div>
-          <div className="space-y-4">
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-            <div className="h-4 bg-gray-200 rounded w-2/3"></div>
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-          </div>
-        </div>
-        <div className="p-6 bg-gray-50">
-          <div className="h-6 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="flex space-x-4">
-            <div className="h-10 bg-gray-200 rounded w-1/4"></div>
-            <div className="h-10 bg-gray-200 rounded w-1/3"></div>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -184,18 +168,18 @@ const TutorGigPage = () => {
       <Navbar />
 
       <main className="flex-grow max-w-4xl mx-auto w-full p-4 mt-20 mb-10">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="bg-white rounded-xl shadow-xl overflow-hidden border border-gray-100">
 
-          {/* Gig Header */}
-          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          {/* Header */}
+          <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-indigo-50 to-blue-50 flex justify-between items-center">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900">
               {editing ? (
                 <input
                   type="text"
                   name="title"
                   value={formData.title}
                   onChange={handleInputChange}
-                  className="border p-2 rounded w-full text-2xl font-bold"
+                  className="border p-2 rounded w-full text-lg"
                 />
               ) : (
                 gig.subject || gig.title || 'Untitled Gig'
@@ -203,13 +187,13 @@ const TutorGigPage = () => {
             </h1>
             <button
               onClick={() => setEditing(!editing)}
-              className="bg-indigo-500 text-white px-4 py-2 rounded"
+              className={`px-4 py-2 rounded text-white font-medium ${editing ? 'bg-gray-500 hover:bg-gray-600' : 'bg-indigo-600 hover:bg-indigo-700'}`}
             >
               {editing ? 'Cancel' : 'Edit Gig'}
             </button>
           </div>
 
-          {/* Gig Description / Edit Form */}
+          {/* Description */}
           <div className="p-6 border-b border-gray-100">
             <h2 className="text-lg font-semibold text-gray-800 mb-3">Description</h2>
             {editing ? (
@@ -217,7 +201,7 @@ const TutorGigPage = () => {
                 name="description"
                 value={formData.description}
                 onChange={handleInputChange}
-                className="w-full border p-2 rounded"
+                className="w-full border p-3 rounded"
                 rows={5}
               />
             ) : (
@@ -227,7 +211,7 @@ const TutorGigPage = () => {
             )}
           </div>
 
-          {/* Gig Details / Edit Form */}
+          {/* Details */}
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             {['phone', 'education', 'experience', 'fee_details', 'subject'].map(field => (
               <div key={field}>
@@ -251,20 +235,18 @@ const TutorGigPage = () => {
             <div className="p-6 border-t border-gray-100 flex justify-end">
               <button
                 onClick={handleSave}
-                className="bg-green-500 text-white px-4 py-2 rounded"
+                className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
               >
                 Save Changes
               </button>
             </div>
           )}
 
-          {/* Current Rank & Boost Section */}
+          {/* Rank and Boost */}
           {gig.subject_active ? (
             <>
               <div className="p-6 border-t border-gray-100 bg-gray-50">
-                <h2 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                  Current Gig Rank
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">Current Gig Rank</h2>
                 {rankLoading ? (
                   <p className="text-gray-500">Loading rank...</p>
                 ) : rankInfo ? (
@@ -276,37 +258,51 @@ const TutorGigPage = () => {
                 )}
               </div>
 
-              {/* Boost Section */}
-              <div className="p-6 border-t border-gray-100">
-                <div className="flex items-center space-x-2 mb-2">
-                  <input
-                    type="number"
-                    min={0}
-                    value={creditsToSpend}
-                    onChange={(e) => setCreditsToSpend(e.target.value)}
-                    placeholder="Points to spend"
-                    className="border p-2 rounded w-32"
-                  />
-                  <button
-                    onClick={fetchPredictedRank}
-                    disabled={predictLoading}
-                    className="bg-indigo-500 text-white px-4 py-2 rounded"
-                  >
-                    {predictLoading ? 'Calculating...' : 'Predict Rank'}
-                  </button>
-                </div>
-                {predictedRank && (
-                  <p className="text-gray-700">
-                    Predicted Rank: <strong>{predictedRank.predicted_rank}</strong> of {predictedRank.total}
-                  </p>
-                )}
+              {/* Dropdown Section */}
+              <div className="border-t border-gray-100">
                 <button
-                  onClick={handleBoost}
-                  disabled={boosting}
-                  className="mt-2 bg-green-500 text-white px-4 py-2 rounded"
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="w-full flex justify-between items-center px-6 py-4 bg-indigo-600 text-white text-lg font-semibold hover:bg-indigo-700 transition-all"
                 >
-                  {boosting ? 'Boosting...' : 'Boost Gig'}
+                  <span>Boost & Predict Rank</span>
+                  {dropdownOpen ? <ChevronUp /> : <ChevronDown />}
                 </button>
+
+                {dropdownOpen && (
+                  <div className="p-6 bg-gray-50 animate-fadeIn">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <input
+                        type="number"
+                        min={0}
+                        value={creditsToSpend}
+                        onChange={(e) => setCreditsToSpend(e.target.value)}
+                        placeholder="Enter points"
+                        className="border p-2 rounded w-40"
+                      />
+                      <button
+                        onClick={fetchPredictedRank}
+                        disabled={predictLoading}
+                        className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded"
+                      >
+                        {predictLoading ? 'Calculating...' : 'Predict Rank'}
+                      </button>
+                    </div>
+
+                    {predictedRank && (
+                      <p className="text-gray-700 mb-2">
+                        Predicted Rank: <strong>{predictedRank.predicted_rank}</strong> of {predictedRank.total}
+                      </p>
+                    )}
+
+                    <button
+                      onClick={handleBoost}
+                      disabled={boosting}
+                      className="mt-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded"
+                    >
+                      {boosting ? 'Boosting...' : 'Boost Gig'}
+                    </button>
+                  </div>
+                )}
               </div>
             </>
           ) : (

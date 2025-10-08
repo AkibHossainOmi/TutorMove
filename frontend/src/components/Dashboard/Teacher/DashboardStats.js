@@ -36,12 +36,6 @@ const DashboardStats = ({ stats, myGigs }) => {
         icon={<GigIcon />}
         color="blue"
       />
-      <StatCard
-        title="Completed Jobs"
-        value={stats.completedJobs}
-        icon={<JobIcon />}
-        color="violet"
-      />
     </div>
   );
 };

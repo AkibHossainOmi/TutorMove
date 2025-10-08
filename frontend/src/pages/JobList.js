@@ -26,7 +26,7 @@ const JobList = () => {
     const fetchJobs = async () => {
       try {
         const res = await jobAPI.getJobs();
-        let allJobs = res.data;
+        let allJobs = res.data || [];
 
         const params = new URLSearchParams(location.search);
         const type = params.get("type");
@@ -61,33 +61,39 @@ const JobList = () => {
     navigate(type === "all" ? "/jobs" : `/jobs?type=${type}`);
   };
 
-  const filteredJobs = jobs.filter(
-    (job) =>
-      job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.subject_details
-        ?.join(" ")
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      job.location?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredJobs = jobs.filter((job) => {
+    if (!searchQuery) return true;
+    const query = searchQuery.toLowerCase();
+
+    const textFields = [
+      job.description,
+      job.location,
+      job.mode,
+      job.service_type,
+      Array.isArray(job.subject_details)
+        ? job.subject_details.join(" ")
+        : job.subject_details,
+    ];
+
+    return textFields.some((field) =>
+      String(field || "").toLowerCase().includes(query)
+    );
+  });
 
   const JobSkeleton = () => (
-    <div className="relative rounded-3xl bg-white shadow-md p-6 animate-pulse">
-      <div className="h-6 w-3/4 bg-gray-200 rounded mb-4"></div>
-      <div className="space-y-3 mb-6">
-        <div className="h-4 w-full bg-gray-200 rounded"></div>
-        <div className="h-4 w-5/6 bg-gray-200 rounded"></div>
-        <div className="h-4 w-4/6 bg-gray-200 rounded"></div>
-      </div>
+    <div className="relative rounded-2xl bg-white shadow-md p-6 animate-pulse">
+      <div className="h-6 w-3/4 bg-gray-200 rounded mb-3"></div>
+      <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
+      <div className="h-4 w-5/6 bg-gray-200 rounded mb-4"></div>
       <div className="h-10 w-32 bg-gray-200 rounded-xl mx-auto"></div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
 
-      {/* Hero */}
+      {/* Hero Section */}
       <div className="relative bg-gradient-to-br from-indigo-600 via-sky-500 to-purple-600 text-white py-20 text-center overflow-hidden">
         <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
         <div className="relative max-w-3xl mx-auto px-6">
@@ -101,7 +107,7 @@ const JobList = () => {
             <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
-              className="w-full rounded-xl border border-gray-200 bg-white/70 backdrop-blur px-10 py-4 text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
+              className="w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur px-10 py-4 text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
               placeholder="Search jobs by title, skills, or location"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -110,9 +116,9 @@ const JobList = () => {
         </div>
       </div>
 
-      {/* Main */}
-      <main className="flex-grow max-w-7xl mx-auto px-6 py-12 -mt-10">
-        {/* Horizontal Filters */}
+      {/* Main Section */}
+      <main className="flex-grow max-w-6xl mx-auto px-6 py-12 -mt-10">
+        {/* Filters */}
         <div className="relative rounded-3xl bg-white shadow p-6 mb-10">
           <div className="flex flex-wrap items-center justify-center gap-4">
             <JobFilters
@@ -122,7 +128,7 @@ const JobList = () => {
           </div>
         </div>
 
-        {/* Jobs */}
+        {/* Job Count Header */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold text-gray-900">
             {filteredJobs.length}{" "}
@@ -133,8 +139,9 @@ const JobList = () => {
           </div>
         </div>
 
+        {/* Job List */}
         {loading ? (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {[...Array(4)].map((_, i) => (
               <JobSkeleton key={i} />
             ))}
@@ -165,7 +172,7 @@ const JobList = () => {
             )}
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             {filteredJobs.map((job) => (
               <JobCard key={job.id} job={job} />
             ))}
@@ -178,59 +185,53 @@ const JobList = () => {
   );
 };
 
-// Job Card
+// Job Card Component
 const JobCard = ({ job }) => {
   return (
-    <div className="relative rounded-3xl bg-white shadow-md hover:shadow-lg transition p-6">
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 mb-4">
+    <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all p-6 border border-gray-100 hover:border-indigo-100">
+      <div className="flex flex-col md:flex-row md:items-center gap-6 flex-1">
+        <div className="flex-shrink-0 bg-indigo-50 p-4 rounded-xl">
+          <FiBriefcase className="text-indigo-600 text-2xl" />
+        </div>
         <div>
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            {job.description || "Job Title"}
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">
+            {job.description || "Untitled Job"}
           </h3>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <span className="px-3 py-1.5 text-xs rounded-full font-medium bg-indigo-100 text-indigo-800">
+          <div className="flex flex-wrap gap-2 mb-2">
+            <span className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
               {job.service_type || "General"}
             </span>
             {job.mode?.includes("Online") && (
-              <span className="px-3 py-1.5 text-xs rounded-full font-medium bg-emerald-100 text-emerald-800">
+              <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800">
                 Remote
               </span>
             )}
             {job.mode?.includes("Offline") && (
-              <span className="px-3 py-1.5 text-xs rounded-full font-medium bg-amber-100 text-amber-800">
+              <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
                 On-site
               </span>
             )}
           </div>
+
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+            <InfoItem icon={<FiBook />} text={job.subject_details?.join(", ") || "Not specified"} />
+            <InfoItem icon={<FiMapPin />} text={job.location || "Remote"} />
+            <InfoItem icon={<FiUser />} text={job.mode || "Not specified"} />
+            <InfoItem
+              icon={<FiClock />}
+              text={`Posted ${new Date(job.created_at).toLocaleDateString()}`}
+            />
+          </div>
         </div>
-        <div className="text-lg font-semibold text-indigo-600 whitespace-nowrap">
+      </div>
+
+      <div className="flex flex-col items-end gap-3">
+        <div className="text-lg font-semibold text-indigo-600">
           {job.budget || "Negotiable"}
-        </div>
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600 mb-6">
-        <InfoItem
-          icon={<FiBook />}
-          text={job.subject_details?.join(", ") || "Not specified"}
-        />
-        <InfoItem icon={<FiMapPin />} text={job.location || "Remote"} />
-        <InfoItem icon={<FiUser />} text={job.mode || "Not specified"} />
-        <InfoItem
-          icon={<FiClock />}
-          text={`Posted ${new Date(job.created_at).toLocaleDateString()} at ${new Date(
-            job.created_at
-          ).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`}
-        />
-      </div>
-
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-        <div className="flex items-center text-sm text-gray-500">
-          <FiAward className="mr-1.5 text-gray-400" />
-          <span>Verified employer</span>
         </div>
         <Link
           to={`/jobs/${job.id}`}
-          className="inline-flex items-center rounded-xl bg-green-600 px-5 py-2.5 text-sm font-medium text-white shadow hover:bg-white"
+          className="inline-flex items-center rounded-xl bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
         >
           View Details
           <svg
@@ -253,13 +254,12 @@ const JobCard = ({ job }) => {
 };
 
 const InfoItem = ({ icon, text }) => (
-  <div className="flex items-center">
-    <div className="p-2 bg-gray-50 rounded-lg mr-3 text-gray-500">{icon}</div>
+  <div className="flex items-center gap-2">
+    <span className="text-gray-500">{icon}</span>
     <span>{text}</span>
   </div>
 );
 
-// Filters
 const JobFilters = ({ selectedType, onFilterChange }) => {
   const filters = [
     { id: "all", label: "All Jobs" },
@@ -269,12 +269,12 @@ const JobFilters = ({ selectedType, onFilterChange }) => {
   ];
 
   return (
-    <div className="flex flex-wrap justify-center gap-4">
+    <div className="flex flex-wrap justify-center gap-3">
       {filters.map((filter) => (
         <button
           key={filter.id}
           onClick={() => onFilterChange(filter.id)}
-          className={`px-5 py-2 rounded-xl text-sm font-medium border transition ${
+          className={`px-5 py-2 rounded-xl text-sm font-medium border transition-all ${
             selectedType === filter.id
               ? "bg-indigo-600 text-white border-indigo-600 shadow"
               : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"

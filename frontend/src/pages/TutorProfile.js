@@ -68,7 +68,7 @@ export default function TutorProfilePage() {
                 <p className="text-gray-600">{profile.location || "Location not specified"}</p>
                 {profile.is_verified && (
                   <span className="inline-block mt-2 bg-green-100 text-green-700 text-sm font-medium px-3 py-1 rounded-full">
-                    ✅ Verified Tutor
+                    ✅ Verified
                   </span>
                 )}
               </div>

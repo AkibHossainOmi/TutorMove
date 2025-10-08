@@ -26,11 +26,11 @@
 ⦁	Homesearch will show subject while starts typing ✅
 ⦁	Matched Jobs not showing on profile
 ⦁	Notifications not working ✅
-⦁	Current gig rank will be come down
+⦁	Current gig rank will be come down ✅
 ⦁	User-> Full Name on profile ✅
 ⦁	Location API on profile ✅
 ⦁	User will request for deletation (Admin manual delete)
-⦁	All Jobs will be in list
+⦁	All Jobs will be in list ✅
 ⦁	Phone number will be mandatory ✅
 
 ## Student Part:
@@ -39,9 +39,9 @@
 ⦁	Student can give reward to teacher 50 points (Teacher)
 ⦁	Rating & Review implementation
 ⦁	Filters not working on tutors
-⦁	Packages sorting
-⦁ Active Job Count on dashboard is always 0
-⦁ Remove Favourite Tutors from Dashboard
+⦁	Packages sorting ✅
+⦁   Active Job Count on dashboard is always 0
+⦁   Remove Favourite Tutors from Dashboard ✅
 ⦁ 
 
 ***# Future Update:***
