@@ -7,7 +7,7 @@ import UnlockContactModal from '../components/UnlockContactModal';
 import BuyCreditsModal from '../components/BuyCreditsModal';
 import UnlockJobModal from '../components/UnlockJobModal';
 
-export default function WhatsAppLikeMessagingWS() {
+export default function ModernChatInterface() {
   const [showUnlockJobModal, setShowUnlockJobModal] = useState(false);
   const [unlockJobUserId, setUnlockJobUserId] = useState(null);
   const [user, setUser] = useState(null);
@@ -21,6 +21,7 @@ export default function WhatsAppLikeMessagingWS() {
   const [showUnlockModal, setShowUnlockModal] = useState(false);
   const [unlockTutorId, setUnlockTutorId] = useState(null);
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const socketRef = useRef(null);
   const messageContainerRef = useRef(null);
@@ -42,6 +43,7 @@ export default function WhatsAppLikeMessagingWS() {
         ?.map((p) => ({
           id: p.id ?? p.user__id,
           username: p.username ?? p.user__username,
+          avatar: p.avatar || `https://ui-avatars.com/api/?name=${p.username ?? p.user__username}&background=6366f1&color=fff`
         }))
         .find((u) => u.id !== user?.user_id),
     [user]
@@ -61,6 +63,7 @@ export default function WhatsAppLikeMessagingWS() {
           const incomingConvId = data.message.conversation_id;
           const isFromOther = data.message.sender.id !== user?.user_id;
           const convExists = conversations.some((c) => c.id === incomingConvId);
+          
           if (!convExists) {
             const newConv = {
               id: incomingConvId,
@@ -76,6 +79,7 @@ export default function WhatsAppLikeMessagingWS() {
               )
             );
           }
+
           const isActive = incomingConvId === activeConversation?.id;
           if (isActive) {
             setMessages((prev) => [
@@ -114,6 +118,7 @@ export default function WhatsAppLikeMessagingWS() {
           break;
         case 'chat.conversations':
           setConversations(data.conversations);
+          setIsLoading(false);
           break;
         case 'chat.messages':
           setMessages(data.messages);
@@ -161,6 +166,7 @@ export default function WhatsAppLikeMessagingWS() {
           break;
         case 'chat.search_results':
           setSearchResults(data.results);
+          setIsLoading(false);
 
           if (usernameFromQuery) {
             const targetUser = data.results.find(u => u.username === usernameFromQuery);
@@ -190,8 +196,10 @@ export default function WhatsAppLikeMessagingWS() {
     const ws = new ChatSocket(user.user_id, (data) => handleWSMessageRef.current?.(data));
     socketRef.current = ws;
     const onOpen = () => {
+      setIsLoading(true);
       sendMessageWS({ type: 'chat.get_conversations' });
       if (usernameFromQuery) {
+        setIsLoading(true);
         sendMessageWS({ type: 'chat.search_user', keyword: usernameFromQuery });
       }
     };
@@ -209,7 +217,7 @@ export default function WhatsAppLikeMessagingWS() {
     if (container) {
       container.scrollTop = container.scrollHeight;
     }
-  }, [messages]);
+  }, [messages, partnerTyping]);
 
   const sendMessage = useCallback(() => {
     if (!newMessage.trim() || !activeConversation) return;
@@ -234,6 +242,7 @@ export default function WhatsAppLikeMessagingWS() {
 
   const handleSearch = useCallback(() => {
     if (searchTerm.trim()) {
+      setIsLoading(true);
       sendMessageWS({ type: 'chat.search_user', keyword: searchTerm.trim() });
     }
   }, [searchTerm, sendMessageWS]);
@@ -256,197 +265,261 @@ export default function WhatsAppLikeMessagingWS() {
     setShowUnlockModal(false);
   }, [sendMessageWS, unlockTutorId]);
 
+  const formatTime = (timestamp) => {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInHours = (now - date) / (1000 * 60 * 60);
+    
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else if (diffInHours < 168) {
+      return date.toLocaleDateString([], { weekday: 'short' });
+    } else {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+  };
+
   return (
     <>
       <Navbar />
-      <div className="min-h-[calc(100vh-160px)] bg-sky-50 p-6 mt-20">
-        <div className="mx-auto max-w-7xl h-[82vh] bg-white rounded-3xl shadow-xl grid grid-cols-12 overflow-hidden">
-          <aside className="col-span-4 bg-gradient-to-b from-sky-600 to-sky-700 text-white p-5 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center text-xl font-semibold">M</div>
-                <div>
-                  <div className="text-sm font-semibold">Messages</div>
-                  <div className="text-xs opacity-80">All chats</div>
-                </div>
-              </div>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search users or username"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full rounded-md py-2 px-3 bg-white/10 placeholder-white/80 focus:outline-none"
-              />
-              <button
-                onClick={handleSearch}
-                className="absolute right-2 top-2 bg-white/20 px-3 py-1 rounded-md text-xs"
-              >
-                Search
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              {searchResults.length > 0 && (
-                <div className="mb-3 rounded-md bg-white/5 p-2">
-                  {searchResults.map((u) => (
-                    <div
-                      key={u.id}
-                      onClick={() => startConversation(u)}
-                      className="py-2 px-3 rounded-md cursor-pointer hover:bg-white/10"
-                    >
-                      <div className="text-sm font-medium">{u.username}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <div className="space-y-2">
-                {conversations.map((conv) => {
-                  const other = getOtherUser(conv);
-                  const lastMsg = conv.last_message?.content || '';
-                  const shouldBold =
-                    conv.has_unread &&
-                    conv.last_message?.sender?.id !== user?.user_id &&
-                    activeConversation?.id !== conv.id;
-                  return (
-                    <div
-                      key={conv.id}
-                      onClick={() => selectConversation(conv)}
-                      className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition ${
-                        activeConversation?.id === conv.id ? 'bg-white/10' : 'hover:bg-white/5'
-                      }`}
-                    >
-                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-sm font-semibold">
-                        {other?.username?.[0]?.toUpperCase() || 'U'}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className={`flex justify-between items-center`}>
-                          <div className={`truncate ${shouldBold ? 'font-semibold' : 'font-medium'}`}>
-                            {other?.username || 'Unknown'}
-                          </div>
-                          <div className="text-xs opacity-70">
-                            {conv.last_message?.timestamp
-                              ? new Date(conv.last_message.timestamp).toLocaleTimeString([], {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                })
-                              : ''}
-                          </div>
-                        </div>
-                        <div className="text-xs opacity-80 truncate">
-                          {lastMsg.length > 40 ? `${lastMsg.slice(0, 37)}...` : lastMsg}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="pt-3">
-              <button
-                onClick={() => {
-                  setSearchTerm('');
-                  setSearchResults([]);
-                }}
-                className="w-full py-2 rounded-md bg-white/10 hover:bg-white/20 text-sm"
-              >
-                Clear search
-              </button>
-            </div>
-          </aside>
-
-          <main className="col-span-8 flex flex-col">
-            {activeConversation ? (
-              <>
-                <div className="flex items-center justify-between px-6 py-4 border-b">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-sky-100 flex items-center justify-center text-sky-700 font-semibold">
-                      {getOtherUser(activeConversation)?.username?.[0]?.toUpperCase() || 'U'}
-                    </div>
-                    <div>
-                      <div className="text-lg font-semibold">
-                        {getOtherUser(activeConversation)?.username || 'Unknown'}
-                      </div>
-                      <div className="text-sm text-sky-600">
-                        {activeConversation?.last_active ? 'Active' : ''}
-                      </div>
-                    </div>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 pt-20">
+        <div className="max-w-7xl mx-auto h-[calc(100vh-120px)] p-4">
+          <div className="bg-white rounded-2xl shadow-xl h-full flex overflow-hidden">
+            {/* Sidebar */}
+            <div className="w-96 border-r border-slate-200 flex flex-col">
+              {/* Header */}
+              <div className="p-6 border-b border-slate-200">
+                <div className="flex items-center justify-between">
+                  <h1 className="text-2xl font-bold text-slate-900">Messages</h1>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white font-semibold">
+                    {user?.username?.[0]?.toUpperCase() || 'U'}
                   </div>
                 </div>
+                
+                {/* Search */}
+                <div className="relative mt-4">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search conversations..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    className="w-full pl-10 pr-4 py-3 bg-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
 
-                <div ref={messageContainerRef} className="flex-1 overflow-y-auto px-6 py-5 space-y-4 bg-slate-50">
-                  {messages.map((msg) => {
-                    const isSelf = msg.sender.id === user?.user_id;
-                    return (
-                      <div key={msg.id} className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                        <div className={`max-w-[70%] break-words px-4 py-2 rounded-lg shadow-sm ${isSelf ? 'bg-sky-600 text-white rounded-br-none' : 'bg-white border border-slate-200 rounded-bl-none'}`}>
-                          <div className="text-sm">{msg.content}</div>
-                          <div className="flex items-center justify-end text-[11px] mt-1 opacity-70 space-x-2">
-                            <div>
-                              {msg.timestamp
-                                ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                : ''}
-                            </div>
-                            {isSelf && (
-                              <div className="flex items-center">
-                                {msg.status === 'seen' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 17l4 4L19 11" />
-                                  </svg>
-                                ) : msg.status === 'delivered' ? (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 17l4 4L19 11" />
-                                  </svg>
-                                ) : (
-                                  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
+              {/* Conversations List */}
+              <div className="flex-1 overflow-y-auto">
+                {searchResults.length > 0 && (
+                  <div className="p-4 border-b border-slate-200">
+                    <h3 className="text-sm font-semibold text-slate-600 mb-2">Search Results</h3>
+                    {searchResults.map((u) => (
+                      <div
+                        key={u.id}
+                        onClick={() => startConversation(u)}
+                        className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors"
+                      >
+                        <img
+                          src={u.avatar || `https://ui-avatars.com/api/?name=${u.username}&background=6366f1&color=fff`}
+                          alt={u.username}
+                          className="w-10 h-10 rounded-full"
+                        />
+                        <div className="flex-1">
+                          <div className="font-medium text-slate-900">{u.username}</div>
+                          <div className="text-sm text-slate-500">Start conversation</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="p-2">
+                  {isLoading && conversations.length === 0 ? (
+                    <div className="flex justify-center items-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                    </div>
+                  ) : conversations.length === 0 ? (
+                    <div className="text-center py-8 text-slate-500">
+                      <svg className="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                      <p>No conversations yet</p>
+                    </div>
+                  ) : (
+                    conversations.map((conv) => {
+                      const other = getOtherUser(conv);
+                      const lastMsg = conv.last_message?.content || 'No messages yet';
+                      const hasUnread = conv.has_unread && activeConversation?.id !== conv.id;
+
+                      return (
+                        <div
+                          key={conv.id}
+                          onClick={() => selectConversation(conv)}
+                          className={`flex items-center gap-4 p-4 rounded-xl cursor-pointer transition-all ${
+                            activeConversation?.id === conv.id 
+                              ? 'bg-blue-50 border border-blue-100' 
+                              : 'hover:bg-slate-50'
+                          }`}
+                        >
+                          <div className="relative">
+                            <img
+                              src={other?.avatar}
+                              alt={other?.username}
+                              className="w-12 h-12 rounded-full"
+                            />
+                            {hasUnread && (
+                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className={`font-semibold truncate ${hasUnread ? 'text-slate-900' : 'text-slate-700'}`}>
+                                {other?.username || 'Unknown'}
                               </div>
+                              <div className="text-xs text-slate-500">
+                                {formatTime(conv.last_message?.timestamp)}
+                              </div>
+                            </div>
+                            <div className={`text-sm truncate ${hasUnread ? 'text-slate-900 font-medium' : 'text-slate-500'}`}>
+                              {lastMsg.length > 50 ? `${lastMsg.slice(0, 47)}...` : lastMsg}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Chat Area */}
+            <div className="flex-1 flex flex-col">
+              {activeConversation ? (
+                <>
+                  {/* Chat Header */}
+                  <div className="border-b border-slate-200 p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={getOtherUser(activeConversation)?.avatar}
+                          alt={getOtherUser(activeConversation)?.username}
+                          className="w-12 h-12 rounded-full"
+                        />
+                        <div>
+                          <h2 className="text-lg font-semibold text-slate-900">
+                            {getOtherUser(activeConversation)?.username || 'Unknown'}
+                          </h2>
+                          <div className="text-sm text-slate-500 flex items-center gap-1">
+                            {partnerTyping ? (
+                              <>
+                                <div className="flex gap-1">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                                </div>
+                                <span>Typing...</span>
+                              </>
+                            ) : (
+                              <span>Online</span>
                             )}
                           </div>
                         </div>
                       </div>
-                    );
-                  })}
-                  {partnerTyping && (
-                    <div className="text-sm text-slate-500 italic">Typing...</div>
-                  )}
-                </div>
+                    </div>
+                  </div>
 
-                <div className="px-6 py-4 border-t bg-white flex items-center gap-3">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => {
-                      setNewMessage(e.target.value);
-                      handleTyping();
-                    }}
-                    onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Write a message"
-                    className="flex-1 rounded-full border border-slate-200 px-4 py-3 focus:outline-none"
-                  />
-                  <button
-                    onClick={sendMessage}
-                    className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-sky-600 text-white hover:bg-sky-700"
+                  {/* Messages */}
+                  <div 
+                    ref={messageContainerRef}
+                    className="flex-1 overflow-y-auto bg-slate-50 p-6 space-y-4"
                   >
-                    Send
-                  </button>
+                    {messages.map((msg) => {
+                      const isSelf = msg.sender.id === user?.user_id;
+                      return (
+                        <div key={msg.id} className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`max-w-[70%] ${isSelf ? 'ml-auto' : 'mr-auto'}`}>
+                            <div className={`rounded-2xl px-4 py-3 ${
+                              isSelf 
+                                ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-br-md' 
+                                : 'bg-white border border-slate-200 rounded-bl-md'
+                            }`}>
+                              <div className="text-sm leading-relaxed">{msg.content}</div>
+                              <div className={`flex items-center gap-2 mt-1 text-xs ${
+                                isSelf ? 'text-blue-100' : 'text-slate-400'
+                              }`}>
+                                <span>{formatTime(msg.timestamp)}</span>
+                                {isSelf && (
+                                  <span className="flex items-center">
+                                    {msg.status === 'seen' ? 'Seen' : msg.status === 'delivered' ? 'Delivered' : 'Sent'}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Message Input */}
+                  <div className="border-t border-slate-200 p-6">
+                    <div className="flex items-center gap-4">
+                      <div className="flex-1 bg-white border border-slate-200 rounded-2xl px-4 py-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                        <input
+                          type="text"
+                          value={newMessage}
+                          onChange={(e) => {
+                            setNewMessage(e.target.value);
+                            handleTyping();
+                          }}
+                          onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                          placeholder="Type a message..."
+                          className="w-full focus:outline-none text-slate-700 placeholder-slate-400"
+                        />
+                      </div>
+                      <button
+                        onClick={sendMessage}
+                        disabled={!newMessage.trim()}
+                        className={`p-3 rounded-xl transition-all ${
+                          newMessage.trim() 
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105' 
+                            : 'bg-slate-200 text-slate-400 cursor-not-allowed'
+                        }`}
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                /* Empty State */
+                <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8">
+                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center mb-6">
+                    <svg className="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-slate-600 mb-2">No conversation selected</h3>
+                  <p className="text-slate-500 text-center max-w-md">
+                    Choose a conversation from the sidebar or search for users to start messaging
+                  </p>
                 </div>
-              </>
-            ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-slate-400">
-                <div className="text-xl font-semibold">No conversation selected</div>
-                <div className="mt-2">Select a chat from the left or search users to start a conversation</div>
-              </div>
-            )}
-          </main>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
+      {/* Modals */}
       <UnlockContactModal
         show={showUnlockModal}
         tutorId={unlockTutorId}
@@ -475,7 +548,7 @@ export default function WhatsAppLikeMessagingWS() {
           setShowBuyCreditsModal(false);
           window.location.href = '/buy-points';
         }}
-        message="You don’t have enough points to unlock this contact."
+        message="You don't have enough points to unlock this contact."
       />
 
       <Footer />
