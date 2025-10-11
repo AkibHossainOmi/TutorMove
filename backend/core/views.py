@@ -1129,6 +1129,107 @@ class JobViewSet(viewsets.ModelViewSet):
         # 3. Floor = 20% of base
         min_price = int(base_price * 0.20)
         return max(price, min_price)
+    
+    @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
+    def applicants(self, request, pk=None):
+        """
+        Returns a list of tutors who have applied for this job (or unlocked it),
+        sorted by total credits spent on their gigs (descending).
+        If the requesting user is a student, email and phone are only
+        shown if the contact is unlocked.
+        """
+        user = request.user
+
+        try:
+            job = Job.objects.get(pk=pk)
+        except Job.DoesNotExist:
+            return Response({"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Tutors who unlocked the job
+        unlocked_tutor_ids = JobUnlock.objects.filter(job=job).values_list('tutor_id', flat=True)
+
+        # Tutors who have gigs in the job subjects
+        job_subject_names = list(job.subjects.filter(is_active=True).values_list("name", flat=True))
+        if not job_subject_names:
+            return Response([], status=status.HTTP_200_OK)
+
+        tutors = User.objects.filter(
+            user_type="tutor",
+            gigs__subject__in=job_subject_names,
+            id__in=unlocked_tutor_ids  # Only those who unlocked/applied
+        ).distinct().order_by('-gigs__used_credits')
+
+        tutor_list = []
+        for tutor in tutors:
+            contact_unlocked = ContactUnlock.objects.filter(
+                unlocker=user,
+                target=tutor
+            ).exists() if user.user_type == "student" else True  # tutors see full info
+
+            tutor_list.append({
+                "id": tutor.id,
+                "username": tutor.username,
+                "email": tutor.email if contact_unlocked else None,
+                "phone": str(tutor.phone_number) if contact_unlocked and tutor.phone_number else None,
+            })
+
+        return Response(tutor_list, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['POST'], permission_classes=[IsAuthenticated])
+    def choose_tutor(self, request, pk=None):
+        """
+        Student chooses a tutor for this job. Job status is set to 'Assigned'.
+        """
+        user = request.user
+        if user.user_type != 'student':
+            return Response({"detail": "Only students can choose a tutor."}, status=status.HTTP_403_FORBIDDEN)
+
+        job = get_object_or_404(Job, pk=pk)
+        tutor_id = request.data.get('tutor_id')
+
+        if not tutor_id:
+            return Response({"detail": "tutor_id is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            tutor = User.objects.get(id=tutor_id, user_type='tutor')
+        except User.DoesNotExist:
+            return Response({"detail": "Tutor not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Optional: check if tutor applied/unlocked this job
+        if not JobUnlock.objects.filter(job=job, tutor=tutor).exists():
+            return Response({"detail": "Tutor has not unlocked/applied for this job."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # Assign the tutor and update job status
+        job.assigned_tutor = tutor
+        job.status = 'Assigned'
+        job.save()
+
+        return Response({
+            "detail": f"Tutor {tutor.username} has been assigned to this job.",
+            "job_id": job.id,
+            "assigned_tutor": tutor.id,
+            "status": job.status
+        }, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['post'], url_path='complete', permission_classes=[IsAuthenticated])
+    def complete_job(self, request, pk=None):
+        try:
+            job = self.get_object()
+        except Job.DoesNotExist:
+            return Response({"detail": "Job not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Only assigned tutor can mark complete
+        if job.assigned_tutor != request.user:
+            return Response({"detail": "You are not assigned to this job."}, status=status.HTTP_403_FORBIDDEN)
+        
+        if job.status == 'Completed':
+            return Response({"detail": "Job is already completed."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        job.status = 'Completed'
+        job.save()
+        serializer = self.get_serializer(job)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 # --- ApplicationViewSet ---
 class ApplicationViewSet(viewsets.ModelViewSet):

@@ -4,7 +4,7 @@ export default class ChatSocket {
   constructor(userId, onMessage) {
     this.userId = userId;
     this.onMessage = onMessage;
-    this.host = `wss://${process.env.REACT_APP_WEBSOCKET_URL}`; // adjust if needed
+    this.host = `${process.env.REACT_APP_WEBSOCKET_PROTOCOL}://${process.env.REACT_APP_WEBSOCKET_URL}`; // adjust if needed
     this.reconnectDelay = 1000;
     this.maxReconnectDelay = 16000;
     this.messageQueue = [];

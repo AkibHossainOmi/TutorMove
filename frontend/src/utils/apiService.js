@@ -169,6 +169,14 @@ export const jobAPI = {
   getJobUnlockPreview: (jobId) => apiService.get(`/api/jobs/${jobId}/preview/`),
 
   getMatchedJobs: () => apiService.get('/api/jobs/matched_jobs/'),
+
+  getJobApplicants: (jobId) =>
+    apiService.get(`/api/jobs/${jobId}/applicants/`),
+
+  chooseTutor: (jobId, tutorId) =>
+    apiService.post(`/api/jobs/${jobId}/choose_tutor/`, { tutor_id: tutorId }),
+  
+  completeJob: (jobId) => apiService.post(`/api/jobs/${jobId}/complete/`),
 };
 
 export const gigApi = {

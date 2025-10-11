@@ -8,6 +8,7 @@ import {
   FiAlertCircle, FiDollarSign, FiClock, FiGlobe, FiPhone, FiUsers 
 } from 'react-icons/fi';
 import { jobAPI } from '../utils/apiService';
+import JobApplicants from '../components/JobApplicants';
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -66,8 +67,6 @@ const JobDetail = () => {
       setJobUnlocked(true);
       setUnlockStatus('success');
       setCreditsNeeded(0);
-
-      // Update applicants count after unlock
       setJob(prev => ({ ...prev, applicants_count: (prev.applicants_count || 0) + 1 }));
     } catch (err) {
       console.error('Error unlocking job:', err);
@@ -79,6 +78,16 @@ const JobDetail = () => {
       } else {
         setUnlockStatus('failed');
       }
+    }
+  };
+
+  const handleMarkComplete = async (jobId) => {
+    try {
+      await jobAPI.completeJob(jobId);
+      setJob(prev => ({ ...prev, status: 'Completed' }));
+    } catch (err) {
+      console.error('Error completing job:', err);
+      alert('Failed to mark job as completed.');
     }
   };
 
@@ -137,9 +146,24 @@ const JobDetail = () => {
                 </span>
               </div>
             </div>
-            <span className="bg-white/20 px-4 py-2 rounded-full text-sm font-medium">
-              {job.subject_details?.join(', ')}
-            </span>
+            
+            <div className="flex items-center space-x-2">
+              {/* Subjects */}
+              <span className="bg-white/20 px-4 py-2 rounded-full text-sm font-medium">
+                {job.subject_details?.join(', ')}
+              </span>
+              
+              {/* Job Status */}
+              <span
+                className={`bg-white/20 px-4 py-2 rounded-full text-sm font-medium ${
+                  job.status === 'Open' ? 'bg-blue-500 text-white' :
+                  job.status === 'Assigned' ? 'bg-green-500 text-white' :
+                  job.status === 'Completed' ? 'bg-gray-400 text-white' : 'bg-gray-200 text-gray-800'
+                }`}
+              >
+                {job.status}
+              </span>
+            </div>
           </div>
         </div>
 
@@ -173,41 +197,61 @@ const JobDetail = () => {
             <p className="text-slate-700">{job.description}</p>
           </div>
 
-          {/* Unlock Section (tutor only) */}
-          {isTutor && !jobUnlocked && (
-            <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl text-center space-y-4">
-              <p className="text-slate-700 text-lg">
-                Unlock this job for <span className="font-semibold">{creditsNeeded} points</span>
-              </p>
-              <button
-                onClick={handleUnlockJob}
-                disabled={unlockStatus === 'loading' || unlockStatus === 'success' || unlockErrorMessage}
-                className={`px-6 py-3 rounded-lg font-semibold text-white ${
-                  unlockStatus === 'success'
-                    ? 'bg-green-700 hover:bg-green-800'
-                    : 'bg-blue-900 hover:bg-blue-800'
-                } ${unlockStatus === 'loading' ? 'opacity-90 cursor-not-allowed' : ''} ${unlockErrorMessage ? 'bg-gray-400 cursor-not-allowed' : ''}`}
-              >
-                {unlockStatus === 'loading' ? 'Unlocking...' : unlockStatus === 'success' ? 'Unlocked!' : 'Unlock Job'}
-              </button>
+          {/* Tutor Unlock / Status Section */}
+          {isTutor && (
+            <>
+              {job.status === 'Open' && !jobUnlocked && (
+                <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl text-center space-y-4">
+                  <p className="text-slate-700 text-lg">
+                    Unlock this job for <span className="font-semibold">{creditsNeeded} points</span>
+                  </p>
+                  <button
+                    onClick={handleUnlockJob}
+                    disabled={unlockStatus === 'loading' || unlockStatus === 'success' || unlockErrorMessage}
+                    className={`px-6 py-3 rounded-lg font-semibold text-white ${
+                      unlockStatus === 'success'
+                        ? 'bg-green-700 hover:bg-green-800'
+                        : 'bg-blue-900 hover:bg-blue-800'
+                    } ${unlockStatus === 'loading' ? 'opacity-90 cursor-not-allowed' : ''} ${unlockErrorMessage ? 'bg-gray-400 cursor-not-allowed' : ''}`}
+                  >
+                    {unlockStatus === 'loading' ? 'Unlocking...' : unlockStatus === 'success' ? 'Unlocked!' : 'Unlock Job'}
+                  </button>
 
-              {unlockErrorMessage && (
-                <div className="mt-4 flex items-center justify-center bg-yellow-50 border-l-4 border-yellow-400 p-4 text-yellow-800 rounded-md shadow-sm">
-                  <FiAlertCircle className="mr-2 text-xl" />
-                  <span className="text-sm font-medium">{unlockErrorMessage}</span>
+                  {unlockErrorMessage && (
+                    <div className="mt-4 flex items-center justify-center bg-yellow-50 border-l-4 border-yellow-400 p-4 text-yellow-800 rounded-md shadow-sm">
+                      <FiAlertCircle className="mr-2 text-xl" />
+                      <span className="text-sm font-medium">{unlockErrorMessage}</span>
+                    </div>
+                  )}
                 </div>
               )}
-            </div>
-          )}
 
-          {isTutor && jobUnlocked && (
-            <div className="p-6 sm:p-8 bg-green-50 rounded-b-xl text-center text-green-700 font-semibold">
-              You have unlocked this job!
-            </div>
+              {job.status === 'Open' && jobUnlocked && (
+                <div className="p-6 sm:p-8 bg-green-50 rounded-b-xl text-center text-green-700 font-semibold">
+                  You have unlocked this job!
+                </div>
+              )}
+
+              {job.status === 'Assigned' && job.assigned_tutor=== currentUser?.id && (
+                <div className="p-6 sm:p-8 bg-yellow-50 rounded-b-xl text-center space-y-4">
+                  <button
+                    onClick={() => handleMarkComplete(job.id)}
+                    className="px-6 py-3 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700"
+                  >
+                    Finish Job
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
-        {/* Buy Points Modal */}
+        {job && (
+          <div className="mt-6">
+            <JobApplicants jobId={job.id} job={job} />
+          </div>
+        )}
+
         {isTutor && (
           <BuyCreditsModal
             show={showBuyCreditsModal}
