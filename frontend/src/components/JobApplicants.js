@@ -121,7 +121,7 @@ const JobApplicants = ({ jobId, job }) => {
               <p className="font-medium text-slate-800">{tutor.username}</p>
             </div>
 
-            {currentUser?.user_type === 'student' && !tutor.chosen && job?.status !== 'Assigned' && (
+            {currentUser?.user_type === 'student' && !tutor.chosen && job?.status === 'Open' && (
               <div className="flex flex-wrap gap-3 mb-2">
                 {!tutor.isUnlocked && !tutor.contactInfo.email && !tutor.contactInfo.phone && (
                   <button

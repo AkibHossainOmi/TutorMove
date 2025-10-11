@@ -223,6 +223,16 @@ class StudentSerializer(serializers.ModelSerializer):
 
 # === JOB SERIALIZER ===
 
+# === REVIEW SERIALIZER ===
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
+        fields = ['id', 'job', 'tutor', 'student', 'rating', 'comment', 'created_at']
+        read_only_fields = ['id', 'tutor', 'student', 'created_at']
+
+# === JOB SERIALIZER ===
+
 class JobSerializer(serializers.ModelSerializer):
     subjects = serializers.ListField(
         child=serializers.CharField(),
@@ -233,6 +243,7 @@ class JobSerializer(serializers.ModelSerializer):
     student = StudentSerializer(read_only=True)
     can_unlock = serializers.SerializerMethodField(read_only=True)
     applicants_count = serializers.SerializerMethodField()
+    review = ReviewSerializer(read_only=True)
 
     class Meta:
         model = Job
@@ -241,7 +252,7 @@ class JobSerializer(serializers.ModelSerializer):
             'service_type', 'education_level', 'gender_preference', 'budget',
             'budget_type', 'phone', 'mode', 'distance', 'languages',
             'subjects', 'subject_details', 'total_hours', 'status', 'assigned_tutor',
-            'created_at', 'updated_at', 'can_unlock', 'applicants_count'
+            'created_at', 'updated_at', 'can_unlock', 'applicants_count', 'review'
         ]
         read_only_fields = ['id', 'student', 'created_at', 'updated_at']
 
@@ -336,18 +347,6 @@ class UserSettingsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserSettings
         fields = '__all__'
-
-
-# === REVIEW SERIALIZER ===
-
-class ReviewSerializer(serializers.ModelSerializer):
-    student_username = serializers.CharField(source='student.username', read_only=True)
-
-    class Meta:
-        model = Review
-        fields = ['id', 'student', 'student_username', 'teacher', 'rating', 'comment', 'created_at', 'updated_at']
-        read_only_fields = ['student', 'teacher', 'created_at', 'updated_at']
-
 
 # === ESCROW PAYMENT SERIALIZER ===
 

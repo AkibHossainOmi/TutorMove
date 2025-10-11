@@ -208,14 +208,6 @@ class UserProfileUpdateByIdView(APIView):
             'phone_number': str(user.phone_number) if user.phone_number else '',
         }, status=status.HTTP_200_OK)
 
-class TutorAverageRating(APIView):
-    permission_classes = [AllowAny]
-
-    def get(self, request, tutor_id):
-        avg_rating = Review.objects.filter(teacher_id=tutor_id).aggregate(average=Avg('rating'))['average']
-        avg_rating = round(avg_rating or 0, 1)
-        return Response({"average_rating": avg_rating})
-
 class SubmitReview(APIView):
     permission_classes = [AllowAny]
 
@@ -1230,6 +1222,41 @@ class JobViewSet(viewsets.ModelViewSet):
         job.save()
         serializer = self.get_serializer(job)
         return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=['POST'], url_path='review')
+    def submit_review(self, request, pk=None):
+        job = self.get_object()
+        user = request.user
+
+        # Only student can review
+        if job.student != user:
+            return Response({"detail": "You can only review your own jobs."}, status=status.HTTP_403_FORBIDDEN)
+
+        if not job.assigned_tutor:
+            return Response({"detail": "No tutor assigned to this job."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if job.status != "Completed":
+            return Response({"detail": "You can review only completed jobs."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if hasattr(job, 'review'):
+            return Response({"detail": "You have already submitted a review for this job."}, status=status.HTTP_400_BAD_REQUEST)
+
+        rating = request.data.get('rating')
+        comment = request.data.get('comment', '')
+
+        if not rating or not (1 <= int(rating) <= 5):
+            return Response({"detail": "Rating must be between 1 and 5."}, status=status.HTTP_400_BAD_REQUEST)
+
+        review = Review.objects.create(
+            job=job,
+            tutor=job.assigned_tutor,
+            student=user,
+            rating=rating,
+            comment=comment
+        )
+
+        serializer = ReviewSerializer(review)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 # --- ApplicationViewSet ---
 class ApplicationViewSet(viewsets.ModelViewSet):

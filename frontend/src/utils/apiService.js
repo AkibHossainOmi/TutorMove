@@ -177,6 +177,9 @@ export const jobAPI = {
     apiService.post(`/api/jobs/${jobId}/choose_tutor/`, { tutor_id: tutorId }),
   
   completeJob: (jobId) => apiService.post(`/api/jobs/${jobId}/complete/`),
+
+  submitJobReview: (jobId, data) =>
+    apiService.post(`/api/jobs/${jobId}/review/`, data),
 };
 
 export const gigApi = {

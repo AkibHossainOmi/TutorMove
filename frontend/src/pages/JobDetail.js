@@ -17,18 +17,21 @@ const JobDetail = () => {
   const [error, setError] = useState(null);
   const [jobUnlocked, setJobUnlocked] = useState(false);
   const [creditsNeeded, setCreditsNeeded] = useState(0);
-  const [unlockStatus, setUnlockStatus] = useState('idle'); // idle | loading | success | failed
+  const [unlockStatus, setUnlockStatus] = useState('idle');
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
   const [unlockErrorMessage, setUnlockErrorMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Get logged-in user from localStorage
+  const [reviewRating, setReviewRating] = useState('');
+  const [reviewComment, setReviewComment] = useState('');
+
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) setCurrentUser(JSON.parse(userData));
   }, []);
 
   const isTutor = currentUser?.user_type === 'tutor';
+  const isStudent = currentUser?.user_type === 'student';
 
   useEffect(() => {
     let isMounted = true;
@@ -81,13 +84,29 @@ const JobDetail = () => {
     }
   };
 
-  const handleMarkComplete = async (jobId) => {
+  const handleMarkComplete = async () => {
     try {
-      await jobAPI.completeJob(jobId);
+      await jobAPI.completeJob(job.id);
       setJob(prev => ({ ...prev, status: 'Completed' }));
     } catch (err) {
       console.error('Error completing job:', err);
       alert('Failed to mark job as completed.');
+    }
+  };
+
+  const handleSubmitReview = async () => {
+    if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
+      return alert('Rating must be between 1 and 5.');
+    }
+    try {
+      await jobAPI.submitJobReview(job.id, { rating: reviewRating, comment: reviewComment });
+      alert('Review submitted!');
+      setJob(prev => ({ ...prev, review: { rating: reviewRating, comment: reviewComment } }));
+      setReviewRating('');
+      setReviewComment('');
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.detail || 'Failed to submit review.');
     }
   };
 
@@ -197,7 +216,7 @@ const JobDetail = () => {
             <p className="text-slate-700">{job.description}</p>
           </div>
 
-          {/* Tutor Unlock / Status Section */}
+          {/* Tutor Unlock / Complete Section */}
           {isTutor && (
             <>
               {job.status === 'Open' && !jobUnlocked && (
@@ -232,10 +251,10 @@ const JobDetail = () => {
                 </div>
               )}
 
-              {job.status === 'Assigned' && job.assigned_tutor=== currentUser?.id && (
+              {job.status === 'Assigned' && job.assigned_tutor === currentUser?.id && (
                 <div className="p-6 sm:p-8 bg-yellow-50 rounded-b-xl text-center space-y-4">
                   <button
-                    onClick={() => handleMarkComplete(job.id)}
+                    onClick={handleMarkComplete}
                     className="px-6 py-3 rounded-lg font-semibold bg-green-600 text-white hover:bg-green-700"
                   >
                     Finish Job
@@ -244,13 +263,48 @@ const JobDetail = () => {
               )}
             </>
           )}
+
+          {/* Student Review Section */}
+          {isStudent && job.status === 'Completed' && !job.review && (
+            <div className="p-6 sm:p-8 bg-gray-50 rounded-b-xl mt-4">
+              <h3 className="text-xl font-semibold mb-4">Leave a Review</h3>
+              <div className="flex flex-col space-y-2 max-w-md mx-auto">
+                <input
+                  type="number"
+                  min="1"
+                  max="5"
+                  placeholder="Rating (1-5)"
+                  value={reviewRating}
+                  onChange={e => setReviewRating(e.target.value)}
+                  className="p-2 border rounded"
+                />
+                <textarea
+                  placeholder="Comment"
+                  value={reviewComment}
+                  onChange={e => setReviewComment(e.target.value)}
+                  className="p-2 border rounded"
+                />
+                <button
+                  onClick={handleSubmitReview}
+                  className="px-4 py-2 bg-blue-900 text-white rounded hover:bg-blue-800"
+                >
+                  Submit Review
+                </button>
+              </div>
+            </div>
+          )}
+
+          {job.review && (
+            <div className="p-6 sm:p-8 bg-green-50 rounded-b-xl mt-4">
+              <h3 className="text-xl font-semibold mb-2">Your Review</h3>
+              <p className="font-medium">Rating: {job.review.rating} / 5</p>
+              <p>{job.review.comment}</p>
+            </div>
+          )}
+
         </div>
 
-        {job && (
-          <div className="mt-6">
-            <JobApplicants jobId={job.id} job={job} />
-          </div>
-        )}
+        {job && <JobApplicants jobId={job.id} job={job} />}
 
         {isTutor && (
           <BuyCreditsModal

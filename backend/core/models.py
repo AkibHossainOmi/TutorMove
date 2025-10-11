@@ -461,38 +461,18 @@ class UserSettings(models.Model):
         return f"Settings for {self.user.username}"
 
 class Review(models.Model):
-    RATING_CHOICES = (
-        (1, '1 Star'),
-        (2, '2 Stars'),
-        (3, '3 Stars'),
-        (4, '4 Stars'),
-        (5, '5 Stars'),
-    )
-
+    job = models.OneToOneField(Job, on_delete=models.CASCADE, related_name='review', null=True, blank=True)
+    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_given')
-    teacher = models.ForeignKey(User, on_delete=models.CASCADE, related_name='reviews_received')
-    rating = models.IntegerField(choices=RATING_CHOICES)
-    comment = models.TextField()
+    rating = models.PositiveSmallIntegerField()  # 1-5
+    comment = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    is_verified = models.BooleanField(default=False)
 
     class Meta:
-        unique_together = ('student', 'teacher')
-        ordering = ['-created_at']
+        unique_together = ('job', 'student', 'tutor')
 
     def __str__(self):
-        return f"Review by {self.student.username} for {self.teacher.username}"
-
-    def save(self, *args, **kwargs):
-        is_new = self.pk is None
-
-        super().save(*args, **kwargs)
-
-        if is_new:
-            self.teacher.jobcount = F('jobcount') + 1
-            self.teacher.save(update_fields=['jobcount'])
-            self.teacher.refresh_from_db()
+        return f"Review for Job {self.job.id} by {self.student.username}"
 
 class EscrowPayment(models.Model):
     student = models.ForeignKey(User, related_name='escrow_student', on_delete=models.CASCADE)

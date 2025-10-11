@@ -8,7 +8,7 @@ from .views import (
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn, 
     SendOTPView, ResetPasswordView, VerifyOTPView, SubmitReview, ContactUnlockViewSet,
-    TutorAverageRating, CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, verify_otp,
+    CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -59,7 +59,6 @@ urlpatterns = [
     # path('messages/send/', SendMessageView.as_view(), name='send-message'),
     # path('teacher/<int:tutor_id>/', TeacherProfileView.as_view(), name='teacher-profile'),
     path('reviews/', SubmitReview.as_view(), name='submit-review'),
-    path('reviews/<int:tutor_id>/', TutorAverageRating.as_view(), name='tutor-average-rating'),
     # All other API endpoints handled by the router
     path('', include(router.urls)),
 
