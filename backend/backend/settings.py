@@ -30,7 +30,6 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'phonenumber_field',
     "corsheaders",
-    "django_rq",
     'accounts',
 
     # Third party apps
@@ -114,6 +113,12 @@ SSL_COMMERZ = {
 
 REDIS_HOST = os.environ.get("REDIS_HOST", "127.0.0.1")
 REDIS_PORT = os.environ.get("REDIS_PORT", 6379)
+CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/0"
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = "Asia/Dhaka"  # or your timezone
 
 CACHES = {
     "default": {
@@ -247,13 +252,4 @@ JWT_COOKIE = {
     'SAMESITE': 'Lax',
     'MAX_AGE': 7 * 24 * 60 * 60,  # 7 days
     'PATH': '/api/auth/token/refresh/',
-}
-
-RQ_QUEUES = {
-    'default': {
-        'HOST': os.getenv("REDIS_HOST", "127.0.0.1"),
-        'PORT': int(os.getenv("REDIS_PORT", 6379)),
-        'DB': 0,
-        'DEFAULT_TIMEOUT': 3600,  # 1 hour timeout
-    }
 }
