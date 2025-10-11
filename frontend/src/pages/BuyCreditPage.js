@@ -88,17 +88,37 @@ const SelectedPackageBox = ({ pkg, isLoading, onProceed }) => (
           <div className="flex justify-between items-center mb-2">
             <span className="font-semibold text-gray-700">Total Points</span>
             <span className="text-lg font-bold text-blue-600">
-              {pkg.points + pkg.bonus}
-              {pkg.bonus > 0 && (
+              {pkg.totalPoints}
+              {pkg.bonusPoints > 0 && (
                 <span className="text-sm text-green-600 ml-1">
-                  (+{pkg.bonus} bonus)
+                  (+{pkg.bonusPoints} bonus)
                 </span>
               )}
             </span>
           </div>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Price</span>
-            <span className="font-medium">{pkg.price} BDT</span>
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>Base Points</span>
+            <span className="font-medium">{pkg.packagePoints}</span>
+          </div>
+          <div className="flex justify-between text-sm text-gray-600 mb-2">
+            <span>Bonus Points</span>
+            <span className="font-medium text-green-600">+{pkg.bonusPoints}</span>
+          </div>
+          <div className="border-t pt-2 mt-2">
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Price (BDT)</span>
+              <span className="font-medium">{pkg.priceBDT}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>Price (USD)</span>
+              <span className="font-medium">{pkg.priceUSD}</span>
+            </div>
+            {pkg.savePercent > 0 && (
+              <div className="flex justify-between text-sm text-green-600 mt-1">
+                <span>You Save</span>
+                <span className="font-medium">{pkg.savePercent}%</span>
+              </div>
+            )}
           </div>
         </div>
         <button
@@ -124,7 +144,7 @@ const SelectedPackageBox = ({ pkg, isLoading, onProceed }) => (
       </>
     ) : (
       <div className="text-center py-4">
-        <p className="text-gray-500">Select a credit package above</p>
+        <p className="text-gray-500">Select a points package above</p>
       </div>
     )}
   </div>
@@ -154,7 +174,7 @@ const StatusBanner = ({ type, message, onClose }) => (
 );
 
 // --- Main Component ---
-const BuyCreditsAndPremiumPage = () => {
+const BuyPointsAndPremiumPage = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [isPremium, setIsPremium] = useState(false);
   const [premiumExpiry, setPremiumExpiry] = useState(null);
@@ -165,11 +185,88 @@ const BuyCreditsAndPremiumPage = () => {
 
   const PREMIUM_PRICE = 500;
 
-  const creditPackages = [
-    { id: 1, points: 10, price: 10, discount: 0, bonus: 0 },
-    { id: 2, points: 20, price: 18, discount: 10, bonus: 0 },
-    { id: 3, points: 50, price: 45, discount: 10, bonus: 5 },
-    { id: 4, points: 100, price: 80, discount: 20, bonus: 10 },
+  const pointsPackages = [
+    { 
+      id: 1, 
+      packagePoints: 50, 
+      bonusPoints: 0, 
+      totalPoints: 50, 
+      priceBDT: "b119", 
+      priceUSD: "$1.00", 
+      savePercent: 0 
+    },
+    { 
+      id: 2, 
+      packagePoints: 100, 
+      bonusPoints: 5, 
+      totalPoints: 105, 
+      priceBDT: "b235", 
+      priceUSD: "$1.98", 
+      savePercent: 3 
+    },
+    { 
+      id: 3, 
+      packagePoints: 250, 
+      bonusPoints: 15, 
+      totalPoints: 265, 
+      priceBDT: "b589", 
+      priceUSD: "$4.90", 
+      savePercent: 5 
+    },
+    { 
+      id: 4, 
+      packagePoints: 500, 
+      bonusPoints: 40, 
+      totalPoints: 540, 
+      priceBDT: "b1,149", 
+      priceUSD: "$9.50", 
+      savePercent: 8 
+    },
+    { 
+      id: 5, 
+      packagePoints: 1000, 
+      bonusPoints: 100, 
+      totalPoints: 1100, 
+      priceBDT: "b2,199", 
+      priceUSD: "$18.20", 
+      savePercent: 12 
+    },
+    { 
+      id: 6, 
+      packagePoints: 2500, 
+      bonusPoints: 300, 
+      totalPoints: 2800, 
+      priceBDT: "b4,849", 
+      priceUSD: "$40.00", 
+      savePercent: 20 
+    },
+    { 
+      id: 7, 
+      packagePoints: 5000, 
+      bonusPoints: 800, 
+      totalPoints: 5800, 
+      priceBDT: "b7,999", 
+      priceUSD: "$66.00", 
+      savePercent: 34 
+    },
+    { 
+      id: 8, 
+      packagePoints: 7500, 
+      bonusPoints: 1500, 
+      totalPoints: 9000, 
+      priceBDT: "b10,399", 
+      priceUSD: "$85.00", 
+      savePercent: 43 
+    },
+    { 
+      id: 9, 
+      packagePoints: 10000, 
+      bonusPoints: 2000, 
+      totalPoints: 12000, 
+      priceBDT: "b11,999", 
+      priceUSD: "$100.00", 
+      savePercent: 50 
+    },
   ];
 
   // --- Load User ---
@@ -207,13 +304,13 @@ const BuyCreditsAndPremiumPage = () => {
     }
   };
 
-  const handlePurchaseCredits = async () => {
+  const handlePurchasePoints = async () => {
     if (!selectedPackage) return;
     setIsLoading(true);
     try {
       const res = await creditAPI.purchaseCredits({
-        points: selectedPackage.points,
-        amount: selectedPackage.price,
+        points: selectedPackage.totalPoints,
+        amount: parseInt(selectedPackage.priceBDT.replace(/[^0-9]/g, '')),
         user_id: currentUser?.id,
       });
       if (res.data.payment_url) window.location.href = res.data.payment_url;
@@ -267,7 +364,7 @@ const BuyCreditsAndPremiumPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col mt-10">
       <Navbar />
-      <main className="flex-grow max-w-6xl mx-auto px-4 py-8 space-y-8">
+      <main className="flex-grow max-w-7xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -323,29 +420,31 @@ const BuyCreditsAndPremiumPage = () => {
           </div>
         </section>
 
-        {/* Credit Packages */}
+        {/* Points Packages */}
         <section>
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <FaCoins className="text-yellow-500" />
-            Credit Packages
+            Points Packages
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {creditPackages.map((pkg) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {pointsPackages.map((pkg) => (
               <PlanCard
                 key={pkg.id}
-                title={`${pkg.points} Points`}
-                price={pkg.price.toString()}
+                title={`${pkg.packagePoints} Points`}
+                price={pkg.priceUSD}
                 subtext={
-                  pkg.discount > 0 ? `${pkg.discount}% OFF` : "Standard rate"
+                  pkg.savePercent > 0 ? `${pkg.savePercent}% SAVE` : "Standard rate"
                 }
                 features={[
-                  pkg.bonus > 0 ? `+${pkg.bonus} bonus points` : "No bonus",
+                  `Total: ${pkg.totalPoints} points`,
+                  pkg.bonusPoints > 0 ? `+${pkg.bonusPoints} bonus points` : "No bonus",
+                  `Price: ${pkg.priceBDT} BDT`,
                   "Instant delivery",
                   "No expiration",
                 ]}
                 isActive={selectedPackage?.id === pkg.id}
                 onClick={() => setSelectedPackage(pkg)}
-                isPopular={pkg.id === 3}
+                isPopular={pkg.id === 9}
                 icon="💰"
               />
             ))}
@@ -357,7 +456,7 @@ const BuyCreditsAndPremiumPage = () => {
           <SelectedPackageBox
             pkg={selectedPackage}
             isLoading={isLoading}
-            onProceed={handlePurchaseCredits}
+            onProceed={handlePurchasePoints}
           />
         </section>
       </main>
@@ -366,4 +465,4 @@ const BuyCreditsAndPremiumPage = () => {
   );
 };
 
-export default BuyCreditsAndPremiumPage;
+export default BuyPointsAndPremiumPage;
