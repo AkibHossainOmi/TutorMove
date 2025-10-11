@@ -301,7 +301,7 @@ export default function WhatsAppLikeMessaging() {
                     <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
                       {user?.username?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <span className="font-semibold text-gray-800">WhatsApp</span>
+                    <span className="font-semibold text-gray-800">Tutormove</span>
                   </div>
                   <div className="flex gap-4 text-gray-600">
                     <button className="hover:text-green-600 transition-colors">
@@ -553,12 +553,9 @@ export default function WhatsAppLikeMessaging() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     </div>
-                    <h3 className="text-2xl font-light text-gray-600 mb-2">WhatsApp Web</h3>
+                    <h3 className="text-2xl font-light text-gray-600 mb-2">Tutormove Messaging</h3>
                     <p className="text-gray-500 max-w-md">
                       Send and receive messages without keeping your phone online.
-                    </p>
-                    <p className="text-gray-500 text-sm mt-2">
-                      Use WhatsApp on up to 4 linked devices and 1 phone at the same time.
                     </p>
                   </div>
                 </div>
