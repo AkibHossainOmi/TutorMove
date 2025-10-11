@@ -4,12 +4,12 @@ import Footer from "../components/Footer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { premiumAPI, creditAPI, userApi } from "../utils/apiService";
 import { FaCrown, FaCoins } from "react-icons/fa";
-import { format } from "date-fns";
 
 // --- Modern Hostinger-Style Plan Card ---
 const PlanCard = ({
   title,
-  price,
+  priceBDT,
+  priceUSD,
   subtext,
   features,
   isActive,
@@ -17,7 +17,6 @@ const PlanCard = ({
   onClick,
   badgeText,
   icon,
-  showPrice = true,
 }) => (
   <div
     onClick={onClick}
@@ -36,16 +35,16 @@ const PlanCard = ({
     )}
 
     {/* Content */}
-    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"} flex flex-col h-full`}>
+    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"}`}>
       <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
         {icon && <span className="text-yellow-500">{icon}</span>}
         {title}
       </h3>
-      {showPrice && price && (
-        <p className="text-3xl font-extrabold text-gray-900 mb-1">
-          {price}
-          <span className="text-base text-gray-600 font-medium ml-1">
-            /mo
+      {priceBDT && (
+        <p className="text-2xl font-extrabold text-gray-900 mb-1">
+          ৳{priceBDT}
+          <span className="text-base text-gray-600 font-medium ml-2">
+            (${priceUSD})
           </span>
         </p>
       )}
@@ -53,7 +52,7 @@ const PlanCard = ({
         <p className="text-sm text-blue-600 mb-4 font-medium">{subtext}</p>
       )}
 
-      <ul className="space-y-2 mb-6 flex-grow">
+      <ul className="space-y-2 mb-6">
         {features.map((f, i) => (
           <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
             <span className="text-green-500 mt-[3px]">✔</span> {f}
@@ -69,102 +68,7 @@ const PlanCard = ({
               : "bg-blue-600 hover:bg-blue-700"
           }`}
       >
-        {isActive ? "Selected" : "Choose Plan"}
-      </button>
-    </div>
-  </div>
-);
-
-// --- Points Package Card ---
-const PointsPackageCard = ({
-  title,
-  packagePoints,
-  bonusPoints,
-  totalPoints,
-  priceBDT,
-  priceUSD,
-  savePercent,
-  isActive,
-  isPopular,
-  onClick,
-}) => (
-  <div
-    onClick={onClick}
-    className={`relative flex flex-col rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden 
-      ${
-        isActive
-          ? "border-blue-600 shadow-xl bg-gradient-to-br from-blue-50 to-blue-100 scale-[1.02]"
-          : "border-gray-200 bg-white hover:shadow-lg hover:scale-[1.01]"
-      }`}
-  >
-    {/* Badge */}
-    {isPopular && (
-      <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white text-sm font-semibold text-center py-2">
-        MOST POPULAR
-      </div>
-    )}
-
-    {/* Content */}
-    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"} flex flex-col h-full`}>
-      <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-        <span className="text-yellow-500">💰</span>
-        {title}
-      </h3>
-      
-      {/* Points Display */}
-      <div className="mb-4">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-2xl font-extrabold text-gray-900">{totalPoints}</span>
-          <span className="text-sm text-gray-600">points</span>
-        </div>
-        {bonusPoints > 0 && (
-          <p className="text-sm text-green-600 font-medium">
-            +{bonusPoints} bonus points
-          </p>
-        )}
-      </div>
-
-      {/* Pricing */}
-      <div className="mb-4">
-        <div className="flex items-baseline gap-2 mb-1">
-          <span className="text-2xl font-extrabold text-gray-900">{priceUSD}</span>
-        </div>
-        <div className="flex items-baseline gap-2">
-          <span className="text-lg font-semibold text-gray-700">{priceBDT}</span>
-          {savePercent > 0 && (
-            <span className="text-sm text-green-600 font-medium">
-              Save {savePercent}%
-            </span>
-          )}
-        </div>
-      </div>
-
-      <ul className="space-y-2 mb-6 flex-grow">
-        <li className="flex items-start gap-2 text-gray-700 text-sm">
-          <span className="text-green-500 mt-[3px]">✔</span> Base: {packagePoints} points
-        </li>
-        {bonusPoints > 0 && (
-          <li className="flex items-start gap-2 text-gray-700 text-sm">
-            <span className="text-green-500 mt-[3px]">✔</span> Bonus: +{bonusPoints} points
-          </li>
-        )}
-        <li className="flex items-start gap-2 text-gray-700 text-sm">
-          <span className="text-green-500 mt-[3px]">✔</span> Instant delivery
-        </li>
-        <li className="flex items-start gap-2 text-gray-700 text-sm">
-          <span className="text-green-500 mt-[3px]">✔</span> No expiration
-        </li>
-      </ul>
-
-      <button
-        className={`w-full py-3 rounded-lg font-semibold text-white transition-all 
-          ${
-            isActive
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-blue-600 hover:bg-blue-700"
-          }`}
-      >
-        {isActive ? "Selected" : "Buy Now"}
+        {isActive ? "Selected" : "Choose Package"}
       </button>
     </div>
   </div>
@@ -185,36 +89,18 @@ const SelectedPackageBox = ({ pkg, isLoading, onProceed }) => (
             <span className="font-semibold text-gray-700">Total Points</span>
             <span className="text-lg font-bold text-blue-600">
               {pkg.totalPoints}
-              {pkg.bonusPoints > 0 && (
+              {pkg.bonus > 0 && (
                 <span className="text-sm text-green-600 ml-1">
-                  (+{pkg.bonusPoints} bonus)
+                  (+{pkg.bonus} bonus)
                 </span>
               )}
             </span>
           </div>
-          <div className="flex justify-between text-sm text-gray-600 mb-1">
-            <span>Base Points</span>
-            <span className="font-medium">{pkg.packagePoints}</span>
-          </div>
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Bonus Points</span>
-            <span className="font-medium text-green-600">+{pkg.bonusPoints}</span>
-          </div>
-          <div className="border-t pt-2 mt-2">
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Price (BDT)</span>
-              <span className="font-medium">{pkg.priceBDT}</span>
-            </div>
-            <div className="flex justify-between text-sm text-gray-600">
-              <span>Price (USD)</span>
-              <span className="font-medium">{pkg.priceUSD}</span>
-            </div>
-            {pkg.savePercent > 0 && (
-              <div className="flex justify-between text-sm text-green-600 mt-1">
-                <span>You Save</span>
-                <span className="font-medium">{pkg.savePercent}%</span>
-              </div>
-            )}
+          <div className="flex justify-between text-sm text-gray-600">
+            <span>Price</span>
+            <span className="font-medium">
+              ৳{pkg.priceBDT} (${pkg.priceUSD})
+            </span>
           </div>
         </div>
         <button
@@ -240,7 +126,7 @@ const SelectedPackageBox = ({ pkg, isLoading, onProceed }) => (
       </>
     ) : (
       <div className="text-center py-4">
-        <p className="text-gray-500">Select a points package above</p>
+        <p className="text-gray-500">Select a point package above</p>
       </div>
     )}
   </div>
@@ -281,91 +167,20 @@ const BuyPointsAndPremiumPage = () => {
 
   const PREMIUM_PRICE = 500;
 
-  const pointsPackages = [
-    { 
-      id: 1, 
-      packagePoints: 50, 
-      bonusPoints: 0, 
-      totalPoints: 50, 
-      priceBDT: "b119", 
-      priceUSD: "$1.00", 
-      savePercent: 0 
-    },
-    { 
-      id: 2, 
-      packagePoints: 100, 
-      bonusPoints: 5, 
-      totalPoints: 105, 
-      priceBDT: "b235", 
-      priceUSD: "$1.98", 
-      savePercent: 3 
-    },
-    { 
-      id: 3, 
-      packagePoints: 250, 
-      bonusPoints: 15, 
-      totalPoints: 265, 
-      priceBDT: "b589", 
-      priceUSD: "$4.90", 
-      savePercent: 5 
-    },
-    { 
-      id: 4, 
-      packagePoints: 500, 
-      bonusPoints: 40, 
-      totalPoints: 540, 
-      priceBDT: "b1,149", 
-      priceUSD: "$9.50", 
-      savePercent: 8 
-    },
-    { 
-      id: 5, 
-      packagePoints: 1000, 
-      bonusPoints: 100, 
-      totalPoints: 1100, 
-      priceBDT: "b2,199", 
-      priceUSD: "$18.20", 
-      savePercent: 12 
-    },
-    { 
-      id: 6, 
-      packagePoints: 2500, 
-      bonusPoints: 300, 
-      totalPoints: 2800, 
-      priceBDT: "b4,849", 
-      priceUSD: "$40.00", 
-      savePercent: 20 
-    },
-    { 
-      id: 7, 
-      packagePoints: 5000, 
-      bonusPoints: 800, 
-      totalPoints: 5800, 
-      priceBDT: "b7,999", 
-      priceUSD: "$66.00", 
-      savePercent: 34 
-    },
-    { 
-      id: 8, 
-      packagePoints: 7500, 
-      bonusPoints: 1500, 
-      totalPoints: 9000, 
-      priceBDT: "b10,399", 
-      priceUSD: "$85.00", 
-      savePercent: 43 
-    },
-    { 
-      id: 9, 
-      packagePoints: 10000, 
-      bonusPoints: 2000, 
-      totalPoints: 12000, 
-      priceBDT: "b11,999", 
-      priceUSD: "$100.00", 
-      savePercent: 50 
-    },
+  // Packages from image table
+  const pointPackages = [
+    { id: 1, points: 50, bonus: 0, totalPoints: 50, priceBDT: 119, priceUSD: 1.0, save: 0 },
+    { id: 2, points: 100, bonus: 5, totalPoints: 105, priceBDT: 235, priceUSD: 1.98, save: 3 },
+    { id: 3, points: 250, bonus: 15, totalPoints: 265, priceBDT: 589, priceUSD: 4.9, save: 5 },
+    { id: 4, points: 500, bonus: 40, totalPoints: 540, priceBDT: 1149, priceUSD: 9.5, save: 8 },
+    { id: 5, points: 1000, bonus: 100, totalPoints: 1100, priceBDT: 2199, priceUSD: 18.2, save: 12 },
+    { id: 6, points: 2500, bonus: 300, totalPoints: 2800, priceBDT: 4849, priceUSD: 40.0, save: 20 },
+    { id: 7, points: 5000, bonus: 800, totalPoints: 5800, priceBDT: 7999, priceUSD: 66.0, save: 34 },
+    { id: 8, points: 7500, bonus: 1500, totalPoints: 9000, priceBDT: 10399, priceUSD: 85.0, save: 43 },
+    { id: 9, points: 10000, bonus: 2000, totalPoints: 12000, priceBDT: 11999, priceUSD: 100.0, save: 50 },
   ];
 
-  // --- Load User ---
+  // Load User
   useEffect(() => {
     const loadUser = async () => {
       try {
@@ -384,7 +199,7 @@ const BuyPointsAndPremiumPage = () => {
     loadUser();
   }, []);
 
-  // --- Actions ---
+  // Actions
   const handlePurchasePremium = async () => {
     setIsLoading(true);
     try {
@@ -393,7 +208,7 @@ const BuyPointsAndPremiumPage = () => {
         user_id: currentUser?.id,
       });
       if (res.data.payment_url) window.location.href = res.data.payment_url;
-    } catch (err) {
+    } catch {
       setError("Payment failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -405,8 +220,8 @@ const BuyPointsAndPremiumPage = () => {
     setIsLoading(true);
     try {
       const res = await creditAPI.purchaseCredits({
-        points: selectedPackage.totalPoints,
-        amount: parseInt(selectedPackage.priceBDT.replace(/[^0-9]/g, '')),
+        points: selectedPackage.points,
+        amount: selectedPackage.priceBDT,
         user_id: currentUser?.id,
       });
       if (res.data.payment_url) window.location.href = res.data.payment_url;
@@ -422,7 +237,7 @@ const BuyPointsAndPremiumPage = () => {
     setError(null);
   };
 
-  // --- Loading or Error States ---
+  // Loading or Error States
   if (isLoading && !currentUser && !error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
@@ -460,7 +275,7 @@ const BuyPointsAndPremiumPage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col mt-10">
       <Navbar />
-      <main className="flex-grow max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <main className="flex-grow max-w-6xl mx-auto px-4 py-8 space-y-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
@@ -484,10 +299,11 @@ const BuyPointsAndPremiumPage = () => {
             <FaCrown className="text-yellow-500" />
             Membership Plans
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <PlanCard
               title="Free Plan"
-              price="0"
+              priceBDT="0"
+              priceUSD="0.00"
               subtext="+3 months free"
               features={[
                 "Basic feature access",
@@ -496,11 +312,11 @@ const BuyPointsAndPremiumPage = () => {
                 "Standard support",
               ]}
               icon="🎯"
-              showPrice={true}
             />
             <PlanCard
               title={isPremium ? "Premium Active" : "Premium Plan"}
-              price={isPremium ? null : PREMIUM_PRICE.toString()}
+              priceBDT={isPremium ? null : PREMIUM_PRICE.toString()}
+              priceUSD={isPremium ? null : "4.25"}
               subtext={isPremium ? null : "+3 months free"}
               features={[
                 "Priority support",
@@ -513,31 +329,38 @@ const BuyPointsAndPremiumPage = () => {
               isActive={isPremium}
               onClick={!isPremium ? handlePurchasePremium : undefined}
               icon={<FaCrown className="text-yellow-500" />}
-              showPrice={!isPremium}
             />
           </div>
         </section>
 
-        {/* Points Packages */}
+        {/* Point Packages */}
         <section>
           <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
             <FaCoins className="text-yellow-500" />
-            Points Packages
+            Point Packages
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pointsPackages.map((pkg) => (
-              <PointsPackageCard
+            {pointPackages.map((pkg) => (
+              <PlanCard
                 key={pkg.id}
-                title={`${pkg.packagePoints} Points`}
-                packagePoints={pkg.packagePoints}
-                bonusPoints={pkg.bonusPoints}
-                totalPoints={pkg.totalPoints}
+                title={`Package ${pkg.id}`}
                 priceBDT={pkg.priceBDT}
                 priceUSD={pkg.priceUSD}
-                savePercent={pkg.savePercent}
+                subtext={
+                  pkg.save > 0 ? `Save ${pkg.save}%` : "Standard rate"
+                }
+                features={[
+                  `${pkg.totalPoints} Total Points`,
+                  pkg.bonus > 0
+                    ? `+${pkg.bonus} Bonus Points`
+                    : "No bonus points",
+                  "Instant delivery",
+                  "No expiration",
+                ]}
                 isActive={selectedPackage?.id === pkg.id}
                 onClick={() => setSelectedPackage(pkg)}
-                isPopular={pkg.id === 9}
+                isPopular={pkg.id === 5}
+                icon="💰"
               />
             ))}
           </div>
