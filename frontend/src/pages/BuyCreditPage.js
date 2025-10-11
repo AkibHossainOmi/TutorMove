@@ -17,6 +17,7 @@ const PlanCard = ({
   onClick,
   badgeText,
   icon,
+  showPrice = true,
 }) => (
   <div
     onClick={onClick}
@@ -35,12 +36,12 @@ const PlanCard = ({
     )}
 
     {/* Content */}
-    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"}`}>
+    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"} flex flex-col h-full`}>
       <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
         {icon && <span className="text-yellow-500">{icon}</span>}
         {title}
       </h3>
-      {price && (
+      {showPrice && price && (
         <p className="text-3xl font-extrabold text-gray-900 mb-1">
           {price}
           <span className="text-base text-gray-600 font-medium ml-1">
@@ -52,7 +53,7 @@ const PlanCard = ({
         <p className="text-sm text-blue-600 mb-4 font-medium">{subtext}</p>
       )}
 
-      <ul className="space-y-2 mb-6">
+      <ul className="space-y-2 mb-6 flex-grow">
         {features.map((f, i) => (
           <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
             <span className="text-green-500 mt-[3px]">✔</span> {f}
@@ -69,6 +70,101 @@ const PlanCard = ({
           }`}
       >
         {isActive ? "Selected" : "Choose Plan"}
+      </button>
+    </div>
+  </div>
+);
+
+// --- Points Package Card ---
+const PointsPackageCard = ({
+  title,
+  packagePoints,
+  bonusPoints,
+  totalPoints,
+  priceBDT,
+  priceUSD,
+  savePercent,
+  isActive,
+  isPopular,
+  onClick,
+}) => (
+  <div
+    onClick={onClick}
+    className={`relative flex flex-col rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden 
+      ${
+        isActive
+          ? "border-blue-600 shadow-xl bg-gradient-to-br from-blue-50 to-blue-100 scale-[1.02]"
+          : "border-gray-200 bg-white hover:shadow-lg hover:scale-[1.01]"
+      }`}
+  >
+    {/* Badge */}
+    {isPopular && (
+      <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white text-sm font-semibold text-center py-2">
+        MOST POPULAR
+      </div>
+    )}
+
+    {/* Content */}
+    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"} flex flex-col h-full`}>
+      <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
+        <span className="text-yellow-500">💰</span>
+        {title}
+      </h3>
+      
+      {/* Points Display */}
+      <div className="mb-4">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="text-2xl font-extrabold text-gray-900">{totalPoints}</span>
+          <span className="text-sm text-gray-600">points</span>
+        </div>
+        {bonusPoints > 0 && (
+          <p className="text-sm text-green-600 font-medium">
+            +{bonusPoints} bonus points
+          </p>
+        )}
+      </div>
+
+      {/* Pricing */}
+      <div className="mb-4">
+        <div className="flex items-baseline gap-2 mb-1">
+          <span className="text-2xl font-extrabold text-gray-900">{priceUSD}</span>
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="text-lg font-semibold text-gray-700">{priceBDT}</span>
+          {savePercent > 0 && (
+            <span className="text-sm text-green-600 font-medium">
+              Save {savePercent}%
+            </span>
+          )}
+        </div>
+      </div>
+
+      <ul className="space-y-2 mb-6 flex-grow">
+        <li className="flex items-start gap-2 text-gray-700 text-sm">
+          <span className="text-green-500 mt-[3px]">✔</span> Base: {packagePoints} points
+        </li>
+        {bonusPoints > 0 && (
+          <li className="flex items-start gap-2 text-gray-700 text-sm">
+            <span className="text-green-500 mt-[3px]">✔</span> Bonus: +{bonusPoints} points
+          </li>
+        )}
+        <li className="flex items-start gap-2 text-gray-700 text-sm">
+          <span className="text-green-500 mt-[3px]">✔</span> Instant delivery
+        </li>
+        <li className="flex items-start gap-2 text-gray-700 text-sm">
+          <span className="text-green-500 mt-[3px]">✔</span> No expiration
+        </li>
+      </ul>
+
+      <button
+        className={`w-full py-3 rounded-lg font-semibold text-white transition-all 
+          ${
+            isActive
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-blue-600 hover:bg-blue-700"
+          }`}
+      >
+        {isActive ? "Selected" : "Buy Now"}
       </button>
     </div>
   </div>
@@ -388,7 +484,7 @@ const BuyPointsAndPremiumPage = () => {
             <FaCrown className="text-yellow-500" />
             Membership Plans
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             <PlanCard
               title="Free Plan"
               price="0"
@@ -400,6 +496,7 @@ const BuyPointsAndPremiumPage = () => {
                 "Standard support",
               ]}
               icon="🎯"
+              showPrice={true}
             />
             <PlanCard
               title={isPremium ? "Premium Active" : "Premium Plan"}
@@ -416,6 +513,7 @@ const BuyPointsAndPremiumPage = () => {
               isActive={isPremium}
               onClick={!isPremium ? handlePurchasePremium : undefined}
               icon={<FaCrown className="text-yellow-500" />}
+              showPrice={!isPremium}
             />
           </div>
         </section>
@@ -426,26 +524,20 @@ const BuyPointsAndPremiumPage = () => {
             <FaCoins className="text-yellow-500" />
             Points Packages
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {pointsPackages.map((pkg) => (
-              <PlanCard
+              <PointsPackageCard
                 key={pkg.id}
                 title={`${pkg.packagePoints} Points`}
-                price={pkg.priceUSD}
-                subtext={
-                  pkg.savePercent > 0 ? `${pkg.savePercent}% SAVE` : "Standard rate"
-                }
-                features={[
-                  `Total: ${pkg.totalPoints} points`,
-                  pkg.bonusPoints > 0 ? `+${pkg.bonusPoints} bonus points` : "No bonus",
-                  `Price: ${pkg.priceBDT} BDT`,
-                  "Instant delivery",
-                  "No expiration",
-                ]}
+                packagePoints={pkg.packagePoints}
+                bonusPoints={pkg.bonusPoints}
+                totalPoints={pkg.totalPoints}
+                priceBDT={pkg.priceBDT}
+                priceUSD={pkg.priceUSD}
+                savePercent={pkg.savePercent}
                 isActive={selectedPackage?.id === pkg.id}
                 onClick={() => setSelectedPackage(pkg)}
                 isPopular={pkg.id === 9}
-                icon="💰"
               />
             ))}
           </div>
