@@ -23,9 +23,11 @@ const JobDetail = () => {
   const [unlockErrorMessage, setUnlockErrorMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
 
+  // Rating states
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [hoverRating, setHoverRating] = useState(0);
+
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
@@ -36,7 +38,7 @@ const JobDetail = () => {
   const isTutor = currentUser?.user_type === 'tutor';
   const isStudent = currentUser?.user_type === 'student';
 
-  // Toast notification function
+  // Toast notification function (kept as simple internal toast)
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
     setTimeout(() => {
@@ -81,7 +83,7 @@ const JobDetail = () => {
       setJobUnlocked(true);
       setUnlockStatus('success');
       setCreditsNeeded(0);
-      setJob(prev => ({ ...prev, applicants_count: (prev.applicants_count || 0) + 1 }));
+      setJob(prev => ({ ...prev, applicants_count: (prev?.applicants_count || 0) + 1 }));
       showToast('Job unlocked successfully!', 'success');
     } catch (err) {
       console.error('Error unlocking job:', err);
@@ -119,6 +121,7 @@ const JobDetail = () => {
       setJob(prev => ({ ...prev, review: { rating: reviewRating, comment: reviewComment } }));
       setReviewRating(0);
       setReviewComment('');
+      setHoverRating(0);
     } catch (err) {
       console.error(err);
       showToast(err.response?.data?.detail || 'Failed to submit review.', 'error');
@@ -131,55 +134,92 @@ const JobDetail = () => {
     return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
   };
 
-  const renderStars = (rating, interactive = false, onRate = null, onHover = null) => {
+  /**
+   * renderStars:
+   * - rating: numeric for display-only mode
+   * - interactive: whether stars can be clicked/hovered (for review)
+   * - onRate: function to set rating
+   *
+   * Behavior:
+   * - Hover shows hoverRating
+   * - Selected rating (reviewRating) displays a star-shaped border around the selected stars so user can see what they'll submit
+   * - Keyboard accessible (Arrow keys + Enter/Space)
+   */
+  const renderStars = (rating = 0, interactive = false, onRate = () => {}) => {
+    // Determine current visual rating: hover takes precedence while hovering
+    const currentVisual = interactive ? (hoverRating || reviewRating) : rating;
+
+    const handleKeyDown = (e, star) => {
+      if (!interactive) return;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onRate(star);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        const next = Math.max(1, (interactive ? (hoverRating || reviewRating) : rating) - 1);
+        onRate(next);
+      } else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') {
+        e.preventDefault();
+        const next = Math.min(5, (interactive ? (hoverRating || reviewRating) : rating) + 1);
+        onRate(next);
+      }
+    };
+
     return (
-      <div className="flex space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => {
-          const isActive = star <= (onHover || rating);
-          const isCurrentRating = star === (onHover || rating);
-          
+      <div className="flex items-center space-x-2" role={interactive ? 'radiogroup' : undefined}>
+        {[1,2,3,4,5].map(star => {
+          const isActive = star <= currentVisual; // filled color
+          const isSelected = interactive ? star <= reviewRating : star <= rating; // permanent selected (for border)
+          const isFocusedBorder = interactive && hoverRating === star; // if hovering over this star
           return (
             <button
               key={star}
-              type={interactive ? "button" : "div"}
+              type="button"
+              aria-label={`${star} star${star > 1 ? 's' : ''}`}
+              aria-checked={interactive ? (reviewRating === star) : undefined}
+              role={interactive ? 'radio' : undefined}
+              onClick={() => interactive && onRate(star)}
+              onMouseEnter={() => interactive && setHoverRating(star)}
+              onMouseLeave={() => interactive && setHoverRating(0)}
+              onFocus={() => interactive && setHoverRating(star)}
+              onBlur={() => interactive && setHoverRating(0)}
+              onKeyDown={(e) => handleKeyDown(e, star)}
               className={`
-                ${interactive 
-                  ? 'cursor-pointer transition-all duration-200 transform hover:scale-110' 
-                  : 'cursor-default'
-                }
-                relative
+                relative flex items-center justify-center
+                focus:outline-none
+                transition-transform duration-150
+                ${interactive ? 'cursor-pointer hover:scale-110 active:scale-95' : ''}
                 ${isActive ? 'text-yellow-400' : 'text-gray-300'}
-              `}
-              onClick={interactive ? () => onRate(star) : undefined}
-              onMouseEnter={interactive ? () => onHover(star) : undefined}
-              onMouseLeave={interactive ? () => onHover(0) : undefined}
+                p-1 rounded-md
+                `}
+              style={{ width: interactive ? 44 : 28, height: interactive ? 44 : 28 }}
             >
-              {/* Star icon */}
-              <FiStar 
-                size={interactive ? 32 : 20} 
-                className={isActive ? "fill-current" : ""}
-              />
-              
-              {/* Star-shaped border for selected rating */}
-              {interactive && isCurrentRating && (
-                <div className="absolute inset-0 -m-1">
-                  <svg
-                    width={interactive ? 40 : 28}
-                    height={interactive ? 40 : 28}
-                    viewBox="0 0 24 24"
-                    className="text-yellow-500 drop-shadow-lg"
-                  >
-                    {/* Star path for border */}
-                    <path
-                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                </div>
+              {/* The base star icon (outline or colored) */}
+              <FiStar size={interactive ? 28 : 18} className={`${isActive ? 'fill-current' : ''}`} />
+
+              {/* Star-shaped stroked border for selected stars (visible before submit) */}
+              {(isSelected || isFocusedBorder) && (
+                <svg
+                  viewBox="0 0 24 24"
+                  className={`
+                    absolute inset-0 pointer-events-none
+                    ${isFocusedBorder ? 'animate-pulse' : ''}
+                  `}
+                  width={interactive ? 44 : 28}
+                  height={interactive ? 44 : 28}
+                >
+                  <path
+                    d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                    fill="none"
+                    stroke={isActive ? '#f59e0b' : '#cbd5e1'} /* yellow for active, soft gray otherwise */
+                    strokeWidth={isFocusedBorder ? 2.5 : 1.8}
+                    strokeLinejoin="round"
+                  />
+                </svg>
               )}
+
+              {/* Subtle ring for keyboard focus (accessible) */}
+              <span className="sr-only">{interactive ? `Rate ${star} star` : `${star} star`}</span>
             </button>
           );
         })}
@@ -192,7 +232,7 @@ const JobDetail = () => {
     const borderColor = type === 'error' ? 'border-red-400' : 'border-green-400';
     
     return (
-      <div className={`fixed top-24 right-6 z-50 ${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl border ${borderColor} transform animate-slide-in-right max-w-sm`}>
+      <div className={`fixed top-24 right-6 z-50 ${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl border ${borderColor} transform max-w-sm`}>
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             {type === 'error' ? (
@@ -205,6 +245,7 @@ const JobDetail = () => {
           <button
             onClick={onClose}
             className="ml-4 hover:bg-white/20 rounded-full p-1 transition-colors"
+            aria-label="Close notification"
           >
             <FiX className="text-lg" />
           </button>
@@ -491,11 +532,12 @@ const JobDetail = () => {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
                       <div className="flex items-center gap-4">
-                        {renderStars(reviewRating, true, setReviewRating, setHoverRating)}
+                        {renderStars(reviewRating, true, (value) => setReviewRating(value))}
                         <span className="text-lg font-semibold text-gray-700">
                           {reviewRating > 0 ? `${reviewRating}/5` : 'Select rating'}
                         </span>
                       </div>
+                      <p className="mt-2 text-xs text-gray-500">Use mouse or keyboard (← →) and press Enter/Space to set rating.</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Comment</label>
