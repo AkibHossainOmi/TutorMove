@@ -50,6 +50,83 @@ const credit = {
   }
 };
 
+// Pagination Component (same as in StudentDashboard)
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const pages = [];
+  
+  // Show limited page numbers for better UX
+  const maxVisiblePages = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  // Adjust start page if we're near the end
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(
+      <button
+        key={i}
+        onClick={() => onPageChange(i)}
+        className={`px-3 py-1 rounded-lg text-sm font-medium ${
+          currentPage === i
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+        }`}
+      >
+        {i}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-center space-x-2 mt-8">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Previous
+      </button>
+      
+      {startPage > 1 && (
+        <>
+          <button
+            onClick={() => onPageChange(1)}
+            className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+          >
+            1
+          </button>
+          {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
+        </>
+      )}
+      
+      {pages}
+      
+      {endPage < totalPages && (
+        <>
+          {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
+          <button
+            onClick={() => onPageChange(totalPages)}
+            className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+          >
+            {totalPages}
+          </button>
+        </>
+      )}
+      
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
+
 const TeacherDashboard = () => {
   const { unreadCount: unreadMessagesCount } = useChat();
 
@@ -72,6 +149,11 @@ const TeacherDashboard = () => {
       creditBalance: 0,
     }
   });
+
+  // Pagination state for both gigs and matched jobs
+  const [currentGigsPage, setCurrentGigsPage] = useState(1);
+  const [currentJobsPage, setCurrentJobsPage] = useState(1);
+  const itemsPerPage = 6;
 
   // Fetch notifications for the logged in user
   const fetchNotifications = async (userId) => {
@@ -137,6 +219,27 @@ const TeacherDashboard = () => {
     }
   };
 
+  // Calculate pagination values for gigs
+  const totalGigs = dashboardData.myGigs.length;
+  const totalGigsPages = Math.ceil(totalGigs / itemsPerPage);
+  const gigsStartIndex = (currentGigsPage - 1) * itemsPerPage;
+  const currentGigs = dashboardData.myGigs.slice(gigsStartIndex, gigsStartIndex + itemsPerPage);
+
+  // Calculate pagination values for matched jobs
+  const totalJobs = dashboardData.matchedJobs.length;
+  const totalJobsPages = Math.ceil(totalJobs / itemsPerPage);
+  const jobsStartIndex = (currentJobsPage - 1) * itemsPerPage;
+  const currentJobs = dashboardData.matchedJobs.slice(jobsStartIndex, jobsStartIndex + itemsPerPage);
+
+  // Reset to first page when data changes
+  useEffect(() => {
+    setCurrentGigsPage(1);
+  }, [dashboardData.myGigs.length]);
+
+  useEffect(() => {
+    setCurrentJobsPage(1);
+  }, [dashboardData.matchedJobs.length]);
+
   const handleGigCreated = async (newGig) => {
     if (user) {
       try {
@@ -195,6 +298,24 @@ const TeacherDashboard = () => {
       if (newState) markNotificationsRead();
       return newState;
     });
+  };
+
+  const handleGigsPageChange = (page) => {
+    setCurrentGigsPage(page);
+    // Scroll to gigs section for better UX
+    const gigsSection = document.getElementById('my-gigs-section');
+    if (gigsSection) {
+      gigsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  const handleJobsPageChange = (page) => {
+    setCurrentJobsPage(page);
+    // Scroll to jobs section for better UX
+    const jobsSection = document.getElementById('matched-jobs-section');
+    if (jobsSection) {
+      jobsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   if (isLoading) {
@@ -269,8 +390,27 @@ const TeacherDashboard = () => {
           <DashboardTabs 
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            dashboardData={dashboardData}
+            dashboardData={{
+              ...dashboardData,
+              // Pass paginated data to tabs
+              myGigs: currentGigs,
+              matchedJobs: currentJobs
+            }}
             handleCreateGigClick={handleCreateGigClick}
+            // Pass pagination info and handlers
+            paginationInfo={{
+              // Gigs pagination
+              totalGigs: totalGigs,
+              totalGigsPages: totalGigsPages,
+              currentGigsPage: currentGigsPage,
+              onGigsPageChange: handleGigsPageChange,
+              // Jobs pagination
+              totalJobs: totalJobs,
+              totalJobsPages: totalJobsPages,
+              currentJobsPage: currentJobsPage,
+              onJobsPageChange: handleJobsPageChange,
+              itemsPerPage: itemsPerPage
+            }}
           />
 
           
