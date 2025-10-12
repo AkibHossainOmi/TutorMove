@@ -202,15 +202,6 @@ const TutorCard = ({ tutor, featured = false }) => {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <h4 className="text-sm font-medium text-gray-500">Rating</h4>
-            <div className="mt-1 flex items-center">
-              <span className="text-yellow-500 mr-1">⭐</span>
-              <span className="text-sm font-medium text-gray-900">
-                {tutor.average_rating?.toFixed(1) || 'N/A'}
-              </span>
-            </div>
-          </div>
-          <div>
             <h4 className="text-sm font-medium text-gray-500">Member Since</h4>
             <p className="mt-1 text-sm text-gray-900">
               {tutor.date_joined
