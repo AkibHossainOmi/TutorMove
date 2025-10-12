@@ -46,10 +46,8 @@ const fmtDate = (d) => {
 };
 
 const JobCard = ({ job, onView }) => {
-  // Safely handle status and subject
   const status = typeof job?.status === 'string' ? job.status.toLowerCase() : 'active';
-  const subject =
-    job.subject_details;
+  const subject = job.subject_details;
 
   return (
     <div className="group bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md hover:border-gray-200 transition">
@@ -88,6 +86,82 @@ const JobCard = ({ job, onView }) => {
   );
 };
 
+const Pagination = ({ currentPage, totalPages, onPageChange }) => {
+  const pages = [];
+  
+  // Show limited page numbers for better UX
+  const maxVisiblePages = 5;
+  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+  
+  // Adjust start page if we're near the end
+  if (endPage - startPage + 1 < maxVisiblePages) {
+    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+  }
+
+  for (let i = startPage; i <= endPage; i++) {
+    pages.push(
+      <button
+        key={i}
+        onClick={() => onPageChange(i)}
+        className={`px-3 py-1 rounded-lg text-sm font-medium ${
+          currentPage === i
+            ? 'bg-blue-600 text-white'
+            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+        }`}
+      >
+        {i}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center justify-center space-x-2 mt-8">
+      <button
+        onClick={() => onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Previous
+      </button>
+      
+      {startPage > 1 && (
+        <>
+          <button
+            onClick={() => onPageChange(1)}
+            className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+          >
+            1
+          </button>
+          {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
+        </>
+      )}
+      
+      {pages}
+      
+      {endPage < totalPages && (
+        <>
+          {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
+          <button
+            onClick={() => onPageChange(totalPages)}
+            className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+          >
+            {totalPages}
+          </button>
+        </>
+      )}
+      
+      <button
+        onClick={() => onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Next
+      </button>
+    </div>
+  );
+};
+
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
@@ -103,6 +177,10 @@ const StudentDashboard = () => {
   const [notifications, setNotifications] = useState([]);
   const [unreadNotificationCount, setUnreadNotificationCount] = useState(0);
   const [showNotifications, setShowNotifications] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 6;
 
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
@@ -148,6 +226,17 @@ const StudentDashboard = () => {
     loadDashboardData();
   }, [user]);
 
+  // Calculate pagination values
+  const totalJobs = dashboardData.postedJobs.length;
+  const totalPages = Math.ceil(totalJobs / jobsPerPage);
+  const startIndex = (currentPage - 1) * jobsPerPage;
+  const currentJobs = dashboardData.postedJobs.slice(startIndex, startIndex + jobsPerPage);
+
+  // Reset to first page when jobs data changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [dashboardData.postedJobs.length]);
+
   const handleJobCreated = (newJob) => {
     setDashboardData(prev => ({
       ...prev,
@@ -177,6 +266,15 @@ const StudentDashboard = () => {
   const handleViewJob = (job) => {
     const jobId = job?.id || job?._id || job?.job_id || job?.uuid;
     if (jobId) navigate(`/jobs/${jobId}`);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Scroll to top of job posts section for better UX
+    const jobSection = document.getElementById('job-posts-section');
+    if (jobSection) {
+      jobSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
   };
 
   if (isLoading) return (
@@ -209,10 +307,16 @@ const StudentDashboard = () => {
           }}
           favoriteTeachersCount={favoriteTeachers.length}
         />
-        <section className="mt-12">
+        <section id="job-posts-section" className="mt-12">
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Your Job Posts</h2>
-            
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
+              Your Job Posts {totalJobs > 0 && `(${totalJobs})`}
+            </h2>
+            {totalJobs > 0 && (
+              <div className="text-sm text-gray-500">
+                Showing {Math.min(jobsPerPage, currentJobs.length)} of {totalJobs} jobs
+              </div>
+            )}
           </div>
           {dashboardData.postedJobs.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center">
@@ -225,11 +329,21 @@ const StudentDashboard = () => {
               </button>
             </div>
           ) : (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {dashboardData.postedJobs.map((job) => (
-                <JobCard key={safeKey(job)} job={job} onView={handleViewJob} />
-              ))}
-            </div>
+            <>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {currentJobs.map((job) => (
+                  <JobCard key={safeKey(job)} job={job} onView={handleViewJob} />
+                ))}
+              </div>
+              
+              {totalPages > 1 && (
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              )}
+            </>
           )}
         </section>
         {favoriteTeachers.length > 0 && (
