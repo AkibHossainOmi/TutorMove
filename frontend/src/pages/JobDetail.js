@@ -136,6 +136,8 @@ const JobDetail = () => {
       <div className="flex space-x-1">
         {[1, 2, 3, 4, 5].map((star) => {
           const isActive = star <= (onHover || rating);
+          const isCurrentRating = star === (onHover || rating);
+          
           return (
             <button
               key={star}
@@ -145,20 +147,39 @@ const JobDetail = () => {
                   ? 'cursor-pointer transition-all duration-200 transform hover:scale-110' 
                   : 'cursor-default'
                 }
-                ${isActive 
-                  ? 'text-yellow-400 border-2 border-yellow-400 rounded-md' 
-                  : 'text-gray-300 border-2 border-transparent'
-                }
-                p-1
+                relative
+                ${isActive ? 'text-yellow-400' : 'text-gray-300'}
               `}
               onClick={interactive ? () => onRate(star) : undefined}
               onMouseEnter={interactive ? () => onHover(star) : undefined}
               onMouseLeave={interactive ? () => onHover(0) : undefined}
             >
+              {/* Star icon */}
               <FiStar 
-                size={interactive ? 28 : 20} 
+                size={interactive ? 32 : 20} 
                 className={isActive ? "fill-current" : ""}
               />
+              
+              {/* Star-shaped border for selected rating */}
+              {interactive && isCurrentRating && (
+                <div className="absolute inset-0 -m-1">
+                  <svg
+                    width={interactive ? 40 : 28}
+                    height={interactive ? 40 : 28}
+                    viewBox="0 0 24 24"
+                    className="text-yellow-500 drop-shadow-lg"
+                  >
+                    {/* Star path for border */}
+                    <path
+                      d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+              )}
             </button>
           );
         })}
