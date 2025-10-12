@@ -91,6 +91,13 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
     "Per Year": "Total Hours per Year",
   }[formData.budgetType] || "Total Hours";
 
+  // Helper to add red star for required fields
+  const RequiredLabel = ({ label }) => (
+    <span className="font-semibold text-gray-700">
+      {label} <span className="text-red-600">*</span>
+    </span>
+  );
+
   return (
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto relative">
@@ -110,7 +117,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Location */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Location</label>
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Location" />
+            </label>
             <input
               type="text"
               name="location"
@@ -124,7 +133,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Phone */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Phone Number</label>
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Phone Number" />
+            </label>
             <input
               type="tel"
               name="phone"
@@ -138,7 +149,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Description */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Description" />
+            </label>
             <textarea
               name="description"
               value={formData.description}
@@ -152,7 +165,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Subjects */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Subjects</label>
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Subjects" />
+            </label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -190,8 +205,8 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Education Level */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Education Level
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Education Level" />
             </label>
             <select
               name="educationLevel"
@@ -211,7 +226,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Service Type */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Service Type</label>
+            <label className="block text-sm mb-1">Service Type</label>
             <select
               name="serviceType"
               value={formData.serviceType}
@@ -225,7 +240,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Mode */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Mode</label>
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Mode" />
+            </label>
             <div className="flex flex-wrap gap-4">
               {["Online", "At My Place", "Travel to Tutor"].map((opt) => (
                 <label key={opt} className="flex items-center gap-2 text-gray-700">
@@ -254,7 +271,9 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Budget */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Budget</label>
+            <label className="block text-sm mb-1">
+              <RequiredLabel label="Budget" />
+            </label>
             <div className="flex gap-3">
               <input
                 type="number"
@@ -283,9 +302,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
           {/* Total Hours (Conditional) */}
           {showTotalHours && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                {totalHourLabel}
-              </label>
+              <label className="block text-sm mb-1">{totalHourLabel}</label>
               <input
                 type="number"
                 name="totalHours"
@@ -299,9 +316,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Gender Preference */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
-              Gender Preference
-            </label>
+            <label className="block text-sm mb-1">Gender Preference</label>
             <select
               name="genderPreference"
               value={formData.genderPreference}
@@ -316,7 +331,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Languages */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Languages</label>
+            <label className="block text-sm mb-1">Languages</label>
             <div className="flex gap-2">
               <input
                 type="text"
@@ -354,7 +369,7 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
           {/* Country */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Country</label>
+            <label className="block text-sm mb-1">Country</label>
             <select
               name="country"
               value={formData.country}
