@@ -6,7 +6,7 @@ import BuyCreditsModal from '../components/BuyCreditsModal';
 import { 
   FiBriefcase, FiMapPin, FiBook, FiUser, FiCalendar, 
   FiAlertCircle, FiDollarSign, FiClock, FiGlobe, FiPhone, FiUsers,
-  FiStar, FiCheckCircle, FiLock, FiUnlock
+  FiStar, FiCheckCircle, FiLock, FiUnlock, FiX
 } from 'react-icons/fi';
 import { jobAPI } from '../utils/apiService';
 import JobApplicants from '../components/JobApplicants';
@@ -26,6 +26,7 @@ const JobDetail = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [hoverRating, setHoverRating] = useState(0);
+  const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -34,6 +35,14 @@ const JobDetail = () => {
 
   const isTutor = currentUser?.user_type === 'tutor';
   const isStudent = currentUser?.user_type === 'student';
+
+  // Toast notification function
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => {
+      setToast({ show: false, message: '', type: '' });
+    }, 4000);
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -73,6 +82,7 @@ const JobDetail = () => {
       setUnlockStatus('success');
       setCreditsNeeded(0);
       setJob(prev => ({ ...prev, applicants_count: (prev.applicants_count || 0) + 1 }));
+      showToast('Job unlocked successfully!', 'success');
     } catch (err) {
       console.error('Error unlocking job:', err);
       if (err.response?.data?.detail === 'Insufficient points') {
@@ -80,8 +90,10 @@ const JobDetail = () => {
       } else if (err.response?.data?.detail === 'You need an active gig with a matching subject to unlock this job.') {
         setUnlockErrorMessage(err.response.data.detail);
         setUnlockStatus('failed');
+        showToast(err.response.data.detail, 'error');
       } else {
         setUnlockStatus('failed');
+        showToast('Failed to unlock job. Please try again.', 'error');
       }
     }
   };
@@ -90,25 +102,26 @@ const JobDetail = () => {
     try {
       await jobAPI.completeJob(job.id);
       setJob(prev => ({ ...prev, status: 'Completed' }));
+      showToast('Job marked as completed!', 'success');
     } catch (err) {
       console.error('Error completing job:', err);
-      alert('Failed to mark job as completed.');
+      showToast('Failed to mark job as completed.', 'error');
     }
   };
 
   const handleSubmitReview = async () => {
     if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
-      return alert('Rating must be between 1 and 5.');
+      return showToast('Please select a rating between 1 and 5 stars.', 'error');
     }
     try {
       await jobAPI.submitJobReview(job.id, { rating: reviewRating, comment: reviewComment });
-      alert('Review submitted!');
+      showToast('Review submitted successfully!', 'success');
       setJob(prev => ({ ...prev, review: { rating: reviewRating, comment: reviewComment } }));
       setReviewRating(0);
       setReviewComment('');
     } catch (err) {
       console.error(err);
-      alert(err.response?.data?.detail || 'Failed to submit review.');
+      showToast(err.response?.data?.detail || 'Failed to submit review.', 'error');
     }
   };
 
@@ -121,27 +134,60 @@ const JobDetail = () => {
   const renderStars = (rating, interactive = false, onRate = null, onHover = null) => {
     return (
       <div className="flex space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => (
+        {[1, 2, 3, 4, 5].map((star) => {
+          const isActive = star <= (onHover || rating);
+          return (
+            <button
+              key={star}
+              type={interactive ? "button" : "div"}
+              className={`
+                ${interactive 
+                  ? 'cursor-pointer transition-all duration-200 transform hover:scale-110' 
+                  : 'cursor-default'
+                }
+                ${isActive 
+                  ? 'text-yellow-400 border-2 border-yellow-400 rounded-md' 
+                  : 'text-gray-300 border-2 border-transparent'
+                }
+                p-1
+              `}
+              onClick={interactive ? () => onRate(star) : undefined}
+              onMouseEnter={interactive ? () => onHover(star) : undefined}
+              onMouseLeave={interactive ? () => onHover(0) : undefined}
+            >
+              <FiStar 
+                size={interactive ? 28 : 20} 
+                className={isActive ? "fill-current" : ""}
+              />
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
+
+  const Toast = ({ message, type, onClose }) => {
+    const bgColor = type === 'error' ? 'bg-red-500' : 'bg-green-500';
+    const borderColor = type === 'error' ? 'border-red-400' : 'border-green-400';
+    
+    return (
+      <div className={`fixed top-24 right-6 z-50 ${bgColor} text-white px-6 py-4 rounded-xl shadow-2xl border ${borderColor} transform animate-slide-in-right max-w-sm`}>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            {type === 'error' ? (
+              <FiAlertCircle className="text-xl flex-shrink-0" />
+            ) : (
+              <FiCheckCircle className="text-xl flex-shrink-0" />
+            )}
+            <span className="font-medium">{message}</span>
+          </div>
           <button
-            key={star}
-            type={interactive ? "button" : "div"}
-            className={`${
-              interactive 
-                ? 'cursor-pointer transition-transform hover:scale-110' 
-                : 'cursor-default'
-            } ${
-              star <= (onHover || rating) ? 'text-yellow-400' : 'text-gray-300'
-            }`}
-            onClick={interactive ? () => onRate(star) : undefined}
-            onMouseEnter={interactive ? () => onHover(star) : undefined}
-            onMouseLeave={interactive ? () => onHover(0) : undefined}
+            onClick={onClose}
+            className="ml-4 hover:bg-white/20 rounded-full p-1 transition-colors"
           >
-            <FiStar 
-              size={interactive ? 28 : 20} 
-              className={star <= (onHover || rating) ? "fill-current" : ""}
-            />
+            <FiX className="text-lg" />
           </button>
-        ))}
+        </div>
       </div>
     );
   };
@@ -188,6 +234,15 @@ const JobDetail = () => {
 
     return (
       <div className="max-w-6xl mx-auto space-y-8">
+        {/* Toast Notification */}
+        {toast.show && (
+          <Toast 
+            message={toast.message} 
+            type={toast.type} 
+            onClose={() => setToast({ show: false, message: '', type: '' })}
+          />
+        )}
+
         {/* Job Header */}
         <div className="bg-gradient-to-r from-blue-600 to-blue-800 rounded-2xl p-8 text-white shadow-2xl">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
