@@ -530,16 +530,6 @@ const JobDetail = () => {
                 <div className="p-6">
                   <div className="max-w-md space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Rating</label>
-                      <div className="flex items-center gap-4">
-                        {renderStars(reviewRating, true, (value) => setReviewRating(value))}
-                        <span className="text-lg font-semibold text-gray-700">
-                          {reviewRating > 0 ? `${reviewRating}/5` : 'Select rating'}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-xs text-gray-500">Use mouse or keyboard (← →) and press Enter/Space to set rating.</p>
-                    </div>
-                    <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Comment</label>
                       <textarea
                         placeholder="Share your experience with this tutor..."
