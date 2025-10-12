@@ -8,7 +8,6 @@ import {
   FiBook,
   FiClock,
   FiSearch,
-  FiAward,
   FiUser,
 } from "react-icons/fi";
 import { jobAPI } from "../utils/apiService";
@@ -18,7 +17,9 @@ const JobList = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedType, setSelectedType] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
 
+  const jobsPerPage = 7;
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -27,6 +28,11 @@ const JobList = () => {
       try {
         const res = await jobAPI.getJobs();
         let allJobs = res.data || [];
+
+        // Sort by date (newest first)
+        allJobs.sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        );
 
         const params = new URLSearchParams(location.search);
         const type = params.get("type");
@@ -58,13 +64,13 @@ const JobList = () => {
 
   const handleFilterChange = (type) => {
     setSelectedType(type);
+    setCurrentPage(1);
     navigate(type === "all" ? "/jobs" : `/jobs?type=${type}`);
   };
 
   const filteredJobs = jobs.filter((job) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
-
     const textFields = [
       job.description,
       job.location,
@@ -74,11 +80,24 @@ const JobList = () => {
         ? job.subject_details.join(" ")
         : job.subject_details,
     ];
-
     return textFields.some((field) =>
       String(field || "").toLowerCase().includes(query)
     );
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
+  const paginatedJobs = filteredJobs.slice(
+    (currentPage - 1) * jobsPerPage,
+    currentPage * jobsPerPage
+  );
+
+  const changePage = (pageNum) => {
+    if (pageNum >= 1 && pageNum <= totalPages) {
+      setCurrentPage(pageNum);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
 
   const JobSkeleton = () => (
     <div className="relative rounded-2xl bg-white shadow-md p-6 animate-pulse">
@@ -110,7 +129,10 @@ const JobList = () => {
               className="w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur px-10 py-4 text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
               placeholder="Search jobs by title, skills, or location"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
+              }}
             />
           </div>
         </div>
@@ -135,7 +157,7 @@ const JobList = () => {
             {filteredJobs.length === 1 ? "Job" : "Jobs"} Available
           </h2>
           <div className="text-sm text-gray-500">
-            Sorted by: <span className="font-medium">Newest</span>
+            Sorted by: <span className="font-medium">Newest First</span>
           </div>
         </div>
 
@@ -172,11 +194,54 @@ const JobList = () => {
             )}
           </div>
         ) : (
-          <div className="space-y-6">
-            {filteredJobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
+          <>
+            <div className="space-y-6">
+              {paginatedJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+
+            {/* Pagination Controls */}
+            <div className="flex justify-center items-center mt-10 gap-2 flex-wrap">
+              <button
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  currentPage === 1
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-white border border-gray-200 hover:bg-indigo-50"
+                }`}
+                onClick={() => changePage(currentPage - 1)}
+                disabled={currentPage === 1}
+              >
+                Previous
+              </button>
+
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => changePage(i + 1)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                    currentPage === i + 1
+                      ? "bg-indigo-600 text-white shadow"
+                      : "bg-white border border-gray-200 hover:bg-indigo-50"
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+
+              <button
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                  currentPage === totalPages || totalPages === 0
+                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    : "bg-white border border-gray-200 hover:bg-indigo-50"
+                }`}
+                onClick={() => changePage(currentPage + 1)}
+                disabled={currentPage === totalPages || totalPages === 0}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </main>
 
@@ -186,72 +251,78 @@ const JobList = () => {
 };
 
 // Job Card Component
-const JobCard = ({ job }) => {
-  return (
-    <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all p-6 border border-gray-100 hover:border-indigo-100">
-      <div className="flex flex-col md:flex-row md:items-center gap-6 flex-1">
-        <div className="flex-shrink-0 bg-indigo-50 p-4 rounded-xl">
-          <FiBriefcase className="text-indigo-600 text-2xl" />
-        </div>
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">
-            {job.description || "Untitled Job"}
-          </h3>
-          <div className="flex flex-wrap gap-2 mb-2">
-            <span className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
-              {job.service_type || "General"}
-            </span>
-            {job.mode?.includes("Online") && (
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800">
-                Remote
-              </span>
-            )}
-            {job.mode?.includes("Offline") && (
-              <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
-                On-site
-              </span>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
-            <InfoItem icon={<FiBook />} text={job.subject_details?.join(", ") || "Not specified"} />
-            <InfoItem icon={<FiMapPin />} text={job.location || "Remote"} />
-            <InfoItem icon={<FiUser />} text={job.mode || "Not specified"} />
-            <InfoItem
-              icon={<FiClock />}
-              text={`Posted ${new Date(job.created_at).toLocaleDateString()}`}
-            />
-          </div>
-        </div>
+const JobCard = ({ job }) => (
+  <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all p-6 border border-gray-100 hover:border-indigo-100">
+    <div className="flex flex-col md:flex-row md:items-center gap-6 flex-1">
+      <div className="flex-shrink-0 bg-indigo-50 p-4 rounded-xl">
+        <FiBriefcase className="text-indigo-600 text-2xl" />
       </div>
-
-      <div className="flex flex-col items-end gap-3">
-        <div className="text-lg font-semibold text-indigo-600">
-          {job.budget || "Negotiable"}
+      <div>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">
+          {job.description || "Untitled Job"}
+        </h3>
+        <div className="flex flex-wrap gap-2 mb-2">
+          <span className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
+            {job.service_type || "General"}
+          </span>
+          {job.mode?.includes("Online") && (
+            <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800">
+              Remote
+            </span>
+          )}
+          {job.mode?.includes("Offline") && (
+            <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
+              On-site
+            </span>
+          )}
         </div>
-        <Link
-          to={`/jobs/${job.id}`}
-          className="inline-flex items-center rounded-xl bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
-        >
-          View Details
-          <svg
-            className="w-4 h-4 ml-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
-        </Link>
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+          <InfoItem
+            icon={<FiBook />}
+            text={job.subject_details?.join(", ") || "Not specified"}
+          />
+          <InfoItem icon={<FiMapPin />} text={job.location || "Remote"} />
+          <InfoItem icon={<FiUser />} text={job.mode || "Not specified"} />
+          <InfoItem
+            icon={<FiClock />}
+            text={`Posted ${new Date(
+              job.created_at
+            ).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}`}
+          />
+        </div>
       </div>
     </div>
-  );
-};
+
+    <div className="flex flex-col items-end gap-3">
+      <div className="text-lg font-semibold text-indigo-600">
+        {job.budget || "Negotiable"}
+      </div>
+      <Link
+        to={`/jobs/${job.id}`}
+        className="inline-flex items-center rounded-xl bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
+      >
+        View Details
+        <svg
+          className="w-4 h-4 ml-2"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 5l7 7-7 7"
+          />
+        </svg>
+      </Link>
+    </div>
+  </div>
+);
 
 const InfoItem = ({ icon, text }) => (
   <div className="flex items-center gap-2">
