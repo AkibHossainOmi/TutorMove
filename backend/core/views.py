@@ -2142,7 +2142,7 @@ def send_whatsapp(request):
         phone_number = phone_number.lstrip("+")
 
         # Build Mudslide command
-        cmd = [r"C:\Program Files\nodejs\npx.cmd", "mudslide", "send", phone_number, otp_message]
+        cmd = ["npx", "mudslide", "send", phone_number, otp_message]
 
         # Run subprocess
         result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")

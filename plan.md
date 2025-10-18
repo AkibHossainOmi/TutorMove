@@ -37,7 +37,7 @@
 ⦁	Gigs sort not working
 ⦁	from student profile gigs not showing in teacher profile
 ⦁	Student can give reward to teacher 50 points (Teacher)
-⦁	Rating & Review implementation
+⦁	Rating & Review implementation ✅ ✅
 ⦁	Filters not working on tutors
 ⦁	Packages sorting ✅
 ⦁   Active Job Count on dashboard is always 0
