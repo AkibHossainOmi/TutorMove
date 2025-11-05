@@ -21,7 +21,7 @@ function WelcomeBanner() {
         // This assumes these points are a one-time welcome bonus
         if (
           Array.isArray(res.data) &&
-          res.data.length > 0 && // Ensure there's at least one credit entry
+          res.data.length > 0 && // Ensure there's at least one point entry
           res.data[0]?.balance === WELCOME_CREDIT
         ) {
           setShowBanner(true);

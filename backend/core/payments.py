@@ -8,7 +8,7 @@ class SSLCommerzPayment:
         self.session_api = os.getenv('SSLCOMMERZ_SESSION_API', 'https://sandbox.sslcommerz.com/gwprocess/v4/api.php')
         self.validation_api = os.getenv('SSLCOMMERZ_VALIDATION_API', 'https://sandbox.sslcommerz.com/validator/api/validationserverAPI.php')
 
-    def get_payment_urls(self, frontend_base='http://localhost:3000/credit-purchase'):
+    def get_payment_urls(self, frontend_base='http://localhost:3000/point-purchase'):
         return {
             'success_url': f'{frontend_base}?success=1',
             'fail_url': f'{frontend_base}?fail=1',

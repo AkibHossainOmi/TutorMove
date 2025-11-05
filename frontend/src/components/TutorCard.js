@@ -60,7 +60,7 @@ const TutorCard = ({ tutor, featured = false }) => {
         'Failed to unlock contact info.';
       setError(msg);
 
-      if (msg.toLowerCase().includes('credit') || err.response?.status === 402) {
+      if (msg.toLowerCase().includes('point') || err.response?.status === 402) {
         setShowBuyCredits(true);
       }
     } finally {
@@ -161,7 +161,7 @@ const TutorCard = ({ tutor, featured = false }) => {
                       : 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
                   } flex items-center justify-center`}
                 >
-                  {unlocking ? 'Unlocking...' : 'Unlock (1 credit)'}
+                  {unlocking ? 'Unlocking...' : 'Unlock (1 point)'}
                 </button>
                 <span className="text-xs text-gray-500">View contact</span>
               </div>
@@ -233,7 +233,7 @@ const TutorCard = ({ tutor, featured = false }) => {
       <BuyCreditsModal
         show={showBuyCredits}
         onClose={() => setShowBuyCredits(false)}
-        onBuyCredits={() => (window.location.href = '/credit-purchase')}
+        onBuyCredits={() => (window.location.href = '/point-purchase')}
         message="You need more points to unlock contact information. Please purchase points to proceed."
       />
     </div>

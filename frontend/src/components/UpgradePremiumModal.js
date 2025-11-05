@@ -16,7 +16,7 @@ const UpgradePremiumModal = ({ open, onClose }) => {
         <p>You’ve reached your monthly application limit.<br />
         <b>Upgrade to Premium</b> for unlimited job applications and more benefits!</p>
         <Link
-          to="/credit-purchase?premium=1"
+          to="/point-purchase?premium=1"
           style={{
             display: 'inline-block',
             background: '#ffc107',

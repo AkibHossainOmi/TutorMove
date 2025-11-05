@@ -80,7 +80,7 @@ const JobApplicants = ({ jobId, job }) => {
     } catch (err) {
       console.error('Unlock error:', err);
       const msg = err.response?.data?.detail || err.response?.data?.error || 'Failed to unlock contact info.';
-      if (msg.toLowerCase().includes('credit') || err.response?.status === 402) {
+      if (msg.toLowerCase().includes('point') || err.response?.status === 402) {
         setShowBuyCredits(true);
       }
     } finally {
@@ -133,7 +133,7 @@ const JobApplicants = ({ jobId, job }) => {
                         : 'bg-gradient-to-br from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
                     }`}
                   >
-                    {unlockingId === tutor.id ? 'Unlocking...' : 'Unlock (1 credit)'}
+                    {unlockingId === tutor.id ? 'Unlocking...' : 'Unlock (1 point)'}
                   </button>
                 )}
                 <button
@@ -166,7 +166,7 @@ const JobApplicants = ({ jobId, job }) => {
       <BuyCreditsModal
         show={showBuyCredits}
         onClose={() => setShowBuyCredits(false)}
-        onBuyCredits={() => (window.location.href = '/credit-purchase')}
+        onBuyCredits={() => (window.location.href = '/point-purchase')}
         message="You need more points to unlock contact information. Please purchase points to proceed."
       />
     </div>

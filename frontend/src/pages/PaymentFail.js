@@ -77,7 +77,7 @@ const PaymentFail = () => {
           {/* Action buttons */}
           <div className="space-y-3">
             <Link
-                to="/credit-purchase"
+                to="/point-purchase"
                 className="block w-full px-6 py-3 bg-gradient-to-r from-amber-500 to-amber-600 text-black hover:text-black font-semibold rounded-lg shadow-md hover:shadow-lg transition-all duration-300 hover:from-amber-600 hover:to-amber-700 text-center"
               >
               Try Again

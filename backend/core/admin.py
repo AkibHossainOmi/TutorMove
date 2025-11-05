@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import (
-    User, Gig, Credit, Job, Application,
+    User, Gig, Point, Job, Application,
     Notification, Message, UserSettings, Review, EscrowPayment ,Subject, Conversation, ConversationParticipant,
 )
 
@@ -31,7 +31,7 @@ class GigAdmin(admin.ModelAdmin):
     search_fields = ('title', 'description', 'education', 'experience')
     ordering = ('-created_at',)
 
-@admin.register(Credit)
+@admin.register(Point)
 class CreditAdmin(admin.ModelAdmin):
     list_display = ('user', 'balance', 'auto_renew', 'last_renewed')
     list_filter = ('auto_renew',)

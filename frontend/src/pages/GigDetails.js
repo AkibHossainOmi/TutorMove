@@ -80,7 +80,7 @@ const GigDetails = ({ gig: initialGig }) => {
               marginLeft: '10px'
             }}
           >
-            {unlocking ? 'Unlocking...' : 'Unlock Contact Info (1 credit)'}
+            {unlocking ? 'Unlocking...' : 'Unlock Contact Info (1 point)'}
           </button>
         )}
       </div>

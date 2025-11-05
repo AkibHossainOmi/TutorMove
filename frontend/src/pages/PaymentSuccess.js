@@ -8,7 +8,7 @@ const PaymentSuccess = () => {
   const amount = searchParams.get('amount') || 'N/A';
   const currency = searchParams.get('currency') || 'BDT';
   const paymentType = searchParams.get('payment_type') || 'points'; // 'premium' or 'points'
-  const creditAmount = searchParams.get('credit') || 'N/A'; // for points
+  const creditAmount = searchParams.get('point') || 'N/A'; // for points
 
   // Message based on payment type
   const successMessage = paymentType === 'premium'
@@ -45,13 +45,13 @@ const PaymentSuccess = () => {
                 <span className="font-medium text-gray-800">{transactionId}</span>
               </div>
 
-              {/* Show amount for both credit and premium */}
+              {/* Show amount for both point and premium */}
               <div className="flex justify-between">
                 <span className="text-gray-600">Amount:</span>
                 <span className="font-medium text-gray-800">{amount} {currency}</span>
               </div>
 
-              {/* Show points only for credit purchase */}
+              {/* Show points only for point purchase */}
               {paymentType === 'points' && (
                 <div className="flex justify-between">
                   <span className="text-gray-600">Points Added:</span>

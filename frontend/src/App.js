@@ -76,7 +76,7 @@ function App() {
 
             
 
-            {/* Messaging and Credit Management */}
+            {/* Messaging and Point Management */}
             <Route path="/messages" element={<Messages />} />
 
             {/* Payment Status Pages */}

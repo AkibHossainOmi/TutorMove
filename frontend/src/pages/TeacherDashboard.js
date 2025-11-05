@@ -36,9 +36,9 @@ const tutorAPI = {
 };
 
 /**
- * API functions for credit-related operations.
+ * API functions for point-related operations.
  */
-const credit = {
+const point = {
   getUserCredits: async (userId) => {
     try {
       const response = await creditAPI.getCreditBalance();
@@ -196,7 +196,7 @@ const TeacherDashboard = () => {
 
       const [gigsData, creditBalanceData, matchedJobsResponse] = await Promise.all([
         tutorAPI.getTutorGigs(currentUser.id),
-        credit.getUserCredits(currentUser.id),
+        point.getUserCredits(currentUser.id),
         jobAPI.getMatchedJobs(),
       ]);
 
@@ -247,17 +247,17 @@ const TeacherDashboard = () => {
         const currentGigCount = dashboardData.myGigs.length;
 
         if (currentGigCount >= freeGigsLimit) {
-          const creditUpdateResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/credit/update/`, {
+          const creditUpdateResponse = await axios.post(`${process.env.REACT_APP_API_URL}/api/point/update/`, {
             id: user.id,
             amount: 1,
             isincrease: false
           });
-          console.log('Credit updated:', creditUpdateResponse.data);
+          console.log('Point updated:', creditUpdateResponse.data);
         }
 
         await loadDashboardData(user);
       } catch (error) {
-        console.error('Error updating credit after gig creation:', error.response?.data || error.message);
+        console.error('Error updating point after gig creation:', error.response?.data || error.message);
       }
     }
 
@@ -380,7 +380,7 @@ const TeacherDashboard = () => {
               <p className="text-sm text-blue-800">
                 {dashboardData.myGigs.length < 5
                   ? `You have ${5 - dashboardData.myGigs.length} free gig${5 - dashboardData.myGigs.length === 1 ? '' : 's'} remaining.`
-                  : `You've used all free gigs. New gigs will cost 1 credit each.`}
+                  : `You've used all free gigs. New gigs will cost 1 point each.`}
               </p>
             </div>
           </div>

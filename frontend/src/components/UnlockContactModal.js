@@ -30,7 +30,7 @@ const UnlockContactModal = ({ show, onClose, tutorId, onUnlockSuccess, onNeedBuy
 
       setError(msg);
 
-      if (msg.toLowerCase().includes('credit') || err.response?.status === 402) {
+      if (msg.toLowerCase().includes('point') || err.response?.status === 402) {
         onNeedBuyCredits?.(); // delegate to parent
       }
     } finally {
@@ -43,7 +43,7 @@ const UnlockContactModal = ({ show, onClose, tutorId, onUnlockSuccess, onNeedBuy
       <div className="bg-white rounded-lg p-6 max-w-sm w-full">
         <h3 className="text-lg font-semibold mb-4">Unlock Contact Info</h3>
         <p className="mb-4 text-gray-700 text-sm leading-6">
-          Use <strong>1 credit</strong> to unlock the tutor's contact info
+          Use <strong>1 point</strong> to unlock the tutor's contact info
           <br />
           and start a conversation instantly.
         </p>

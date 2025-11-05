@@ -55,7 +55,7 @@ const About = () => {
             <li>✔ Wide range of subjects & skills</li>
             <li>✔ Verified tutor profiles</li>
             <li>✔ Flexible online & offline learning options</li>
-            <li>✔ Transparent credit-based system</li>
+            <li>✔ Transparent point-based system</li>
             <li>✔ Secure and reliable platform</li>
           </ul>
         </div>

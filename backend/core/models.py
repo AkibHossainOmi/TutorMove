@@ -210,7 +210,7 @@ class Gig(models.Model):
     def __str__(self):
         return f"{self.title} by {self.tutor.username}"
 
-class Credit(models.Model):
+class Point(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     balance = models.IntegerField(default=0)
     auto_renew = models.BooleanField(default=False)
