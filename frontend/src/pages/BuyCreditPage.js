@@ -3,9 +3,9 @@ import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { premiumAPI, creditAPI, userApi } from "../utils/apiService";
-import { FaCrown, FaCoins } from "react-icons/fa";
+import { FaCrown, FaCoins, FaCheckCircle, FaTimes } from "react-icons/fa";
 
-// --- Modern Hostinger-Style Plan Card ---
+// --- Modern Plan Card with Better Visual Hierarchy ---
 const PlanCard = ({
   title,
   priceBDT,
@@ -17,140 +17,232 @@ const PlanCard = ({
   onClick,
   badgeText,
   icon,
+  isPremiumCard,
 }) => (
   <div
     onClick={onClick}
-    className={`relative flex flex-col rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden 
+    className={`relative flex flex-col rounded-xl border-2 transition-all duration-300 cursor-pointer overflow-hidden h-full
       ${
         isActive
-          ? "border-blue-600 shadow-xl bg-gradient-to-br from-blue-50 to-blue-100 scale-[1.02]"
-          : "border-gray-200 bg-white hover:shadow-lg hover:scale-[1.01]"
-      }`}
+          ? "border-blue-600 shadow-2xl bg-gradient-to-br from-blue-50 via-white to-blue-50 transform scale-105"
+          : "border-gray-200 bg-white hover:shadow-xl hover:border-blue-300 hover:scale-102"
+      }
+      ${isPremiumCard ? "md:min-h-[400px]" : ""}
+    `}
   >
-    {/* Badge */}
+    {/* Popular Badge */}
     {isPopular && (
-      <div className="absolute top-0 left-0 right-0 bg-blue-600 text-white text-sm font-semibold text-center py-2">
-        {badgeText || "MOST POPULAR"}
+      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg rounded-tr-lg shadow-lg">
+        ⭐ {badgeText || "BEST VALUE"}
+      </div>
+    )}
+
+    {/* Active Indicator */}
+    {isActive && (
+      <div className="absolute top-4 right-4 bg-blue-600 text-white p-2 rounded-full shadow-lg">
+        <FaCheckCircle className="text-lg" />
       </div>
     )}
 
     {/* Content */}
-    <div className={`p-6 ${isPopular ? "pt-12" : "pt-6"}`}>
-      <h3 className="text-xl font-bold text-gray-900 mb-2 flex items-center gap-2">
-        {icon && <span className="text-yellow-500">{icon}</span>}
-        {title}
-      </h3>
+    <div className="p-6 flex flex-col h-full">
+      {/* Title & Icon */}
+      <div className="flex items-center gap-3 mb-4">
+        {icon && <span className="text-3xl">{icon}</span>}
+        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+      </div>
+
+      {/* Pricing */}
       {priceBDT && (
-        <p className="text-2xl font-extrabold text-gray-900 mb-1">
-          ৳{priceBDT}
-          <span className="text-base text-gray-600 font-medium ml-2">
-            (${priceUSD})
-          </span>
-        </p>
-      )}
-      {subtext && (
-        <p className="text-sm text-blue-600 mb-4 font-medium">{subtext}</p>
+        <div className="mb-4">
+          <div className="flex items-baseline gap-2">
+            <span className="text-4xl font-extrabold text-gray-900">৳{priceBDT}</span>
+            <span className="text-lg text-gray-500 font-medium">${priceUSD}</span>
+          </div>
+          {subtext && (
+            <p className="text-sm text-blue-600 font-semibold mt-1 flex items-center gap-1">
+              <span className="text-green-500">✨</span> {subtext}
+            </p>
+          )}
+        </div>
       )}
 
-      <ul className="space-y-2 mb-6">
+      {/* Features */}
+      <ul className="space-y-3 mb-6 flex-grow">
         {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-2 text-gray-700 text-sm">
-            <span className="text-green-500 mt-[3px]">✔</span> {f}
+          <li key={i} className="flex items-start gap-3 text-gray-700 text-sm">
+            <FaCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+            <span>{f}</span>
           </li>
         ))}
       </ul>
 
+      {/* Action Button */}
       <button
-        className={`w-full py-3 rounded-lg font-semibold text-white transition-all 
+        className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5
           ${
             isActive
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-blue-600 hover:bg-blue-700"
+              ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
+              : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
           }`}
       >
-        {isActive ? "Selected" : "Choose Package"}
+        {isActive ? (
+          <span className="flex items-center justify-center gap-2">
+            <FaCheckCircle /> Selected
+          </span>
+        ) : (
+          "Select Package"
+        )}
       </button>
     </div>
   </div>
 );
 
-// --- Selected Package Box ---
-const SelectedPackageBox = ({ pkg, isLoading, onProceed }) => (
-  <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-lg p-6 max-w-md mx-auto border border-blue-200">
-    <div className="text-center mb-4">
-      <FaCoins className="text-3xl text-yellow-500 mx-auto mb-2" />
-      <h3 className="text-lg font-semibold text-gray-800">Selected Package</h3>
-    </div>
-
-    {pkg ? (
-      <>
-        <div className="bg-white rounded-lg p-4 mb-4 shadow-sm">
-          <div className="flex justify-between items-center mb-2">
-            <span className="font-semibold text-gray-700">Total Points</span>
-            <span className="text-lg font-bold text-blue-600">
-              {pkg.totalPoints}
-              {pkg.bonus > 0 && (
-                <span className="text-sm text-green-600 ml-1">
-                  (+{pkg.bonus} bonus)
-                </span>
-              )}
-            </span>
+// --- Sticky Selected Package Sidebar ---
+const SelectedPackageSidebar = ({ pkg, isLoading, onProceed, isPremium }) => {
+  if (!pkg) {
+    return (
+      <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-dashed border-gray-300 sticky top-24">
+        <div className="text-center py-8">
+          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaCoins className="text-4xl text-gray-400" />
           </div>
-          <div className="flex justify-between text-sm text-gray-600">
-            <span>Price</span>
-            <span className="font-medium">
-              ৳{pkg.priceBDT} (${pkg.priceUSD})
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            No Package Selected
+          </h3>
+          <p className="text-gray-500 text-sm">
+            Choose a point package from the left to continue
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-2xl p-6 border-2 border-blue-200 sticky top-24">
+      {/* Header */}
+      <div className="text-center mb-6">
+        <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
+          <FaCoins className="text-3xl text-white" />
+        </div>
+        <h3 className="text-xl font-bold text-gray-900 mb-1">Selected Package</h3>
+        <p className="text-sm text-gray-600">Review your selection</p>
+      </div>
+
+      {/* Package Details */}
+      <div className="bg-white rounded-lg p-5 mb-5 shadow-md space-y-4">
+        {/* Package Title */}
+        <div className="border-b border-gray-200 pb-3">
+          <p className="text-lg font-bold text-gray-800">Package {pkg.id}</p>
+        </div>
+
+        {/* Points Breakdown */}
+        <div className="space-y-3">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600 font-medium">Base Points</span>
+            <span className="text-lg font-bold text-gray-900">{pkg.points}</span>
+          </div>
+          
+          {pkg.bonus > 0 && (
+            <div className="flex justify-between items-center">
+              <span className="text-green-600 font-medium">Bonus Points</span>
+              <span className="text-lg font-bold text-green-600">+{pkg.bonus}</span>
+            </div>
+          )}
+
+          <div className="border-t-2 border-gray-200 pt-3 flex justify-between items-center">
+            <span className="text-gray-900 font-semibold">Total Points</span>
+            <span className="text-2xl font-extrabold text-blue-600">
+              {pkg.totalPoints}
             </span>
           </div>
         </div>
-        <button
-          onClick={onProceed}
-          disabled={isLoading}
-          className={`w-full py-3 rounded-lg font-semibold text-white transition-all
-            ${
-              isLoading
-                ? "bg-gray-400 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md hover:shadow-lg"
-            }
-          `}
-        >
-          {isLoading ? (
-            <div className="flex items-center justify-center gap-2">
-              <LoadingSpinner size="sm" />
-              Processing...
+
+        {/* Price */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mt-4">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700 font-semibold">Total Price</span>
+            <div className="text-right">
+              <p className="text-2xl font-extrabold text-gray-900">৳{pkg.priceBDT}</p>
+              <p className="text-sm text-gray-600">${pkg.priceUSD} USD</p>
             </div>
-          ) : (
-            "Proceed to Payment"
+          </div>
+          {pkg.save > 0 && (
+            <div className="mt-2 text-center">
+              <span className="inline-block bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                SAVE {pkg.save}%
+              </span>
+            </div>
           )}
-        </button>
-      </>
-    ) : (
-      <div className="text-center py-4">
-        <p className="text-gray-500">Select a point package above</p>
+        </div>
       </div>
-    )}
-  </div>
-);
+
+      {/* Action Button */}
+      <button
+        onClick={onProceed}
+        disabled={isLoading}
+        className={`w-full py-4 rounded-lg font-bold text-white text-lg transition-all shadow-lg transform
+          ${
+            isLoading
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 hover:shadow-2xl hover:-translate-y-1"
+          }
+        `}
+      >
+        {isLoading ? (
+          <div className="flex items-center justify-center gap-3">
+            <LoadingSpinner size="sm" />
+            Processing...
+          </div>
+        ) : (
+          <span className="flex items-center justify-center gap-2">
+            Proceed to Payment →
+          </span>
+        )}
+      </button>
+
+      {/* Security Badge */}
+      <div className="mt-4 text-center">
+        <p className="text-xs text-gray-600 flex items-center justify-center gap-1">
+          <span className="text-green-500">🔒</span>
+          Secure payment powered by bKash
+        </p>
+      </div>
+    </div>
+  );
+};
 
 // --- Status Banner ---
 const StatusBanner = ({ type, message, onClose }) => (
   <div
-    className={`rounded-lg p-4 mb-6 flex items-center justify-between
+    className={`rounded-lg p-4 mb-6 flex items-center justify-between shadow-md animate-slideDown
     ${
       type === "error"
-        ? "bg-red-50 border border-red-200"
-        : "bg-blue-50 border border-blue-200"
+        ? "bg-red-50 border-l-4 border-red-500"
+        : "bg-blue-50 border-l-4 border-blue-500"
     }`}
   >
-    <p
-      className={`font-medium ${
-        type === "error" ? "text-red-800" : "text-blue-800"
-      }`}
+    <div className="flex items-center gap-3">
+      <div
+        className={`w-8 h-8 rounded-full flex items-center justify-center
+        ${type === "error" ? "bg-red-100" : "bg-blue-100"}
+      `}
+      >
+        <span className="text-lg">{type === "error" ? "⚠️" : "ℹ️"}</span>
+      </div>
+      <p
+        className={`font-medium ${
+          type === "error" ? "text-red-800" : "text-blue-800"
+        }`}
+      >
+        {message}
+      </p>
+    </div>
+    <button
+      onClick={onClose}
+      className="text-gray-500 hover:text-gray-700 transition-colors"
     >
-      {message}
-    </p>
-    <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-      ×
+      <FaTimes className="text-xl" />
     </button>
   </div>
 );
@@ -167,7 +259,7 @@ const BuyPointsAndPremiumPage = () => {
 
   const PREMIUM_PRICE = 500;
 
-  // Packages from image table
+  // Point packages with more attractive pricing structure
   const pointPackages = [
     { id: 1, points: 50, bonus: 0, totalPoints: 50, priceBDT: 119, priceUSD: 1.0, save: 0 },
     { id: 2, points: 100, bonus: 5, totalPoints: 105, priceBDT: 235, priceUSD: 1.98, save: 3 },
@@ -190,7 +282,7 @@ const BuyPointsAndPremiumPage = () => {
           setIsPremium(true);
           setPremiumExpiry(res.data.premium_expires);
         }
-      } catch {
+      } catch (err) {
         setError("Please log in to continue");
       } finally {
         setIsLoading(false);
@@ -199,33 +291,43 @@ const BuyPointsAndPremiumPage = () => {
     loadUser();
   }, []);
 
-  // Actions
+  // Purchase Premium
   const handlePurchasePremium = async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const res = await premiumAPI.upgradeToPremium({
         amount: PREMIUM_PRICE,
         user_id: currentUser?.id,
       });
-      if (res.data.payment_url) window.location.href = res.data.payment_url;
-    } catch {
+      if (res.data.payment_url) {
+        window.location.href = res.data.payment_url;
+      }
+    } catch (err) {
       setError("Payment failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Purchase Points
   const handlePurchasePoints = async () => {
-    if (!selectedPackage) return;
+    if (!selectedPackage) {
+      setError("Please select a package first");
+      return;
+    }
     setIsLoading(true);
+    setError(null);
     try {
       const res = await creditAPI.purchaseCredits({
         points: selectedPackage.points,
         amount: selectedPackage.priceBDT,
         user_id: currentUser?.id,
       });
-      if (res.data.payment_url) window.location.href = res.data.payment_url;
-    } catch {
+      if (res.data.payment_url) {
+        window.location.href = res.data.payment_url;
+      }
+    } catch (err) {
       setError("Payment failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -237,32 +339,36 @@ const BuyPointsAndPremiumPage = () => {
     setError(null);
   };
 
-  // Loading or Error States
+  // Loading State
   if (isLoading && !currentUser && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="text-center">
-          <LoadingSpinner size="lg" />
-          <p className="mt-4 text-gray-600">Loading your account...</p>
+          <div className="w-20 h-20 mx-auto mb-6">
+            <LoadingSpinner size="lg" />
+          </div>
+          <p className="text-xl font-semibold text-gray-700">Loading your account...</p>
+          <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
         </div>
       </div>
     );
   }
 
+  // Error State - Not Logged In
   if (error && !currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="bg-white shadow-xl p-8 rounded-2xl text-center max-w-md mx-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <span className="text-2xl">🔒</span>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 px-4">
+        <div className="bg-white shadow-2xl p-10 rounded-2xl text-center max-w-md">
+          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <span className="text-4xl">🔒</span>
           </div>
-          <h2 className="text-red-600 font-bold text-xl mb-3">
+          <h2 className="text-red-600 font-bold text-2xl mb-4">
             Authentication Required
           </h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-8 text-lg">{error}</p>
           <button
             onClick={() => (window.location.href = "/login")}
-            className="bg-blue-600 text-white py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors w-full"
+            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-10 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl w-full text-lg font-semibold"
           >
             Go to Login
           </button>
@@ -273,108 +379,157 @@ const BuyPointsAndPremiumPage = () => {
 
   // --- Main UI ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col mt-10">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 flex flex-col">
       <Navbar />
-      <main className="flex-grow max-w-6xl mx-auto px-4 py-8 space-y-8">
+      
+      <main className="flex-grow container mx-auto px-4 py-8 mt-16 max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+        <div className="text-center mb-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
             Upgrade Your Experience
           </h1>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Choose the plan that works best for you. Go premium for unlimited
-            access or buy points as you need.
+          <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
+            Unlock unlimited possibilities with our flexible plans. Choose premium for full access or buy points as needed.
           </p>
         </div>
 
-        {/* Status */}
+        {/* Status Messages */}
         {error && <StatusBanner type="error" message={error} onClose={clearStatus} />}
         {statusMessage && (
           <StatusBanner type="info" message={statusMessage} onClose={clearStatus} />
         )}
 
-        {/* Membership Plans */}
-        <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-            <FaCrown className="text-yellow-500" />
-            Membership Plans
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Premium Membership Section */}
+        <section className="mb-12">
+          <div className="flex items-center gap-3 mb-6">
+            <FaCrown className="text-3xl text-yellow-500" />
+            <h2 className="text-3xl font-bold text-gray-900">Membership Plans</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <PlanCard
               title="Free Plan"
               priceBDT="0"
               priceUSD="0.00"
-              subtext="+3 months free"
+              subtext="Always Free"
               features={[
                 "Basic feature access",
                 "Limited monthly points",
-                "Free job browsing",
-                "Standard support",
+                "Browse all job listings",
+                "Standard email support",
+                "Community forum access",
               ]}
               icon="🎯"
+              isPremiumCard
             />
+            
             <PlanCard
-              title={isPremium ? "Premium Active" : "Premium Plan"}
+              title={isPremium ? "Premium Active ✓" : "Premium Plan"}
               priceBDT={isPremium ? null : PREMIUM_PRICE.toString()}
-              priceUSD={isPremium ? null : "4.25"}
-              subtext={isPremium ? null : "+3 months free"}
+              priceUSD={isPremium ? null : "4.17"}
+              subtext={isPremium ? `Active until ${premiumExpiry || "N/A"}` : "Unlimited Access"}
               features={[
-                "Priority support",
-                "Exclusive discounts",
-                "Unlimited access",
-                "Advanced features",
+                "All features unlocked",
+                "Priority 24/7 support",
+                "Exclusive member discounts",
+                "Unlimited point purchases",
                 "Early access to new features",
+                "Ad-free experience",
               ]}
-              isPopular
+              isPopular={!isPremium}
               isActive={isPremium}
               onClick={!isPremium ? handlePurchasePremium : undefined}
-              icon={<FaCrown className="text-yellow-500" />}
+              icon={<FaCrown />}
+              badgeText="BEST VALUE"
+              isPremiumCard
             />
           </div>
         </section>
 
-        {/* Point Packages */}
+        {/* Point Packages Section with Sidebar Layout */}
         <section>
-          <h2 className="text-2xl font-semibold text-gray-800 mb-6 flex items-center gap-2">
-            <FaCoins className="text-yellow-500" />
-            Point Packages
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pointPackages.map((pkg) => (
-              <PlanCard
-                key={pkg.id}
-                title={`Package ${pkg.id}`}
-                priceBDT={pkg.priceBDT}
-                priceUSD={pkg.priceUSD}
-                subtext={
-                  pkg.save > 0 ? `Save ${pkg.save}%` : "Standard rate"
-                }
-                features={[
-                  `${pkg.totalPoints} Total Points`,
-                  pkg.bonus > 0
-                    ? `+${pkg.bonus} Bonus Points`
-                    : "No bonus points",
-                  "Instant delivery",
-                  "No expiration",
-                ]}
-                isActive={selectedPackage?.id === pkg.id}
-                onClick={() => setSelectedPackage(pkg)}
-                isPopular={pkg.id === 5}
-                icon="💰"
+          <div className="flex items-center gap-3 mb-6">
+            <FaCoins className="text-3xl text-yellow-500" />
+            <h2 className="text-3xl font-bold text-gray-900">Point Packages</h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left Side - Point Packages (2 columns) */}
+            <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {pointPackages.map((pkg) => (
+                  <PlanCard
+                    key={pkg.id}
+                    title={`${pkg.totalPoints} Points`}
+                    priceBDT={pkg.priceBDT}
+                    priceUSD={pkg.priceUSD}
+                    subtext={pkg.save > 0 ? `Save ${pkg.save}%` : "Standard Rate"}
+                    features={[
+                      `${pkg.points} base points`,
+                      pkg.bonus > 0
+                        ? `+${pkg.bonus} bonus points (${Math.round((pkg.bonus/pkg.points)*100)}% extra)`
+                        : "No bonus included",
+                      "Instant delivery to account",
+                      "Never expires",
+                      "Use anytime",
+                    ]}
+                    isActive={selectedPackage?.id === pkg.id}
+                    onClick={() => setSelectedPackage(pkg)}
+                    isPopular={pkg.id === 5}
+                    badgeText={pkg.id === 5 ? "MOST POPULAR" : pkg.id === 9 ? "BEST SAVINGS" : null}
+                    icon="💰"
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Right Side - Selected Package Sidebar (Sticky) */}
+            <div className="lg:col-span-1">
+              <SelectedPackageSidebar
+                pkg={selectedPackage}
+                isLoading={isLoading}
+                onProceed={handlePurchasePoints}
+                isPremium={isPremium}
               />
-            ))}
+            </div>
           </div>
         </section>
 
-        {/* Selected Package */}
-        <section className="flex justify-center">
-          <SelectedPackageBox
-            pkg={selectedPackage}
-            isLoading={isLoading}
-            onProceed={handlePurchasePoints}
-          />
+        {/* Info Section */}
+        <section className="mt-12 bg-white rounded-xl shadow-lg p-8 border border-gray-200">
+          <h3 className="text-2xl font-bold text-gray-900 mb-4">Why Choose Our Points System?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-3xl">⚡</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Instant Delivery</h4>
+              <p className="text-gray-600 text-sm">
+                Points are added to your account immediately after payment
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-3xl">🎁</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Bonus Points</h4>
+              <p className="text-gray-600 text-sm">
+                Get up to 20% extra points on larger packages
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-3xl">♾️</span>
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-2">Never Expire</h4>
+              <p className="text-gray-600 text-sm">
+                Your points remain in your account forever, use them anytime
+              </p>
+            </div>
+          </div>
         </section>
       </main>
+
       <Footer />
     </div>
   );
