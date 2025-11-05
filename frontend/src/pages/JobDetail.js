@@ -574,7 +574,7 @@ const JobDetail = () => {
           </div>
         </div>
 
-        {/* Buy Credits Modal */}
+        {/* Buy Points Modal */}
         {isTutor && (
           <BuyCreditsModal
             show={showBuyCreditsModal}

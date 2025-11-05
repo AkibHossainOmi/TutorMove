@@ -1126,7 +1126,7 @@ class JobViewSet(viewsets.ModelViewSet):
     def applicants(self, request, pk=None):
         """
         Returns a list of tutors who have applied for this job (or unlocked it),
-        sorted by total credits spent on their gigs (descending).
+        sorted by total points spent on their gigs (descending).
         If the requesting user is a student, email and phone are only
         shown if the contact is unlocked.
         """

@@ -15,9 +15,7 @@
 -   Change Password UI added on user profile.
 -   Navbar shows User's Profile Picture \& Username.
 -   Redesigned Navbar, Login, SignUp.
--
-
-**_# Issues:_**
+-   **_# Issues:_**
 
 ## Teacher Part:
 
@@ -50,4 +48,4 @@
 -   Coupon Code
 -   Refer & Earn
 -   Account Delete
--   Credits can go to negative (not supposed to)
+-   Points can go to negative (not supposed to)
