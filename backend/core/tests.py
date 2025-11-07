@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from .models import Gig, Point, Job, Application, Message
+from .models import Gig, Credit, Job, Application, Message
 from django.utils import timezone
 
 class UserTests(APITestCase):
@@ -60,19 +60,19 @@ class CreditTests(APITestCase):
             password='pass123',
             user_type='teacher'
         )
-        Point.objects.create(user=self.user1, balance=100)
-        Point.objects.create(user=self.user2, balance=0)
+        Credit.objects.create(user=self.user1, balance=100)
+        Credit.objects.create(user=self.user2, balance=0)
         self.client.force_authenticate(user=self.user1)
 
     def test_credit_transfer(self):
         response = self.client.post(
-            reverse('point-transfer'),
+            reverse('credit-transfer'),
             {'recipient_id': self.user2.id, 'amount': 50},
             format='json'
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(Point.objects.get(user=self.user1).balance, 50)
-        self.assertEqual(Point.objects.get(user=self.user2).balance, 50)
+        self.assertEqual(Credit.objects.get(user=self.user1).balance, 50)
+        self.assertEqual(Credit.objects.get(user=self.user2).balance, 50)
 
 class JobApplicationTests(APITestCase):
     def setUp(self):
@@ -86,7 +86,7 @@ class JobApplicationTests(APITestCase):
             password='pass123',
             user_type='teacher'
         )
-        Point.objects.create(user=self.teacher, balance=10)
+        Credit.objects.create(user=self.teacher, balance=10)
         self.job = Job.objects.create(
             student=self.student,
             title='Need Math Tutor',
@@ -103,7 +103,7 @@ class JobApplicationTests(APITestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Application.objects.count(), 1)
-        self.assertEqual(Point.objects.get(user=self.teacher).balance, 9)
+        self.assertEqual(Credit.objects.get(user=self.teacher).balance, 9)
         application = Application.objects.get()
         self.assertIsNotNone(application.countdown_end)
 

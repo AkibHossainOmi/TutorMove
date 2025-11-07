@@ -210,14 +210,14 @@ class Gig(models.Model):
     def __str__(self):
         return f"{self.title} by {self.tutor.username}"
 
-class Point(models.Model):
+class Credit(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     balance = models.IntegerField(default=0)
     auto_renew = models.BooleanField(default=False)
     last_renewed = models.DateTimeField(blank=True, null=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.balance} points"
+        return f"{self.user.username} - {self.balance} credits"
 
 class Job(models.Model):
     SERVICE_TYPE_CHOICES = [

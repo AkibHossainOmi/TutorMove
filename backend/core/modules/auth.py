@@ -20,7 +20,7 @@ from rest_framework import views
 from ..serializers import (
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, UserTokenSerializer
 )
-from ..models import Point
+from ..models import Credit
 
 UserModel = get_user_model()
 
@@ -163,7 +163,7 @@ class VerifyOTPView(views.APIView):
             if serializer.is_valid():
                 with transaction.atomic():
                     user = serializer.save()
-                    Point.objects.get_or_create(user=user, defaults={"balance": 5})
+                    Credit.objects.get_or_create(user=user, defaults={"balance": 5})
                 delete_otp(email, purpose)
                 return Response({"detail": "Registration complete"}, status=status.HTTP_201_CREATED)
 

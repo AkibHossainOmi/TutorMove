@@ -5,7 +5,7 @@ from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
-    ContactUnlock, User, Gig, Point, Job, Application, Notification,
+    ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
     Order, Payment, JobUnlock,
 )
@@ -201,28 +201,28 @@ class CreditUpdateByUserSerializer(serializers.Serializer):
     isincrease = serializers.BooleanField()
 
     def validate(self, data):
-        from .models import Point
+        from .models import Credit
         try:
-            point = Point.objects.get(user__id=data['user_id'])
-        except Point.DoesNotExist:
-            raise serializers.ValidationError("Point entry not found for the user.")
+            credit = Credit.objects.get(user__id=data['user_id'])
+        except Credit.DoesNotExist:
+            raise serializers.ValidationError("Credit entry not found for the user.")
 
         # Calculate new balance
         amount = data['amount']
-        new_balance = point.balance + amount if data['isincrease'] else point.balance - amount
+        new_balance = credit.balance + amount if data['isincrease'] else credit.balance - amount
 
         if new_balance < 0:
             raise serializers.ValidationError("Balance cannot go negative.")
         if new_balance > 9223372036854776000:
             raise serializers.ValidationError("Balance exceeds maximum limit.")
 
-        data['point'] = point  # Pass the point instance forward
+        data['credit'] = credit  # Pass the credit instance forward
         data['new_balance'] = new_balance
         return data
 
 class CreditSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Point
+        model = Credit
         fields = '__all__'
 
 class StudentSerializer(serializers.ModelSerializer):

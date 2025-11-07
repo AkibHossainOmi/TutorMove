@@ -1,14 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    StudentViewSet, UserViewSet, GigViewSet, CreditViewSet, JobViewSet,
+    UserViewSet, GigViewSet, CreditViewSet, JobViewSet,
     ApplicationViewSet, NotificationViewSet, UserSettingsViewSet,
     ReviewViewSet, PremiumViewSet, EscrowPaymentViewSet, SubjectViewSet,
     AdminViewSet, LoginView,
     # ADDED: Import new payment callback views
     payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn, 
     SendOTPView, ResetPasswordView, VerifyOTPView, SubmitReview, ContactUnlockViewSet,
-    CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, verify_otp,
+    CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, StudentViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
 )
@@ -22,7 +22,7 @@ router.register(r'admin-tools', AdminViewSet, basename='admin-tools')
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'tutors', TutorViewSet, basename='tutor')
 router.register(r'students', StudentViewSet, basename='student')
-router.register(r'points', CreditViewSet, basename='point')
+router.register(r'credits', CreditViewSet, basename='credit')
 router.register(r'jobs', JobViewSet, basename='job')
 router.register(r'gigs', GigViewSet, basename='gig')
 router.register(r'applications', ApplicationViewSet, basename='application')
@@ -51,9 +51,9 @@ urlpatterns = [
     path('auth/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     # path('profile/', UserProfileView.as_view(), name='user-profile'),
     # path('profile/edit/', UserProfileUpdateByIdView.as_view(), name='user-profile-edit'),
-    # path('point/update/', CreditUpdateByUserPostView.as_view(), name='point-update-by-user'),
-    # path('point/purchase/', credit_purchase, name='credit_purchase'),
-    # path('point/user/<int:user_id>/', UserCreditBalanceView.as_view(), name='user-point-balance'),
+    # path('credit/update/', CreditUpdateByUserPostView.as_view(), name='credit-update-by-user'),
+    # path('credit/purchase/', credit_purchase, name='credit_purchase'),
+    # path('credit/user/<int:user_id>/', UserCreditBalanceView.as_view(), name='user-credit-balance'),
     # path('users/search/', UserSearchView.as_view(), name='user-search'),
     # path('conversations/', ConversationListView.as_view(), name='conversation-list'),
     # path('conversations/messages/', ConversationMessagesView.as_view(), name='conversation-messages'),
