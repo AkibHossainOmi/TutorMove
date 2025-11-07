@@ -427,12 +427,12 @@ export default function WhatsAppLikeMessaging() {
                       />
                       <div>
                         <div className="font-semibold text-gray-800">
-                          {getOtherUser(activeConversation) ? (
+                          {user ? (
                             <Link
-                              to={`/students/${getOtherUser(activeConversation).id}`}
+                              to={user.user_type === 'student' ? `/tutors/${getOtherUser(activeConversation)?.id}` : `/students/${getOtherUser(activeConversation)?.id}`}
                               className="hover:underline"
                             >
-                              {getOtherUser(activeConversation).username}
+                              {getOtherUser(activeConversation)?.username}
                             </Link>
                           ) : (
                             'Unknown'

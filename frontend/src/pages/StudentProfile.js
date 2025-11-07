@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -19,11 +19,6 @@ export default function StudentProfilePage() {
         const res = await studentAPI.getStudentProfile(studentId);
         setStudent(res.data);
       } catch (err) {
-        if (err.response && err.response.status === 404) {
-          Navigate(`/tutors/${studentId}`);
-        } else {
-          setError(err.message || "Failed to load student data.");
-        }
         setError(err.message || "Failed to load student data.");
       } finally {
         setLoading(false);
