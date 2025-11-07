@@ -62,9 +62,19 @@ class ContactUnlockSerializer(serializers.ModelSerializer):
         return super().create(validated_data)
 
 class UserSerializer(serializers.ModelSerializer):
+    unlocked = serializers.SerializerMethodField()  # <-- Add this
+
     class Meta:
         model = User
         fields = '__all__'
+
+    def get_unlocked(self, obj):
+        request = self.context.get("request")
+        if request and request.user.is_authenticated:
+            # Check if the current user unlocked this tutor
+            return ContactUnlock.objects.filter(unlocker=request.user, target=obj).exists()
+        # For anonymous users, just return False
+        return False
 
 # === AUTH & PASSWORD RESET SERIALIZERS ===
 

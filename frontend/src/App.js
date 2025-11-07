@@ -37,6 +37,7 @@ import TeacherGuide from './pages/TeacherGuide';
 import FAQ from './pages/FAQ';
 import PostRequirement from './pages/PostRequirement';
 import BuyCreditsAndPremiumPage from './pages/BuyCreditPage';
+import StudentProfilePage from './pages/StudentProfile';
 
 
 function App() {
@@ -66,6 +67,7 @@ function App() {
             {/* User Profile and Tutor Listings */}
             <Route path="/profile" element={<Profile />} />
             <Route path="/tutors/:tutorId" element={<TutorProfile />} />
+            <Route path="/students/:studentId" element={<StudentProfilePage />} />
             <Route path="/buy-points" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
 

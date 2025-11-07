@@ -1,5 +1,6 @@
 import React from 'react';
-import { FaKey } from 'react-icons/fa';
+import { FaKey, FaTrash } from 'react-icons/fa';
+import { userApi } from '../../utils/apiService';
 
 const AccountActionsCard = ({ profile }) => {
   const {
@@ -14,12 +15,30 @@ const AccountActionsCard = ({ profile }) => {
     handlePasswordChange,
   } = profile;
 
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      await userApi.deleteAccount();
+      alert("Your account has been deleted.");
+      // Optionally, log out the user and redirect
+      localStorage.clear();
+      window.location.href = '/';
+    } catch (err) {
+      alert("Failed to delete account: " + (err.message || "Unknown error"));
+    }
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
         <FaKey className="text-indigo-500 mr-2" /> Account Actions
       </h2>
       <div className="space-y-4">
+        {/* Change Password */}
         <button
           onClick={() => setShowPasswordFields((prev) => !prev)}
           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg hover:bg-gray-50 flex items-center justify-between"
@@ -57,6 +76,14 @@ const AccountActionsCard = ({ profile }) => {
             </button>
           </div>
         )}
+
+        {/* Delete Account */}
+        <button
+          onClick={handleDeleteAccount}
+          className="w-full px-4 py-2 mt-4 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center gap-2"
+        >
+          <FaTrash /> Delete Account
+        </button>
       </div>
     </div>
   );

@@ -146,6 +146,11 @@ export const tutorAPI = {
   promoteGig: (gigId) => apiService.post(`/api/tutors/${gigId}/promote/`),
 };
 
+export const studentAPI = {
+  getStudentProfile: (id) => apiService.get(`/api/students/${id}/`),
+  getStudents: () => apiService.get(`/api/students/`),
+};
+
 // Job API calls
 export const jobAPI = {
   getJobs: (params) => apiService.get('/api/jobs/', { params }),
@@ -209,7 +214,7 @@ export const userApi = {
       },
     });
   },
-  
+  deleteAccount: () => apiService.delete('/api/users/delete-account/'),
   changePassword: (passwords) => apiService.post('/api/users/change_password/', passwords),
 };
 

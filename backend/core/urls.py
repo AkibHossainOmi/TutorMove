@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
-    UserViewSet, GigViewSet, CreditViewSet, JobViewSet,
+    StudentViewSet, UserViewSet, GigViewSet, CreditViewSet, JobViewSet,
     ApplicationViewSet, NotificationViewSet, UserSettingsViewSet,
     ReviewViewSet, PremiumViewSet, EscrowPaymentViewSet, SubjectViewSet,
     AdminViewSet, LoginView,
@@ -21,6 +21,7 @@ router = DefaultRouter()
 router.register(r'admin-tools', AdminViewSet, basename='admin-tools')
 router.register(r'users', UserViewSet, basename='user')
 router.register(r'tutors', TutorViewSet, basename='tutor')
+router.register(r'students', StudentViewSet, basename='student')
 router.register(r'points', CreditViewSet, basename='point')
 router.register(r'jobs', JobViewSet, basename='job')
 router.register(r'gigs', GigViewSet, basename='gig')

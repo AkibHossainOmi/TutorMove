@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import ChatSocket from '../components/ChatSocket';
@@ -427,7 +427,16 @@ export default function WhatsAppLikeMessaging() {
                       />
                       <div>
                         <div className="font-semibold text-gray-800">
-                          {getOtherUser(activeConversation)?.username || 'Unknown'}
+                          {getOtherUser(activeConversation) ? (
+                            <Link
+                              to={`/students/${getOtherUser(activeConversation).id}`}
+                              className="hover:underline"
+                            >
+                              {getOtherUser(activeConversation).username}
+                            </Link>
+                          ) : (
+                            'Unknown'
+                          )}
                         </div>
                         <div className="text-xs text-gray-600">
                           {partnerTyping ? (

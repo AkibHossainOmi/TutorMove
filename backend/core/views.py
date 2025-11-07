@@ -81,6 +81,11 @@ class TutorViewSet(viewsets.ModelViewSet):
             return [AllowAny()]
         return super().get_permissions()
 
+    def retrieve(self, request, *args, **kwargs):
+        tutor = self.get_object()
+        serializer = self.get_serializer(tutor, context={'request': request})
+        return Response(serializer.data)
+
     @action(detail=False, methods=["post"], url_path="search", permission_classes=[AllowAny])
     def search(self, request):
         input_location = request.data.get("location", "").strip()
@@ -138,6 +143,21 @@ class TutorViewSet(viewsets.ModelViewSet):
             "count": len(combined_tutors),
             "results": serializer.data
         })
+
+class StudentViewSet(viewsets.ModelViewSet):
+    serializer_class = UserSerializer
+    queryset = User.objects.filter(user_type='student')
+
+    def get_permissions(self):
+        # Make list and retrieve public
+        if self.action in ['list', 'retrieve']:
+            return [AllowAny()]
+        return super().get_permissions()
+
+    def retrieve(self, request, *args, **kwargs):
+        student = self.get_object()
+        serializer = self.get_serializer(student, context={'request': request})
+        return Response(serializer.data)
 
 class JobCreateAPIView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -304,6 +324,33 @@ class UserViewSet(viewsets.ModelViewSet):
         if self.action in ['register', 'search']:
             return []
         return super().get_permissions()
+    
+    @action(detail=False, methods=["delete"], url_path="delete-account")
+    @transaction.atomic
+    def delete_account(self, request):
+        user = request.user
+
+        try:
+            # Delete related objects
+            if user.user_type == "tutor":
+                # Delete tutor gigs
+                Gig.objects.filter(tutor=user).delete()
+                # Delete any contact unlocks for this tutor
+                ContactUnlock.objects.filter(target=user).delete()
+            elif user.user_type == "student":
+                # Delete contact unlocks made by this student
+                ContactUnlock.objects.filter(unlocker=user).delete()
+
+            # Add other related references if needed, e.g., favorites, messages
+
+            # Finally, delete user account
+            user.delete()
+
+            return Response({"detail": "Your account and all related data have been deleted."},
+                            status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @method_decorator(csrf_exempt)
     @action(detail=False, methods=['post'], permission_classes=[])
