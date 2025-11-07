@@ -155,7 +155,15 @@ class StudentViewSet(viewsets.ModelViewSet):
         return super().get_permissions()
 
     def retrieve(self, request, *args, **kwargs):
-        student = self.get_object()
+        student_id = kwargs.get('pk')
+
+        try:
+            student = self.get_queryset().get(pk=student_id)
+        except User.DoesNotExist:
+            # Redirect to tutor page if student not found
+            tutor_url = f"{settings.FRONTEND_SITE_URL}/tutors/{student_id}"
+            return Response({"redirect": tutor_url}, status=302)
+
         serializer = self.get_serializer(student, context={'request': request})
         return Response(serializer.data)
 
