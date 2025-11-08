@@ -360,7 +360,7 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           <PlayingCard type="diamond" isRevealed={cardsRevealed} delay={0.3} />
         </div>
         <div className="close-hint">
-          Press Delete again or click anywhere to close
+          Actual Developers of this project.
         </div>
       </div>
     </>
