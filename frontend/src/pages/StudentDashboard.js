@@ -171,10 +171,15 @@ const PlayingCard = ({ type, isRevealed, delay }) => {
       style={{
         animationDelay: `${delay}s`,
         opacity: isRevealed ? 1 : 0,
-        transform: isRevealed ? 'rotateY(0deg) translateY(0)' : 'rotateY(180deg) translateY(50px)'
+        transform: isRevealed ? 'translateY(0)' : 'translateY(50px)'
       }}
     >
-      <div className="card-inner">
+      <div 
+        className="card-inner"
+        style={{
+          transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
+        }}
+      >
         {/* Card Back */}
         <div className="card-back">
           <div className="card-pattern"></div>
@@ -271,6 +276,7 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           height: 480px;
           position: relative;
           transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+          perspective: 1000px;
         }
 
         .card-inner {
@@ -278,6 +284,7 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           height: 100%;
           position: relative;
           transform-style: preserve-3d;
+          transition: transform 1s ease-in-out;
         }
 
         .card-back,
