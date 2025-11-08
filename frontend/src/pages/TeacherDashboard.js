@@ -50,6 +50,323 @@ const point = {
   }
 };
 
+// Easter Egg Card Component
+const PlayingCard = ({ type, isRevealed, delay }) => {
+  const isSpade = type === 'spade';
+  
+  return (
+    <div
+      className="playing-card"
+      style={{
+        animationDelay: `${delay}s`,
+        opacity: isRevealed ? 1 : 0,
+        transform: isRevealed ? 'translateY(0)' : 'translateY(50px)'
+      }}
+    >
+      <div 
+        className="card-inner"
+        style={{
+          transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
+        }}
+      >
+        {/* Card Back */}
+        <div className="card-back">
+          <div className="card-pattern"></div>
+        </div>
+        
+        {/* Card Front */}
+        <div className="card-front">
+          {isSpade ? (
+            // Ace of Spades Card - Now shows Akib's info
+            <div className="card-content ace-card">
+              <div className="card-corner top-left">
+                <div className="rank">A</div>
+                <div className="suit">♠</div>
+              </div>
+              <div className="card-center">
+                <div className="spade-icon">♠</div>
+              </div>
+              <div className="card-info">
+                <h3 className="dev-name">Akib Hossain Omi</h3>
+                <p className="dev-title">CS Graduate</p>
+                <p className="dev-title">Software Developer</p>
+                <p className="dev-company">Telcobright Ltd.</p>
+              </div>
+              <div className="card-corner bottom-right">
+                <div className="rank">A</div>
+                <div className="suit">♠</div>
+              </div>
+            </div>
+          ) : (
+            // Ace of Diamonds Card - Now shows Rahadul's info
+            <div className="card-content diamond-card">
+              <div className="card-corner top-left">
+                <div className="rank red">A</div>
+                <div className="suit red">♦</div>
+              </div>
+              <div className="card-center">
+                <div className="diamond-icon">♦</div>
+              </div>
+              <div className="card-info">
+                <h3 className="dev-name">Rahadul Islam</h3>
+                <p className="dev-title">CSE Graduate (BRACU)</p>
+                <p className="dev-title">Junior Software Developer</p>
+                <p className="dev-company">Inovi Solutions</p>
+              </div>
+              <div className="card-corner bottom-right">
+                <div className="rank red">A</div>
+                <div className="suit red">♦</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EasterEggOverlay = ({ isVisible, onClose }) => {
+  const [cardsRevealed, setCardsRevealed] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      setTimeout(() => setCardsRevealed(true), 100);
+    } else {
+      setCardsRevealed(false);
+    }
+  }, [isVisible]);
+
+  if (!isVisible) return null;
+
+  return (
+    <>
+      <style>{`
+        .easter-egg-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.95);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .cards-container {
+          display: flex;
+          gap: 60px;
+          perspective: 1000px;
+          position: relative;
+        }
+
+        .playing-card {
+          width: 320px;
+          height: 480px;
+          position: relative;
+          transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+          perspective: 1000px;
+        }
+
+        .card-inner {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          transform-style: preserve-3d;
+          transition: transform 1s ease-in-out;
+        }
+
+        .card-back,
+        .card-front {
+          width: 100%;
+          height: 100%;
+          position: absolute;
+          backface-visibility: hidden;
+          border-radius: 16px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .card-back {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .card-pattern {
+          width: 280px;
+          height: 440px;
+          background-image: 
+            repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px),
+            repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px);
+          border-radius: 12px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .card-front {
+          background: white;
+          transform: rotateY(180deg);
+          padding: 20px;
+        }
+
+        .card-content {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .ace-card {
+          border: 3px solid #000;
+          border-radius: 12px;
+        }
+
+        .diamond-card {
+          border: 3px solid #c41e3a;
+          border-radius: 12px;
+        }
+
+        .card-corner {
+          position: absolute;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          font-weight: bold;
+        }
+
+        .top-left {
+          top: 10px;
+          left: 15px;
+        }
+
+        .bottom-right {
+          bottom: 10px;
+          right: 15px;
+          transform: rotate(180deg);
+        }
+
+        .rank {
+          font-size: 42px;
+          line-height: 1;
+          color: #000;
+        }
+
+        .rank.red {
+          color: #c41e3a;
+        }
+
+        .suit {
+          font-size: 36px;
+          line-height: 1;
+          color: #000;
+        }
+
+        .suit.red {
+          color: #c41e3a;
+        }
+
+        .card-center {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 40px 0;
+        }
+
+        .spade-icon {
+          font-size: 120px;
+          color: #000;
+          animation: pulse 2s ease-in-out infinite;
+        }
+
+        .diamond-icon {
+          font-size: 120px;
+          color: #c41e3a;
+          animation: sparkle 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+
+        @keyframes sparkle {
+          0%, 100% { 
+            transform: scale(1) rotate(0deg);
+            filter: drop-shadow(0 0 10px rgba(196, 30, 58, 0.5));
+          }
+          50% { 
+            transform: scale(1.08) rotate(5deg);
+            filter: drop-shadow(0 0 20px rgba(196, 30, 58, 0.8));
+          }
+        }
+
+        .card-info {
+          background: rgba(255, 255, 255, 0.95);
+          border-radius: 8px;
+          padding: 16px;
+          text-align: center;
+          margin-top: auto;
+        }
+
+        .dev-name {
+          font-size: 22px;
+          font-weight: bold;
+          color: #1a1a1a;
+          margin-bottom: 8px;
+        }
+
+        .dev-title {
+          font-size: 14px;
+          color: #555;
+          margin: 4px 0;
+        }
+
+        .dev-company {
+          font-size: 16px;
+          font-weight: 600;
+          color: #2563eb;
+          margin-top: 8px;
+        }
+
+        .close-hint {
+          position: absolute;
+          bottom: 40px;
+          left: 50%;
+          transform: translateX(-50%);
+          color: white;
+          font-size: 14px;
+          opacity: 0.7;
+          animation: blink 2s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+          0%, 100% { opacity: 0.7; }
+          50% { opacity: 0.3; }
+        }
+      `}</style>
+
+      <div className="easter-egg-overlay" onClick={onClose}>
+        <div className="cards-container" onClick={(e) => e.stopPropagation()}>
+          <PlayingCard type="spade" isRevealed={cardsRevealed} delay={0} />
+          <PlayingCard type="diamond" isRevealed={cardsRevealed} delay={0.3} />
+        </div>
+        <div className="close-hint">
+          Press Delete again or click anywhere to close
+        </div>
+      </div>
+    </>
+  );
+};
+
 // Pagination Component (same as in StudentDashboard)
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
   const pages = [];
@@ -154,6 +471,21 @@ const TeacherDashboard = () => {
   const [currentGigsPage, setCurrentGigsPage] = useState(1);
   const [currentJobsPage, setCurrentJobsPage] = useState(1);
   const itemsPerPage = 6;
+
+  // Easter Egg State
+  const [showEasterEgg, setShowEasterEgg] = useState(false);
+
+  // Easter Egg Keyboard Listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Delete') {
+        setShowEasterEgg(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Fetch notifications for the logged in user
   const fetchNotifications = async (userId) => {
@@ -426,6 +758,11 @@ const TeacherDashboard = () => {
           showInsufficientCreditsModal={showInsufficientCreditsModal}
           setShowInsufficientCreditsModal={setShowInsufficientCreditsModal}
           handleNavigateToBuyCredits={handleNavigateToBuyCredits}
+        />
+
+        <EasterEggOverlay 
+          isVisible={showEasterEgg} 
+          onClose={() => setShowEasterEgg(false)} 
         />
       </div>
       <div className="w-screen relative left-1/2 right-1/2 -mx-[50.4vw] h-20">
