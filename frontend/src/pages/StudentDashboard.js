@@ -23,7 +23,7 @@ const studentAPI = {
   },
   getPostedJobs: async () => {
     try {
-      const response = await jobAPI.getJobs();
+      const response = await jobAPI.getMyJobs();
       return response.data || [];
     } catch {
       return [];

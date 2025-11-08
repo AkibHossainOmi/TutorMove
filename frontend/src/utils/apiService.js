@@ -154,6 +154,7 @@ export const studentAPI = {
 // Job API calls
 export const jobAPI = {
   getJobs: (params) => apiService.get('/api/jobs/', { params }),
+  getMyJobs: (params) => apiService.get('/api/jobs/my_jobs/', { params }),
 
   getJobDetail: (id) => apiService.get(`/api/jobs/${id}/`),
 
@@ -218,16 +219,16 @@ export const userApi = {
   changePassword: (passwords) => apiService.post('/api/users/change_password/', passwords),
 };
 
-// Point API calls
+// Credit API calls
 export const creditAPI = {
   getCreditBalance: () => apiService.get(`/api/points/`),
-  getCreditHistory: (params) => apiService.get('/api/point/history/', { params }),
-  transferCredits: (transferData) => apiService.post('/api/point/transfer/', transferData),
-  getReferralCode: () => apiService.get('/api/point/referral-code/'),
-  applyReferralCode: (code) => apiService.post('/api/point/apply-referral/', { code }),
-  getEarnings: () => apiService.get('/api/point/earnings/'),
-  withdrawEarnings: (data) => apiService.post('/api/point/withdraw/', data),
-  getPendingPayments: () => apiService.get('/api/point/pending-payments/'),
+  getCreditHistory: (params) => apiService.get('/api/credit/history/', { params }),
+  transferCredits: (transferData) => apiService.post('/api/credit/transfer/', transferData),
+  getReferralCode: () => apiService.get('/api/credit/referral-code/'),
+  applyReferralCode: (code) => apiService.post('/api/credit/apply-referral/', { code }),
+  getEarnings: () => apiService.get('/api/credit/earnings/'),
+  withdrawEarnings: (data) => apiService.post('/api/credit/withdraw/', data),
+  getPendingPayments: () => apiService.get('/api/credit/pending-payments/'),
   purchaseCredits: (purchaseData) => apiService.post('/api/points/purchase/', purchaseData),
 };
 
