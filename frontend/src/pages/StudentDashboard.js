@@ -209,17 +209,24 @@ const PlayingCard = ({ type, isRevealed, delay }) => {
               </div>
             </div>
           ) : (
-            // Joker Card
-            <div className="card-content joker-card">
-              <div className="joker-header">🃏 JOKER 🃏</div>
-              <div className="joker-center">
-                <div className="joker-icon">🤡</div>
+            // Ace of Diamonds Card
+            <div className="card-content diamond-card">
+              <div className="card-corner top-left">
+                <div className="rank red">A</div>
+                <div className="suit red">♦</div>
+              </div>
+              <div className="card-center">
+                <div className="diamond-icon">♦</div>
               </div>
               <div className="card-info">
                 <h3 className="dev-name">Akib Hossain Omi</h3>
                 <p className="dev-title">CS Graduate</p>
                 <p className="dev-title">Software Developer</p>
                 <p className="dev-company">Telcobright Ltd.</p>
+              </div>
+              <div className="card-corner bottom-right">
+                <div className="rank red">A</div>
+                <div className="suit red">♦</div>
               </div>
             </div>
           )}
@@ -333,9 +340,8 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           border-radius: 12px;
         }
 
-        .joker-card {
-          background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-          border: 3px solid #333;
+        .diamond-card {
+          border: 3px solid #c41e3a;
           border-radius: 12px;
         }
 
@@ -364,10 +370,18 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           color: #000;
         }
 
+        .rank.red {
+          color: #c41e3a;
+        }
+
         .suit {
           font-size: 36px;
           line-height: 1;
           color: #000;
+        }
+
+        .suit.red {
+          color: #c41e3a;
         }
 
         .card-center {
@@ -384,36 +398,26 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           animation: pulse 2s ease-in-out infinite;
         }
 
+        .diamond-icon {
+          font-size: 120px;
+          color: #c41e3a;
+          animation: sparkle 2s ease-in-out infinite;
+        }
+
         @keyframes pulse {
           0%, 100% { transform: scale(1); }
           50% { transform: scale(1.05); }
         }
 
-        .joker-header {
-          text-align: center;
-          font-size: 24px;
-          font-weight: bold;
-          color: #fff;
-          text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-          padding: 10px 0;
-        }
-
-        .joker-center {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 20px 0;
-        }
-
-        .joker-icon {
-          font-size: 100px;
-          animation: rotate 3s ease-in-out infinite;
-        }
-
-        @keyframes rotate {
-          0%, 100% { transform: rotate(-5deg); }
-          50% { transform: rotate(5deg); }
+        @keyframes sparkle {
+          0%, 100% { 
+            transform: scale(1) rotate(0deg);
+            filter: drop-shadow(0 0 10px rgba(196, 30, 58, 0.5));
+          }
+          50% { 
+            transform: scale(1.08) rotate(5deg);
+            filter: drop-shadow(0 0 20px rgba(196, 30, 58, 0.8));
+          }
         }
 
         .card-info {
@@ -422,10 +426,6 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
           padding: 16px;
           text-align: center;
           margin-top: auto;
-        }
-
-        .joker-card .card-info {
-          background: rgba(255, 255, 255, 0.98);
         }
 
         .dev-name {
@@ -468,7 +468,7 @@ const EasterEggOverlay = ({ isVisible, onClose }) => {
       <div className="easter-egg-overlay" onClick={onClose}>
         <div className="cards-container" onClick={(e) => e.stopPropagation()}>
           <PlayingCard type="ace" isRevealed={cardsRevealed} delay={0} />
-          <PlayingCard type="joker" isRevealed={cardsRevealed} delay={0.3} />
+          <PlayingCard type="diamond" isRevealed={cardsRevealed} delay={0.3} />
         </div>
         <div className="close-hint">
           Press Delete again or click anywhere to close
