@@ -395,7 +395,7 @@ export default function WhatsAppLikeMessaging() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between mb-1">
                               <div className="font-semibold text-gray-800 truncate">
-                                {other?.username || 'Unknown'}
+                                {other?.username || 'Deleted User'}
                               </div>
                               <div className="text-xs text-gray-500 whitespace-nowrap">
                                 {formatTime(conv.last_message?.timestamp)}
