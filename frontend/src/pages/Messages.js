@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import Footer from '../components/Footer';
 import ChatSocket from '../components/ChatSocket';
 import UnlockContactModal from '../components/UnlockContactModal';
 import BuyCreditsModal from '../components/BuyCreditsModal';
@@ -43,7 +42,7 @@ export default function WhatsAppLikeMessaging() {
         ?.map((p) => ({
           id: p.id ?? p.user__id,
           username: p.username ?? p.user__username,
-          avatar: p.avatar || `https://ui-avatars.com/api/?name=${p.username ?? p.user__username}&background=25D366&color=fff`
+          avatar: p.avatar || `https://ui-avatars.com/api/?name=${p.username ?? p.user__username}&background=6366f1&color=fff`
         }))
         .find((u) => u.id !== user?.user_id),
     [user]
@@ -287,290 +286,348 @@ export default function WhatsAppLikeMessaging() {
   };
 
   return (
-    <>
+    <div className="flex flex-col h-screen bg-gray-50">
       <Navbar />
-      <div className="min-h-screen bg-gray-100 pt-20">
-        <div className="max-w-7xl mx-auto h-[calc(100vh-120px)] p-4">
-          <div className="bg-white rounded-lg shadow-lg h-full flex overflow-hidden">
-            {/* Left Sidebar - Conversations List */}
-            <div className="w-1/3 border-r border-gray-300 flex flex-col bg-white">
-              {/* Sidebar Header */}
-              <div className="bg-gray-100 p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-semibold">
-                      {user?.username?.[0]?.toUpperCase() || 'U'}
-                    </div>
-                    <span className="font-semibold text-gray-800">Tutormove</span>
-                  </div>
-                  <div className="flex gap-4 text-gray-600">
-                    <button className="hover:text-green-600 transition-colors">
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                    </button>
-                  </div>
+      
+      {/* Main Chat Container - Starts right after navbar */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Conversations List */}
+        <div className="w-96 bg-white border-r border-gray-200 flex flex-col">
+          {/* Sidebar Header */}
+          <div className="p-4 border-b border-gray-200 bg-white">
+            <div className="flex items-center justify-between mb-4">
+              <h1 className="text-2xl font-bold text-gray-900">Messages</h1>
+              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+                <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+              </button>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Search conversations..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Conversations List */}
+          <div className="flex-1 overflow-y-auto">
+            {searchResults.length > 0 && (
+              <div className="border-b border-gray-200">
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
+                  Search Results
                 </div>
-                
-                {/* Search Bar */}
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                {searchResults.map((u) => (
+                  <div
+                    key={u.id}
+                    onClick={() => startConversation(u)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100"
+                  >
+                    <img
+                      src={u.avatar}
+                      alt={u.username}
+                      className="w-12 h-12 rounded-full ring-2 ring-white"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-gray-900">{u.username}</div>
+                      <div className="text-sm text-indigo-600 font-medium">Start conversation →</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <div>
+              {isLoading && conversations.length === 0 ? (
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+              ) : conversations.length === 0 ? (
+                <div className="text-center py-12 px-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                   </div>
-                  <input
-                    type="text"
-                    placeholder="Search or start new chat"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-green-500 focus:border-green-500"
-                  />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-1">No conversations yet</h3>
+                  <p className="text-sm text-gray-500">Search for users above to start chatting</p>
                 </div>
-              </div>
+              ) : (
+                conversations.map((conv) => {
+                  const other = getOtherUser(conv);
+                  const lastMsg = conv.last_message?.content || 'No messages yet';
+                  const hasUnread = conv.has_unread && activeConversation?.id !== conv.id;
+                  const isActive = activeConversation?.id === conv.id;
 
-              {/* Conversations List */}
-              <div className="flex-1 overflow-y-auto bg-white">
-                {searchResults.length > 0 && (
-                  <div className="border-b border-gray-200">
-                    <div className="p-3 text-sm font-semibold text-gray-500 bg-gray-50">Search Results</div>
-                    {searchResults.map((u) => (
-                      <div
-                        key={u.id}
-                        onClick={() => startConversation(u)}
-                        className="flex items-center gap-3 p-3 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
-                      >
-                        <img
-                          src={u.avatar}
-                          alt={u.username}
-                          className="w-12 h-12 rounded-full"
-                        />
-                        <div className="flex-1">
-                          <div className="font-semibold text-gray-800">{u.username}</div>
-                          <div className="text-sm text-green-600">Start conversation</div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div>
-                  {isLoading && conversations.length === 0 ? (
-                    <div className="flex justify-center items-center py-8">
-                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-500"></div>
-                    </div>
-                  ) : conversations.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
-                      <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
-                      <p>No conversations</p>
-                      <p className="text-sm">Start a new conversation by searching above</p>
-                    </div>
-                  ) : (
-                    conversations.map((conv) => {
-                      const other = getOtherUser(conv);
-                      const lastMsg = conv.last_message?.content || 'No messages yet';
-                      const hasUnread = conv.has_unread && activeConversation?.id !== conv.id;
-
-                      return (
-                        <div
-                          key={conv.id}
-                          onClick={() => selectConversation(conv)}
-                          className={`flex items-center gap-3 p-3 border-b border-gray-100 cursor-pointer transition-colors ${
-                            activeConversation?.id === conv.id ? 'bg-green-50' : 'hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="relative">
-                            <img
-                              src={other?.avatar}
-                              alt={other?.username}
-                              className="w-12 h-12 rounded-full"
-                            />
-                            {hasUnread && (
-                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></div>
-                            )}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <div className="font-semibold text-gray-800 truncate">
-                                {other?.username || 'Deleted User'}
-                              </div>
-                              <div className="text-xs text-gray-500 whitespace-nowrap">
-                                {formatTime(conv.last_message?.timestamp)}
-                              </div>
-                            </div>
-                            <div className={`text-sm truncate ${hasUnread ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
-                              {lastMsg.length > 35 ? `${lastMsg.slice(0, 32)}...` : lastMsg}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Right Side - Chat Area */}
-            <div className="flex-1 flex flex-col bg-gray-100">
-              {activeConversation ? (
-                <>
-                  {/* Chat Header */}
-                  <div className="bg-gray-200 px-6 py-3 flex items-center justify-between border-b border-gray-300">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={getOtherUser(activeConversation)?.avatar}
-                        alt={getOtherUser(activeConversation)?.username}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div>
-                        <div className="font-semibold text-gray-800">
-                          {user ? (
-                            <Link
-                              to={user.user_type === 'student' ? `/tutors/${getOtherUser(activeConversation)?.id}` : `/students/${getOtherUser(activeConversation)?.id}`}
-                              className="hover:underline"
-                            >
-                              {getOtherUser(activeConversation)?.username}
-                            </Link>
-                          ) : (
-                            'Unknown'
-                          )}
-                        </div>
-                        <div className="text-xs text-gray-600">
-                          {partnerTyping ? (
-                            <span className="text-green-600">Typing...</span>
-                          ) : (
-                            <span>Online</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex gap-4 text-gray-600">
-                      <button className="hover:text-green-600 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                      </button>
-                      <button className="hover:text-green-600 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                      </button>
-                      <button className="hover:text-green-600 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Messages Area */}
-                  <div 
-                    ref={messageContainerRef}
-                    className="flex-1 overflow-y-auto bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-cover bg-center p-4"
-                  >
-                    <div className="space-y-2">
-                      {messages.map((msg, index) => {
-                        const isSelf = msg.sender.id === user?.user_id;
-                        const showDate = index === 0 || 
-                          formatDate(msg.timestamp) !== formatDate(messages[index - 1]?.timestamp);
-
-                        return (
-                          <React.Fragment key={msg.id}>
-                            {showDate && (
-                              <div className="flex justify-center my-4">
-                                <div className="bg-gray-200 px-3 py-1 rounded-full text-xs text-gray-600">
-                                  {formatDate(msg.timestamp)}
-                                </div>
-                              </div>
-                            )}
-                            <div className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                              <div className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                                isSelf 
-                                  ? 'bg-green-100 rounded-br-none' 
-                                  : 'bg-white rounded-bl-none'
-                              } shadow-sm`}>
-                                <div className="text-gray-800 text-sm">{msg.content}</div>
-                                <div className={`text-xs mt-1 flex items-center gap-1 ${
-                                  isSelf ? 'text-gray-500 justify-end' : 'text-gray-400'
-                                }`}>
-                                  <span>{formatTime(msg.timestamp)}</span>
-                                  {isSelf && (
-                                    <span>
-                                      {msg.status === 'seen' ? '✓✓' : msg.status === 'delivered' ? '✓✓' : '✓'}
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </React.Fragment>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  {/* Message Input */}
-                  <div className="bg-gray-200 px-6 py-3 flex items-center gap-4">
-                    <div className="flex gap-2 text-gray-600">
-                      <button className="p-2 hover:text-green-600 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </button>
-                      <button className="p-2 hover:text-green-600 transition-colors">
-                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                      </button>
-                    </div>
-                    <div className="flex-1 bg-white rounded-full border border-gray-300">
-                      <input
-                        type="text"
-                        value={newMessage}
-                        onChange={(e) => {
-                          setNewMessage(e.target.value);
-                          handleTyping();
-                        }}
-                        onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                        placeholder="Type a message"
-                        className="w-full px-4 py-2 bg-transparent focus:outline-none text-gray-800 placeholder-gray-500"
-                      />
-                    </div>
-                    <button
-                      onClick={sendMessage}
-                      disabled={!newMessage.trim()}
-                      className={`p-2 rounded-full transition-colors ${
-                        newMessage.trim() 
-                          ? 'bg-green-500 text-white hover:bg-green-600' 
-                          : 'text-gray-400 cursor-not-allowed'
+                  return (
+                    <div
+                      key={conv.id}
+                      onClick={() => selectConversation(conv)}
+                      className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-all border-b border-gray-100 ${
+                        isActive 
+                          ? 'bg-indigo-50 border-l-4 border-l-indigo-600' 
+                          : 'hover:bg-gray-50 border-l-4 border-l-transparent'
                       }`}
                     >
-                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                      </svg>
-                    </button>
-                  </div>
-                </>
-              ) : (
-                /* Empty Chat State */
-                <div className="flex-1 flex flex-col items-center justify-center bg-[url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png')] bg-cover bg-center">
-                  <div className="text-center">
-                    <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 mx-auto shadow-lg">
-                      <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={other?.avatar}
+                          alt={other?.username}
+                          className="w-12 h-12 rounded-full ring-2 ring-white"
+                        />
+                        {hasUnread && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+                            <span className="text-xs text-white font-bold">•</span>
+                          </div>
+                        )}
+                        <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-0.5">
+                          <div className={`font-semibold truncate ${hasUnread ? 'text-gray-900' : 'text-gray-700'}`}>
+                            {other?.username || 'Deleted User'}
+                          </div>
+                          <div className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                            {formatTime(conv.last_message?.timestamp)}
+                          </div>
+                        </div>
+                        <div className={`text-sm truncate ${
+                          hasUnread ? 'text-gray-900 font-medium' : 'text-gray-500'
+                        }`}>
+                          {lastMsg.length > 40 ? `${lastMsg.slice(0, 37)}...` : lastMsg}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-2xl font-light text-gray-600 mb-2">Tutormove Messaging</h3>
-                    <p className="text-gray-500 max-w-md">
-                      Send and receive messages without keeping your phone online.
-                    </p>
-                  </div>
-                </div>
+                  );
+                })
               )}
             </div>
           </div>
+        </div>
+
+        {/* Right Side - Chat Area */}
+        <div className="flex-1 flex flex-col bg-white">
+          {activeConversation ? (
+            <>
+              {/* Chat Header */}
+              <div className="px-6 py-4 bg-white border-b border-gray-200 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <img
+                      src={getOtherUser(activeConversation)?.avatar}
+                      alt={getOtherUser(activeConversation)?.username}
+                      className="w-11 h-11 rounded-full ring-2 ring-white shadow-sm"
+                    />
+                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-gray-900 text-lg">
+                      {user ? (
+                        <Link
+                          to={user.user_type === 'student' ? `/tutors/${getOtherUser(activeConversation)?.id}` : `/students/${getOtherUser(activeConversation)?.id}`}
+                          className="hover:text-indigo-600 transition-colors"
+                        >
+                          {getOtherUser(activeConversation)?.username}
+                        </Link>
+                      ) : (
+                        'Unknown'
+                      )}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {partnerTyping ? (
+                        <span className="text-indigo-600 font-medium flex items-center gap-1">
+                          <span className="flex gap-1">
+                            <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                          </span>
+                          <span className="ml-1">Typing</span>
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          Active now
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </button>
+                  <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                  </button>
+                  <button className="p-2.5 hover:bg-gray-100 rounded-full transition-colors">
+                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Messages Area */}
+              <div 
+                ref={messageContainerRef}
+                className="flex-1 overflow-y-auto p-6 bg-gradient-to-b from-gray-50 to-white"
+              >
+                <div className="max-w-4xl mx-auto space-y-4">
+                  {messages.map((msg, index) => {
+                    const isSelf = msg.sender.id === user?.user_id;
+                    const showDate = index === 0 || 
+                      formatDate(msg.timestamp) !== formatDate(messages[index - 1]?.timestamp);
+
+                    return (
+                      <React.Fragment key={msg.id}>
+                        {showDate && (
+                          <div className="flex justify-center my-6">
+                            <div className="bg-white px-4 py-1.5 rounded-full text-xs font-medium text-gray-600 shadow-sm border border-gray-200">
+                              {formatDate(msg.timestamp)}
+                            </div>
+                          </div>
+                        )}
+                        <div className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
+                          <div className={`flex items-end gap-2 max-w-[70%] ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}>
+                            {!isSelf && (
+                              <img
+                                src={msg.sender.avatar || getOtherUser(activeConversation)?.avatar}
+                                alt=""
+                                className="w-8 h-8 rounded-full flex-shrink-0"
+                              />
+                            )}
+                            <div className={`rounded-2xl px-4 py-2.5 shadow-sm ${
+                              isSelf 
+                                ? 'bg-indigo-600 text-white rounded-br-sm' 
+                                : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200'
+                            }`}>
+                              <div className="text-[15px] leading-relaxed break-words">{msg.content}</div>
+                              <div className={`text-xs mt-1 flex items-center gap-1.5 ${
+                                isSelf ? 'text-indigo-200 justify-end' : 'text-gray-500'
+                              }`}>
+                                <span>{formatTime(msg.timestamp)}</span>
+                                {isSelf && (
+                                  <span className="text-sm">
+                                    {msg.status === 'seen' ? (
+                                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                        <path d="M12.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-1-1a1 1 0 011.414-1.414l.293.293 7.293-7.293a1 1 0 011.414 0z"/>
+                                      </svg>
+                                    ) : msg.status === 'delivered' ? (
+                                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                        <path d="M12.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-1-1a1 1 0 011.414-1.414l.293.293 7.293-7.293a1 1 0 011.414 0z"/>
+                                      </svg>
+                                    ) : (
+                                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
+                                      </svg>
+                                    )}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                  
+                  {partnerTyping && (
+                    <div className="flex justify-start">
+                      <div className="flex items-end gap-2">
+                        <img
+                          src={getOtherUser(activeConversation)?.avatar}
+                          alt=""
+                          className="w-8 h-8 rounded-full"
+                        />
+                        <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                          <div className="flex gap-1">
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Message Input */}
+              <div className="px-6 py-4 bg-white border-t border-gray-200">
+                <div className="max-w-4xl mx-auto flex items-end gap-3">
+                  <button className="p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors flex-shrink-0">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                  </button>
+                  <div className="flex-1 bg-gray-100 rounded-3xl flex items-center px-4 py-2 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => {
+                        setNewMessage(e.target.value);
+                        handleTyping();
+                      }}
+                      onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+                      placeholder="Type a message..."
+                      className="flex-1 bg-transparent focus:outline-none text-gray-900 placeholder-gray-500 text-[15px]"
+                    />
+                    <button className="p-1.5 text-gray-500 hover:text-indigo-600 rounded-full transition-colors">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                  <button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim()}
+                    className={`p-3 rounded-full transition-all flex-shrink-0 ${
+                      newMessage.trim() 
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/50' 
+                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            /* Empty Chat State */
+            <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-white">
+              <div className="text-center max-w-md px-6">
+                <div className="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-6 mx-auto shadow-xl">
+                  <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-3">Welcome to Tutormove Messages</h2>
+                <p className="text-gray-600 text-lg leading-relaxed">
+                  Select a conversation from the left sidebar or search for users to start chatting.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -605,8 +662,6 @@ export default function WhatsAppLikeMessaging() {
         }}
         message="You don't have enough points to unlock this contact."
       />
-
-      <Footer />
-    </>
+    </div>
   );
 }
