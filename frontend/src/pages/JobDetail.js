@@ -408,11 +408,7 @@ const JobDetail = () => {
                   <ul className="space-y-2 text-xs text-gray-700">
                     <li className="flex items-start gap-2">
                       <span className="text-blue-600 mt-0.5">•</span>
-                      <span><strong>0 teachers</strong> contacted the student.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-0.5">•</span>
-                      <span><strong>0 teachers</strong> contacted by the student</span>
+                      <span><strong>{job.applicants_count} teachers</strong> contacted the student.</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-blue-600 mt-0.5">•</span>
