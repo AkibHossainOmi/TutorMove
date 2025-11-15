@@ -1,5 +1,4 @@
 **_# New Update:_**
-
 - Latest 10 notification will be shown. 
 - 2 hours timer will be shown and only the users who received can apply.
 - Bidding page: Show next bidding point.
