@@ -109,7 +109,7 @@ export default function TutorProfilePage() {
               {profile.email || profile.phone_number ? (
                 <ul className="space-y-2 text-gray-700">
                   <li><span className="font-medium">Email:</span> {profile.email || "Hidden"}</li>
-                  <li><span className="font-medium">Phone:</span> {profile.phone_number || "Hidden"}</li>
+                  <li><span className="font-medium">WhatsApp:</span> {profile.phone_number || "Hidden"}</li>
                 </ul>
               ) : (
                 <p className="text-gray-500 italic">Contact not available</p>

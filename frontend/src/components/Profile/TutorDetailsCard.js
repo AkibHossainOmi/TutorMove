@@ -62,7 +62,7 @@ const TutorDetailsCard = ({ profile }) => {
       ),
     },
     {
-      label: "Phone Number",
+      label: "WhatsApp Number",
       icon: <FaPhoneAlt className="text-gray-500" />,
       value: isEditing ? (
         <input

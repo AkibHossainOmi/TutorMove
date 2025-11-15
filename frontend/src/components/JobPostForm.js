@@ -134,14 +134,14 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
           {/* Phone */}
           <div>
             <label className="block text-sm mb-1">
-              <RequiredLabel label="Phone Number" />
+              <RequiredLabel label="WhatsApp Number" />
             </label>
             <input
               type="tel"
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Enter your phone number"
+              placeholder="Enter your WhatsApp number"
               className="w-full border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-lg p-3 transition"
               required
             />

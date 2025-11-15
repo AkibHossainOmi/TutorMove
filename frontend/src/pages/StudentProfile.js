@@ -50,7 +50,7 @@ export default function StudentProfilePage() {
             <div className="space-y-5">
               {[
                 {
-                  label: "Phone Number",
+                  label: "WhatsApp Number",
                   value: student.phone_number || "Not provided",
                   icon: <FaPhoneAlt className="text-gray-500" />,
                 },
