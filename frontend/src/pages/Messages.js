@@ -403,7 +403,6 @@ export default function WhatsAppLikeMessaging() {
                             <span className="text-xs text-white font-bold">•</span>
                           </div>
                         )}
-                        <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-3.5 md:h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-0.5">
@@ -453,7 +452,6 @@ export default function WhatsAppLikeMessaging() {
                       alt={getOtherUser(activeConversation)?.username}
                       className="w-9 h-9 md:w-11 md:h-11 rounded-full ring-2 ring-white shadow-sm"
                     />
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 md:w-3.5 md:h-3.5 bg-green-500 rounded-full border-2 border-white"></div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-gray-900 text-sm md:text-lg truncate">
@@ -479,10 +477,7 @@ export default function WhatsAppLikeMessaging() {
                           <span className="ml-1">Typing</span>
                         </span>
                       ) : (
-                        <span className="flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></span>
-                          Active now
-                        </span>
+                        <span className="text-gray-500">Click name to view profile</span>
                       )}
                     </div>
                   </div>
