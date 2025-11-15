@@ -1,27 +1,29 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import TutorCard from "../components/TutorCard";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { tutorAPI } from "../utils/apiService";
 
 const PAGE_SIZE = 8;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const TutorList = () => {
   const [tutors, setTutors] = useState([]);
   const [filteredTutors, setFilteredTutors] = useState([]);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  
+
   // Filter states
+  const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
   const [selectedLevel, setSelectedLevel] = useState("");
   const [priceRange, setPriceRange] = useState("");
   const [sortBy, setSortBy] = useState("popular");
-  
-  // Filter options (you can modify these based on your actual data)
+
+  // Filter options
   const subjects = ["Math", "Science", "English", "History", "Programming", "Languages"];
   const levels = ["Elementary", "Middle School", "High School", "College", "Professional"];
   const priceRanges = [
@@ -31,8 +33,15 @@ const TutorList = () => {
     { label: "Over $100", value: "100+" }
   ];
 
-  // Fetch tutors from API
+  // Debounce searchInput => searchQuery
   useEffect(() => {
+    const id = setTimeout(() => setSearchQuery(searchInput.trim()), SEARCH_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [searchInput]);
+
+  // Fetch tutors (pagination)
+  useEffect(() => {
+    let cancelled = false;
     const fetchTutors = async () => {
       setLoading(true);
       setError(null);
@@ -40,73 +49,99 @@ const TutorList = () => {
         const params = { page, page_size: PAGE_SIZE };
         const res = await tutorAPI.getTutors(params);
         const data = Array.isArray(res.data) ? res.data : res.data.results || [];
-        
-        setTutors((prev) => (page === 1 ? data : [...prev, ...data]));
+
+        if (cancelled) return;
+
+        setTutors(prev => (page === 1 ? data : [...prev, ...data]));
         setHasMore(data.length === PAGE_SIZE);
       } catch (err) {
         setError("Failed to fetch tutors. Please try again later.");
         setHasMore(false);
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     };
+
     fetchTutors();
+    return () => {
+      cancelled = true;
+    };
   }, [page]);
 
-  // Apply filters and sorting
+  // Reset page when component mounts or when user clears everything
   useEffect(() => {
-    let result = [...tutors];
+    // when filters or search change we do client-side filtering
+    // but if we want fresh server results on filter change, we would set page(1) & refetch
+    // currently we keep server fetch independent and apply client-side filters
+  }, []);
 
-    // Search filter
-    if (searchQuery) {
-      result = result.filter(tutor =>
-        tutor.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tutor.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        tutor.bio?.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+  // Apply filters + sorting (client-side)
+  useEffect(() => {
+    const byTextMatch = (tutor, q) => {
+      if (!q) return true;
+      const lower = q.toLowerCase();
+      const name = (tutor.username || tutor.name || "").toLowerCase();
+      const bio = (tutor.bio || tutor.description || "").toLowerCase();
+      const subjString = (Array.isArray(tutor.subjects) ? tutor.subjects.join(" ") : tutor.subject || "").toLowerCase();
+      return name.includes(lower) || bio.includes(lower) || subjString.includes(lower);
+    };
 
-    // Subject filter
-    if (selectedSubject) {
-      result = result.filter(tutor => 
-        tutor.subject?.toLowerCase() === selectedSubject.toLowerCase() ||
-        tutor.subjects?.some(s => s.toLowerCase() === selectedSubject.toLowerCase())
-      );
-    }
+    const bySubject = (tutor, subject) => {
+      if (!subject) return true;
+      const subj = subject.toLowerCase();
+      if (Array.isArray(tutor.subjects)) {
+        return tutor.subjects.some(s => (s || "").toLowerCase() === subj);
+      }
+      return (tutor.subject || "").toLowerCase() === subj;
+    };
 
-    // Level filter
-    if (selectedLevel) {
-      result = result.filter(tutor =>
-        tutor.level?.toLowerCase() === selectedLevel.toLowerCase() ||
-        tutor.levels?.some(l => l.toLowerCase() === selectedLevel.toLowerCase())
-      );
-    }
+    const byLevel = (tutor, level) => {
+      if (!level) return true;
+      const lev = level.toLowerCase();
+      if (Array.isArray(tutor.levels)) {
+        return tutor.levels.some(l => (l || "").toLowerCase() === lev);
+      }
+      return (tutor.level || "").toLowerCase() === lev;
+    };
 
-    // Price range filter
-    if (priceRange) {
-      const [min, max] = priceRange.split("-").map(v => v.replace("+", ""));
-      result = result.filter(tutor => {
-        const price = parseFloat(tutor.hourly_rate || tutor.price || 0);
-        if (priceRange.includes("+")) {
-          return price >= parseFloat(min);
-        }
-        return price >= parseFloat(min) && price <= parseFloat(max);
-      });
-    }
+    const byPriceRange = (tutor, rangeVal) => {
+      if (!rangeVal) return true;
+      const price = parseFloat(tutor.hourly_rate ?? tutor.price ?? tutor.rate ?? 0) || 0;
+      if (rangeVal.endsWith("+")) {
+        const min = parseFloat(rangeVal.replace("+", ""));
+        return price >= min;
+      }
+      const parts = rangeVal.split("-");
+      if (parts.length === 2) {
+        const min = parseFloat(parts[0]) || 0;
+        const max = parseFloat(parts[1]) || Infinity;
+        return price >= min && price <= max;
+      }
+      return true;
+    };
+
+    let result = tutors.slice();
+
+    // Apply each filter
+    result = result.filter(t => byTextMatch(t, searchQuery));
+    result = result.filter(t => bySubject(t, selectedSubject));
+    result = result.filter(t => byLevel(t, selectedLevel));
+    result = result.filter(t => byPriceRange(t, priceRange));
 
     // Sorting
+    const safeNumber = (v) => (typeof v === "number" ? v : parseFloat(v) || 0);
     switch (sortBy) {
       case "rating":
-        result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+        result.sort((a, b) => safeNumber(b.rating) - safeNumber(a.rating));
         break;
       case "newest":
-        result.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        result.sort((a, b) => new Date(b.created_at || b.date_joined || 0) - new Date(a.created_at || a.date_joined || 0));
         break;
       case "price-low":
-        result.sort((a, b) => (a.hourly_rate || a.price || 0) - (b.hourly_rate || b.price || 0));
+        result.sort((a, b) => safeNumber(a.hourly_rate ?? a.price ?? a.rate) - safeNumber(b.hourly_rate ?? b.price ?? b.rate));
         break;
       case "price-high":
-        result.sort((a, b) => (b.hourly_rate || b.price || 0) - (a.hourly_rate || a.price || 0));
+        result.sort((a, b) => safeNumber(b.hourly_rate ?? b.price ?? b.rate) - safeNumber(a.hourly_rate ?? a.price ?? a.rate));
         break;
       case "popular":
       default:
@@ -118,6 +153,7 @@ const TutorList = () => {
   }, [tutors, searchQuery, selectedSubject, selectedLevel, priceRange, sortBy]);
 
   const handleResetFilters = () => {
+    setSearchInput("");
     setSearchQuery("");
     setSelectedSubject("");
     setSelectedLevel("");
@@ -125,13 +161,14 @@ const TutorList = () => {
     setSortBy("popular");
   };
 
-  const activeFiltersCount = [searchQuery, selectedSubject, selectedLevel, priceRange].filter(Boolean).length;
+  const activeFiltersCount = useMemo(() => {
+    return [searchQuery, selectedSubject, selectedLevel, priceRange].filter(Boolean).length;
+  }, [searchQuery, selectedSubject, selectedLevel, priceRange]);
 
   return (
     <>
       <Navbar />
 
-      {/* Hero Section */}
       <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
           <div className="text-center">
@@ -154,7 +191,6 @@ const TutorList = () => {
               Connect with certified experts tailored to your learning goals
             </p>
 
-            {/* Search Bar */}
             <div className="max-w-2xl mx-auto">
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -164,8 +200,8 @@ const TutorList = () => {
                 </div>
                 <input
                   type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   placeholder="Search by subject, name, or keyword..."
                   className="w-full pl-12 pr-4 py-4 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-xl"
                 />
@@ -175,12 +211,10 @@ const TutorList = () => {
         </div>
       </div>
 
-      {/* Filters Bar */}
       <div className="bg-white border-b sticky top-0 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap">
-              {/* Subject Filter */}
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
@@ -192,7 +226,6 @@ const TutorList = () => {
                 ))}
               </select>
 
-              {/* Level Filter */}
               <select
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
@@ -204,7 +237,6 @@ const TutorList = () => {
                 ))}
               </select>
 
-              {/* Price Range Filter */}
               <select
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
@@ -216,7 +248,6 @@ const TutorList = () => {
                 ))}
               </select>
 
-              {/* Reset Filters */}
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleResetFilters}
@@ -227,7 +258,6 @@ const TutorList = () => {
               )}
             </div>
 
-            {/* Sort */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600 hidden sm:inline">Sort:</span>
               <select
@@ -246,10 +276,8 @@ const TutorList = () => {
         </div>
       </div>
 
-      {/* Main Content */}
       <div className="bg-gray-50 min-h-screen py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Results Header */}
           {!loading && !error && filteredTutors.length > 0 && (
             <div className="mb-6">
               <h2 className="text-2xl font-bold text-gray-900">
@@ -258,7 +286,6 @@ const TutorList = () => {
             </div>
           )}
 
-          {/* Loading State */}
           {loading && page === 1 && (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
@@ -266,7 +293,6 @@ const TutorList = () => {
             </div>
           )}
 
-          {/* Error State */}
           {error && (
             <div className="max-w-xl mx-auto bg-white rounded-xl border border-red-200 p-6">
               <div className="flex items-start gap-4">
@@ -289,7 +315,6 @@ const TutorList = () => {
             </div>
           )}
 
-          {/* Empty State */}
           {!loading && !error && filteredTutors.length === 0 && (
             <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-12 text-center">
               <div className="w-20 h-20 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -313,7 +338,6 @@ const TutorList = () => {
             </div>
           )}
 
-          {/* Tutors Grid */}
           {!loading && !error && filteredTutors.length > 0 && (
             <div className="space-y-4">
               {filteredTutors.map((tutor) => (
@@ -322,7 +346,6 @@ const TutorList = () => {
             </div>
           )}
 
-          {/* Load More Button */}
           {hasMore && !loading && !error && filteredTutors.length > 0 && (
             <div className="mt-12 text-center">
               <button
@@ -330,19 +353,10 @@ const TutorList = () => {
                 disabled={loading}
                 className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
               >
-                {loading ? (
-                  <>
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    Loading...
-                  </>
-                ) : (
-                  <>
-                    Load More Tutors
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                    </svg>
-                  </>
-                )}
+                Load More Tutors
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                </svg>
               </button>
             </div>
           )}
