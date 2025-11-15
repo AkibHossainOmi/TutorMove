@@ -53,7 +53,7 @@ const TutorProfile = ({
             icon: <FaBriefcase className="text-gray-500" />,
           },
           {
-            label: 'Phone Number',
+            label: 'WhatsApp Number',
             value: isEditing ? (
               <input
                 className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
