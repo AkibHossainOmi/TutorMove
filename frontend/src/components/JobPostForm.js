@@ -65,7 +65,24 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
       const storedUser = localStorage.getItem("user");
       const studentId = storedUser ? JSON.parse(storedUser)?.user_id : null;
 
-      const payload = { student: studentId, ...formData };
+      const payload = {
+        student: studentId,
+        location: formData.location,
+        phone: formData.phone,
+        description: formData.description,
+        subjects: formData.subjects, // M2M
+        languages: formData.languages,
+        mode: formData.mode,
+        education_level: formData.educationLevel || "Primary",
+        service_type: formData.serviceType || "Tutoring",
+        distance: formData.distance || null,
+        budget: formData.budget || null,
+        budget_type: formData.budgetType || "Fixed",
+        total_hours: formData.totalHours || null,
+        gender_preference: formData.genderPreference || "Any",
+        country: formData.country || "Unknown",
+      };
+
       const response = await jobAPI.createJob(payload);
 
       if (response?.status === 201 || response?.id) {
