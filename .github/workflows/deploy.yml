@@ -21,7 +21,9 @@ jobs:
           script: |
             cd /var/www/TutorMove
             git reset --hard
-            git pull https://rahadulx0:${{ secrets.PAT }}@github.com/rahadulx0/TutorMove.git main
+            git config --global credential.helper store
+            echo "https://rahadulx0:${{ secrets.PAT }}@github.com" > ~/.git-credentials
+            git pull https://github.com/rahadulx0/TutorMove.git main
             source backend/venv/bin/activate
             pip install -r backend/requirements.txt
             python backend/manage.py migrate --noinput
