@@ -259,6 +259,7 @@ export const notificationAPI = {
   markAllAsRead: () => apiService.post('/notifications/mark-all-read/'),
   deleteNotification: (id) => apiService.delete(`/notifications/${id}/`),
   updateNotificationPreferences: (preferences) => apiService.patch('/notifications/preferences/', preferences),
+  getLatestNotifications: () => apiService.get('/api/notifications/latest/'),
 };
 
 // Settings API calls

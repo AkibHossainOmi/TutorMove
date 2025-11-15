@@ -1431,6 +1431,14 @@ class NotificationViewSet(viewsets.ModelViewSet):
         updated_count = self.queryset.filter(to_user=request.user, is_read=False).update(is_read=True)
         return Response({'marked_read_count': updated_count})
 
+    @action(detail=False, methods=['get'], url_path='latest')
+    def latest_notifications(self, request):
+        latest_10 = self.queryset.filter(
+            to_user=request.user
+        ).order_by('-created_at')[:10]
+
+        serializer = self.get_serializer(latest_10, many=True)
+        return Response(serializer.data)
 
 # --- MessageViewSet ---
 # class MessageViewSet(viewsets.ModelViewSet):

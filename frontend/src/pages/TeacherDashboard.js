@@ -490,10 +490,11 @@ const TeacherDashboard = () => {
   // Fetch notifications for the logged in user
   const fetchNotifications = async (userId) => {
     try {
-      const response = await notificationAPI.getUnreadNotifications();
+      const response = await notificationAPI.getLatestNotifications();
       const unreadNotifs = response.data || [];
       setNotifications(unreadNotifs);
-      setUnreadNotificationCount(unreadNotifs.length);
+      const unreadNotifsCount = unreadNotifs.filter(n => !n.is_read).length;
+      setUnreadNotificationCount(unreadNotifsCount);
     } catch (error) {
       console.error("Failed to fetch notifications:", error.response?.data || error.message);
     }

@@ -522,9 +522,13 @@ const StudentDashboard = () => {
 
     const loadNotifications = async () => {
       try {
-        const res = await notificationAPI.getUnreadNotifications();
-        setNotifications(res.data || []);
-        setUnreadNotificationCount(res.data?.length || 0);
+        const res = await notificationAPI.getLatestNotifications();
+        const allNotifications = res.data || [];
+
+        setNotifications(allNotifications);
+        // Count only unread notifications
+        const unreadCount = allNotifications.filter(n => !n.is_read).length;
+        setUnreadNotificationCount(unreadCount);
       } catch {}
     };
 
