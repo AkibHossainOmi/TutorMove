@@ -6,6 +6,7 @@
 - point spends on gig will be resetted after 1 month.
 - Filter in Job page.
 - Sorting in Job page.
+- test ciCd
 
 **_# Future Update:_**
 
