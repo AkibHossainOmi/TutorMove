@@ -334,11 +334,6 @@ const JobDetail = () => {
                 />
                 <DetailItem 
                   icon={<FiBook className="text-gray-600" />} 
-                  label="Languages" 
-                  value={job.languages?.join(', ')} 
-                />
-                <DetailItem 
-                  icon={<FiBook className="text-gray-600" />} 
                   label="Education Level" 
                   value={job.education_level} 
                 />
@@ -347,11 +342,11 @@ const JobDetail = () => {
                   label="Gender Preference" 
                   value={job.gender_preference} 
                 />
-                <DetailItem 
+                {/* <DetailItem 
                   icon={<FiUsers className="text-gray-600" />} 
                   label="Applicants" 
                   value={job.applicants_count || 0} 
-                />
+                /> */}
                 
                 {/* Phone Number with Conditional Access */}
                 <div className="flex items-start gap-3">
@@ -359,7 +354,7 @@ const JobDetail = () => {
                     <FiPhone size={18} />
                   </div>
                   <div>
-                    <p className="text-xs font-medium text-gray-500 mb-0.5">Phone</p>
+                    <p className="text-xs font-medium text-gray-500 mb-0.5">WhatsApp</p>
                     <p className="text-sm font-medium text-gray-900">
                       {jobUnlocked || !isTutor ? (job.phone || "N/A") : "Unlock to view"}
                     </p>
