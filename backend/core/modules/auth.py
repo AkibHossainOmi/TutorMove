@@ -22,6 +22,23 @@ from ..serializers import (
 )
 from ..models import Credit
 
+TRUSTED_DOMAINS = [
+    # Popular public email providers
+    "gmail.com",
+    "googlemail.com",
+    "outlook.com",
+    "hotmail.com",
+    "yahoo.com",
+    "icloud.com",
+    "protonmail.com",
+    "zoho.com",
+    "gmx.com",
+]
+
+def is_trusted_email(email):
+    domain = email.split('@')[-1].lower()
+    return domain in TRUSTED_DOMAINS
+
 UserModel = get_user_model()
 
 
@@ -106,6 +123,13 @@ class SendOTPView(views.APIView):
 
         if not email:
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # --- Trusted domain check ---
+        if purpose == "register" and not is_trusted_email(email):
+            return Response(
+                {"error": "Email domain is not allowed for registration."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Check email existence
         if purpose == "register":

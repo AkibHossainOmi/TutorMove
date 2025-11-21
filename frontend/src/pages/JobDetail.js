@@ -19,10 +19,14 @@ const JobDetail = () => {
   const [error, setError] = useState(null);
   const [jobUnlocked, setJobUnlocked] = useState(false);
   const [creditsNeeded, setCreditsNeeded] = useState(0);
+  const [nextCreditsNeeded, setNextCreditsNeeded] = useState(0);
   const [unlockStatus, setUnlockStatus] = useState('idle');
   const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false);
   const [unlockErrorMessage, setUnlockErrorMessage] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [timeLeft, setTimeLeft] = useState(null);
+  const [isInPriorityWindow, setIsInPriorityWindow] = useState(false);
+  const [unlockRestricted, setUnlockRestricted] = useState(false);
 
   // Rating states
   const [reviewRating, setReviewRating] = useState(0);
@@ -61,6 +65,7 @@ const JobDetail = () => {
           if (!isMounted) return;
           setJobUnlocked(unlockRes.data.unlocked);
           setCreditsNeeded(unlockRes.data.points_needed);
+          setNextCreditsNeeded(unlockRes.data.future_points_needed)
         }
       } catch (err) {
         if (!isMounted) return;
@@ -76,6 +81,36 @@ const JobDetail = () => {
     return () => { isMounted = false; };
   }, [id, isTutor]);
 
+  useEffect(() => {
+    if (!job?.created_at) return;
+
+    const createdTime = new Date(job.created_at).getTime();
+    const endTime = createdTime + 60 * 60 * 1000; // 1 hour
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diff = endTime - now;
+
+      if (diff <= 0) {
+        setTimeLeft(0);
+        setIsInPriorityWindow(false);
+        return;
+      }
+
+      setIsInPriorityWindow(true);
+
+      const mins = Math.floor(diff / 1000 / 60);
+      const secs = Math.floor((diff / 1000) % 60);
+
+      setTimeLeft(`${mins}m ${secs}s`);
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+
+    return () => clearInterval(interval);
+  }, [job]);
+
   const handleUnlockJob = async () => {
     setUnlockStatus('loading');
     setUnlockErrorMessage('');
@@ -88,8 +123,17 @@ const JobDetail = () => {
       showToast('Job unlocked successfully!', 'success');
     } catch (err) {
       console.error('Error unlocking job:', err);
-      if (err.response?.data?.detail === 'Insufficient points') {
+      if (err.response?.status === 403) {
+        setUnlockRestricted(true);
+        setUnlockStatus('failed');
+        showToast(
+          "Be the top tutors to apply for this job. Unlocking is currently restricted for you."
+        );
+        return;
+      }
+      else if (err.response?.data?.detail === 'Insufficient points') {
         setShowBuyCreditsModal(true);
+        setUnlockStatus('failed');
       } else if (err.response?.data?.detail === 'You need an active gig with a matching subject to unlock this job.') {
         setUnlockErrorMessage(err.response.data.detail);
         setUnlockStatus('failed');
@@ -250,6 +294,18 @@ const JobDetail = () => {
           />
         )}
 
+        {isTutor && isInPriorityWindow && (
+          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-4">
+            <p className="text-sm text-yellow-800 font-semibold">
+              Priority Access: <span className="font-bold text-yellow-900">{timeLeft}</span> left
+            </p>
+            <p className="text-xs text-yellow-700 mt-1">
+              For the first hour, only top tutors who received priority notification can unlock this job.
+            </p>
+          </div>
+        )}
+
+
         {/* Job Header - Minimal Style */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex flex-col lg:flex-row justify-between gap-4">
@@ -381,46 +437,62 @@ const JobDetail = () => {
               </div>
             </div>
 
-            {/* Recommendation Section - Only for Tutors */}
-            {isTutor && job.status === 'Open' && (
-              <div className="bg-blue-50 rounded-lg border border-blue-100 p-6">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <FiTrendingUp className="text-blue-600" size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-base font-semibold text-gray-900 mb-1">Recommendation</h3>
-                    <p className="text-sm text-gray-700 font-medium mb-3">
-                      Be the first one to apply. You have a very high chance of securing this student.
-                    </p>
-                  </div>
+          {/* Recommendation Section - Only for Tutors */}
+          {isTutor && job.status === "Open" && (
+            <div className="bg-blue-50 rounded-lg border border-blue-100 p-6">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <FiTrendingUp className="text-blue-600" size={18} />
                 </div>
-                
-                <div className="bg-white/60 rounded-lg p-4 border border-blue-100">
-                  <p className="text-xs font-medium text-gray-600 mb-3">
-                    Above Recommendation is made automatically based on the following data:
+                <div>
+                  <h3 className="text-base font-semibold text-gray-900 mb-1">Recommendation</h3>
+                  <p className="text-sm text-gray-700 font-medium mb-3">
+                    Apply early to unlock this job at the lowest coin cost.
                   </p>
-                  <ul className="space-y-2 text-xs text-gray-700">
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-0.5">•</span>
-                      <span><strong>{job.applicants_count} teachers</strong> contacted the student.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-0.5">•</span>
-                      <span>Price may <strong>decrease to 0 coins</strong> in 36 hours.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-0.5">•</span>
-                      <span>Price will <strong>increase</strong> as more teachers apply.</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <span className="text-blue-600 mt-0.5">•</span>
-                      <span>Student verified phone number and can be called. Therefore, <strong className="text-red-600">no coins will be refunded</strong> even if student doesn't look at your message.</span>
-                    </li>
-                  </ul>
                 </div>
               </div>
-            )}
+
+              <div className="bg-white/60 rounded-lg p-4 border border-blue-100">
+                <p className="text-xs font-medium text-gray-600 mb-3">
+                  This recommendation is generated based on the following:
+                </p>
+                <ul className="space-y-2 text-xs text-gray-700">
+
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-0.5">•</span>
+                    <span><strong>{job.applicants_count} teachers</strong> have already contacted the student.</span>
+                  </li>
+
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-0.5">•</span>
+                    <span>
+                      If you unlock now, the next unlock price will update to 
+                      <strong className="ml-1 text-blue-600">{nextCreditsNeeded} points</strong>.
+                    </span>
+                  </li>
+
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-0.5">•</span>
+                    <span>Unlock cost may <strong>drop to 0 coins</strong> if unclaimed for 36 hours.</span>
+                  </li>
+
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-0.5">•</span>
+                    <span>Unlock cost <strong>increases</strong> as more teachers apply.</span>
+                  </li>
+
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-0.5">•</span>
+                    <span>
+                      Student has a verified phone number. <strong className="text-red-600">
+                      Coins are non-refundable</strong> once unlocked.
+                    </span>
+                  </li>
+
+                </ul>
+              </div>
+            </div>
+          )}
 
             {/* Action Sections */}
             {/* Tutor Unlock / Complete Section */}
