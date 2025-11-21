@@ -61,3 +61,6 @@ yarn-error.log
 .dmypy.json
 .pyre/
 .pytype/
+
+# Celery Beat schedule files
+celerybeat-schedule*

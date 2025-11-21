@@ -3,6 +3,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.utils import timezone
 from core.models import User
+from core.models import Gig
 
 @shared_task
 def send_job_email(email, html_content, text_content):
@@ -26,3 +27,12 @@ def expire_single_user_premium(user_id):
             user.save(update_fields=['is_premium', 'premium_expires'])
     except User.DoesNotExist:
         pass
+
+@shared_task
+def reset_monthly_credits_spend_on_gigs():
+    """
+    Reset used_credits to 0 for all gigs.
+    Scheduled to run on the 1st day of each month.
+    """
+    updated_count = Gig.objects.update(used_credits=0)
+    print(f"Reset used_credits for {updated_count} gigs.")
