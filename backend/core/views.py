@@ -1042,7 +1042,34 @@ class JobViewSet(viewsets.ModelViewSet):
         except Job.DoesNotExist:
             return Response({"detail": "Job not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        # Get active gig subject names (strings)
+        # -------------------------
+        # First-hour top 10 restriction
+        # -------------------------
+        if timezone.now() <= job.created_at + timedelta(hours=1):
+            active_job_subjects = job.subjects.filter(is_active=True).values_list("name", flat=True)
+            top_tutors = (
+                User.objects.filter(
+                    user_type="tutor",
+                    gigs__subject__in=active_job_subjects
+                )
+                .distinct()
+                .annotate(
+                    total_points_spent=Sum(
+                        'gigs__used_credits',
+                        filter=Q(gigs__subject__in=active_job_subjects)
+                    )
+                )
+                .order_by('-total_points_spent')[:10]
+            )
+            if tutor not in top_tutors:
+                return Response(
+                    {"detail": "Only the top tutors can unlock this job for the first hour."},
+                    status=status.HTTP_403_FORBIDDEN,
+                )
+
+        # -------------------------
+        # Existing checks remain unchanged
+        # -------------------------
         gig_subjects = tutor.gigs.values_list("subject", flat=True).distinct()
 
         # Check if job has at least one matching subject
@@ -1090,12 +1117,16 @@ class JobViewSet(viewsets.ModelViewSet):
 
         unlocked = JobUnlock.objects.filter(job=job, tutor=tutor).exists()
         points_needed = 0
+        future_points_needed = 0
+
         if not unlocked:
             points_needed = self.calculate_unlock_points(job, tutor)
+            future_points_needed = self.calculate_next_unlock_points(job, tutor)  # 👈 new
 
         return Response({
             "unlocked": unlocked,
-            "points_needed": points_needed
+            "points_needed": points_needed,
+            "future_points_needed": future_points_needed
         }, status=status.HTTP_200_OK)
 
     # ---------------------------
@@ -1191,6 +1222,43 @@ class JobViewSet(viewsets.ModelViewSet):
         min_price = int(base_price * 0.20)
         return max(price, min_price)
     
+    def calculate_next_unlock_points(self, job: Job, tutor: User) -> int:
+        """
+        Return the points needed for the immediate next unlock attempt,
+        using the same base price and dynamic pricing logic.
+        """
+        # Step 1: Determine base points (same as calculate_unlock_points)
+        if job.budget and job.total_hours:
+            hourly_rate = self.normalize_hourly_rate(job)
+            base_points = self.get_base_points_for_hourly(hourly_rate)
+        else:
+            base_points = self.get_country_group_points(job.country)
+
+        # Step 2: Dynamic price for NEXT unlock
+        current_unlock_count = job.unlocks.count()
+        # simulate next unlock → add 1
+        next_unlock_count = current_unlock_count + 1
+
+        price = base_points
+
+        # 1. Increment per unlock (10% each, cap at 10)
+        effective_unlocks = min(next_unlock_count, 10)
+        if effective_unlocks > 0:
+            price = int(price * (1.1 ** effective_unlocks))
+
+        # 2. Decay if idle for 36h
+        if current_unlock_count == 0 and job.created_at:
+            now = timezone.now()
+            idle_time = now - job.created_at
+            if idle_time > timedelta(hours=36):
+                five_hour_blocks = (idle_time - timedelta(hours=36)) // timedelta(hours=5)
+                for _ in range(int(five_hour_blocks)):
+                    price = int(price * 0.95)
+
+        # 3. Floor = 20% of base
+        min_price = int(base_points * 0.20)
+        return max(price, min_price)
+
     @action(detail=True, methods=['GET'], permission_classes=[IsAuthenticated])
     def applicants(self, request, pk=None):
         """
@@ -2279,4 +2347,5 @@ def verify_otp(request):
             return Response({"status": "failed", "message": "Invalid OTP"}, status=400)
 
     except Exception as e:
+        return Response({"status": "failed", "error": str(e)}, status=500)
         return Response({"status": "failed", "error": str(e)}, status=500)
