@@ -6,6 +6,15 @@
 - MySQL Server (for production)
 - Git
 
+## Environment Setup
+
+Before running anything:
+```bash
+# Copy example env file
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
 ## Installation & Setup
 
 ### 1. Backend Setup
@@ -56,9 +65,14 @@ uvicorn backend.asgi:application --reload
 ```
 Backend will be available at: http://localhost:8000
 
+### Start Redis Server
+Make sure Redis is installed and running.
+
 #### Run Worker
 ```bash
-python manage.py rqworker default
+celery -A backend worker -l info -P solo
+or
+celery -A backend worker -l info
 ```
 
 #### Start Frontend Development Server (in a new terminal)
