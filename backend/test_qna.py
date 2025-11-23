@@ -99,6 +99,24 @@ def test_qna_flow():
     # Check total score logic manually if needed, but fields are separate
     print("✅ Answer voting works.")
 
+    # 7. Security Check: Unauthorized Modification
+    print("Testing Security (Modification)...")
+
+    # Student2 tries to delete Student1's question
+    response = client_student2.delete(f'/api/questions/{question_id}/')
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    print("✅ Student2 blocked from deleting Student1's question.")
+
+    # Tutor tries to edit Student1's question
+    response = client_tutor.patch(f'/api/questions/{question_id}/', {'title': 'Hacked'})
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+    print("✅ Tutor blocked from editing Student1's question.")
+
+    # Student1 deletes their own question
+    response = client_student.delete(f'/api/questions/{question_id}/')
+    assert response.status_code == status.HTTP_204_NO_CONTENT
+    print("✅ Student1 successfully deleted their own question.")
+
     print("\n🎉 All Q&A tests passed!")
 
     # Clean up

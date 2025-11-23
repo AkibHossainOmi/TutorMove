@@ -55,6 +55,7 @@ from .serializers import (
 )
 
 from .payments import SSLCommerzPayment
+from .permissions import IsOwnerOrReadOnly
 
 __all__ = [
     "SendOTPView",
@@ -2353,7 +2354,7 @@ def verify_otp(request):
 class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all().order_by('-created_at')
     serializer_class = QuestionSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'content']
 
@@ -2380,7 +2381,7 @@ class QuestionViewSet(viewsets.ModelViewSet):
 class AnswerViewSet(viewsets.ModelViewSet):
     queryset = Answer.objects.all().order_by('-created_at')
     serializer_class = AnswerSerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
 
     def get_queryset(self):
         queryset = Answer.objects.all()
