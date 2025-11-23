@@ -43,7 +43,7 @@ from core.modules.auth import ( SendOTPView, ResetPasswordView,
 from urllib.parse import urlencode
 from .models import (
     CountryGroup, CountryGroupPoint, UnlockPricingTier, User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, ContactUnlock, JobUnlock,
+    Order, Payment, ContactUnlock, JobUnlock, Question, Answer,
 )
 from .serializers import (
     ContactUnlockSerializer, UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
@@ -51,7 +51,7 @@ from .serializers import (
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     PaymentSerializer, CreditUpdateByUserSerializer,
-    JobUnlockSerializer,
+    JobUnlockSerializer, QuestionSerializer, AnswerSerializer,
 )
 
 from .payments import SSLCommerzPayment
@@ -2347,3 +2347,88 @@ def verify_otp(request):
     except Exception as e:
         return Response({"status": "failed", "error": str(e)}, status=500)
         return Response({"status": "failed", "error": str(e)}, status=500)
+
+# === Q&A VIEWSETS ===
+
+class QuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all().order_by('-created_at')
+    serializer_class = QuestionSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'content']
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.user_type != 'student':
+            raise ValidationError("Only students can create questions.")
+        serializer.save(student=user)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def upvote(self, request, pk=None):
+        question = self.get_object()
+        user = request.user
+
+        # Teachers and students both can upvote questions
+
+        if question.upvotes.filter(id=user.id).exists():
+            question.upvotes.remove(user)
+            return Response({'status': 'upvote removed', 'total_upvotes': question.total_upvotes()})
+        else:
+            question.upvotes.add(user)
+            return Response({'status': 'upvoted', 'total_upvotes': question.total_upvotes()})
+
+class AnswerViewSet(viewsets.ModelViewSet):
+    queryset = Answer.objects.all().order_by('-created_at')
+    serializer_class = AnswerSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        queryset = Answer.objects.all()
+        question_id = self.request.query_params.get('question_id')
+        if question_id:
+            queryset = queryset.filter(question_id=question_id)
+        return queryset.order_by('-created_at')
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.user_type != 'tutor':
+            raise ValidationError("Only tutors can answer questions.")
+
+        question_id = self.request.data.get('question')
+        # Check if tutor has already answered this question? Maybe not required.
+
+        serializer.save(tutor=user)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def upvote(self, request, pk=None):
+        answer = self.get_object()
+        user = request.user
+
+        if user.user_type != 'student':
+             return Response({'error': 'Only students can upvote answers.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if answer.upvotes.filter(id=user.id).exists():
+            answer.upvotes.remove(user)
+            return Response({'status': 'upvote removed', 'total_upvotes': answer.total_upvotes(), 'total_downvotes': answer.total_downvotes()})
+        else:
+            if answer.downvotes.filter(id=user.id).exists():
+                answer.downvotes.remove(user)
+            answer.upvotes.add(user)
+            return Response({'status': 'upvoted', 'total_upvotes': answer.total_upvotes(), 'total_downvotes': answer.total_downvotes()})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def downvote(self, request, pk=None):
+        answer = self.get_object()
+        user = request.user
+
+        if user.user_type != 'student':
+             return Response({'error': 'Only students can downvote answers.'}, status=status.HTTP_403_FORBIDDEN)
+
+        if answer.downvotes.filter(id=user.id).exists():
+            answer.downvotes.remove(user)
+            return Response({'status': 'downvote removed', 'total_upvotes': answer.total_upvotes(), 'total_downvotes': answer.total_downvotes()})
+        else:
+            if answer.upvotes.filter(id=user.id).exists():
+                answer.upvotes.remove(user)
+            answer.downvotes.add(user)
+            return Response({'status': 'downvoted', 'total_upvotes': answer.total_upvotes(), 'total_downvotes': answer.total_downvotes()})

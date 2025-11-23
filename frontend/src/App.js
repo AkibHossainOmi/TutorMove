@@ -38,6 +38,9 @@ import FAQ from './pages/FAQ';
 import PostRequirement from './pages/PostRequirement';
 import BuyCreditsAndPremiumPage from './pages/BuyCreditPage';
 import StudentProfilePage from './pages/StudentProfile';
+import QnAPage from './pages/qna/QnAPage';
+import CreateQuestionPage from './pages/qna/CreateQuestionPage';
+import QuestionDetailsPage from './pages/qna/QuestionDetailsPage';
 
 
 function App() {
@@ -85,6 +88,11 @@ function App() {
             <Route path="/payments/success/" element={<PaymentSuccess />} />
             <Route path="/payments/fail/" element={<PaymentFail />} />
             <Route path="/payments/cancel" element={<PaymentCancel />} />
+
+            {/* Q&A Routes */}
+            <Route path="/qna" element={<QnAPage />} />
+            <Route path="/qna/create" element={<CreateQuestionPage />} />
+            <Route path="/qna/:id" element={<QuestionDetailsPage />} />
 
             {/* Map Search functionality */}
             <Route path="/map-search" element={<TutorMapSearch mode="gigs" radiusKm={20} />} />

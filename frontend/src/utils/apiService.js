@@ -315,3 +315,16 @@ export const apiCall = async (method, endpoint, data = null, config = {}) => {
 };
 
 export default apiService;
+
+// Q&A API calls
+export const qnaAPI = {
+  getQuestions: (params) => apiService.get('/api/questions/', { params }),
+  createQuestion: (data) => apiService.post('/api/questions/', data),
+  getQuestion: (id) => apiService.get(`/api/questions/${id}/`),
+  upvoteQuestion: (id) => apiService.post(`/api/questions/${id}/upvote/`),
+
+  createAnswer: (data) => apiService.post('/api/answers/', data),
+  getAnswers: (questionId) => apiService.get('/api/answers/', { params: { question_id: questionId } }),
+  upvoteAnswer: (id) => apiService.post(`/api/answers/${id}/upvote/`),
+  downvoteAnswer: (id) => apiService.post(`/api/answers/${id}/downvote/`),
+};
