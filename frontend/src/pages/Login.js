@@ -1,14 +1,10 @@
+// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate, Link, Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
-import { authAPI, userApi } from "../utils/apiService"; // Backend API service
-
-const FIELD_BASE =
-  "w-full rounded-xl border border-gray-200 bg-white/60 backdrop-blur px-4 py-3 text-sm text-gray-900 placeholder-gray-400 outline-none transition focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500";
-
-const LABEL_BASE = "block text-sm font-medium text-gray-700 mb-1";
+import { authAPI, userApi } from "../utils/apiService";
 
 const Login = () => {
   const [formData, setFormData] = useState({ username: "", password: "" });
@@ -34,18 +30,14 @@ const Login = () => {
     }
 
     try {
-      // Send username (can be actual username or email) and password
       const response = await authAPI.login({
         username: formData.username,
         password: formData.password,
       });
 
       const data = response.data;
-
-      // Store token
       localStorage.setItem("token", data.access);
 
-      // Fetch and store user profile
       const user = await userApi.getUser();
       user.data.user_id = user.data.id;
       localStorage.setItem("user", JSON.stringify(user.data));
@@ -65,120 +57,118 @@ const Login = () => {
   if (isAuthenticated) return <Navigate to="/dashboard" />;
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Navbar />
 
-      <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-sky-50 flex items-center justify-center py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid md:grid-cols-2 gap-8 items-stretch max-w-4xl mx-auto">
-            {/* Left Side */}
-            <div className="hidden md:flex relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 to-sky-500 text-white p-10 shadow-2xl">
-              <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-              <div className="relative z-10 flex flex-col justify-end">
-                <h1 className="text-4xl font-extrabold leading-tight">
-                  Log in to TutorMove
-                </h1>
-                <p className="mt-4 text-white/90 text-lg">
-                  Access your personalized dashboard, connect with students or tutors, and manage your learning journey.
-                </p>
-                <ul className="mt-8 space-y-3 text-white/90">
-                  <li className="flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> Seamless return
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> Secure authentication
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/20">✓</span> All your data, instantly
-                  </li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Right Side: Form */}
-            <div className="relative">
-              <div className="absolute -inset-1 rounded-3xl bg-gradient-to-br from-indigo-200 to-sky-200 blur opacity-60" />
-              <div className="relative rounded-3xl bg-white shadow-xl p-8 md:p-10">
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-gray-900">Welcome Back!</h2>
-                  <p className="text-sm text-gray-500 mt-1">Sign in to your account.</p>
-                </div>
-
-                {error && (
-                  <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {error}
-                  </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                  <div>
-                    <label htmlFor="email" className={LABEL_BASE}>
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      name="username"
-                      id="username"
-                      value={formData.username}
-                      onChange={handleChange}
-                      required
-                      placeholder="Your username or email"
-                      className={FIELD_BASE}
-                      disabled={loading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className={LABEL_BASE}>
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      name="password"
-                      id="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      placeholder="Your password"
-                      className={FIELD_BASE}
-                      disabled={loading}
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full rounded-xl px-4 py-3 text-sm font-semibold text-white transition shadow ${
-                      loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
-                    }`}
-                  >
-                    {loading ? "Logging In..." : "Log In"}
-                  </button>
-                </form>
-
-                <div className="mt-6 text-center text-sm">
-                  <Link
-                    to="/forgot-password"
-                    className="font-medium text-indigo-600 hover:text-indigo-800 transition mr-4"
-                  >
-                    Forgot password?
-                  </Link>
-                  <span className="text-gray-600"> or </span>
-                  <Link
-                    to="/signup"
-                    className="font-medium text-gray-600 hover:text-gray-800 transition ml-4"
-                  >
-                    Create an account
-                  </Link>
-                </div>
-              </div>
-            </div>
+      <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-16">
+        <div className="max-w-md w-full space-y-8 bg-white p-10 rounded-2xl shadow-sm border border-gray-100">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Welcome back
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              Don't have an account?{" "}
+              <Link to="/signup" className="font-medium text-indigo-600 hover:text-indigo-500">
+                Sign up
+              </Link>
+            </p>
           </div>
+
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="rounded-md bg-red-50 p-4 border border-red-200">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div className="mb-4">
+                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email address
+                </label>
+                <input
+                  id="username"
+                  name="username"
+                  type="text" // Allows username or email
+                  autoComplete="username"
+                  required
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
+                  placeholder="Enter your email"
+                  value={formData.username}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
+              <div className="mb-4">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  required
+                  className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-lg focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm transition-colors"
+                  placeholder="Enter your password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="remember-me"
+                  name="remember-me"
+                  type="checkbox"
+                  className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                />
+                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
+                  Remember me
+                </label>
+              </div>
+
+              <div className="text-sm">
+                <Link to="/forgot-password" className="font-medium text-indigo-600 hover:text-indigo-500">
+                  Forgot your password?
+                </Link>
+              </div>
+            </div>
+
+            <div>
+              <button
+                type="submit"
+                disabled={loading}
+                className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white ${
+                  loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors`}
+              >
+                {loading ? (
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : null}
+                {loading ? "Signing in..." : "Sign in"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-
       <Footer />
-    </>
+    </div>
   );
 };
 

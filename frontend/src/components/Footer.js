@@ -54,54 +54,48 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="relative w-full mt-12">
-      {/* Full width gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-indigo-100 to-sky-100 blur opacity-40" />
-      
-      <div className="relative w-full bg-white shadow-xl">
-        <div className="max-w-6xl mx-auto px-6 py-10">
-          {/* Top links */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 text-sm">
-            {sections.map((section) => (
-              <div key={section.title}>
-                <h3 className="text-gray-900 font-semibold mb-3 text-base">
-                  {section.title}
-                </h3>
-                <ul className="space-y-2">
-                  {section.links.map((link) => (
-                    <li key={link.to}>
-                      <Link
-                        to={link.to}
-                        className="text-gray-600 hover:text-indigo-600 transition"
-                      >
-                        {link.label}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* Bottom bar */}
-          <div className="mt-10 pt-6 border-t border-gray-200 flex flex-col items-center gap-4">
-            <div className="flex gap-3">
-              {socials.map(({ href, icon, label }) => (
-                <a
-                  key={label}
-                  href={href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={label}
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-600 hover:bg-indigo-600 hover:text-white transition"
-                >
-                  {icon}
-                </a>
-              ))}
+    <footer className="w-full bg-gray-50 border-t border-gray-200 mt-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+          {sections.map((section) => (
+            <div key={section.title}>
+              <h3 className="text-gray-900 font-semibold mb-4 text-sm uppercase tracking-wider">
+                {section.title}
+              </h3>
+              <ul className="space-y-3">
+                {section.links.map((link) => (
+                  <li key={link.to}>
+                    <Link
+                      to={link.to}
+                      className="text-gray-500 hover:text-indigo-600 transition-colors text-sm"
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="text-xs text-gray-500">
-              &copy; {new Date().getFullYear()} TutorMove. All rights reserved.
-            </p>
+          ))}
+        </div>
+
+        <div className="pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-6">
+          <p className="text-xs text-gray-500">
+            &copy; {new Date().getFullYear()} TutorMove. All rights reserved.
+          </p>
+
+          <div className="flex space-x-4">
+            {socials.map(({ href, icon, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={label}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-white border border-gray-200 text-gray-400 hover:text-indigo-600 hover:border-indigo-600 transition-all duration-200"
+              >
+                {icon}
+              </a>
+            ))}
           </div>
         </div>
       </div>
