@@ -68,13 +68,6 @@ const TutorList = () => {
     };
   }, [page]);
 
-  // Reset page when component mounts or when user clears everything
-  useEffect(() => {
-    // when filters or search change we do client-side filtering
-    // but if we want fresh server results on filter change, we would set page(1) & refetch
-    // currently we keep server fetch independent and apply client-side filters
-  }, []);
-
   // Apply filters + sorting (client-side)
   useEffect(() => {
     const byTextMatch = (tutor, q) => {
@@ -166,59 +159,45 @@ const TutorList = () => {
   }, [searchQuery, selectedSubject, selectedLevel, priceRange]);
 
   return (
-    <>
+    <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
 
-      <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
-          <div className="text-center">
-            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-              </span>
-              <span className="text-sm font-semibold">500+ Expert Tutors Available</span>
+      {/* Hero Section */}
+      <div className="bg-white border-b border-gray-100 mt-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
+          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
+            Find Your Perfect <span className="text-indigo-600">Tutor</span>
+          </h1>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
+            Connect with certified experts tailored to your learning goals.
+          </p>
+
+          <div className="max-w-xl mx-auto relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-
-            <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6">
-              Find Your Perfect
-              <span className="block bg-gradient-to-r from-yellow-200 to-pink-200 bg-clip-text text-transparent">
-                Tutor Match
-              </span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-white/90 max-w-2xl mx-auto mb-8">
-              Connect with certified experts tailored to your learning goals
-            </p>
-
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <input
-                  type="text"
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  placeholder="Search by subject, name, or keyword..."
-                  className="w-full pl-12 pr-4 py-4 rounded-xl bg-white text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/50 shadow-xl"
-                />
-              </div>
-            </div>
+            <input
+              type="text"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              placeholder="Search by subject, name, or keyword..."
+              className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-shadow"
+            />
           </div>
         </div>
       </div>
 
-      <div className="bg-white border-b sticky top-0 z-20 shadow-sm">
+      {/* Filters Section */}
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-20 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar">
               <select
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">All Subjects</option>
                 {subjects.map(subject => (
@@ -229,7 +208,7 @@ const TutorList = () => {
               <select
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">All Levels</option>
                 {levels.map(level => (
@@ -240,7 +219,7 @@ const TutorList = () => {
               <select
                 value={priceRange}
                 onChange={(e) => setPriceRange(e.target.value)}
-                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
               >
                 <option value="">All Prices</option>
                 {priceRanges.map(range => (
@@ -251,19 +230,19 @@ const TutorList = () => {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleResetFilters}
-                  className="px-4 py-2 text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="px-3 py-2 text-sm text-indigo-600 font-medium hover:text-indigo-800 whitespace-nowrap"
                 >
-                  Reset ({activeFiltersCount})
+                  Reset Filters
                 </button>
               )}
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600 hidden sm:inline">Sort:</span>
+            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+              <span className="text-sm text-gray-500">Sort by:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="px-3 py-2 text-sm rounded-lg border-none bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 focus:ring-0 cursor-pointer"
               >
                 <option value="popular">Most Popular</option>
                 <option value="rating">Highest Rated</option>
@@ -276,95 +255,76 @@ const TutorList = () => {
         </div>
       </div>
 
-      <div className="bg-gray-50 min-h-screen py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {!loading && !error && filteredTutors.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">
-                {filteredTutors.length} {filteredTutors.length === 1 ? 'Tutor' : 'Tutors'} Found
-              </h2>
-            </div>
-          )}
+      {/* Results Section */}
+      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+        {!loading && !error && filteredTutors.length > 0 && (
+          <div className="mb-6 text-gray-500 text-sm font-medium">
+            Showing {filteredTutors.length} results
+          </div>
+        )}
 
-          {loading && page === 1 && (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-              <p className="text-gray-600">Loading tutors...</p>
-            </div>
-          )}
+        {loading && page === 1 && (
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
+            <p className="text-gray-500 text-sm">Finding best tutors for you...</p>
+          </div>
+        )}
 
-          {error && (
-            <div className="max-w-xl mx-auto bg-white rounded-xl border border-red-200 p-6">
-              <div className="flex items-start gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                  <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900">Error</h3>
-                  <p className="text-gray-600 mt-1">{error}</p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    Try Again
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-lg mx-auto mt-8">
+            <svg className="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <h3 className="text-lg font-medium text-red-800 mb-1">Something went wrong</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
+            >
+              Try Again
+            </button>
+          </div>
+        )}
 
-          {!loading && !error && filteredTutors.length === 0 && (
-            <div className="max-w-xl mx-auto bg-white rounded-xl shadow-lg p-12 text-center">
-              <div className="w-20 h-20 mx-auto mb-4 bg-indigo-100 rounded-full flex items-center justify-center">
-                <svg className="w-10 h-10 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">No tutors found</h3>
-              <p className="text-gray-600 mb-6">
-                Try adjusting your filters to see more results
-              </p>
-              <button
-                onClick={handleResetFilters}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                Reset Filters
-              </button>
+        {!loading && !error && filteredTutors.length === 0 && (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center max-w-lg mx-auto mt-8">
+            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          )}
+            <h3 className="text-lg font-medium text-gray-900 mb-1">No tutors found</h3>
+            <p className="text-gray-500 mb-6">We couldn't find any tutors matching your search criteria.</p>
+            <button
+              onClick={handleResetFilters}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+            >
+              Clear all filters
+            </button>
+          </div>
+        )}
 
-          {!loading && !error && filteredTutors.length > 0 && (
-            <div className="space-y-4">
-              {filteredTutors.map((tutor) => (
-                <TutorCard key={tutor.id} tutor={tutor} />
-              ))}
-            </div>
-          )}
-
-          {hasMore && !loading && !error && filteredTutors.length > 0 && (
-            <div className="mt-12 text-center">
-              <button
-                onClick={() => setPage((p) => p + 1)}
-                disabled={loading}
-                className="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white font-semibold rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-lg"
-              >
-                Load More Tutors
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                </svg>
-              </button>
-            </div>
-          )}
+        <div className="grid gap-6">
+          {filteredTutors.map((tutor) => (
+            <TutorCard key={tutor.id} tutor={tutor} />
+          ))}
         </div>
-      </div>
+
+        {hasMore && !loading && !error && filteredTutors.length > 0 && (
+          <div className="mt-10 text-center">
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={loading}
+              className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:text-gray-900 transition shadow-sm"
+            >
+              {loading ? "Loading..." : "Load More Tutors"}
+            </button>
+          </div>
+        )}
+      </main>
 
       <Footer />
-    </>
+    </div>
   );
 };
 
