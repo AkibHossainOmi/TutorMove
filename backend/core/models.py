@@ -498,3 +498,32 @@ class AbuseReport(models.Model):
     target_type = models.CharField(max_length=50)
     target_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+class Question(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    upvotes = models.ManyToManyField(User, related_name='upvoted_questions', blank=True)
+
+    def total_upvotes(self):
+        return self.upvotes.count()
+
+    def __str__(self):
+        return self.title
+
+class Answer(models.Model):
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='answers')
+    tutor = models.ForeignKey(User, on_delete=models.CASCADE, related_name='answers')
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    upvotes = models.ManyToManyField(User, related_name='upvoted_answers', blank=True)
+    downvotes = models.ManyToManyField(User, related_name='downvoted_answers', blank=True)
+
+    def total_upvotes(self):
+        return self.upvotes.count()
+
+    def total_downvotes(self):
+        return self.downvotes.count()
+
+    def __str__(self):
+        return f"Answer to {self.question.title} by {self.tutor.username}"
