@@ -14,7 +14,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-dswq$mer#l$f2p%b8eydalez%(%e_e*su9itll(9+yvvpsqwf@')
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY and os.getenv("DEBUG", "False") == "True":
+    SECRET_KEY = 'django-insecure-dswq$mer#l$f2p%b8eydalez%(%e_e*su9itll(9+yvvpsqwf@'
 
 DEBUG = os.getenv("DEBUG", "False") == "True"
 
@@ -79,7 +81,14 @@ CHANNEL_LAYERS = {
 }
 
 # CORS
-CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    os.getenv("FRONTEND_SITE_URL", "http://localhost:3000"),
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+if DEBUG:
+    CORS_ALLOW_ALL_ORIGINS = True
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
@@ -138,9 +147,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "tutormove.com@gmail.com")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "btwc wjvr dfek uabp")
-DEFAULT_FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_HOST_USER)
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = os.getenv("FROM_EMAIL", EMAIL_HOST_USER)
 FROM_EMAIL = DEFAULT_FROM_EMAIL 
 FRONTEND_SITE_URL = os.getenv("FRONTEND_SITE_URL", "http://localhost:3000")
@@ -254,3 +262,7 @@ JWT_COOKIE = {
     'MAX_AGE': 7 * 24 * 60 * 60,  # 7 days
     'PATH': '/api/auth/token/refresh/',
 }
+
+# Secure Cookies
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG

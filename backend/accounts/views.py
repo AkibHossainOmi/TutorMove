@@ -1,4 +1,4 @@
-import random
+import secrets
 from django.utils import timezone
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -15,7 +15,7 @@ def signup(request):
         if User.objects.filter(email=email).exists():
             return Response({"error": "Email already in use"}, status=400)
         user = serializer.save()
-        otp = f"{random.randint(100000,999999)}"
+        otp = f"{secrets.SystemRandom().randint(100000,999999)}"
         user.otp_code = otp
         user.otp_expires = timezone.now() + timezone.timedelta(minutes=10)
         user.save()
@@ -49,7 +49,7 @@ def verify_otp(request):
 @permission_classes([IsAuthenticated])
 def send_phone_otp(request):
     phone = request.data.get("phone")
-    otp = f"{random.randint(100000, 999999)}"
+    otp = f"{secrets.SystemRandom().randint(100000, 999999)}"
     user = request.user
     user.phone = phone
     user.phone_otp = otp
@@ -92,7 +92,7 @@ def request_reset(request):
         user = User.objects.get(email=email)
     except User.DoesNotExist:
         return Response({"error": "User not found"}, status=400)
-    otp = f"{random.randint(100000,999999)}"
+    otp = f"{secrets.SystemRandom().randint(100000,999999)}"
     user.otp_code = otp
     user.otp_expires = timezone.now() + timezone.timedelta(minutes=10)
     user.save()

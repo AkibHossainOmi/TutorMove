@@ -200,18 +200,10 @@ class JobCreateAPIView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class UserProfileUpdateByIdView(APIView):
-    permission_classes = [AllowAny]  # public API, no auth required
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        user_id = request.data.get('id')
-        if not user_id:
-            return Response({'id': 'User ID is required.'}, status=status.HTTP_400_BAD_REQUEST)
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response({'id': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
-
+        user = request.user
         allowed_fields = ['bio', 'education', 'experience', 'location', 'phone_number']
         data_to_update = {field: request.data.get(field) for field in allowed_fields if field in request.data}
 
@@ -229,19 +221,16 @@ class UserProfileUpdateByIdView(APIView):
         }, status=status.HTTP_200_OK)
 
 class SubmitReview(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         data = request.data.copy()
 
-        student_id = data.get('student')
-        if not student_id:
-            return Response({"error": "student id is required"}, status=400)
+        student = request.user
+        if student.user_type != 'student':
+            return Response({"error": "Only students can submit reviews."}, status=403)
 
-        try:
-            student = User.objects.get(id=student_id)
-        except User.DoesNotExist:
-            return Response({"error": "Student not found."}, status=404)
+        data['student'] = student.id
 
         try:
             teacher = User.objects.get(id=data.get('teacher'), user_type='tutor')
@@ -540,6 +529,15 @@ class UserViewSet(viewsets.ModelViewSet):
         if ext not in ALLOWED_IMAGE_EXTENSIONS:
             return Response({'error': 'Unsupported file type'}, status=400)
 
+        # Validate image content using Pillow
+        try:
+            from PIL import Image
+            image = Image.open(dp_file)
+            image.verify()  # verify that it is, in fact, an image
+            dp_file.seek(0) # Reset file pointer after verify
+        except Exception:
+             return Response({'error': 'Invalid image file content'}, status=400)
+
         # Delete old profile picture if exists
         if user.profile_picture and default_storage.exists(user.profile_picture.name):
             default_storage.delete(user.profile_picture.name)
@@ -616,7 +614,7 @@ def credit_purchase(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class CreditUpdateByUserPostView(APIView):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAdminUser]
     def post(self, request):
         serializer = CreditUpdateByUserSerializer(data=request.data)
         if serializer.is_valid():
