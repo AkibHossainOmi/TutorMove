@@ -110,309 +110,300 @@ const JobPostForm = ({ onClose, onJobCreated }) => {
 
   // Helper to add red star for required fields
   const RequiredLabel = ({ label }) => (
-    <span className="font-semibold text-gray-700">
-      {label} <span className="text-red-600">*</span>
+    <span className="block text-sm font-semibold text-gray-700 mb-1">
+      {label} <span className="text-red-500">*</span>
     </span>
   );
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl max-h-[85vh] overflow-y-auto relative">
-        {/* Close Button */}
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute top-3 right-4 text-3xl text-gray-500 hover:text-red-600 transition"
-        >
-          &times;
-        </button>
-
-        <form onSubmit={handleSubmit} className="p-8 space-y-6">
-          <h2 className="text-2xl font-bold text-gray-800 border-b pb-3">
-            Get a Tutor For You
-          </h2>
-
-          {/* Location */}
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-fade-in">
+      <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl flex flex-col max-h-[85vh] overflow-hidden relative">
+        
+        {/* Header */}
+        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-white sticky top-0 z-10">
           <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="Location" />
-            </label>
-            <input
-              type="text"
-              name="location"
-              value={formData.location}
-              onChange={handleChange}
-              placeholder="Enter your location"
-              className="w-full border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-lg p-3 transition"
-              required
-            />
+            <h2 className="text-2xl font-bold text-gray-800">Post a Job</h2>
+            <p className="text-gray-500 text-sm mt-1">Find the perfect tutor for your needs</p>
           </div>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-red-500 transition-colors p-2 rounded-full hover:bg-red-50"
+            aria-label="Close form"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
 
-          {/* Phone */}
-          <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="WhatsApp Number" />
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter your WhatsApp number"
-              className="w-full border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-lg p-3 transition"
-              required
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="Description" />
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              placeholder="Describe your requirements"
-              rows={4}
-              className="w-full border border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-lg p-3 transition"
-              required
-            />
-          </div>
-
-          {/* Subjects */}
-          <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="Subjects" />
-            </label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={subjectInput}
-                onChange={(e) => setSubjectInput(e.target.value)}
-                placeholder="Add a subject"
-                className="flex-1 border border-gray-300 rounded-lg p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              />
-              <button
-                type="button"
-                onClick={() => handleAddItem(subjectInput, "subjects", setSubjectInput)}
-                className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition"
-              >
-                Add
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.subjects.map((subj, i) => (
-                <span
-                  key={i}
-                  className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-full flex items-center text-sm"
-                >
-                  {subj}
-                  <button
-                    type="button"
-                    onClick={() => handleRemoveItem(subj, "subjects")}
-                    className="ml-2 text-red-500 hover:text-red-700"
-                  >
-                    ×
-                  </button>
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Education Level */}
-          <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="Education Level" />
-            </label>
-            <select
-              name="educationLevel"
-              value={formData.educationLevel}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              required
-            >
-              <option value="">Select your level</option>
-              {educationLevels.map((level, i) => (
-                <option key={i} value={level}>
-                  {level}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Service Type */}
-          <div>
-            <label className="block text-sm mb-1">Service Type</label>
-            <select
-              name="serviceType"
-              value={formData.serviceType}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            >
-              <option value="Tutoring">Tutoring</option>
-              <option value="Assignment Help">Assignment Help</option>
-            </select>
-          </div>
-
-          {/* Mode */}
-          <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="Mode" />
-            </label>
-            <div className="flex flex-wrap gap-4">
-              {["Online", "At My Place", "Travel to Tutor"].map((opt) => (
-                <label key={opt} className="flex items-center gap-2 text-gray-700">
+        {/* Scrollable Form */}
+        <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-8">
+          <form id="jobForm" onSubmit={handleSubmit} className="space-y-8">
+            
+            {/* Section: Basic Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Basic Details</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Location */}
+                <div>
+                  <RequiredLabel label="Location" />
                   <input
-                    type="checkbox"
-                    value={opt}
-                    checked={formData.mode.includes(opt)}
-                    onChange={(e) => handleCheckboxChange(e, "mode")}
-                    className="accent-indigo-600"
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={handleChange}
+                    placeholder="City, Area"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+                    required
                   />
-                  {opt}
-                </label>
-              ))}
-            </div>
-            {showDistanceInput && (
-              <input
-                type="number"
-                name="distance"
-                value={formData.distance}
-                onChange={handleChange}
-                placeholder="Distance in km"
-                className="mt-3 w-full border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              />
-            )}
-          </div>
+                </div>
 
-          {/* Budget */}
-          <div>
-            <label className="block text-sm mb-1">
-              <RequiredLabel label="Budget" />
-            </label>
-            <div className="flex gap-3">
-              <input
-                type="number"
-                name="budget"
-                value={formData.budget}
-                onChange={handleChange}
-                placeholder="Enter amount"
-                className="flex-1 border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              />
-              <select
-                name="budgetType"
-                value={formData.budgetType}
-                onChange={handleChange}
-                className="border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              >
-                <option value="">Select Type</option>
-                {budgetTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+                {/* Phone */}
+                <div>
+                  <RequiredLabel label="WhatsApp / Phone" />
+                  <input
+                    type="tel"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    placeholder="Contact number"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+                    required
+                  />
+                </div>
+              </div>
 
-          {/* Total Hours (Conditional) */}
-          {showTotalHours && (
-            <div>
-              <label className="block text-sm mb-1">{totalHourLabel}</label>
-              <input
-                type="number"
-                name="totalHours"
-                value={formData.totalHours}
-                onChange={handleChange}
-                placeholder={`Enter ${totalHourLabel.toLowerCase()}`}
-                className="w-full border border-indigo-400 rounded-lg p-3 focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
-              />
+              {/* Description */}
+              <div>
+                <RequiredLabel label="Description" />
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleChange}
+                  placeholder="Describe your requirements in detail..."
+                  rows={4}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition resize-y"
+                  required
+                />
+              </div>
             </div>
-          )}
 
-          {/* Gender Preference */}
-          <div>
-            <label className="block text-sm mb-1">Gender Preference</label>
-            <select
-              name="genderPreference"
-              value={formData.genderPreference}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            >
-              <option value="">No Preference</option>
-              <option value="Male">Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
+            {/* Section: Academic Info */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Academic Requirements</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Education Level */}
+                <div>
+                  <RequiredLabel label="Level" />
+                  <select
+                    name="educationLevel"
+                    value={formData.educationLevel}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition bg-white"
+                    required
+                  >
+                    <option value="">Select Level</option>
+                    {educationLevels.map((level, i) => (
+                      <option key={i} value={level}>{level}</option>
+                    ))}
+                  </select>
+                </div>
 
-          {/* Languages */}
-          <div>
-            <label className="block text-sm mb-1">Languages</label>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={languageInput}
-                onChange={(e) => setLanguageInput(e.target.value)}
-                placeholder="Add a language"
-                className="flex-1 border border-gray-300 rounded-lg p-2 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-              />
-              <button
-                type="button"
-                onClick={() => handleAddItem(languageInput, "languages", setLanguageInput)}
-                className="bg-indigo-600 text-white px-5 py-2 rounded-lg hover:bg-indigo-700 transition"
-              >
-                Add
-              </button>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.languages.map((lang, i) => (
-                <span
-                  key={i}
-                  className="bg-indigo-50 border border-indigo-200 text-indigo-700 px-3 py-1 rounded-full flex items-center text-sm"
-                >
-                  {lang}
+                {/* Service Type */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Service Type</label>
+                  <select
+                    name="serviceType"
+                    value={formData.serviceType}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition bg-white"
+                  >
+                    <option value="Tutoring">Tutoring</option>
+                    <option value="Assignment Help">Assignment Help</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Subjects */}
+              <div>
+                <RequiredLabel label="Subjects" />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={subjectInput}
+                    onChange={(e) => setSubjectInput(e.target.value)}
+                    placeholder="Add a subject (e.g. Math)"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddItem(subjectInput, "subjects", setSubjectInput))}
+                  />
                   <button
                     type="button"
-                    onClick={() => handleRemoveItem(lang, "languages")}
-                    className="ml-2 text-red-500 hover:text-red-700"
+                    onClick={() => handleAddItem(subjectInput, "subjects", setSubjectInput)}
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-xl hover:bg-indigo-700 transition font-medium"
                   >
-                    ×
+                    Add
                   </button>
-                </span>
-              ))}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {formData.subjects.map((subj, i) => (
+                    <span
+                      key={i}
+                      className="bg-indigo-50 border border-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg flex items-center text-sm font-medium"
+                    >
+                      {subj}
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(subj, "subjects")}
+                        className="ml-2 text-indigo-400 hover:text-red-500 transition"
+                      >
+                        &times;
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Country */}
-          <div>
-            <label className="block text-sm mb-1">Country</label>
-            <select
-              name="country"
-              value={formData.country}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg p-3 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200"
-            >
-              <option value="">Select Country</option>
-              {countries.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
+            {/* Section: Preferences */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">Preferences & Budget</h3>
 
-          {/* Submit */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-8 py-3 rounded-xl font-semibold shadow-md hover:from-indigo-700 hover:to-purple-700 transition disabled:opacity-60"
-            >
-              {isSubmitting ? "Posting..." : "Post Job"}
-            </button>
-          </div>
-        </form>
+              {/* Mode */}
+              <div>
+                <RequiredLabel label="Mode" />
+                <div className="flex flex-wrap gap-4 mt-2">
+                  {["Online", "At My Place", "Travel to Tutor"].map((opt) => (
+                    <label key={opt} className="flex items-center gap-2 cursor-pointer bg-gray-50 px-4 py-2 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                      <input
+                        type="checkbox"
+                        value={opt}
+                        checked={formData.mode.includes(opt)}
+                        onChange={(e) => handleCheckboxChange(e, "mode")}
+                        className="w-4 h-4 text-indigo-600 rounded focus:ring-indigo-500 border-gray-300"
+                      />
+                      <span className="text-gray-700">{opt}</span>
+                    </label>
+                  ))}
+                </div>
+                {showDistanceInput && (
+                  <div className="mt-3 max-w-xs">
+                     <label className="text-xs text-gray-500 mb-1 block">Max Distance (km)</label>
+                    <input
+                      type="number"
+                      name="distance"
+                      value={formData.distance}
+                      onChange={handleChange}
+                      placeholder="e.g. 5"
+                      className="w-full px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Budget Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                   <RequiredLabel label="Budget Amount" />
+                  <div className="flex gap-2">
+                    <input
+                      type="number"
+                      name="budget"
+                      value={formData.budget}
+                      onChange={handleChange}
+                      placeholder="0.00"
+                      className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+                    />
+                    <select
+                      name="budgetType"
+                      value={formData.budgetType}
+                      onChange={handleChange}
+                      className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition bg-white"
+                    >
+                      <option value="">Type</option>
+                      {budgetTypes.map((type) => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Total Hours */}
+                {showTotalHours && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-1">{totalHourLabel}</label>
+                    <input
+                      type="number"
+                      name="totalHours"
+                      value={formData.totalHours}
+                      onChange={handleChange}
+                      placeholder="e.g. 10"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition"
+                    />
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                 {/* Gender Preference */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Tutor Gender Preference</label>
+                  <select
+                    name="genderPreference"
+                    value={formData.genderPreference}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition bg-white"
+                  >
+                    <option value="">No Preference</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                  </select>
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">Country</label>
+                  <select
+                    name="country"
+                    value={formData.country}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-500 transition bg-white"
+                  >
+                    <option value="">Select Country</option>
+                    {countries.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        {/* Footer Actions */}
+        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 sticky bottom-0 z-10">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isSubmitting}
+            className="px-6 py-2.5 rounded-xl text-gray-700 font-medium hover:bg-gray-200 transition disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="jobForm"
+            disabled={isSubmitting}
+            className={`px-8 py-2.5 rounded-xl font-semibold text-white shadow-lg transform transition-all active:scale-95 ${
+              isSubmitting
+                ? "bg-indigo-400 cursor-wait"
+                : "bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 hover:shadow-xl"
+            }`}
+          >
+            {isSubmitting ? "Posting..." : "Post Job"}
+          </button>
+        </div>
       </div>
     </div>
   );
