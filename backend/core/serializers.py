@@ -7,7 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
-    Order, Payment, JobUnlock,
+    Order, Payment, JobUnlock, Question, Answer,
 )
 
 User = get_user_model()
@@ -442,3 +442,57 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = '__all__' # Adjust fields as per your API requirements
         read_only_fields = ['id', 'transaction_id', 'bank_transaction_id', 'status', 'payment_date', 'validation_status', 'error_message']
+# === Q&A SERIALIZERS ===
+
+class QuestionSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+    total_upvotes = serializers.SerializerMethodField()
+    has_upvoted = serializers.SerializerMethodField()
+    answers_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Question
+        fields = ['id', 'student', 'title', 'content', 'created_at', 'total_upvotes', 'has_upvoted', 'answers_count']
+        read_only_fields = ['student', 'created_at']
+
+    def get_total_upvotes(self, obj):
+        return obj.total_upvotes()
+
+    def get_has_upvoted(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.upvotes.filter(id=request.user.id).exists()
+        return False
+
+    def get_answers_count(self, obj):
+        return obj.answers.count()
+
+class AnswerSerializer(serializers.ModelSerializer):
+    tutor = UserSerializer(read_only=True)
+    total_upvotes = serializers.SerializerMethodField()
+    total_downvotes = serializers.SerializerMethodField()
+    has_upvoted = serializers.SerializerMethodField()
+    has_downvoted = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Answer
+        fields = ['id', 'question', 'tutor', 'content', 'created_at', 'total_upvotes', 'total_downvotes', 'has_upvoted', 'has_downvoted']
+        read_only_fields = ['tutor', 'created_at', 'total_upvotes', 'total_downvotes']
+
+    def get_total_upvotes(self, obj):
+        return obj.total_upvotes()
+
+    def get_total_downvotes(self, obj):
+        return obj.total_downvotes()
+
+    def get_has_upvoted(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.upvotes.filter(id=request.user.id).exists()
+        return False
+
+    def get_has_downvoted(self, obj):
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            return obj.downvotes.filter(id=request.user.id).exists()
+        return False

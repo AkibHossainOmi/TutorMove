@@ -11,6 +11,7 @@ from .views import (
     CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, StudentViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
+    QuestionViewSet, AnswerViewSet,
 )
 
 # ADDED: If you uncommented PaymentViewSet, import its serializer:
@@ -34,6 +35,8 @@ router.register(r'premium', PremiumViewSet, basename='premium')
 router.register(r'escrow', EscrowPaymentViewSet, basename='escrow')
 router.register(r'subjects', SubjectViewSet, basename='subject')
 router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
+router.register(r'questions', QuestionViewSet, basename='question')
+router.register(r'answers', AnswerViewSet, basename='answer')
 # If you decide to expose a PaymentViewSet, register it here:
 # router.register(r'payments', PaymentViewSet, basename='payment')
 

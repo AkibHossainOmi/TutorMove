@@ -152,6 +152,8 @@ const Navbar = () => {
               </div>
             )}
 
+            <NavLink to="/qna" text="Q&A Forum" />
+
             {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" />}
 
             {/* Auth Buttons */}
@@ -230,6 +232,7 @@ const Navbar = () => {
         <div className="px-6 py-5 space-y-4">
           {(userType === "student" || !isAuthenticated) && <NavLink to="/tutors" text="Find Tutors" onClick={() => setIsMenuOpen(false)} />}
           {(userType === "tutor" || !isAuthenticated) && <NavLink to="/jobs" text="Find Jobs" onClick={() => setIsMenuOpen(false)} />}
+          <NavLink to="/qna" text="Q&A Forum" onClick={() => setIsMenuOpen(false)} />
           {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" onClick={() => setIsMenuOpen(false)} />}
 
           {isAuthenticated ? (

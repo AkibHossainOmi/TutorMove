@@ -11,6 +11,7 @@ import DashboardStats from '../components/Dashboard/Student/DashboardStats';
 import JobPostModal from '../components/Dashboard/Student/JobPostModal';
 import InsufficientCreditsModal from '../components/Dashboard/Student/InsufficientCreditsModal';
 import { creditAPI, jobAPI, notificationAPI } from '../utils/apiService';
+import { Link } from 'react-router-dom';
 
 const studentAPI = {
   getCredits: async () => {
@@ -637,6 +638,17 @@ const StudentDashboard = () => {
           }}
           favoriteTeachersCount={favoriteTeachers.length}
         />
+
+        {/* Q&A Button Section */}
+        <section className="mt-8">
+           <Link to="/qna/create" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow">
+              Ask a Question in Forum
+           </Link>
+           <Link to="/qna" className="ml-4 text-blue-600 hover:underline">
+              Browse Q&A Forum
+           </Link>
+        </section>
+
         <section id="job-posts-section" className="mt-12">
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
