@@ -1,5 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -45,22 +46,23 @@ import QuestionDetailsPage from './pages/qna/QuestionDetailsPage';
 
 function App() {
   return (
-    <div className="font-roboto min-h-screen flex flex-col"> {/* Applying font-roboto and flex layout */}
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes - Accessible to all users */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/verify-email/:uid/:token" element={<VerifyEmail />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-          <Route path="/terms" element={<TermsOfService />} />
-          <Route path="/tutors" element={<TutorList />} />
-          <Route path="/jobs" element={<JobList />} />
-          {/* Fallback for unmatched public routes, redirects to Home */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+    <AuthProvider>
+      <div className="font-roboto min-h-screen flex flex-col"> {/* Applying font-roboto and flex layout */}
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes - Accessible to all users */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/verify-email/:uid/:token" element={<VerifyEmail />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms" element={<TermsOfService />} />
+            <Route path="/tutors" element={<TutorList />} />
+            <Route path="/jobs" element={<JobList />} />
+            {/* Fallback for unmatched public routes, redirects to Home */}
+            <Route path="*" element={<Navigate to="/" replace />} />
 
           {/* Protected Routes - Accessible only after authentication, handled by ProtectedRoute */}
           <Route element={<ProtectedRoute />}>
@@ -110,6 +112,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </div>
+    </AuthProvider>
   );
 }
 
