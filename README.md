@@ -74,6 +74,10 @@ celery -A backend worker -l info -P solo
 or
 celery -A backend worker -l info
 ```
+#### Run Celery Beat
+```bash
+celery -A backend beat -l info
+```
 
 #### Start Frontend Development Server (in a new terminal)
 ```bash

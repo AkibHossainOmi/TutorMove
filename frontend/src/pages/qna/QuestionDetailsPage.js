@@ -10,7 +10,7 @@ const QuestionDetailsPage = () => {
   const [answers, setAnswers] = useState([]);
   const [newAnswer, setNewAnswer] = useState('');
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const user = JSON.parse(localStorage.getItem('user'));
   const [submitError, setSubmitError] = useState('');
 
   useEffect(() => {

@@ -7,7 +7,7 @@ import Navbar from '../../components/Navbar';
 const QnAPage = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
+  const user = JSON.parse(localStorage.getItem('user'));
 
   useEffect(() => {
     fetchQuestions();
