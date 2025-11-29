@@ -91,6 +91,18 @@ export default function TutorProfilePage() {
                       Verified
                     </span>
                   )}
+                  {isStudent && (
+                    <button
+                      onClick={openGiftModal}
+                      className="ml-3 inline-flex items-center px-3 py-1 text-sm font-medium rounded-full text-amber-600 bg-amber-50 hover:bg-amber-100 transition-colors border border-amber-200 shadow-sm"
+                      title="Gift Coins"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.858 5.485a1 1 0 00-1.715 1.03L7.633 9H7a1 1 0 100 2h1.838l.179 1.074c.128.766.726 1.347 1.488 1.446l.495.064c.783.102 1.446-.543 1.345-1.326l-.064-.495a1.2 1.2 0 00-1.22-1.042l-1.954-.253-.178-1.074H13a1 1 0 100-2h-2.383l1.49-2.485a1 1 0 00-1.715-1.03L8.91 8.243 7.858 5.485z" clipRule="evenodd" />
+                      </svg>
+                      Gift
+                    </button>
+                  )}
                 </div>
 
                 <p className="text-gray-500 flex items-center justify-center sm:justify-start gap-1 mb-4">
