@@ -217,3 +217,88 @@ class AdminCountryGroupViewSet(viewsets.ModelViewSet):
     queryset = CountryGroup.objects.all()
     serializer_class = CountryGroupSerializer
     permission_classes = [permissions.IsAdminUser]
+
+class AdminPaymentViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Payment.objects.all().order_by('-payment_date')
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['transaction_id', 'status', 'order__id']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total = Payment.objects.count()
+        success = Payment.objects.filter(status='SUCCESS').count()
+        pending = Payment.objects.filter(status='PENDING').count()
+        failed = Payment.objects.filter(status='FAILED').count()
+        return Response({
+            "total": total,
+            "success": success,
+            "pending": pending,
+            "failed": failed
+        })
+
+class AdminReportViewSet(viewsets.ModelViewSet):
+    queryset = AbuseReport.objects.all().order_by('-created_at')
+    serializer_class = AbuseReportSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ['get', 'delete']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total = AbuseReport.objects.count()
+        return Response({"total": total})
+
+class AdminSubjectViewSet(viewsets.ModelViewSet):
+    queryset = Subject.objects.all().order_by('name')
+    serializer_class = SubjectSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total = Subject.objects.count()
+        active = Subject.objects.filter(is_active=True).count()
+        inactive = total - active
+        return Response({"total": total, "active": active, "inactive": inactive})
+
+class AdminGigViewSet(viewsets.ModelViewSet):
+    queryset = Gig.objects.all().order_by('-created_at')
+    serializer_class = GigSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'subject', 'tutor__username']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total = Gig.objects.count()
+        # Add more if Gig model has status
+        return Response({"total": total})
+
+class AdminQuestionViewSet(viewsets.ModelViewSet):
+    queryset = Question.objects.all().order_by('-created_at')
+    serializer_class = QuestionSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'content', 'student__username']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total = Question.objects.count()
+        return Response({"total": total})
+
+class AdminPointPackageViewSet(viewsets.ModelViewSet):
+    queryset = PointPackage.objects.all()
+    serializer_class = PointPackageSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class AdminPricingTierViewSet(viewsets.ModelViewSet):
+    queryset = UnlockPricingTier.objects.all()
+    serializer_class = UnlockPricingTierSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class AdminCountryGroupViewSet(viewsets.ModelViewSet):
+    queryset = CountryGroup.objects.all()
+    serializer_class = CountryGroupSerializer
+    permission_classes = [permissions.IsAdminUser]
