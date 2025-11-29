@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
+import { pointsAPI } from '../utils/apiService';
 
 const GiftCoinModal = ({ isOpen, onClose, tutorId, tutorName, currentBalance }) => {
   const [amount, setAmount] = useState('');
@@ -25,14 +25,7 @@ const GiftCoinModal = ({ isOpen, onClose, tutorId, tutorName, currentBalance }) 
 
     setLoading(true);
     try {
-      await axios.post('/api/gifts/', {
-        recipient: tutorId,
-        amount: parseInt(amount)
-      }, {
-          headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token')}` // Adjust based on your auth implementation
-          }
-      });
+      await pointsAPI.giftCoins(tutorId, parseInt(amount));
       setSuccess(true);
       setTimeout(() => {
         onClose();
