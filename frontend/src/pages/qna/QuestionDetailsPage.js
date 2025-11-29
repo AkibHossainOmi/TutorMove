@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import { qnaAPI } from '../../utils/apiService';
+import { qnaAPI, pointsAPI } from '../../utils/apiService';
 import { useAuth } from '../../contexts/UseAuth';
 import Navbar from '../../components/Navbar';
+import GiftCoinModal from '../../components/GiftCoinModal';
 
 const QuestionDetailsPage = () => {
   const { id } = useParams();
@@ -12,6 +13,11 @@ const QuestionDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem('user'));
   const [submitError, setSubmitError] = useState('');
+
+  // Gift Coin State
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
+  const [selectedTutor, setSelectedTutor] = useState(null);
+  const [userCreditBalance, setUserCreditBalance] = useState(0);
 
   useEffect(() => {
     fetchData();
@@ -86,6 +92,18 @@ const QuestionDetailsPage = () => {
     } catch (error) {
       setSubmitError("Failed to submit answer.");
     }
+  };
+
+  const handleGiftClick = async (tutor) => {
+      try {
+          const res = await pointsAPI.getBalance();
+          setUserCreditBalance(res.data.balance);
+          setSelectedTutor(tutor);
+          setIsGiftModalOpen(true);
+      } catch (err) {
+          console.error("Failed to fetch balance", err);
+          // Fallback or show error
+      }
   };
 
   if (loading) {
@@ -188,13 +206,28 @@ const QuestionDetailsPage = () => {
                   <div className="prose max-w-none text-gray-800 whitespace-pre-wrap mb-4 leading-relaxed">
                     {answer.content}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs">
-                      {answer.tutor?.username?.[0]?.toUpperCase() || 'T'}
-                    </div>
-                    <span className="font-medium text-gray-900">{answer.tutor?.username}</span>
-                    <span>•</span>
-                    <span>{new Date(answer.created_at).toLocaleDateString()}</span>
+                  <div className="flex justify-between items-center mt-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-500">
+                        <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs">
+                          {answer.tutor?.username?.[0]?.toUpperCase() || 'T'}
+                        </div>
+                        <span className="font-medium text-gray-900">{answer.tutor?.username}</span>
+                        <span>•</span>
+                        <span>{new Date(answer.created_at).toLocaleDateString()}</span>
+                      </div>
+
+                      {/* Gift Coin Button */}
+                      {user && user.user_type === 'student' && user.id !== answer.tutor?.id && (
+                          <button
+                            onClick={() => handleGiftClick(answer.tutor)}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-amber-600 bg-amber-50 hover:bg-amber-100 transition-colors"
+                          >
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.858 5.485a1 1 0 00-1.715 1.03L7.633 9H7a1 1 0 100 2h1.838l.179 1.074c.128.766.726 1.347 1.488 1.446l.495.064c.783.102 1.446-.543 1.345-1.326l-.064-.495a1.2 1.2 0 00-1.22-1.042l-1.954-.253-.178-1.074H13a1 1 0 100-2h-2.383l1.49-2.485a1 1 0 00-1.715-1.03L8.91 8.243 7.858 5.485z" clipRule="evenodd" />
+                             </svg>
+                             Gift Coin
+                          </button>
+                      )}
                   </div>
                 </div>
               </div>
@@ -254,6 +287,17 @@ const QuestionDetailsPage = () => {
           )
         )}
       </div>
+
+      {/* Gift Modal */}
+      {selectedTutor && (
+        <GiftCoinModal
+            isOpen={isGiftModalOpen}
+            onClose={() => setIsGiftModalOpen(false)}
+            tutorId={selectedTutor.id}
+            tutorName={selectedTutor.username}
+            currentBalance={userCreditBalance}
+        />
+      )}
     </div>
   );
 };

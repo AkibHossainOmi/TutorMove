@@ -8,8 +8,9 @@ import {
   FiAlertCircle, FiDollarSign, FiClock, FiGlobe, FiPhone, FiUsers,
   FiStar, FiCheckCircle, FiLock, FiUnlock, FiX, FiTrendingUp
 } from 'react-icons/fi';
-import { jobAPI } from '../utils/apiService';
+import { jobAPI, pointsAPI } from '../utils/apiService';
 import JobApplicants from '../components/JobApplicants';
+import GiftCoinModal from '../components/GiftCoinModal';
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -31,6 +32,10 @@ const JobDetail = () => {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
   const [hoverRating, setHoverRating] = useState(0);
+
+  // Gift Coin State
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
+  const [userCreditBalance, setUserCreditBalance] = useState(0);
 
   const [toast, setToast] = useState({ show: false, message: '', type: '' });
 
@@ -169,6 +174,16 @@ const JobDetail = () => {
       console.error(err);
       showToast(err.response?.data?.detail || 'Failed to submit review.', 'error');
     }
+  };
+
+  const handleGiftClick = async () => {
+      try {
+          const res = await pointsAPI.getBalance();
+          setUserCreditBalance(res.data.balance);
+          setIsGiftModalOpen(true);
+      } catch (err) {
+          console.error("Failed to fetch balance", err);
+      }
   };
 
   const formatDate = (dateStr) => {
@@ -503,6 +518,23 @@ const JobDetail = () => {
                  </div>
               </div>
             ) : null}
+
+            {/* Gift Coin Button */}
+             {isStudent && job.status === 'Completed' && job.assigned_tutor && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 text-center">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">Appreciate your Tutor?</h3>
+                    <p className="text-gray-600 mb-6">Send them a gift of coins as a token of appreciation.</p>
+                    <button
+                        onClick={handleGiftClick}
+                        className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-amber-500 hover:bg-amber-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-amber-500 transition-all"
+                    >
+                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.858 5.485a1 1 0 00-1.715 1.03L7.633 9H7a1 1 0 100 2h1.838l.179 1.074c.128.766.726 1.347 1.488 1.446l.495.064c.783.102 1.446-.543 1.345-1.326l-.064-.495a1.2 1.2 0 00-1.22-1.042l-1.954-.253-.178-1.074H13a1 1 0 100-2h-2.383l1.49-2.485a1 1 0 00-1.715-1.03L8.91 8.243 7.858 5.485z" clipRule="evenodd" />
+                         </svg>
+                        Gift Coins
+                    </button>
+                </div>
+            )}
           </div>
 
           {/* Right Column - Applicants */}
@@ -518,6 +550,17 @@ const JobDetail = () => {
             onBuyCredits={() => { window.location.href = '/buy-points'; }}
             message={`You need ${creditsNeeded} points to unlock this job.`}
           />
+        )}
+
+        {/* Gift Modal */}
+        {job?.assigned_tutor && (
+            <GiftCoinModal
+                isOpen={isGiftModalOpen}
+                onClose={() => setIsGiftModalOpen(false)}
+                tutorId={job.assigned_tutor}
+                tutorName="the Tutor"
+                currentBalance={userCreditBalance}
+            />
         )}
       </div>
     );

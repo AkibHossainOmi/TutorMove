@@ -13,6 +13,7 @@ from .views import (
     # PaymentViewSet,
     QuestionViewSet, AnswerViewSet,
     AdminDashboardStatsView,
+    CoinGiftViewSet,
 )
 from .views_admin import (
     AdminUserViewSet, AdminJobViewSet, AdminPaymentViewSet,
@@ -44,6 +45,7 @@ router.register(r'subjects', SubjectViewSet, basename='subject')
 router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
 router.register(r'questions', QuestionViewSet, basename='question')
 router.register(r'answers', AnswerViewSet, basename='answer')
+router.register(r'gifts', CoinGiftViewSet, basename='gift')
 
 # Admin ViewSets
 router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
