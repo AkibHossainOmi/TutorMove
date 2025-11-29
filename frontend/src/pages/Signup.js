@@ -66,7 +66,7 @@ const Signup = () => {
     } catch (err) {
       const data = err.response?.data;
       if (err.response?.status === 409) {
-        setSuccess("Email is already registered.");
+        setSuccess("User is already registered with this email/username.");
         setError(null);
       } else if (err.response?.status === 429) {
         setSuccess("Please wait a moment before trying again.");
@@ -236,7 +236,7 @@ const Signup = () => {
                 />
               </div>
               {form.user_type === 'tutor' && (
-                  <div className="md:col-span-2">
+                  <div className="">
                     <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
                       Phone Number
                     </label>
@@ -251,6 +251,20 @@ const Signup = () => {
                     />
                   </div>
               )}
+              <div>
+                <label htmlFor="referrer_username" className="block text-sm font-medium text-gray-700 mb-1">
+                  Referred By
+                </label>
+                <input
+                  id="referrer_username"
+                  name="referrer_username"
+                  type="text"
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                  value={form.referrer_username || ""}
+                  onChange={handleChange}
+                  placeholder="Optional"
+                />
+              </div>
                <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                   Password

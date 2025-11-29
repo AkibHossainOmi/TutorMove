@@ -20,7 +20,7 @@ from rest_framework import views
 from ..serializers import (
     RegisterSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer, UserTokenSerializer
 )
-from ..models import Credit
+from ..models import Credit, Notification
 
 TRUSTED_DOMAINS = [
     # Popular public email providers
@@ -120,6 +120,7 @@ class SendOTPView(views.APIView):
         email = request.data.get("email")
         purpose = request.data.get("purpose", "register")
         user_data = request.data.get("user_data")  # optional for signup
+        referrer_username = user_data.get("referrer_username") if user_data else None
 
         if not email:
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -139,10 +140,25 @@ class SendOTPView(views.APIView):
                     {"error": "Email is already registered."},
                     status=status.HTTP_409_CONFLICT
                 )
+            if UserModel.objects.filter(username=user_data.get("username")).exists():
+                return Response(
+                    {"error": "Username is already taken."},
+                    status=status.HTTP_409_CONFLICT
+                )
         elif purpose == "password-reset":
             if not UserModel.objects.filter(email=email).exists():
                 return Response({"error": "Email not found."},
                                 status=status.HTTP_404_NOT_FOUND)
+        
+        # --- Validate referrer before proceeding ---
+        new_username = user_data.get("username")
+        if referrer_username:
+            if referrer_username == new_username:
+                return Response({"error": "You cannot refer yourself."}, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                referrer = UserModel.objects.get(username=referrer_username)
+            except UserModel.DoesNotExist:
+                return Response({"error": "Invalid referrer username."}, status=status.HTTP_400_BAD_REQUEST)
 
         otp, throttled = set_otp(email, purpose=purpose, user_data=user_data)
         if throttled:
@@ -194,6 +210,22 @@ class VerifyOTPView(views.APIView):
                 with transaction.atomic():
                     user = serializer.save()
                     Credit.objects.get_or_create(user=user, defaults={"balance": 5})
+                    referrer_username = cached.get("user_data", {}).get("referrer_username")
+                    if referrer_username:
+                        try:
+                            referrer = UserModel.objects.get(username=referrer_username)
+                            # Add 10 coins to referrer
+                            Credit.objects.get_or_create(user=referrer, defaults={"balance": 0})
+                            referrer.credit.balance += 10
+                            referrer.credit.save(update_fields=["balance"])
+                            Notification.objects.create(
+                                from_user=user,  # the new user who signed up
+                                to_user=referrer,
+                                message=f"You earned 10 coins! {user.username} joined using your referral."
+                            )
+                        except UserModel.DoesNotExist:
+                            # Invalid referrer, skip giving coins
+                            pass
                 delete_otp(email, purpose)
                 return Response({"detail": "Registration complete"}, status=status.HTTP_201_CREATED)
             else:
