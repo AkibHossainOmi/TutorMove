@@ -172,6 +172,9 @@ class SubjectSerializer(serializers.ModelSerializer):
 
 class GigSerializer(serializers.ModelSerializer):
     subject_active = serializers.SerializerMethodField()
+    tutor_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='tutor', write_only=True, required=False
+    )
 
     class Meta:
         model = Gig
@@ -251,6 +254,9 @@ class JobSerializer(serializers.ModelSerializer):
     )
     subject_details = serializers.SerializerMethodField(read_only=True)
     student = StudentSerializer(read_only=True)
+    student_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='student', write_only=True, required=False
+    )
     can_unlock = serializers.SerializerMethodField(read_only=True)
     applicants_count = serializers.SerializerMethodField()
     review = ReviewSerializer(read_only=True)
@@ -258,7 +264,7 @@ class JobSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job
         fields = [
-            'id', 'student', 'description', 'location', 'country',
+            'id', 'student', 'student_id', 'description', 'location', 'country',
             'service_type', 'education_level', 'gender_preference', 'budget',
             'budget_type', 'phone', 'mode', 'distance', 'languages',
             'subjects', 'subject_details', 'total_hours', 'status', 'assigned_tutor',
@@ -446,13 +452,16 @@ class PaymentSerializer(serializers.ModelSerializer):
 
 class QuestionSerializer(serializers.ModelSerializer):
     student = UserSerializer(read_only=True)
+    student_id = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(), source='student', write_only=True, required=False
+    )
     total_upvotes = serializers.SerializerMethodField()
     has_upvoted = serializers.SerializerMethodField()
     answers_count = serializers.SerializerMethodField()
 
     class Meta:
         model = Question
-        fields = ['id', 'student', 'title', 'content', 'created_at', 'total_upvotes', 'has_upvoted', 'answers_count']
+        fields = ['id', 'student', 'student_id', 'title', 'content', 'created_at', 'total_upvotes', 'has_upvoted', 'answers_count']
         read_only_fields = ['student', 'created_at']
 
     def get_total_upvotes(self, obj):
@@ -496,3 +505,21 @@ class AnswerSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.downvotes.filter(id=request.user.id).exists()
         return False
+
+# === SETTINGS SERIALIZERS ===
+from .models import PointPackage, UnlockPricingTier, CountryGroup
+
+class PointPackageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PointPackage
+        fields = '__all__'
+
+class UnlockPricingTierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnlockPricingTier
+        fields = '__all__'
+
+class CountryGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CountryGroup
+        fields = '__all__'

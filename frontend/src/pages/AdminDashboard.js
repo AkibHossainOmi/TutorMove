@@ -1,428 +1,471 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import {
-  Users,
-  Briefcase,
-  DollarSign,
-  Activity,
-  Search,
-  Bell,
-  Settings,
-  Shield,
-  FileText,
-  UserCheck,
-  Trash2,
-  Ban,
-  CheckCircle,
-  XCircle
+  Users, Briefcase, DollarSign, Activity, Search, Settings, Shield,
+  FileText, UserCheck, Trash2, Ban, CheckCircle, XCircle, AlertTriangle,
+  Plus, BookOpen, Edit2, Save, X
 } from 'lucide-react';
 
-const AdminDashboard = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const [stats, setStats] = useState({
-    total_users: 0,
-    active_jobs: 0,
-    total_revenue: 0,
-    recent_activity: []
-  });
-  const [users, setUsers] = useState([]);
-  const [jobs, setJobs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
-  const [searchTerm, setSearchTerm] = useState('');
+// --- Generic Components ---
 
-  useEffect(() => {
-    // Determine if the user is allowed to view this page.
-    if (user && user.user_type !== 'admin') {
-      navigate('/dashboard'); // Redirect non-admins
-      return;
-    }
+const StatBadge = ({ label, value, color = 'blue' }) => (
+  <div className={`bg-${color}-100 text-${color}-800 px-3 py-1 rounded-full text-sm font-medium mr-2 mb-2`}>
+    {label}: {value}
+  </div>
+);
 
-    const fetchData = async () => {
-      try {
-        const token = localStorage.getItem('access_token');
-        const headers = { Authorization: `Bearer ${token}` };
+const ActionButton = ({ onClick, icon: Icon, color, title }) => (
+  <button onClick={onClick} title={title} className={`p-1 rounded hover:bg-gray-200 ${color} mr-1`}>
+    <Icon size={18} />
+  </button>
+);
 
-        // Fetch Stats
-        const statsRes = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin-dashboard/stats/`, { headers });
-        setStats(statsRes.data);
-
-        // Fetch Users (if on users tab or initially to have data ready, but let's fetch on tab switch to be efficient)
-      } catch (error) {
-        console.error("Error fetching admin data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [user, navigate]);
-
-  useEffect(() => {
-    if (activeTab === 'users') fetchUsers();
-    if (activeTab === 'jobs') fetchJobs();
-  }, [activeTab]);
-
-  const fetchUsers = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/users/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setUsers(response.data.results || response.data);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-
-  const fetchJobs = async () => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin/jobs/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setJobs(response.data.results || response.data);
-    } catch (error) {
-      console.error("Error fetching jobs:", error);
-    }
-  };
-
-  const handleBlockUser = async (userId, isBlocked) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const action = isBlocked ? 'unblock' : 'block';
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/users/${userId}/${action}/`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchUsers(); // Refresh list
-    } catch (error) {
-      console.error("Error updating user status:", error);
-      alert("Failed to update user status");
-    }
-  };
-
-  const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user? This action cannot be undone.")) return;
-    try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/users/${userId}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchUsers();
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      alert("Failed to delete user");
-    }
-  };
-
-  const handleCloseJob = async (jobId) => {
-    if (!window.confirm("Are you sure you want to close this job?")) return;
-    try {
-      const token = localStorage.getItem('access_token');
-      await axios.post(`${process.env.REACT_APP_API_URL}/api/admin/jobs/${jobId}/close/`, {}, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchJobs();
-    } catch (error) {
-      console.error("Error closing job:", error);
-      alert("Failed to close job");
-    }
-  };
-
-  const handleDeleteJob = async (jobId) => {
-    if (!window.confirm("Are you sure you want to delete this job?")) return;
-    try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/admin/jobs/${jobId}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      fetchJobs();
-    } catch (error) {
-      console.error("Error deleting job:", error);
-      alert("Failed to delete job");
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-indigo-600"></div>
-      </div>
-    );
-  }
-
-  const StatCard = ({ title, value, icon: Icon, color }) => (
-    <div className="bg-white p-6 rounded-lg shadow-md flex items-center space-x-4 border-l-4" style={{ borderColor: color }}>
-      <div className={`p-3 rounded-full bg-opacity-20`} style={{ backgroundColor: color }}>
-        <Icon size={24} color={color} />
-      </div>
-      <div>
-        <p className="text-gray-500 text-sm font-medium uppercase">{title}</p>
-        <h3 className="text-2xl font-bold text-gray-800">{value}</h3>
+const Modal = ({ isOpen, onClose, title, children }) => {
+  if (!isOpen) return null;
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-4 border-b">
+          <h3 className="text-xl font-bold capitalize">{title}</h3>
+          <button onClick={onClose}><X size={24} className="text-gray-500 hover:text-gray-700" /></button>
+        </div>
+        <div className="p-4">{children}</div>
       </div>
     </div>
   );
+};
+
+const DynamicForm = ({ fields, initialData = {}, onSubmit, onCancel }) => {
+  const [formData, setFormData] = useState(initialData);
+
+  useEffect(() => {
+    setFormData(initialData);
+  }, [initialData]);
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+  };
+
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(formData); }}>
+      {fields.map(field => (
+        <div key={field.name} className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-1 capitalize">
+            {field.label || field.name.replace(/_/g, ' ')}
+          </label>
+          {field.type === 'select' ? (
+            <select
+              name={field.name}
+              value={formData[field.name] || ''}
+              onChange={handleChange}
+              className="w-full border p-2 rounded focus:ring-indigo-500 focus:border-indigo-500"
+              required={field.required}
+            >
+              <option value="">Select...</option>
+              {field.options.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          ) : field.type === 'textarea' ? (
+             <textarea
+              name={field.name}
+              value={formData[field.name] || ''}
+              onChange={handleChange}
+              className="w-full border p-2 rounded focus:ring-indigo-500 focus:border-indigo-500"
+              rows={3}
+              required={field.required}
+            />
+          ) : field.type === 'checkbox' ? (
+             <input
+              type="checkbox"
+              name={field.name}
+              checked={formData[field.name] || false}
+              onChange={handleChange}
+              className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
+            />
+          ) : (
+            <input
+              type={field.type || 'text'}
+              name={field.name}
+              value={formData[field.name] || ''}
+              onChange={handleChange}
+              className="w-full border p-2 rounded focus:ring-indigo-500 focus:border-indigo-500"
+              required={field.required}
+              step={field.step}
+            />
+          )}
+        </div>
+      ))}
+      <div className="flex justify-end space-x-2 mt-6">
+        <button type="button" onClick={onCancel} className="px-4 py-2 border rounded text-gray-600 hover:bg-gray-50">Cancel</button>
+        <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 flex items-center">
+            <Save size={16} className="mr-2" /> Save
+        </button>
+      </div>
+    </form>
+  );
+};
+
+// --- Resource Manager Component ---
+
+const ResourceManager = ({
+  resourceName,
+  apiEndpoint,
+  columns,
+  formFields,
+  statsConfig = [],
+  customActions = null
+}) => {
+  const [data, setData] = useState([]);
+  const [stats, setStats] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+
+  const fetchAll = async () => {
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('access_token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [dataRes, statsRes] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_API_URL}${apiEndpoint}`, { headers }),
+        axios.get(`${process.env.REACT_APP_API_URL}${apiEndpoint}stats/`, { headers })
+      ]);
+
+      setData(dataRes.data.results || dataRes.data);
+      setStats(statsRes.data);
+    } catch (error) {
+      console.error(`Error fetching ${resourceName}:`, error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, [resourceName]); // Reload when resource changes
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this item?")) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      await axios.delete(`${process.env.REACT_APP_API_URL}${apiEndpoint}${id}/`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchAll();
+    } catch (error) {
+      alert("Delete failed");
+    }
+  };
+
+  const handleSave = async (formData) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      if (editingItem) {
+        await axios.patch(`${process.env.REACT_APP_API_URL}${apiEndpoint}${editingItem.id}/`, formData, { headers });
+      } else {
+        await axios.post(`${process.env.REACT_APP_API_URL}${apiEndpoint}`, formData, { headers });
+      }
+      setIsModalOpen(false);
+      fetchAll();
+    } catch (error) {
+      console.error("Save error:", error);
+      alert("Save failed: " + (error.response?.data?.detail || JSON.stringify(error.response?.data)));
+    }
+  };
+
+  const filteredData = data.filter(item =>
+    Object.values(item).some(val =>
+      String(val).toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+
+  return (
+    <div className="space-y-4">
+      {/* Stats Header */}
+      <div className="bg-white p-4 rounded shadow-sm flex flex-wrap">
+        {Object.entries(stats).map(([key, val]) => (
+           <StatBadge key={key} label={key.replace(/_/g, ' ')} value={val} color={key === 'total' ? 'indigo' : 'gray'} />
+        ))}
+      </div>
+
+      {/* Controls */}
+      <div className="flex justify-between items-center bg-white p-4 rounded shadow-sm">
+        <div className="relative w-64">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <input
+            type="text"
+            placeholder="Search..."
+            className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 w-full"
+            value={searchTerm}
+            onChange={e => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <button
+          onClick={() => { setEditingItem(null); setIsModalOpen(true); }}
+          className="bg-indigo-600 text-white px-4 py-2 rounded flex items-center hover:bg-indigo-700"
+        >
+          <Plus size={16} className="mr-2" /> Create New
+        </button>
+      </div>
+
+      {/* Table */}
+      <div className="bg-white rounded shadow-sm overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-gray-50 border-b">
+            <tr>
+              {columns.map((col, idx) => <th key={idx} className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">{col.header}</th>)}
+              <th className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {loading ? (
+               <tr><td colSpan={columns.length + 1} className="p-8 text-center">Loading...</td></tr>
+            ) : filteredData.length === 0 ? (
+               <tr><td colSpan={columns.length + 1} className="p-8 text-center text-gray-500">No data found</td></tr>
+            ) : (
+              filteredData.map((item) => (
+                <tr key={item.id} className="hover:bg-gray-50">
+                  {columns.map((col, idx) => (
+                    <td key={idx} className="px-6 py-4 whitespace-nowrap">
+                      {col.render ? col.render(item) : item[col.accessor]}
+                    </td>
+                  ))}
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                     <div className="flex justify-end">
+                        {customActions && customActions(item, fetchAll)}
+                        <ActionButton onClick={() => { setEditingItem(item); setIsModalOpen(true); }} icon={Edit2} color="text-indigo-600" title="Edit" />
+                        <ActionButton onClick={() => handleDelete(item.id)} icon={Trash2} color="text-red-600" title="Delete" />
+                     </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={`${editingItem ? 'Edit' : 'Create'} ${resourceName}`}
+      >
+        <DynamicForm
+          fields={formFields}
+          initialData={editingItem}
+          onSubmit={handleSave}
+          onCancel={() => setIsModalOpen(false)}
+        />
+      </Modal>
+    </div>
+  );
+};
+
+// --- Main Dashboard ---
+
+const AdminDashboard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  useEffect(() => {
+    if (user && user.user_type !== 'admin') {
+      navigate('/dashboard');
+    }
+  }, [user, navigate]);
+
+  const tabs = [
+    { id: 'overview', label: 'Overview', icon: Activity },
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'subjects', label: 'Subjects', icon: BookOpen },
+    { id: 'gigs', label: 'Gigs', icon: FileText },
+    { id: 'jobs', label: 'Jobs', icon: Briefcase },
+    { id: 'questions', label: 'Questions', icon: AlertTriangle }, // Used AlertTriangle for QnA for now
+    { id: 'payments', label: 'Payments', icon: DollarSign },
+  ];
+
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview': return <OverviewStats />;
+      case 'users':
+        return <ResourceManager
+          resourceName="User"
+          apiEndpoint="/api/admin/users/"
+          columns={[
+             { header: 'User', render: u => <div><div className="font-bold">{u.username}</div><div className="text-xs text-gray-500">{u.email}</div></div> },
+             { header: 'Role', accessor: 'user_type' },
+             { header: 'Credits', accessor: 'credit_balance' },
+             { header: 'Status', render: u => <span className={`px-2 py-0.5 rounded-full text-xs ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100'}`}>{u.is_active ? 'Active' : 'Blocked'}</span> }
+          ]}
+          formFields={[
+             { name: 'username', label: 'Username', required: true },
+             { name: 'email', label: 'Email', type: 'email', required: true },
+             { name: 'first_name', label: 'First Name' },
+             { name: 'last_name', label: 'Last Name' },
+             { name: 'user_type', label: 'Role', type: 'select', options: [{value: 'student', label: 'Student'}, {value: 'tutor', label: 'Tutor'}, {value: 'admin', label: 'Admin'}, {value: 'moderator', label: 'Moderator'}], required: true },
+             { name: 'credit_balance', label: 'Credit Balance', type: 'number', required: true },
+             { name: 'is_active', label: 'Active Account', type: 'checkbox' },
+             // Password handling is complex in simple edit, usually separate endpoint, but let's allow setting it on Create
+             { name: 'password', label: 'Password (Create Only)', type: 'password' }
+          ]}
+        />;
+      case 'subjects':
+        return <ResourceManager
+          resourceName="Subject"
+          apiEndpoint="/api/admin/subjects/"
+          columns={[
+             { header: 'Name', accessor: 'name' },
+             { header: 'Aliases', accessor: 'aliases' },
+             { header: 'Active', render: s => s.is_active ? 'Yes' : 'No' }
+          ]}
+          formFields={[
+             { name: 'name', label: 'Name', required: true },
+             { name: 'aliases', label: 'Aliases (comma separated)' },
+             { name: 'is_active', label: 'Is Active', type: 'checkbox' }
+          ]}
+        />;
+      case 'gigs':
+        return <ResourceManager
+          resourceName="Gig"
+          apiEndpoint="/api/admin/gigs/"
+          columns={[
+             { header: 'Title', accessor: 'title' },
+             { header: 'Tutor', accessor: 'tutor' },
+             { header: 'Subject', accessor: 'subject' },
+          ]}
+          formFields={[
+             { name: 'title', label: 'Title', required: true },
+             { name: 'tutor_id', label: 'Tutor ID', type: 'number', required: true },
+             { name: 'subject', label: 'Subject Name', required: true },
+             { name: 'description', label: 'Description', type: 'textarea' },
+             { name: 'fee_details', label: 'Fee Details' },
+          ]}
+        />;
+      case 'jobs':
+        return <ResourceManager
+          resourceName="Job"
+          apiEndpoint="/api/admin/jobs/"
+          columns={[
+             { header: 'Title', accessor: 'title' },
+             { header: 'Student', render: j => j.student ? j.student.username : 'N/A' },
+             { header: 'Service', accessor: 'service_type' },
+             { header: 'Status', render: j => <span className={`px-2 py-0.5 rounded-full text-xs ${j.status === 'Open' ? 'bg-green-100' : 'bg-gray-100'}`}>{j.status}</span> },
+          ]}
+          formFields={[
+             { name: 'title', label: 'Title (Optional)' },
+             { name: 'description', label: 'Description', type: 'textarea', required: true },
+             { name: 'student_id', label: 'Student ID', type: 'number', required: true },
+             { name: 'service_type', label: 'Service Type', type: 'select', options: [{value: 'Tutoring', label: 'Tutoring'}, {value: 'Assignment Help', label: 'Assignment Help'}] },
+             { name: 'status', label: 'Status', type: 'select', options: [{value: 'Open', label: 'Open'}, {value: 'Assigned', label: 'Assigned'}, {value: 'Completed', label: 'Completed'}, {value: 'Cancelled', label: 'Cancelled'}] },
+             { name: 'budget', label: 'Budget', type: 'number' },
+          ]}
+        />;
+      case 'questions':
+        return <ResourceManager
+          resourceName="Question"
+          apiEndpoint="/api/admin/questions/"
+          columns={[
+             { header: 'Title', accessor: 'title' },
+             { header: 'Student', render: q => q.student ? q.student.username : 'N/A' },
+             { header: 'Answers', accessor: 'answers_count' },
+          ]}
+          formFields={[
+             { name: 'title', label: 'Title', required: true },
+             { name: 'content', label: 'Content', type: 'textarea', required: true },
+             { name: 'student_id', label: 'Student ID', type: 'number', required: true },
+          ]}
+        />;
+       case 'payments':
+        return <ResourceManager
+          resourceName="Payment"
+          apiEndpoint="/api/admin/payments/"
+          columns={[
+             { header: 'Trx ID', accessor: 'transaction_id' },
+             { header: 'User', render: p => p.order?.user || 'Guest' },
+             { header: 'Amount', accessor: 'amount' },
+             { header: 'Status', accessor: 'status' },
+          ]}
+          formFields={[]} // Read-only typically
+        />;
+      default: return <div>Select a tab</div>;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans">
       <Navbar />
-
       <div className="flex h-[calc(100vh-64px)]">
         {/* Sidebar */}
-        <aside className="w-64 bg-white shadow-lg hidden md:block z-10">
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-indigo-700 flex items-center">
-              <Shield className="mr-2" /> Admin
-            </h2>
+        <aside className="w-64 bg-white shadow-lg hidden md:block z-10 overflow-y-auto">
+          <div className="p-6 border-b">
+            <h2 className="text-2xl font-bold text-indigo-700 flex items-center"><Shield className="mr-2" /> Admin</h2>
           </div>
-          <nav className="mt-6 px-4">
-            {[
-              { id: 'overview', label: 'Overview', icon: Activity },
-              { id: 'users', label: 'Manage Users', icon: Users },
-              { id: 'jobs', label: 'Manage Jobs', icon: Briefcase },
-              { id: 'payments', label: 'Payments', icon: DollarSign },
-              { id: 'content', label: 'Content', icon: FileText },
-              { id: 'moderators', label: 'Moderators', icon: UserCheck },
-              { id: 'settings', label: 'Settings', icon: Settings },
-            ].map((item) => (
+          <nav className="p-4 space-y-2">
+            {tabs.map(item => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex items-center w-full px-4 py-3 mb-2 rounded-lg transition-colors ${
-                  activeTab === item.id
-                    ? 'bg-indigo-50 text-indigo-700 font-semibold'
-                    : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                className={`flex items-center w-full px-4 py-3 rounded-lg transition-colors ${activeTab === item.id ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-gray-600 hover:bg-gray-100'}`}
               >
-                <item.icon size={20} className="mr-3" />
-                {item.label}
+                <item.icon size={20} className="mr-3" /> {item.label}
               </button>
             ))}
           </nav>
         </aside>
 
-        {/* Main Content */}
+        {/* Content */}
         <main className="flex-1 overflow-y-auto p-8">
-          <header className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
-              <p className="text-gray-500 mt-1">Welcome back, Admin</p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border-2 border-indigo-200">
-                A
-              </div>
-            </div>
-          </header>
-
-          {activeTab === 'overview' && (
-            <div className="space-y-8">
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard
-                  title="Total Users"
-                  value={stats.total_users}
-                  icon={Users}
-                  color="#4F46E5"
-                />
-                <StatCard
-                  title="Active Jobs"
-                  value={stats.active_jobs}
-                  icon={Briefcase}
-                  color="#10B981"
-                />
-                <StatCard
-                  title="Total Revenue"
-                  value={`$${stats.total_revenue}`}
-                  icon={DollarSign}
-                  color="#F59E0B"
-                />
-                <StatCard
-                  title="Pending Reports"
-                  value={stats.pending_reports || 0}
-                  icon={Shield}
-                  color="#EF4444"
-                />
-              </div>
-
-              {/* Recent Activity */}
-              <div className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                  <h3 className="text-lg font-semibold text-gray-800">Recent Activity</h3>
-                </div>
-                <div className="divide-y divide-gray-100">
-                  {stats.recent_activity.length > 0 ? (
-                    stats.recent_activity.map((activity, index) => (
-                      <div key={index} className="px-6 py-4 flex items-center hover:bg-gray-50 transition-colors">
-                        <div className="bg-blue-100 p-2 rounded-full mr-4 text-blue-600">
-                          <Activity size={16} />
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-800">{activity.description}</p>
-                          <p className="text-xs text-gray-500">{new Date(activity.timestamp).toLocaleString()}</p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <div className="p-6 text-center text-gray-500">No recent activity</div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'users' && (
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-xl font-bold text-gray-800">User Management</h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Search users..."
-                    className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-600 font-medium border-b">
-                    <tr>
-                      <th className="px-6 py-3">User</th>
-                      <th className="px-6 py-3">Role</th>
-                      <th className="px-6 py-3">Status</th>
-                      <th className="px-6 py-3">Joined</th>
-                      <th className="px-6 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {users
-                      .filter(u => u.username.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map(u => (
-                      <tr key={u.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <div className="flex items-center">
-                            <div className="h-8 w-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold mr-3">
-                              {u.username[0].toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="font-medium text-gray-800">{u.username}</p>
-                              <p className="text-xs text-gray-500">{u.email}</p>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600 capitalize">{u.user_type}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${u.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                            {u.is_active ? 'Active' : 'Blocked'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-500">{new Date(u.date_joined).toLocaleDateString()}</td>
-                        <td className="px-6 py-4">
-                          <div className="flex space-x-2">
-                            <button
-                              onClick={() => handleBlockUser(u.id, !u.is_active)}
-                              className={`p-1 rounded hover:bg-gray-200 ${u.is_active ? 'text-orange-500' : 'text-green-500'}`}
-                              title={u.is_active ? "Block User" : "Unblock User"}
-                            >
-                              {u.is_active ? <Ban size={18} /> : <CheckCircle size={18} />}
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(u.id)}
-                              className="p-1 rounded hover:bg-gray-200 text-red-500"
-                              title="Delete User"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-           {activeTab === 'jobs' && (
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
-              <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-xl font-bold text-gray-800">Job Management</h3>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-                  <input
-                    type="text"
-                    placeholder="Search jobs..."
-                    className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-600 font-medium border-b">
-                    <tr>
-                      <th className="px-6 py-3">Title/Description</th>
-                      <th className="px-6 py-3">Posted By</th>
-                      <th className="px-6 py-3">Service</th>
-                      <th className="px-6 py-3">Status</th>
-                      <th className="px-6 py-3">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {jobs
-                      .filter(j => j.description?.toLowerCase().includes(searchTerm.toLowerCase()) || j.service_type?.toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map(j => (
-                      <tr key={j.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4">
-                          <p className="font-medium text-gray-800 truncate max-w-xs">{j.description || j.title || "No description"}</p>
-                          <p className="text-xs text-gray-500">{new Date(j.created_at).toLocaleDateString()}</p>
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{j.student ? j.student.username : 'Unknown'}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{j.service_type}</td>
-                        <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${j.status === 'Open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                            {j.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          <div className="flex space-x-2">
-                            {j.status === 'Open' && (
-                              <button
-                                onClick={() => handleCloseJob(j.id)}
-                                className="p-1 rounded hover:bg-gray-200 text-orange-500"
-                                title="Close Job"
-                              >
-                                <XCircle size={18} />
-                              </button>
-                            )}
-                            <button
-                              onClick={() => handleDeleteJob(j.id)}
-                              className="p-1 rounded hover:bg-gray-200 text-red-500"
-                              title="Delete Job"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
+           <header className="mb-6">
+             <h1 className="text-3xl font-bold text-gray-800 capitalize">{activeTab}</h1>
+           </header>
+           {renderTabContent()}
         </main>
       </div>
     </div>
   );
 };
+
+// Simplified Overview (Reusable from previous)
+const OverviewStats = () => {
+    const [stats, setStats] = useState({});
+    useEffect(() => {
+        const fetchStats = async () => {
+            try {
+                const token = localStorage.getItem('access_token');
+                const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin-dashboard/stats/`, { headers: { Authorization: `Bearer ${token}` } });
+                setStats(res.data);
+            } catch(e) {}
+        };
+        fetchStats();
+    }, []);
+
+    const cards = [
+        { label: 'Total Users', val: stats.total_users, color: 'blue' },
+        { label: 'Active Jobs', val: stats.active_jobs, color: 'green' },
+        { label: 'Revenue', val: `$${stats.total_revenue || 0}`, color: 'yellow' },
+    ];
+
+    return (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {cards.map((c, i) => (
+                <div key={i} className={`bg-white p-6 rounded shadow border-l-4 border-${c.color}-500`}>
+                    <div className="text-gray-500 uppercase text-xs font-bold">{c.label}</div>
+                    <div className="text-3xl font-bold">{c.val}</div>
+                </div>
+            ))}
+        </div>
+    )
+}
 
 export default AdminDashboard;
