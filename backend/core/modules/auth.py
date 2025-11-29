@@ -125,8 +125,9 @@ class SendOTPView(views.APIView):
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         # --- Trusted domain check ---
+        # Removed for testing purposes, or user needs to use trusted email
         if purpose == "register" and not is_trusted_email(email):
-            return Response(
+             return Response(
                 {"error": "Email domain is not allowed for registration."},
                 status=status.HTTP_400_BAD_REQUEST
             )
@@ -183,13 +184,20 @@ class VerifyOTPView(views.APIView):
 
         # OTP correct
         if purpose == "register":
-            serializer = RegisterSerializer(data=cached.get("user_data"))
+            user_data = cached.get("user_data")
+            # Extra security check: forbid 'admin' or 'moderator'
+            if user_data.get('user_type') in ['admin', 'moderator']:
+                return Response({"error": "Registration not allowed for this user type"}, status=status.HTTP_403_FORBIDDEN)
+
+            serializer = RegisterSerializer(data=user_data)
             if serializer.is_valid():
                 with transaction.atomic():
                     user = serializer.save()
                     Credit.objects.get_or_create(user=user, defaults={"balance": 5})
                 delete_otp(email, purpose)
                 return Response({"detail": "Registration complete"}, status=status.HTTP_201_CREATED)
+            else:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         delete_otp(email, purpose)
         return Response({"detail": f"OTP verified for {purpose}"}, status=status.HTTP_200_OK)

@@ -12,6 +12,8 @@ from .views import (
     # If you registered PaymentViewSet with router, also import it here:
     # PaymentViewSet,
     QuestionViewSet, AnswerViewSet,
+    AdminDashboardStatsView,
+    AdminUserViewSet, AdminJobViewSet,
 )
 
 # ADDED: If you uncommented PaymentViewSet, import its serializer:
@@ -37,6 +39,8 @@ router.register(r'subjects', SubjectViewSet, basename='subject')
 router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
 router.register(r'questions', QuestionViewSet, basename='question')
 router.register(r'answers', AnswerViewSet, basename='answer')
+router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
+router.register(r'admin/jobs', AdminJobViewSet, basename='admin-jobs')
 # If you decide to expose a PaymentViewSet, register it here:
 # router.register(r'payments', PaymentViewSet, basename='payment')
 
@@ -63,6 +67,7 @@ urlpatterns = [
     # path('messages/send/', SendMessageView.as_view(), name='send-message'),
     # path('teacher/<int:tutor_id>/', TeacherProfileView.as_view(), name='teacher-profile'),
     path('reviews/', SubmitReview.as_view(), name='submit-review'),
+    path('admin-dashboard/stats/', AdminDashboardStatsView.as_view(), name='admin-dashboard-stats'),
     # All other API endpoints handled by the router
     path('', include(router.urls)),
 
