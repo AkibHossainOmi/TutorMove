@@ -17,6 +17,7 @@ from .views import (
 from .views_admin import (
     AdminUserViewSet, AdminJobViewSet, AdminPaymentViewSet,
     AdminReportViewSet, AdminSubjectViewSet, AdminGigViewSet,
+    AdminQuestionViewSet,
     AdminPointPackageViewSet, AdminPricingTierViewSet, AdminCountryGroupViewSet
 )
 
@@ -51,6 +52,7 @@ router.register(r'admin/payments', AdminPaymentViewSet, basename='admin-payments
 router.register(r'admin/reports', AdminReportViewSet, basename='admin-reports')
 router.register(r'admin/subjects', AdminSubjectViewSet, basename='admin-subjects')
 router.register(r'admin/gigs', AdminGigViewSet, basename='admin-gigs')
+router.register(r'admin/questions', AdminQuestionViewSet, basename='admin-questions')
 router.register(r'admin/point-packages', AdminPointPackageViewSet, basename='admin-point-packages')
 router.register(r'admin/pricing-tiers', AdminPricingTierViewSet, basename='admin-pricing-tiers')
 router.register(r'admin/country-groups', AdminCountryGroupViewSet, basename='admin-country-groups')
