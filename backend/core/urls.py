@@ -13,7 +13,11 @@ from .views import (
     # PaymentViewSet,
     QuestionViewSet, AnswerViewSet,
     AdminDashboardStatsView,
-    AdminUserViewSet, AdminJobViewSet,
+)
+from .views_admin import (
+    AdminUserViewSet, AdminJobViewSet, AdminPaymentViewSet,
+    AdminReportViewSet, AdminSubjectViewSet, AdminGigViewSet,
+    AdminPointPackageViewSet, AdminPricingTierViewSet, AdminCountryGroupViewSet
 )
 
 # ADDED: If you uncommented PaymentViewSet, import its serializer:
@@ -39,10 +43,17 @@ router.register(r'subjects', SubjectViewSet, basename='subject')
 router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unlock')
 router.register(r'questions', QuestionViewSet, basename='question')
 router.register(r'answers', AnswerViewSet, basename='answer')
+
+# Admin ViewSets
 router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
 router.register(r'admin/jobs', AdminJobViewSet, basename='admin-jobs')
-# If you decide to expose a PaymentViewSet, register it here:
-# router.register(r'payments', PaymentViewSet, basename='payment')
+router.register(r'admin/payments', AdminPaymentViewSet, basename='admin-payments')
+router.register(r'admin/reports', AdminReportViewSet, basename='admin-reports')
+router.register(r'admin/subjects', AdminSubjectViewSet, basename='admin-subjects')
+router.register(r'admin/gigs', AdminGigViewSet, basename='admin-gigs')
+router.register(r'admin/point-packages', AdminPointPackageViewSet, basename='admin-point-packages')
+router.register(r'admin/pricing-tiers', AdminPricingTierViewSet, basename='admin-pricing-tiers')
+router.register(r'admin/country-groups', AdminCountryGroupViewSet, basename='admin-country-groups')
 
 
 urlpatterns = [
