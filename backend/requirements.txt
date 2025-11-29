@@ -23,3 +23,4 @@ wheel>=0.38.4
 celery>=5.3,<6.0
 # Database adapter (mysqlclient was causing issues in this env, but usually required for production)
 # mysqlclient>=2.2,<3.0
+cryptography

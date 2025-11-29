@@ -245,13 +245,19 @@ class ChatConsumer(AsyncWebsocketConsumer):
     @sync_to_async
     def save_message(self, data):
         from core.models import User, Conversation, Message, ConversationParticipant, MessageRead
+        from core.utils_encryption import encrypt_text
 
         sender = User.objects.get(id=self.user_id)
         conversation = Conversation.objects.get(id=data["conversation_id"])
+
+        # Encrypt content before saving
+        raw_content = data.get("content", "")
+        encrypted_content = encrypt_text(raw_content)
+
         msg = Message.objects.create(
             sender=sender,
             conversation=conversation,
-            content=data.get("content", ""),
+            content=encrypted_content,
             timestamp=timezone.now(),
         )
 
@@ -399,6 +405,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
     async def serialize_message(self, msg):
         from core.models import MessageRead
         from asgiref.sync import sync_to_async
+        from core.utils_encryption import decrypt_text
 
         status = None
         is_read = False
@@ -417,11 +424,14 @@ class ChatConsumer(AsyncWebsocketConsumer):
                     status = None
                     is_read = False
 
+        # Decrypt content
+        decrypted_content = decrypt_text(msg.content)
+
         return {
             "id": msg.id,
             "conversation_id": msg.conversation.id,
             "sender": {"id": msg.sender.id, "username": msg.sender.username},
-            "content": msg.content,
+            "content": decrypted_content,
             "timestamp": msg.timestamp.isoformat(),
             "is_system": getattr(msg, "is_system", False),
             "attachment": msg.attachment.url if getattr(msg, "attachment", None) else None,
