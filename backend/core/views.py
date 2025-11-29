@@ -2460,7 +2460,7 @@ class CoinGiftViewSet(viewsets.ModelViewSet):
 
         try:
             recipient = User.objects.get(id=recipient_id)
-        except User.DoesNotExist:
+        except (User.DoesNotExist, ValueError):
              return Response({'error': 'Recipient not found'}, status=status.HTTP_404_NOT_FOUND)
 
         if request.user.id == recipient.id:
