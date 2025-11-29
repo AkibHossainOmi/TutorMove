@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import permissions, viewsets, status, filters
+from rest_framework import permissions, viewsets, status, filters, serializers
 from rest_framework.decorators import action
 from django.db.models import Sum, Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
@@ -13,6 +13,31 @@ from .serializers import (
     SubjectSerializer, GigSerializer, PointPackageSerializer,
     UnlockPricingTierSerializer, CountryGroupSerializer, QuestionSerializer
 )
+
+class AdminUserSerializer(UserSerializer):
+    """
+    Serializer for Admin to create/update users, handling password hashing.
+    """
+    password = serializers.CharField(write_only=True, required=False)
+
+    class Meta(UserSerializer.Meta):
+        fields = '__all__'
+
+    def create(self, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().create(validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop('password', None)
+        user = super().update(instance, validated_data)
+        if password:
+            user.set_password(password)
+            user.save()
+        return user
 
 class AdminDashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -52,7 +77,7 @@ class AdminDashboardStatsView(APIView):
 
 class AdminUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all().order_by('-date_joined')
-    serializer_class = UserSerializer
+    serializer_class = AdminUserSerializer
     permission_classes = [permissions.IsAdminUser]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter]
     filterset_fields = ['user_type', 'is_active']

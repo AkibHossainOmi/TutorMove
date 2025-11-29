@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import axios from 'axios';
+import apiService from '../utils/apiService';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import {
   Users, Briefcase, DollarSign, Activity, Search, Settings, Shield,
   FileText, UserCheck, Trash2, Ban, CheckCircle, XCircle, AlertTriangle,
-  Plus, BookOpen, Edit2, Save, X
+  Plus, BookOpen, Edit2, Save, X, Globe, Flag, Tag, Layers
 } from 'lucide-react';
 
 // --- Generic Components ---
@@ -130,19 +130,34 @@ const ResourceManager = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
+  const getApiUrl = (endpoint) => {
+    const baseUrl = process.env.REACT_APP_API_URL || '';
+    // ensure no double slashes if base ends with / and endpoint starts with /
+    const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    return `${cleanBase}${cleanEndpoint}`;
+  };
+
   const fetchAll = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('access_token');
-      const headers = { Authorization: `Bearer ${token}` };
+      // Use apiService which handles token injection and refresh
+      const url = getApiUrl(apiEndpoint);
 
-      const [dataRes, statsRes] = await Promise.all([
-        axios.get(`${process.env.REACT_APP_API_URL}${apiEndpoint}`, { headers }),
-        axios.get(`${process.env.REACT_APP_API_URL}${apiEndpoint}stats/`, { headers })
-      ]);
+      // Attempt to fetch stats if supported (ignore 404 on stats)
+      let statsData = {};
+      try {
+          const statsRes = await apiService.get(`${url}stats/`);
+          statsData = statsRes.data;
+      } catch (e) {
+          // ignore stats error
+          console.warn('Stats fetch failed or not supported', e);
+      }
+
+      const dataRes = await apiService.get(url);
 
       setData(dataRes.data.results || dataRes.data);
-      setStats(statsRes.data);
+      setStats(statsData);
     } catch (error) {
       console.error(`Error fetching ${resourceName}:`, error);
     } finally {
@@ -157,10 +172,7 @@ const ResourceManager = ({
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this item?")) return;
     try {
-      const token = localStorage.getItem('access_token');
-      await axios.delete(`${process.env.REACT_APP_API_URL}${apiEndpoint}${id}/`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await apiService.delete(`${getApiUrl(apiEndpoint)}${id}/`);
       fetchAll();
     } catch (error) {
       alert("Delete failed");
@@ -169,13 +181,24 @@ const ResourceManager = ({
 
   const handleSave = async (formData) => {
     try {
-      const token = localStorage.getItem('access_token');
-      const headers = { Authorization: `Bearer ${token}` };
+      // Data Transformation for specific cases
+      const payload = { ...formData };
+
+      // Handle comma-separated lists (e.g., aliases, subjects for jobs)
+      // Check if any formField has specific transform requirements?
+      // For now, hardcode based on known fields
+      if (resourceName === 'Subject' && typeof payload.aliases === 'string') {
+          payload.aliases = payload.aliases.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      if (resourceName === 'Job' && typeof payload.subjects === 'string') {
+          // payload.subjects should be a list for the serializer
+          payload.subjects = payload.subjects.split(',').map(s => s.trim()).filter(Boolean);
+      }
 
       if (editingItem) {
-        await axios.patch(`${process.env.REACT_APP_API_URL}${apiEndpoint}${editingItem.id}/`, formData, { headers });
+        await apiService.patch(`${getApiUrl(apiEndpoint)}${editingItem.id}/`, payload);
       } else {
-        await axios.post(`${process.env.REACT_APP_API_URL}${apiEndpoint}`, formData, { headers });
+        await apiService.post(getApiUrl(apiEndpoint), payload);
       }
       setIsModalOpen(false);
       fetchAll();
@@ -185,20 +208,44 @@ const ResourceManager = ({
     }
   };
 
-  const filteredData = data.filter(item =>
+  // Safe Pre-processing for Form
+  const prepareInitialData = (item) => {
+      if (!item) return {};
+      const data = { ...item };
+
+      if (Array.isArray(data.aliases)) data.aliases = data.aliases.join(', ');
+      // For Job, subjects is usually a list of objects or strings depending on read serializer
+      // The read serializer for Job returns subjects as list of strings in 'subject_details',
+      // but 'subjects' field in read might be IDs or objects.
+      // Let's check `subject_details` first
+      if (resourceName === 'Job') {
+          if (data.subject_details && Array.isArray(data.subject_details)) {
+              data.subjects = data.subject_details.join(', ');
+          } else if (Array.isArray(data.subjects)) {
+              // fallback if it's strings
+             data.subjects = data.subjects.map(s => typeof s === 'object' ? s.name : s).join(', ');
+          }
+      }
+
+      return data;
+  }
+
+  const filteredData = Array.isArray(data) ? data.filter(item =>
     Object.values(item).some(val =>
       String(val).toLowerCase().includes(searchTerm.toLowerCase())
     )
-  );
+  ) : [];
 
   return (
     <div className="space-y-4">
       {/* Stats Header */}
-      <div className="bg-white p-4 rounded shadow-sm flex flex-wrap">
-        {Object.entries(stats).map(([key, val]) => (
-           <StatBadge key={key} label={key.replace(/_/g, ' ')} value={val} color={key === 'total' ? 'indigo' : 'gray'} />
-        ))}
-      </div>
+      {Object.keys(stats).length > 0 && (
+        <div className="bg-white p-4 rounded shadow-sm flex flex-wrap">
+            {Object.entries(stats).map(([key, val]) => (
+                typeof val !== 'object' && <StatBadge key={key} label={key.replace(/_/g, ' ')} value={val} color={key === 'total' ? 'indigo' : 'gray'} />
+            ))}
+        </div>
+      )}
 
       {/* Controls */}
       <div className="flex justify-between items-center bg-white p-4 rounded shadow-sm">
@@ -245,7 +292,7 @@ const ResourceManager = ({
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                      <div className="flex justify-end">
                         {customActions && customActions(item, fetchAll)}
-                        <ActionButton onClick={() => { setEditingItem(item); setIsModalOpen(true); }} icon={Edit2} color="text-indigo-600" title="Edit" />
+                        <ActionButton onClick={() => { setEditingItem(prepareInitialData(item)); setIsModalOpen(true); }} icon={Edit2} color="text-indigo-600" title="Edit" />
                         <ActionButton onClick={() => handleDelete(item.id)} icon={Trash2} color="text-red-600" title="Delete" />
                      </div>
                   </td>
@@ -263,7 +310,7 @@ const ResourceManager = ({
       >
         <DynamicForm
           fields={formFields}
-          initialData={editingItem}
+          initialData={editingItem || {}}
           onSubmit={handleSave}
           onCancel={() => setIsModalOpen(false)}
         />
@@ -280,6 +327,8 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
+    // If auth is still loading, user might be null, but we usually handle that in UseAuth or protected route
+    // Assuming simple check here
     if (user && user.user_type !== 'admin') {
       navigate('/dashboard');
     }
@@ -291,8 +340,12 @@ const AdminDashboard = () => {
     { id: 'subjects', label: 'Subjects', icon: BookOpen },
     { id: 'gigs', label: 'Gigs', icon: FileText },
     { id: 'jobs', label: 'Jobs', icon: Briefcase },
-    { id: 'questions', label: 'Questions', icon: AlertTriangle }, // Used AlertTriangle for QnA for now
+    { id: 'questions', label: 'Questions', icon: AlertTriangle },
+    { id: 'reports', label: 'Reports', icon: Flag },
     { id: 'payments', label: 'Payments', icon: DollarSign },
+    { id: 'packages', label: 'Point Packages', icon: Layers },
+    { id: 'tiers', label: 'Pricing Tiers', icon: Tag },
+    { id: 'countries', label: 'Country Groups', icon: Globe },
   ];
 
   const renderTabContent = () => {
@@ -316,8 +369,7 @@ const AdminDashboard = () => {
              { name: 'user_type', label: 'Role', type: 'select', options: [{value: 'student', label: 'Student'}, {value: 'tutor', label: 'Tutor'}, {value: 'admin', label: 'Admin'}, {value: 'moderator', label: 'Moderator'}], required: true },
              { name: 'credit_balance', label: 'Credit Balance', type: 'number', required: true },
              { name: 'is_active', label: 'Active Account', type: 'checkbox' },
-             // Password handling is complex in simple edit, usually separate endpoint, but let's allow setting it on Create
-             { name: 'password', label: 'Password (Create Only)', type: 'password' }
+             { name: 'password', label: 'Password (Leave blank to keep current)', type: 'password' }
           ]}
         />;
       case 'subjects':
@@ -326,7 +378,7 @@ const AdminDashboard = () => {
           apiEndpoint="/api/admin/subjects/"
           columns={[
              { header: 'Name', accessor: 'name' },
-             { header: 'Aliases', accessor: 'aliases' },
+             { header: 'Aliases', render: s => Array.isArray(s.aliases) ? s.aliases.join(', ') : s.aliases },
              { header: 'Active', render: s => s.is_active ? 'Yes' : 'No' }
           ]}
           formFields={[
@@ -359,12 +411,14 @@ const AdminDashboard = () => {
           columns={[
              { header: 'Title', accessor: 'title' },
              { header: 'Student', render: j => j.student ? j.student.username : 'N/A' },
+             { header: 'Subjects', render: j => j.subject_details ? j.subject_details.join(', ') : '' },
              { header: 'Service', accessor: 'service_type' },
              { header: 'Status', render: j => <span className={`px-2 py-0.5 rounded-full text-xs ${j.status === 'Open' ? 'bg-green-100' : 'bg-gray-100'}`}>{j.status}</span> },
           ]}
           formFields={[
              { name: 'title', label: 'Title (Optional)' },
              { name: 'description', label: 'Description', type: 'textarea', required: true },
+             { name: 'subjects', label: 'Subjects (comma separated)', required: true },
              { name: 'student_id', label: 'Student ID', type: 'number', required: true },
              { name: 'service_type', label: 'Service Type', type: 'select', options: [{value: 'Tutoring', label: 'Tutoring'}, {value: 'Assignment Help', label: 'Assignment Help'}] },
              { name: 'status', label: 'Status', type: 'select', options: [{value: 'Open', label: 'Open'}, {value: 'Assigned', label: 'Assigned'}, {value: 'Completed', label: 'Completed'}, {value: 'Cancelled', label: 'Cancelled'}] },
@@ -386,6 +440,18 @@ const AdminDashboard = () => {
              { name: 'student_id', label: 'Student ID', type: 'number', required: true },
           ]}
         />;
+       case 'reports':
+        return <ResourceManager
+            resourceName="Report"
+            apiEndpoint="/api/admin/reports/"
+            columns={[
+                { header: 'Reported User', render: r => r.reported_user_id || 'N/A' },
+                { header: 'Reason', accessor: 'reason' },
+                { header: 'Type', accessor: 'target_type' },
+                { header: 'Date', render: r => new Date(r.created_at).toLocaleDateString() }
+            ]}
+            formFields={[]} // Read-only typically, or maybe minimal edit
+        />;
        case 'payments':
         return <ResourceManager
           resourceName="Payment"
@@ -398,6 +464,53 @@ const AdminDashboard = () => {
           ]}
           formFields={[]} // Read-only typically
         />;
+      case 'packages':
+          return <ResourceManager
+            resourceName="Point Package"
+            apiEndpoint="/api/admin/point-packages/"
+            columns={[
+                { header: 'Name', accessor: 'name' },
+                { header: 'Points', accessor: 'points' },
+                { header: 'Price', accessor: 'price' },
+                { header: 'Active', render: p => p.is_active ? 'Yes' : 'No' }
+            ]}
+            formFields={[
+                { name: 'name', label: 'Name', required: true },
+                { name: 'points', label: 'Points', type: 'number', required: true },
+                { name: 'price', label: 'Price', type: 'number', required: true, step: "0.01" },
+                { name: 'is_active', label: 'Active', type: 'checkbox' }
+            ]}
+          />;
+      case 'tiers':
+          return <ResourceManager
+            resourceName="Pricing Tier"
+            apiEndpoint="/api/admin/pricing-tiers/"
+            columns={[
+                { header: 'Min Points', accessor: 'min_points' },
+                { header: 'Max Points', accessor: 'max_points' },
+                { header: 'Price', accessor: 'price' }
+            ]}
+            formFields={[
+                { name: 'min_points', label: 'Min Points', type: 'number', required: true },
+                { name: 'max_points', label: 'Max Points', type: 'number', required: true },
+                { name: 'price', label: 'Price', type: 'number', required: true, step: "0.01" }
+            ]}
+          />;
+      case 'countries':
+          return <ResourceManager
+            resourceName="Country Group"
+            apiEndpoint="/api/admin/country-groups/"
+            columns={[
+                { header: 'Name', accessor: 'name' },
+                { header: 'Countries', render: c => c.countries ? c.countries.slice(0, 50) + '...' : '' },
+                { header: 'Tier', accessor: 'tier' }
+            ]}
+            formFields={[
+                { name: 'name', label: 'Name', required: true },
+                { name: 'countries', label: 'Countries (comma list)', type: 'textarea' },
+                { name: 'tier', label: 'Tier ID', type: 'number' }
+            ]}
+          />;
       default: return <div>Select a tab</div>;
     }
   };
@@ -442,8 +555,9 @@ const OverviewStats = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const token = localStorage.getItem('access_token');
-                const res = await axios.get(`${process.env.REACT_APP_API_URL}/api/admin-dashboard/stats/`, { headers: { Authorization: `Bearer ${token}` } });
+                const baseUrl = process.env.REACT_APP_API_URL || '';
+                const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+                const res = await apiService.get(`${cleanBase}/api/admin-dashboard/stats/`);
                 setStats(res.data);
             } catch(e) {}
         };
@@ -454,16 +568,35 @@ const OverviewStats = () => {
         { label: 'Total Users', val: stats.total_users, color: 'blue' },
         { label: 'Active Jobs', val: stats.active_jobs, color: 'green' },
         { label: 'Revenue', val: `$${stats.total_revenue || 0}`, color: 'yellow' },
+        { label: 'Reports', val: stats.pending_reports, color: 'red' },
     ];
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {cards.map((c, i) => (
-                <div key={i} className={`bg-white p-6 rounded shadow border-l-4 border-${c.color}-500`}>
-                    <div className="text-gray-500 uppercase text-xs font-bold">{c.label}</div>
-                    <div className="text-3xl font-bold">{c.val}</div>
+        <div className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                {cards.map((c, i) => (
+                    <div key={i} className={`bg-white p-6 rounded shadow border-l-4 border-${c.color}-500`}>
+                        <div className="text-gray-500 uppercase text-xs font-bold">{c.label}</div>
+                        <div className="text-3xl font-bold">{c.val}</div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="bg-white p-6 rounded shadow">
+                <h3 className="text-lg font-bold mb-4">Recent Activity</h3>
+                <div className="space-y-3">
+                    {stats.recent_activity && stats.recent_activity.length > 0 ? (
+                        stats.recent_activity.map((act, i) => (
+                            <div key={i} className="flex justify-between border-b pb-2 last:border-0">
+                                <span>{act.description}</span>
+                                <span className="text-gray-400 text-sm">{new Date(act.timestamp).toLocaleDateString()}</span>
+                            </div>
+                        ))
+                    ) : (
+                        <div className="text-gray-500">No recent activity.</div>
+                    )}
                 </div>
-            ))}
+            </div>
         </div>
     )
 }
