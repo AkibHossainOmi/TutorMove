@@ -1,10 +1,18 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import permissions, viewsets, status
+from rest_framework import permissions, viewsets, status, filters
 from rest_framework.decorators import action
 from django.db.models import Sum
-from .models import User, Job, Payment, AbuseReport
-from .serializers import UserSerializer, JobSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import (
+    User, Job, Payment, AbuseReport, Subject, Gig, PointPackage,
+    UnlockPricingTier, CountryGroup
+)
+from .serializers import (
+    UserSerializer, JobSerializer, PaymentSerializer, AbuseReportSerializer,
+    SubjectSerializer, GigSerializer, PointPackageSerializer,
+    UnlockPricingTierSerializer, CountryGroupSerializer
+)
 
 class AdminDashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]
@@ -55,6 +63,9 @@ class AdminUserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ['get', 'delete', 'patch', 'post'] # Restrict methods
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter]
+    filterset_fields = ['user_type', 'is_active']
+    search_fields = ['username', 'email']
 
     @action(detail=True, methods=['post'])
     def block(self, request, pk=None):
@@ -70,15 +81,80 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         user.save()
         return Response({'status': 'User unblocked'})
 
+    @action(detail=True, methods=['post'])
+    def make_moderator(self, request, pk=None):
+        user = self.get_object()
+        user.user_type = 'moderator'
+        user.save()
+        return Response({'status': 'User is now a moderator'})
+
+    @action(detail=True, methods=['post'])
+    def remove_moderator(self, request, pk=None):
+        user = self.get_object()
+        # Fallback to 'student' but check if 'tutor' is appropriate could be complex without history.
+        # Ideally, we should pass the target role.
+        target_role = request.data.get('target_role', 'student')
+        if target_role not in ['student', 'tutor']:
+             target_role = 'student'
+
+        user.user_type = target_role
+        user.save()
+        return Response({'status': f'User removed from moderators and set to {target_role}'})
+
 class AdminJobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all().order_by('-created_at')
     serializer_class = JobSerializer
     permission_classes = [permissions.IsAdminUser]
     http_method_names = ['get', 'delete', 'patch', 'post']
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['description', 'title', 'service_type']
 
     @action(detail=True, methods=['post'])
     def close(self, request, pk=None):
         job = self.get_object()
-        job.status = 'Cancelled' # Or Closed if that status exists, choices says Cancelled/Completed
+        job.status = 'Cancelled'
         job.save()
         return Response({'status': 'Job closed'})
+
+class AdminPaymentViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = Payment.objects.all().order_by('-payment_date')
+    serializer_class = PaymentSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['transaction_id', 'status', 'order__id']
+
+class AdminReportViewSet(viewsets.ModelViewSet):
+    queryset = AbuseReport.objects.all().order_by('-created_at')
+    serializer_class = AbuseReportSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ['get', 'delete'] # Mostly read-only or delete report
+
+class AdminSubjectViewSet(viewsets.ModelViewSet):
+    queryset = Subject.objects.all().order_by('name')
+    serializer_class = SubjectSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name']
+
+class AdminGigViewSet(viewsets.ModelViewSet):
+    queryset = Gig.objects.all().order_by('-created_at')
+    serializer_class = GigSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ['get', 'delete']
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['title', 'subject', 'tutor__username']
+
+class AdminPointPackageViewSet(viewsets.ModelViewSet):
+    queryset = PointPackage.objects.all()
+    serializer_class = PointPackageSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class AdminPricingTierViewSet(viewsets.ModelViewSet):
+    queryset = UnlockPricingTier.objects.all()
+    serializer_class = UnlockPricingTierSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+class AdminCountryGroupViewSet(viewsets.ModelViewSet):
+    queryset = CountryGroup.objects.all()
+    serializer_class = CountryGroupSerializer
+    permission_classes = [permissions.IsAdminUser]

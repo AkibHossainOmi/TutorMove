@@ -496,3 +496,21 @@ class AnswerSerializer(serializers.ModelSerializer):
         if request and request.user.is_authenticated:
             return obj.downvotes.filter(id=request.user.id).exists()
         return False
+
+# === SETTINGS SERIALIZERS ===
+from .models import PointPackage, UnlockPricingTier, CountryGroup
+
+class PointPackageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PointPackage
+        fields = '__all__'
+
+class UnlockPricingTierSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnlockPricingTier
+        fields = '__all__'
+
+class CountryGroupSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CountryGroup
+        fields = '__all__'
