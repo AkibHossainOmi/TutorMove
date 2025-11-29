@@ -529,3 +529,14 @@ class Answer(models.Model):
 
     def __str__(self):
         return f"Answer to {self.question.title} by {self.tutor.username}"
+from django.db import models
+from django.conf import settings
+
+class CoinGift(models.Model):
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sent_gifts')
+    recipient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='received_gifts')
+    amount = models.PositiveIntegerField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender} gifted {self.amount} to {self.recipient}"

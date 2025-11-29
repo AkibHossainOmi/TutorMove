@@ -5,13 +5,19 @@ import Footer from "../components/Footer";
 import { tutorAPI } from "../utils/apiService";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
+import GiftCoinModal from "../components/GiftCoinModal";
+import { useAuth } from "../contexts/AuthContext";
+import { pointsAPI } from "../utils/apiService";
 
 export default function TutorProfilePage() {
   const { tutorId } = useParams();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
+  const [userCreditBalance, setUserCreditBalance] = useState(0);
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     async function fetchData() {
@@ -43,7 +49,21 @@ export default function TutorProfilePage() {
 
   if (!profile) return null;
 
-  const isStudent = JSON.parse(localStorage.getItem("user"))?.user_type === "student";
+  const isStudent = user?.user_type === "student";
+
+  const fetchUserBalance = async () => {
+      try {
+          const res = await pointsAPI.getBalance();
+          setUserCreditBalance(res.data.balance);
+      } catch (err) {
+          console.error("Failed to fetch balance", err);
+      }
+  };
+
+  const openGiftModal = () => {
+      fetchUserBalance();
+      setIsGiftModalOpen(true);
+  };
 
   return (
     <>
@@ -187,19 +207,38 @@ export default function TutorProfilePage() {
             </Card>
 
             {isStudent && (
-              <button
-                onClick={() => navigate(`/messages/?username=${encodeURIComponent(profile.username)}`)}
-                className="w-full inline-flex justify-center items-center px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm hover:shadow transition-all"
-              >
-                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                Message Tutor
-              </button>
+              <div className="space-y-3">
+                <button
+                  onClick={() => navigate(`/messages/?username=${encodeURIComponent(profile.username)}`)}
+                  className="w-full inline-flex justify-center items-center px-5 py-3.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold shadow-sm hover:shadow transition-all"
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                  Message Tutor
+                </button>
+                <button
+                  onClick={openGiftModal}
+                  className="w-full inline-flex justify-center items-center px-5 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold shadow-sm hover:shadow transition-all"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.858 5.485a1 1 0 00-1.715 1.03L7.633 9H7a1 1 0 100 2h1.838l.179 1.074c.128.766.726 1.347 1.488 1.446l.495.064c.783.102 1.446-.543 1.345-1.326l-.064-.495a1.2 1.2 0 00-1.22-1.042l-1.954-.253-.178-1.074H13a1 1 0 100-2h-2.383l1.49-2.485a1 1 0 00-1.715-1.03L8.91 8.243 7.858 5.485z" clipRule="evenodd" />
+                  </svg>
+                  Gift Coins
+                </button>
+              </div>
             )}
           </aside>
         </div>
       </main>
+
+      <GiftCoinModal
+        isOpen={isGiftModalOpen}
+        onClose={() => setIsGiftModalOpen(false)}
+        tutorId={tutorId}
+        tutorName={profile.username}
+        currentBalance={userCreditBalance}
+      />
       <Footer />
     </>
   );

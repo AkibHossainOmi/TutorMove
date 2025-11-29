@@ -7,7 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
-    Order, Payment, JobUnlock, Question, Answer,
+    Order, Payment, JobUnlock, Question, Answer, CoinGift,
 )
 
 User = get_user_model()
@@ -523,3 +523,11 @@ class CountryGroupSerializer(serializers.ModelSerializer):
     class Meta:
         model = CountryGroup
         fields = '__all__'
+
+class CoinGiftSerializer(serializers.ModelSerializer):
+    sender = serializers.ReadOnlyField(source='sender.username')
+
+    class Meta:
+        model = CoinGift
+        fields = ['id', 'sender', 'recipient', 'amount', 'timestamp']
+        read_only_fields = ['id', 'sender', 'timestamp']

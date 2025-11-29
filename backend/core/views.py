@@ -43,7 +43,7 @@ from core.modules.auth import ( SendOTPView, ResetPasswordView,
 from urllib.parse import urlencode
 from .models import (
     CountryGroup, CountryGroupPoint, UnlockPricingTier, User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, ContactUnlock, JobUnlock, Question, Answer,
+    Order, Payment, ContactUnlock, JobUnlock, Question, Answer, CoinGift,
 )
 from .serializers import (
     ContactUnlockSerializer, UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
@@ -51,7 +51,7 @@ from .serializers import (
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     PaymentSerializer, CreditUpdateByUserSerializer,
-    JobUnlockSerializer, QuestionSerializer, AnswerSerializer,
+    JobUnlockSerializer, QuestionSerializer, AnswerSerializer, CoinGiftSerializer,
 )
 
 from .views_admin import AdminDashboardStatsView, AdminUserViewSet, AdminJobViewSet
@@ -2435,3 +2435,66 @@ class AnswerViewSet(viewsets.ModelViewSet):
                 answer.upvotes.remove(user)
             answer.downvotes.add(user)
             return Response({'status': 'downvoted', 'total_upvotes': answer.total_upvotes(), 'total_downvotes': answer.total_downvotes()})
+
+class CoinGiftViewSet(viewsets.ModelViewSet):
+    queryset = CoinGift.objects.all()
+    serializer_class = CoinGiftSerializer
+    permission_classes = [IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        recipient_id = request.data.get('recipient')
+        amount = request.data.get('amount')
+
+        # Validation
+        if not amount:
+            return Response({'error': 'Amount is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            amount = int(amount)
+            if amount <= 0:
+                return Response({'error': 'Amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+        except ValueError:
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not recipient_id:
+            return Response({'error': 'Recipient is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            recipient = User.objects.get(id=recipient_id)
+        except User.DoesNotExist:
+             return Response({'error': 'Recipient not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        if request.user.id == recipient.id:
+            return Response({'error': 'You cannot gift coins to yourself'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Transaction
+        with transaction.atomic():
+            # Lock sender's credit record
+            sender_credit, _ = Credit.objects.select_for_update().get_or_create(user=request.user)
+            if sender_credit.balance < amount:
+                 return Response({'error': 'Insufficient coin balance'}, status=status.HTTP_400_BAD_REQUEST)
+
+            recipient_credit, _ = Credit.objects.select_for_update().get_or_create(user=recipient)
+
+            # Transfer
+            sender_credit.balance -= amount
+            recipient_credit.balance += amount
+
+            sender_credit.save()
+            recipient_credit.save()
+
+            # Create Record
+            gift = CoinGift.objects.create(
+                sender=request.user,
+                recipient=recipient,
+                amount=amount
+            )
+
+            # Notification
+            Notification.objects.create(
+                from_user=request.user,
+                to_user=recipient,
+                message=f"You received a gift of {amount} coins from {request.user.username}!"
+            )
+
+            serializer = self.get_serializer(gift)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)

@@ -102,6 +102,12 @@ export const whatsappAPI = {
   verifyOTP: (otp) =>
     apiService.post('/api/whatsapp/verify/', { otp }),
 };
+
+export const pointsAPI = {
+    getBalance: () => apiService.get('/api/credits/'),
+    giftCoins: (recipientId, amount) => apiService.post('/api/gifts/', { recipient: recipientId, amount }),
+};
+
 export const authAPI = {
   login: (credentials) => apiService.post('/api/auth/login/', credentials),
   signup: (userData) => apiService.post('/api/auth/register/', userData), // sends OTP for signup
