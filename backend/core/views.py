@@ -54,6 +54,7 @@ from .serializers import (
     JobUnlockSerializer, QuestionSerializer, AnswerSerializer,
 )
 
+from .views_admin import AdminDashboardStatsView, AdminUserViewSet, AdminJobViewSet
 from .payments import SSLCommerzPayment
 from .permissions import IsOwnerOrReadOnly
 
@@ -347,6 +348,7 @@ class UserViewSet(viewsets.ModelViewSet):
     def register(self, request):
         user_type = request.data.get('user_type')
         if user_type not in ['student', 'teacher']:
+            # Prevent 'admin' or 'moderator' signups via public API
             return Response({'error': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():

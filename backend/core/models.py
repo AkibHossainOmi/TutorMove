@@ -11,6 +11,8 @@ class User(AbstractUser):
     USER_TYPE_CHOICES = (
         ("student", "Student"),
         ("tutor", "Tutor"),
+        ("admin", "Admin"),
+        ("moderator", "Moderator"),
     )
     user_type = models.CharField(max_length=10, choices=USER_TYPE_CHOICES, default="student")
     email_verified = models.BooleanField(default=False)
