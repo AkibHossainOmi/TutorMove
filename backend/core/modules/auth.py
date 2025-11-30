@@ -214,17 +214,11 @@ class VerifyOTPView(views.APIView):
                     if referrer_username:
                         try:
                             referrer = UserModel.objects.get(username=referrer_username)
-                            # Add 10 coins to referrer
-                            Credit.objects.get_or_create(user=referrer, defaults={"balance": 0})
-                            referrer.credit.balance += 10
-                            referrer.credit.save(update_fields=["balance"])
-                            Notification.objects.create(
-                                from_user=user,  # the new user who signed up
-                                to_user=referrer,
-                                message=f"You earned 10 coins! {user.username} joined using your referral."
-                            )
+                            # Save referrer for future bonus (on first purchase)
+                            user.referred_by = referrer
+                            user.save(update_fields=["referred_by"])
                         except UserModel.DoesNotExist:
-                            # Invalid referrer, skip giving coins
+                            # Invalid referrer, skip
                             pass
                 delete_otp(email, purpose)
                 return Response({"detail": "Registration complete"}, status=status.HTTP_201_CREATED)

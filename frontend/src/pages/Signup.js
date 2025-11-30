@@ -1,12 +1,13 @@
 // src/pages/Signup.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { authAPI } from "../utils/apiService";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -16,7 +17,17 @@ const Signup = () => {
     confirm_password: "",
     user_type: "student",
     phone_number: "", // Added phone_number initial state
+    referrer_username: "",
   });
+
+  useEffect(() => {
+    if (location.state?.referrer_username) {
+      setForm((prev) => ({
+        ...prev,
+        referrer_username: location.state.referrer_username,
+      }));
+    }
+  }, [location.state]);
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -253,7 +264,7 @@ const Signup = () => {
               )}
               <div>
                 <label htmlFor="referrer_username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Referred By
+                  Referred By (Optional)
                 </label>
                 <input
                   id="referrer_username"
@@ -262,8 +273,11 @@ const Signup = () => {
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                   value={form.referrer_username || ""}
                   onChange={handleChange}
-                  placeholder="Optional"
+                  placeholder="Username of who referred you"
                 />
+                <p className="mt-1 text-xs text-indigo-600">
+                  Referrer gets 10% bonus points on your first purchase!
+                </p>
               </div>
                <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
