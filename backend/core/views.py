@@ -1393,6 +1393,9 @@ class JobViewSet(viewsets.ModelViewSet):
             comment=comment
         )
 
+        # Update tutor stats
+        update_trust_score(job.assigned_tutor)
+
         serializer = ReviewSerializer(review)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -1590,7 +1593,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         review = serializer.save(student=request.user)
-        update_trust_score(review.teacher)
+        update_trust_score(review.tutor)  # Review model uses 'tutor' field for teacher
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 # --- PremiumViewSet ---

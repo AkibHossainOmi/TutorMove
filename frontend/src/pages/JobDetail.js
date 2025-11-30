@@ -11,6 +11,7 @@ import {
 import { jobAPI, pointsAPI } from '../utils/apiService';
 import JobApplicants from '../components/JobApplicants';
 import GiftCoinModal from '../components/GiftCoinModal';
+import StarRating from '../components/StarRating';
 
 const JobDetail = () => {
   const { id } = useParams();
@@ -485,7 +486,7 @@ const JobDetail = () => {
                     {job.review ? (
                        <div>
                           <div className="flex items-center gap-2 mb-3">
-                             {renderStars(job.review.rating)}
+                             <StarRating rating={job.review.rating} showCount={false} size={20} />
                              <span className="font-bold text-gray-900 ml-2">{job.review.rating}.0</span>
                           </div>
                           <p className="text-gray-700 italic">"{job.review.comment}"</p>

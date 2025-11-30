@@ -29,11 +29,29 @@ def schedule_job_emails(tutor_data):
 def update_trust_score(user):
     base = 1.0
     reviews = user.reviews_received.all()
-    avg_rating = sum([r.rating for r in reviews]) / reviews.count() if reviews.exists() else 1
-    base += (avg_rating - 3) * 0.3
+    count = reviews.count()
+
+    if count > 0:
+        avg_rating = sum([r.rating for r in reviews]) / count
+    else:
+        avg_rating = 0.0
+
+    # Trust Score Logic (Legacy but kept for compatibility)
+    # Base starts at 1.0
+    # Adjust based on rating deviation from 3.0
+    # Range typically 0.1 to 2.0
+    trust_adjust = (avg_rating - 3) * 0.3 if count > 0 else 0
+    base += trust_adjust
+
     if user.is_verified:
         base += 0.3
+
     user.trust_score = round(max(0.1, min(base, 2.0)), 2)
+
+    # New Rating Fields
+    user.average_rating = round(avg_rating, 2)
+    user.review_count = count
+
     user.save()
 
 

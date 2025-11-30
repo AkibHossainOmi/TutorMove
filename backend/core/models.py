@@ -40,6 +40,8 @@ class User(AbstractUser):
     premium_expires = models.DateTimeField(blank=True, null=True)
     referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
     referral_bonus_awarded = models.BooleanField(default=False)
+    average_rating = models.FloatField(default=0.0)
+    review_count = models.PositiveIntegerField(default=0)
 
     def has_premium(self):
         """Check if user currently has active premium."""
