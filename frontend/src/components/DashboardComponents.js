@@ -454,7 +454,7 @@ export const ResourceManager = ({
                      <div className="flex justify-end">
                         {customActions && customActions(item, fetchAll)}
                         {canEdit && <ActionButton onClick={() => { setEditingItem(prepareInitialData(item)); setIsModalOpen(true); }} icon={Edit2} color="text-indigo-600" title="Edit" />}
-                        {canDelete && <ActionButton onClick={() => handleDelete(item.id)} icon={Trash2} color="text-red-600" title="Delete" />}
+                        {canDelete && <ActionButton onClick={() => confirmDelete(item.id)} icon={Trash2} color="text-red-600" title="Delete" />}
                      </div>
                   </td>
                 </tr>
