@@ -38,6 +38,8 @@ class User(AbstractUser):
     subjects = models.JSONField(default=list, blank=True)
     jobcount = models.PositiveIntegerField(default=0)
     premium_expires = models.DateTimeField(blank=True, null=True)
+    referred_by = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, related_name='referrals')
+    referral_bonus_awarded = models.BooleanField(default=False)
 
     def has_premium(self):
         """Check if user currently has active premium."""
