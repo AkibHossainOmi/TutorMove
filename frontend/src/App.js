@@ -40,6 +40,7 @@ import FAQ from './pages/FAQ';
 import PostRequirement from './pages/PostRequirement';
 import BuyCreditsAndPremiumPage from './pages/BuyCreditPage';
 import StudentProfilePage from './pages/StudentProfile';
+import UserProfile from './pages/UserProfile';
 import QnAPage from './pages/qna/QnAPage';
 import CreateQuestionPage from './pages/qna/CreateQuestionPage';
 import QuestionDetailsPage from './pages/qna/QuestionDetailsPage';
@@ -73,8 +74,9 @@ function App() {
 
             {/* User Profile and Tutor Listings */}
             <Route path="/profile" element={<Profile />} />
-            <Route path="/tutors/:tutorId" element={<TutorProfile />} />
-            <Route path="/students/:studentId" element={<StudentProfilePage />} />
+            <Route path="/profile/:username" element={<UserProfile />} />
+            {/* <Route path="/tutors/:tutorId" element={<TutorProfile />} /> */}
+            {/* <Route path="/students/:studentId" element={<StudentProfilePage />} /> */}
             <Route path="/buy-points" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
 

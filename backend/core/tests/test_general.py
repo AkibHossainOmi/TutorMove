@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from django.contrib.auth import get_user_model
-from .models import Gig, Credit, Job, Application, Message
+from core.models import Gig, Credit, Job, Application, Message
 from django.utils import timezone
 
 class UserTests(APITestCase):
@@ -22,6 +22,19 @@ class UserTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(get_user_model().objects.count(), 1)
         self.assertEqual(get_user_model().objects.get().username, 'testuser')
+
+    def test_public_user_profile(self):
+        user = get_user_model().objects.create_user(
+            username='testprofile',
+            password='testpass123',
+            user_type='tutor',
+            bio='My bio'
+        )
+        url = reverse('public-profile', kwargs={'username': 'testprofile'})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['username'], 'testprofile')
+        self.assertEqual(response.data['bio'], 'My bio')
 
 class GigTests(APITestCase):
     def setUp(self):

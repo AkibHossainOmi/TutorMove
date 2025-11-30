@@ -74,7 +74,7 @@ const JobCard = ({ job }) => {
 
       <div className="mb-5 text-sm text-gray-600">
         <p className="mb-1">
-          Posted by: <span className="font-medium">{job.student?.username || 'Anonymous Student'}</span>
+          Posted by: <Link to={`/profile/${job.student?.username}`} className="font-medium hover:text-indigo-600 transition-colors">{job.student?.username || 'Anonymous Student'}</Link>
         </p>
         <div className="flex items-center">
           <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

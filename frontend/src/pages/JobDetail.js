@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import BuyCreditsModal from '../components/BuyCreditsModal';
@@ -309,10 +309,10 @@ const JobDetail = () => {
               </div>
               
               <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
-                <span className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full">
+                <Link to={`/profile/${job.student.username}`} className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full hover:bg-gray-100 hover:shadow-sm transition-all text-gray-700 font-medium">
                   <FiUser className="text-gray-400" /> 
                   {job.student.username}
-                </span>
+                </Link>
                 <span className="flex items-center gap-1.5 bg-gray-50 px-3 py-1 rounded-full">
                   <FiMapPin className="text-gray-400" /> 
                   {job.location || 'Remote'}
