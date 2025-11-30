@@ -225,7 +225,7 @@ const TutorMapSearch = () => {
                   </div>
 
                   <Link
-                    to={`/tutors/${tutor.id}`}
+                    to={`/profile/${tutor.username}`}
                     className="inline-block text-xs font-semibold text-indigo-600 hover:text-indigo-800"
                   >
                     View Profile →

@@ -210,6 +210,7 @@ export const subjectApi = {
 };
 
 export const userApi = {
+  getPublicProfile: (username) => apiService.get(`/api/profile/${username}/`),
   getUser: () => apiService.get('/api/users/me/'),
   editProfile: (profileData) => apiService.post('/api/users/edit_profile/', profileData),
   uploadDp: (file) => {

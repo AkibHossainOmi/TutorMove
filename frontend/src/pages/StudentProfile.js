@@ -6,18 +6,25 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { FaMapMarkerAlt, FaPhoneAlt } from "react-icons/fa";
 import { studentAPI } from "../utils/apiService";
 
-export default function StudentProfilePage() {
+export default function StudentProfilePage({ initialData }) {
   const { studentId } = useParams();
-  const [student, setStudent] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (initialData) {
+        setProfile(initialData);
+        setLoading(false);
+        return;
+    }
+    if (!studentId) return;
+
     async function fetchStudent() {
       try {
         setLoading(true);
         const res = await studentAPI.getStudentProfile(studentId);
-        setStudent(res.data);
+        setProfile(res.data);
       } catch (err) {
         setError(err.message || "Failed to load student data.");
       } finally {
@@ -25,11 +32,11 @@ export default function StudentProfilePage() {
       }
     }
     fetchStudent();
-  }, [studentId]);
+  }, [studentId, initialData]);
 
   if (loading) return <div className="p-6 text-center"><LoadingSpinner /></div>;
   if (error) return <div className="p-6 text-center text-red-600 font-semibold">{error}</div>;
-  if (!student) return null;
+  if (!profile) return null;
 
   return (
     <>
@@ -39,11 +46,11 @@ export default function StudentProfilePage() {
           <div className="bg-white rounded-xl shadow-md p-6">
             <div className="flex items-center gap-4 mb-6">
               <div className="w-20 h-20 rounded-full bg-indigo-600 text-white text-3xl font-bold flex items-center justify-center">
-                {student.username?.charAt(0).toUpperCase() || "S"}
+                {profile.username?.charAt(0).toUpperCase() || "S"}
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{student.username}</h1>
-                <p className="text-gray-600">{student.location || "Location not specified"}</p>
+                <h1 className="text-2xl font-bold text-gray-900">{profile.username}</h1>
+                <p className="text-gray-600">{profile.location || "Location not specified"}</p>
               </div>
             </div>
 
@@ -51,17 +58,17 @@ export default function StudentProfilePage() {
               {[
                 {
                   label: "WhatsApp Number",
-                  value: student.phone_number || "Not provided",
+                  value: profile.phone_number || "Not provided",
                   icon: <FaPhoneAlt className="text-gray-500" />,
                 },
                 {
                   label: "Location",
-                  value: student.location || "Not provided",
+                  value: profile.location || "Not provided",
                   icon: <FaMapMarkerAlt className="text-gray-500" />,
                 },
                 {
                   label: "Bio",
-                  value: student.bio || "No bio available.",
+                  value: profile.bio || "No bio available.",
                   icon: null,
                 },
               ].map(({ label, value, icon }) => (
