@@ -42,7 +42,7 @@ const AdminDashboard = () => {
           columns={[
              { header: 'User', render: u => <div><div className="font-bold">{u.username}</div><div className="text-xs text-gray-500">{u.email}</div></div> },
              { header: 'Role', accessor: 'user_type' },
-             { header: 'Credits', accessor: 'credit_balance' },
+             { header: 'Credits', render: u => ['admin', 'moderator'].includes(u.user_type) ? 'N/A' : u.credit_balance },
              { header: 'Status', render: u => <span className={`px-2 py-0.5 rounded-full text-xs ${u.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100'}`}>{u.is_active ? 'Active' : 'Blocked'}</span> }
           ]}
           formFields={[
@@ -51,7 +51,7 @@ const AdminDashboard = () => {
              { name: 'first_name', label: 'First Name' },
              { name: 'last_name', label: 'Last Name' },
              { name: 'user_type', label: 'Role', type: 'select', options: [{value: 'student', label: 'Student'}, {value: 'tutor', label: 'Tutor'}, {value: 'admin', label: 'Admin'}, {value: 'moderator', label: 'Moderator'}], required: true },
-             { name: 'credit_balance', label: 'Credit Balance', type: 'number', required: true },
+             { name: 'credit_balance', label: 'Credit Balance (Student/Tutor only)', type: 'number', required: true },
              { name: 'is_active', label: 'Active Account', type: 'checkbox' },
              { name: 'password', label: 'Password (Leave blank to keep current)', type: 'password' }
           ]}
@@ -79,13 +79,15 @@ const AdminDashboard = () => {
              { header: 'Title', accessor: 'title' },
              { header: 'Tutor', accessor: 'tutor' },
              { header: 'Subject', accessor: 'subject' },
+             { header: 'Status', render: g => <span className={`px-2 py-0.5 rounded-full text-xs ${g.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100'}`}>{g.is_active ? 'Active' : 'Inactive'}</span> }
           ]}
           formFields={[
              { name: 'title', label: 'Title', required: true },
-             { name: 'tutor_id', label: 'Tutor ID', type: 'number', required: true },
+             { name: 'tutor_id', label: 'Tutor', type: 'user-search', required: true },
              { name: 'subject', label: 'Subject Name', required: true },
              { name: 'description', label: 'Description', type: 'textarea' },
              { name: 'fee_details', label: 'Fee Details' },
+             { name: 'is_active', label: 'Is Active', type: 'checkbox' },
           ]}
         />;
       case 'jobs':
@@ -103,7 +105,7 @@ const AdminDashboard = () => {
              { name: 'title', label: 'Title (Optional)' },
              { name: 'description', label: 'Description', type: 'textarea', required: true },
              { name: 'subjects', label: 'Subjects (comma separated)', required: true },
-             { name: 'student_id', label: 'Student ID', type: 'number', required: true },
+             { name: 'student_id', label: 'Student', type: 'user-search', required: true },
              { name: 'service_type', label: 'Service Type', type: 'select', options: [{value: 'Tutoring', label: 'Tutoring'}, {value: 'Assignment Help', label: 'Assignment Help'}] },
              { name: 'status', label: 'Status', type: 'select', options: [{value: 'Open', label: 'Open'}, {value: 'Assigned', label: 'Assigned'}, {value: 'Completed', label: 'Completed'}, {value: 'Cancelled', label: 'Cancelled'}] },
              { name: 'budget', label: 'Budget', type: 'number' },
@@ -121,7 +123,7 @@ const AdminDashboard = () => {
           formFields={[
              { name: 'title', label: 'Title', required: true },
              { name: 'content', label: 'Content', type: 'textarea', required: true },
-             { name: 'student_id', label: 'Student ID', type: 'number', required: true },
+             { name: 'student_id', label: 'Student', type: 'user-search', required: true },
           ]}
         />;
        case 'reports':
