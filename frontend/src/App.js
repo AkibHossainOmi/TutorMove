@@ -75,8 +75,8 @@ function App() {
             {/* User Profile and Tutor Listings */}
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/:username" element={<UserProfile />} />
-            {/* <Route path="/tutors/:tutorId" element={<TutorProfile />} /> */}
-            {/* <Route path="/students/:studentId" element={<StudentProfilePage />} /> */}
+            <Route path="/tutors/:tutorId" element={<TutorProfile />} />
+            <Route path="/students/:studentId" element={<StudentProfilePage />} />
             <Route path="/buy-points" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
 
