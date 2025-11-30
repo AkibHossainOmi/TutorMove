@@ -13,6 +13,7 @@ import Messages from './pages/Messages';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsOfService from './pages/TermsOfService';
 import GigDetails from './pages/GigDetails';
+import ReferralHandler from './components/ReferralHandler';
 
 // Payment status components
 import PaymentSuccess from './pages/PaymentSuccess';
@@ -61,6 +62,7 @@ function App() {
             <Route path="/terms" element={<TermsOfService />} />
             <Route path="/tutors" element={<TutorList />} />
             <Route path="/jobs" element={<JobList />} />
+            <Route path="/refer/:username" element={<ReferralHandler />} />
             {/* Fallback for unmatched public routes, redirects to Home */}
             <Route path="*" element={<Navigate to="/" replace />} />
 

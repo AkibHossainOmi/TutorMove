@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import BuyCreditsModal from './BuyCreditsModal';
 import { contactUnlockAPI } from '../utils/apiService';
 import ProfileImageWithBg from './ProfileImageWithBg';
+import StarRating from './StarRating';
 
 const TutorCard = ({ tutor, featured = false }) => {
   const [contactInfo, setContactInfo] = useState({ phone: '', email: '' });
@@ -123,6 +124,11 @@ const TutorCard = ({ tutor, featured = false }) => {
                 </span>
               )}
             </div>
+          </div>
+
+          {/* Rating Display */}
+          <div className="mb-3">
+             <StarRating rating={tutor.average_rating || 0} count={tutor.review_count || 0} />
           </div>
 
           <p className="text-gray-600 text-sm line-clamp-2 mb-4">

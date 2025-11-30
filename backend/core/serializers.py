@@ -27,7 +27,8 @@ class TeacherProfileSerializer(serializers.ModelSerializer):
             'id', 'username', 'email', 'phone_number',
             'user_type', 'bio', 'education', 'experience',
             'location', 'profile_picture', 'trust_score', 'is_verified',
-            'subjects', 'gigs', 'reviews', 'bio', 'education', 'experience', 'location'
+            'subjects', 'gigs', 'reviews', 'bio', 'education', 'experience', 'location',
+            'average_rating', 'review_count'
         ]
 
     def get_gigs(self, obj):
@@ -67,6 +68,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = '__all__'
+        extra_fields = ['average_rating', 'review_count']
 
     def get_unlocked(self, obj):
         request = self.context.get("request")

@@ -6,6 +6,7 @@ import { tutorAPI } from "../utils/apiService";
 import LoadingSpinner from "../components/LoadingSpinner";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
 import GiftCoinModal from "../components/GiftCoinModal";
+import StarRating from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
 import { pointsAPI } from "../utils/apiService";
 
@@ -103,6 +104,11 @@ export default function TutorProfilePage() {
                       Gift
                     </button>
                   )}
+                </div>
+
+                {/* Rating */}
+                <div className="mb-4 flex justify-center sm:justify-start">
+                   <StarRating rating={profile.average_rating || 0} count={profile.review_count || 0} />
                 </div>
 
                 <p className="text-gray-500 flex items-center justify-center sm:justify-start gap-1 mb-4">

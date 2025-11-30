@@ -1393,6 +1393,9 @@ class JobViewSet(viewsets.ModelViewSet):
             comment=comment
         )
 
+        # Update tutor stats
+        update_trust_score(job.assigned_tutor)
+
         serializer = ReviewSerializer(review)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
@@ -1576,7 +1579,7 @@ class UserSettingsViewSet(viewsets.ModelViewSet):
         return Response({'status': 'privacy settings updated'})
 
 # --- ReviewViewSet (with trust_score update hook) ---
-from core.utils import schedule_job_emails, schedule_premium_expiry, update_trust_score
+from core.utils import schedule_job_emails, schedule_premium_expiry, update_trust_score, process_referral_bonus
 class ReviewViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = ReviewSerializer
@@ -1590,7 +1593,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         review = serializer.save(student=request.user)
-        update_trust_score(review.teacher)
+        update_trust_score(review.tutor)  # Review model uses 'tutor' field for teacher
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 # --- PremiumViewSet ---
@@ -1896,6 +1899,10 @@ def payment_success_view(request):
                 credit_obj.balance += credits_amount
                 credit_obj.save()
 
+                # --- Referral Bonus Logic ---
+                process_referral_bonus(user, credits_amount)
+                # ----------------------------
+
             elif payment_type == 'premium':
                 now = timezone.now()
                 if not user.premium_expires or user.premium_expires < now:
@@ -2079,6 +2086,11 @@ def sslcommerz_ipn(request):
                     credit_obj, _ = Credit.objects.get_or_create(user=user)
                     credit_obj.balance += credits_to_add
                     credit_obj.save()
+
+                    # --- Referral Bonus Logic (IPN) ---
+                    process_referral_bonus(user, credits_to_add)
+                    # ----------------------------------
+
                     Notification.objects.create(
                         user=user,
                         message=f"💰 Your purchase of {credits_to_add} points was confirmed (IPN)! Your new balance is {credit_obj.balance}."

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
 import LoadingSpinner from '../components/LoadingSpinner';
+import StarRating from '../components/StarRating';
 
 const GigDetails = ({ gig: initialGig }) => {
   // If navigating via router: get :id from URL
@@ -54,6 +55,12 @@ const GigDetails = ({ gig: initialGig }) => {
       <div style={{ color: '#007bff', marginBottom: 14 }}>
         Posted by: {gig.teacher?.username || 'Tutor'}
       </div>
+      {/* Rating Display */}
+      {gig.teacher && (
+        <div style={{ marginBottom: 14 }}>
+           <StarRating rating={gig.teacher.average_rating || 0} count={gig.teacher.review_count || 0} />
+        </div>
+      )}
       <p style={{ marginBottom: 18, color: '#495057' }}>{gig.description}</p>
       <div style={{ marginBottom: 10 }}>
         <strong>Subjects:</strong> {gig.subject}
