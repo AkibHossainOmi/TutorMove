@@ -7,7 +7,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import (
     ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
-    Order, Payment, JobUnlock, Question, Answer, CoinGift,
+    Order, Payment, JobUnlock, Question, Answer, CoinGift, Coupon,
 )
 
 User = get_user_model()
@@ -533,3 +533,8 @@ class CoinGiftSerializer(serializers.ModelSerializer):
         model = CoinGift
         fields = ['id', 'sender', 'recipient', 'amount', 'timestamp']
         read_only_fields = ['id', 'sender', 'timestamp']
+
+class CouponSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = '__all__'

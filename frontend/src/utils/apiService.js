@@ -236,6 +236,7 @@ export const creditAPI = {
   withdrawEarnings: (data) => apiService.post('/api/credit/withdraw/', data),
   getPendingPayments: () => apiService.get('/api/credit/pending-payments/'),
   purchaseCredits: (purchaseData) => apiService.post('/api/credits/purchase/', purchaseData),
+  validateCoupon: (code) => apiService.post('/api/credits/validate_coupon/', { code }),
 };
 
 // Review API calls

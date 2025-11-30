@@ -43,7 +43,7 @@ from core.modules.auth import ( SendOTPView, ResetPasswordView,
 from urllib.parse import urlencode
 from .models import (
     CountryGroup, CountryGroupPoint, UnlockPricingTier, User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, ContactUnlock, JobUnlock, Question, Answer, CoinGift,
+    Order, Payment, ContactUnlock, JobUnlock, Question, Answer, CoinGift, Coupon,
 )
 from .serializers import (
     ContactUnlockSerializer, UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
@@ -772,6 +772,21 @@ class CreditViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(credit)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def validate_coupon(self, request):
+        code = request.data.get('code')
+        try:
+            coupon = Coupon.objects.get(code=code, active=True)
+            if not coupon.is_valid():
+                return Response({'error': 'Coupon is expired or invalid'}, status=400)
+            return Response({
+                'code': coupon.code,
+                'discount_percentage': coupon.discount_percentage,
+                'valid': True
+            })
+        except Coupon.DoesNotExist:
+            return Response({'error': 'Invalid coupon code'}, status=404)
+
     # Secure purchase endpoint: only authenticated users
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def purchase(self, request):
@@ -786,6 +801,20 @@ class CreditViewSet(viewsets.ModelViewSet):
 
         if credits_to_add <= 0 or amount <= 0:
             return Response({'error': 'Points and amount must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+
+        coupon_code = request.data.get('coupon_code')
+        if coupon_code:
+            try:
+                coupon = Coupon.objects.get(code=coupon_code, active=True)
+                if coupon.is_valid():
+                    discount = (amount * Decimal(coupon.discount_percentage)) / 100
+                    amount -= discount
+                    if amount < 0:
+                        amount = Decimal(0)
+                else:
+                    return Response({'error': 'Coupon is invalid or expired'}, status=400)
+            except Coupon.DoesNotExist:
+                return Response({'error': 'Invalid coupon code'}, status=400)
 
         user = request.user
         order = Order.objects.create(user=user, total_amount=amount, is_paid=False)

@@ -6,12 +6,13 @@ from django.db.models import Sum, Count, Q
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import (
     User, Job, Payment, AbuseReport, Subject, Gig, PointPackage,
-    UnlockPricingTier, CountryGroup, Question
+    UnlockPricingTier, CountryGroup, Question, Coupon
 )
 from .serializers import (
     UserSerializer, JobSerializer, PaymentSerializer, AbuseReportSerializer,
     SubjectSerializer, GigSerializer, PointPackageSerializer,
-    UnlockPricingTierSerializer, CountryGroupSerializer, QuestionSerializer
+    UnlockPricingTierSerializer, CountryGroupSerializer, QuestionSerializer,
+    CouponSerializer
 )
 
 class AdminUserSerializer(UserSerializer):
@@ -242,6 +243,19 @@ class AdminCountryGroupViewSet(viewsets.ModelViewSet):
     queryset = CountryGroup.objects.all()
     serializer_class = CountryGroupSerializer
     permission_classes = [permissions.IsAdminUser]
+
+class AdminCouponViewSet(viewsets.ModelViewSet):
+    queryset = Coupon.objects.all().order_by('-created_at')
+    serializer_class = CouponSerializer
+    permission_classes = [permissions.IsAdminUser]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['code']
+
+    @action(detail=False, methods=['get'])
+    def stats(self, request):
+        total = Coupon.objects.count()
+        active = Coupon.objects.filter(active=True).count()
+        return Response({"total": total, "active": active})
 
 class AdminPaymentViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Payment.objects.all().order_by('-payment_date')
