@@ -210,6 +210,7 @@ class Gig(models.Model):
 
     fee_details = models.TextField(default='')            # default empty string
     used_credits = models.PositiveIntegerField(default=0)
+    is_active = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 

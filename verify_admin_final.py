@@ -1,87 +1,85 @@
-import asyncio
-import json
-from playwright.async_api import async_playwright
+from playwright.sync_api import sync_playwright
 
-async def run():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context()
-        page = await context.new_page()
+def verify_admin_dashboard():
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True)
+        context = browser.new_context(viewport={'width': 1280, 'height': 800})
 
-        # Mock API responses
-        # 1. User/Auth Mocks
-        await page.route("**/api/users/me/", lambda route: route.fulfill(
+        page = context.new_page()
+
+        # Listen to console logs
+        page.on("console", lambda msg: print(f"Console: {msg.text}"))
+
+        # Mock APIs
+        page.route("**/*api/users/me/", lambda route: route.fulfill(
             status=200,
             content_type="application/json",
-            body=json.dumps({
-                "id": 1,
-                "email": "admin@example.com",
-                "first_name": "Admin",
-                "last_name": "User",
-                "user_type": "admin"
-            })
+            body='{"id": 1, "username": "admin", "email": "admin@example.com", "user_type": "admin"}'
         ))
 
-        # 2. Stats Mocks for Admin Dashboard
-        stats_response = json.dumps({"total": 10, "active": 5, "open": 5, "closed": 5})
+        page.route("**/*api/admin-dashboard/stats/", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"total_users": 100, "active_jobs": 5, "total_revenue": 5000, "pending_reports": 2, "recent_activity": []}'
+        ))
 
-        await page.route("**/api/admin/users/stats/", lambda route: route.fulfill(status=200, body=stats_response))
-        await page.route("**/api/admin/jobs/stats/", lambda route: route.fulfill(status=200, body=stats_response))
-        await page.route("**/api/admin/subjects/stats/", lambda route: route.fulfill(status=200, body=stats_response))
-        await page.route("**/api/admin/gigs/stats/", lambda route: route.fulfill(status=200, body=stats_response))
-        await page.route("**/api/admin/questions/stats/", lambda route: route.fulfill(status=200, body=stats_response))
-        await page.route("**/api/admin/payments/stats/", lambda route: route.fulfill(status=200, body=stats_response))
+        page.route("**/*api/admin/users/", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"results": [{"id": 1, "username": "admin", "email": "admin@example.com", "user_type": "admin", "credit_balance": 5, "is_active": true}, {"id": 2, "username": "student1", "email": "student1@example.com", "user_type": "student", "credit_balance": 10, "is_active": true}]}'
+        ))
 
-        # 3. List Mocks (Empty lists to avoid errors)
-        list_response = json.dumps({"results": [], "count": 0})
-        await page.route("**/api/admin/users/*", lambda route: route.continue_() if "stats" in route.request.url else route.fulfill(status=200, body=list_response))
-        await page.route("**/api/admin/jobs/*", lambda route: route.continue_() if "stats" in route.request.url else route.fulfill(status=200, body=list_response))
-        await page.route("**/api/admin/subjects/*", lambda route: route.continue_() if "stats" in route.request.url else route.fulfill(status=200, body=list_response))
+        page.route("**/*api/admin/gigs/", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"results": [{"id": 1, "title": "Math Tutor", "tutor": "tutor1", "subject": "Math", "is_active": true}, {"id": 2, "title": "Physics Tutor", "tutor": "tutor1", "subject": "Physics", "is_active": false}]}'
+        ))
 
-        # Pre-set LocalStorage
-        # We need to navigate to the domain first to set localStorage for that domain
-        await page.goto("http://localhost:3000/")
+        # Mock user search
+        page.route("**/*api/admin/users/?search=student1", lambda route: route.fulfill(
+            status=200,
+            content_type="application/json",
+            body='{"results": [{"id": 2, "username": "student1", "email": "student1@example.com", "user_type": "student"}]}'
+        ))
 
-        await page.evaluate("""() => {
-            localStorage.setItem('token', 'mock-token');
-            localStorage.setItem('user', JSON.stringify({
-                id: 1,
-                email: 'admin@example.com',
-                user_type: 'admin'
-            }));
-        }""")
+        # Mock delete
+        page.route("**/*api/admin/users/2/", lambda route: route.fulfill(
+             status=204
+        ))
 
-        # Now navigate to dashboard
-        print("Navigating to Dashboard...")
-        await page.goto("http://localhost:3000/dashboard")
+        # Inject token AND user before navigation
+        print("Injecting token and user...")
+        page.goto("http://localhost:3000/login") # Go to a page to set localstorage
+        page.evaluate("localStorage.setItem('token', 'mock_token')")
+        page.evaluate('localStorage.setItem("user", JSON.stringify({"id": 1, "username": "admin", "email": "admin@example.com", "user_type": "admin"}))')
 
-        # Wait for something specific to Admin Dashboard
-        # The tabs are: Users, Subjects, Gigs, Jobs, Questions, Payments
+        print("Navigating to dashboard...")
+        page.goto("http://localhost:3000/dashboard")
+
         try:
-            # Wait for the main container or a specific tab
-            await page.wait_for_selector("text=Overview", timeout=10000)
-            print("Found 'Overview' text - Admin Dashboard Loaded!")
+            # 2. Click Users Tab
+            print("Clicking Users...")
+            page.click("text=Users", timeout=5000)
+            page.wait_for_timeout(1000)
 
-            # Check for stats badges
-            stats = await page.locator("text=Total: 10").count()
-            print(f"Found {stats} stats badges with value 10")
+            # Test Delete Confirmation
+            print("Clicking Delete on student1...")
+            student_row = page.locator("tr", has_text="student1")
+            student_row.locator("button[title='Delete']").click()
 
-            # Check for Tabs
-            tabs = ["Users", "Subjects", "Gigs", "Jobs", "Questions", "Payments"]
-            for tab in tabs:
-                if await page.get_by_text(tab).is_visible():
-                    print(f"Tab '{tab}' is visible")
-                else:
-                    print(f"Tab '{tab}' NOT visible")
+            page.wait_for_timeout(1000)
+            page.screenshot(path="/home/jules/verification/admin_delete_confirm.png")
+            print("Captured Delete Confirmation screenshot")
 
-            print("Verification Successful")
+            # Verify modal text
+            assert page.is_visible("text=Confirm Deletion")
+            assert page.is_visible("text=Are you sure you want to delete this item?")
 
         except Exception as e:
-            print(f"Verification Failed: {e}")
-            await page.screenshot(path="verify_fail.png")
-            print("Screenshot saved to verify_fail.png")
+            print(f"Error: {e}")
+            page.screenshot(path="/home/jules/verification/error_state.png")
 
-        await browser.close()
+        browser.close()
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    verify_admin_dashboard()

@@ -33,6 +33,142 @@ export const Modal = ({ isOpen, onClose, title, children }) => {
   );
 };
 
+export const ConfirmationModal = ({ isOpen, onClose, onConfirm, title, message }) => {
+    if (!isOpen) return null;
+    return (
+        <Modal isOpen={isOpen} onClose={onClose} title={title}>
+            <p className="mb-6">{message}</p>
+            <div className="flex justify-end space-x-3">
+                <button
+                    onClick={onClose}
+                    className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+                >
+                    Cancel
+                </button>
+                <button
+                    onClick={onConfirm}
+                    className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                >
+                    Confirm
+                </button>
+            </div>
+        </Modal>
+    );
+};
+
+export const UserSearchInput = ({ value, onChange, required }) => {
+    const [searchTerm, setSearchTerm] = useState('');
+    const [results, setResults] = useState([]);
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [loading, setLoading] = useState(false);
+    const [displayValue, setDisplayValue] = useState('');
+
+    useEffect(() => {
+        // If initial value (user ID) is provided, fetch user details to display name
+        const fetchInitialUser = async () => {
+            if (value && !selectedUser) {
+                try {
+                     // Optimistically assuming we can search by ID or handle it
+                     // But typically we don't have get_by_id endpoint in admin search exposed easily directly here
+                     // For now, if value is present, we might just show ID until new search
+                     // Or, if we receive an object from initialData, we can use it.
+                     // Since DynamicForm receives formData, if it's an ID, we just show ID.
+                     // Ideally, the backend serializer should return user object or we fetch it.
+                     // Given current setup, let's just show ID if no name available.
+                     setDisplayValue(`User ID: ${value}`);
+
+                     // Try to fetch if possible (optional enhancement)
+                     const res = await apiService.get(`/api/admin/users/?search=${value}`);
+                     const found = res.data.results.find(u => u.id === value);
+                     if (found) {
+                         setSelectedUser(found);
+                         setDisplayValue(`${found.username} (${found.email})`);
+                     }
+                } catch (e) {
+                    // ignore
+                }
+            }
+        };
+        fetchInitialUser();
+    }, [value]);
+
+    useEffect(() => {
+        if (!searchTerm) {
+            setResults([]);
+            return;
+        }
+        const delayDebounceFn = setTimeout(async () => {
+            setLoading(true);
+            try {
+                const res = await apiService.get(`/api/admin/users/?search=${searchTerm}`);
+                setResults(res.data.results);
+            } catch (error) {
+                console.error("Search error", error);
+            } finally {
+                setLoading(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm]);
+
+    const handleSelect = (user) => {
+        setSelectedUser(user);
+        setDisplayValue(`${user.username} (${user.email})`);
+        onChange({ target: { name: 'user_search', value: user.id } }); // Mock event
+        setResults([]);
+        setSearchTerm('');
+    };
+
+    return (
+        <div className="relative">
+             <div className="flex">
+                <input
+                    type="text"
+                    value={displayValue}
+                    readOnly
+                    className="w-full border p-2 rounded-l bg-gray-50 focus:outline-none"
+                    placeholder="Selected User"
+                />
+                <button
+                    type="button"
+                    onClick={() => { setSelectedUser(null); onChange({ target: { value: '' } }); setDisplayValue(''); }}
+                    className="bg-red-100 text-red-600 px-3 rounded-r hover:bg-red-200"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+
+            <div className="mt-2 relative">
+                <input
+                    type="text"
+                    placeholder="Type username or email to search..."
+                    className="w-full border p-2 rounded focus:ring-indigo-500 focus:border-indigo-500"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {loading && <div className="absolute right-3 top-3"><Activity size={16} className="animate-spin text-gray-400"/></div>}
+
+                {results.length > 0 && (
+                    <ul className="absolute z-10 w-full bg-white border rounded shadow-lg max-h-60 overflow-auto mt-1">
+                        {results.map(user => (
+                            <li
+                                key={user.id}
+                                onClick={() => handleSelect(user)}
+                                className="p-2 hover:bg-indigo-50 cursor-pointer border-b last:border-0"
+                            >
+                                <div className="font-medium">{user.username}</div>
+                                <div className="text-xs text-gray-500">{user.email} - {user.user_type}</div>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+            </div>
+            {required && !value && <span className="text-xs text-red-500 mt-1">Selection required</span>}
+        </div>
+    );
+};
+
 export const DynamicForm = ({ fields, initialData = {}, onSubmit, onCancel }) => {
   const [formData, setFormData] = useState(initialData);
 
@@ -46,6 +182,13 @@ export const DynamicForm = ({ fields, initialData = {}, onSubmit, onCancel }) =>
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleUserSearchChange = (name, val) => {
+       setFormData(prev => ({
+          ...prev,
+          [name]: val
+       }));
   };
 
   return (
@@ -85,6 +228,12 @@ export const DynamicForm = ({ fields, initialData = {}, onSubmit, onCancel }) =>
               onChange={handleChange}
               className="h-4 w-4 text-indigo-600 border-gray-300 rounded"
             />
+          ) : field.type === 'user-search' ? (
+              <UserSearchInput
+                value={formData[field.name]}
+                onChange={(e) => handleUserSearchChange(field.name, e.target.value)}
+                required={field.required}
+              />
           ) : (
             <input
               type={field.type || 'text'}
@@ -167,14 +316,22 @@ export const ResourceManager = ({
     fetchAll();
   }, [resourceName]); // Reload when resource changes
 
-  const handleDelete = async (id) => {
-    if (!canDelete) return;
-    if (!window.confirm("Delete this item?")) return;
+  const [deleteConfirmation, setDeleteConfirmation] = useState({ isOpen: false, id: null });
+
+  const confirmDelete = (id) => {
+      setDeleteConfirmation({ isOpen: true, id });
+  };
+
+  const handleDelete = async () => {
+    if (!canDelete || !deleteConfirmation.id) return;
+
     try {
-      await apiService.delete(`${getApiUrl(apiEndpoint)}${id}/`);
+      await apiService.delete(`${getApiUrl(apiEndpoint)}${deleteConfirmation.id}/`);
+      setDeleteConfirmation({ isOpen: false, id: null });
       fetchAll();
     } catch (error) {
       alert("Delete failed");
+      setDeleteConfirmation({ isOpen: false, id: null });
     }
   };
 
@@ -319,6 +476,14 @@ export const ResourceManager = ({
           onCancel={() => setIsModalOpen(false)}
         />
       </Modal>
+
+      <ConfirmationModal
+        isOpen={deleteConfirmation.isOpen}
+        onClose={() => setDeleteConfirmation({ isOpen: false, id: null })}
+        onConfirm={handleDelete}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this item? This action cannot be undone."
+      />
     </div>
   );
 };
