@@ -10,10 +10,10 @@ import StarRating from "../components/StarRating";
 import { useAuth } from "../contexts/AuthContext";
 import { pointsAPI } from "../utils/apiService";
 
-export default function TutorProfilePage() {
+export default function TutorProfilePage({ initialData }) {
   const { tutorId } = useParams();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [profile, setProfile] = useState(initialData || null);
+  const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState(null);
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
   const [userCreditBalance, setUserCreditBalance] = useState(0);
@@ -21,6 +21,14 @@ export default function TutorProfilePage() {
   const { user } = useAuth();
 
   useEffect(() => {
+    if (initialData) {
+      setProfile(initialData);
+      setLoading(false);
+      return;
+    }
+
+    if (!tutorId) return;
+
     async function fetchData() {
       try {
         setLoading(true);
@@ -33,7 +41,7 @@ export default function TutorProfilePage() {
       }
     }
     fetchData();
-  }, [tutorId]);
+  }, [tutorId, initialData]);
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center min-h-[50vh]">
@@ -253,7 +261,7 @@ export default function TutorProfilePage() {
       <GiftCoinModal
         isOpen={isGiftModalOpen}
         onClose={() => setIsGiftModalOpen(false)}
-        tutorId={tutorId}
+        tutorId={profile?.id}
         tutorName={profile.username}
         currentBalance={userCreditBalance}
       />

@@ -53,7 +53,7 @@ const GigDetails = ({ gig: initialGig }) => {
     }}>
       <h2 style={{ marginBottom: 8, color: '#212529' }}>{gig.title}</h2>
       <div style={{ color: '#007bff', marginBottom: 14 }}>
-        Posted by: {gig.teacher?.username || 'Tutor'}
+        Posted by: <a href={`/profile/${gig.teacher?.username}`} style={{ color: '#007bff', textDecoration: 'none' }}>{gig.teacher?.username || 'Tutor'}</a>
       </div>
       {/* Rating Display */}
       {gig.teacher && (

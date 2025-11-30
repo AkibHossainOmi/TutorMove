@@ -118,7 +118,9 @@ const JobApplicants = ({ jobId, job }) => {
           <li key={tutor.id} className="flex flex-col p-4 bg-gray-50 rounded-lg border border-gray-200">
             <div className="flex items-center gap-3 mb-2">
               <FiUser className="text-2xl text-blue-900" />
-              <p className="font-medium text-slate-800">{tutor.username}</p>
+              <a href={`/profile/${tutor.username}`} className="font-medium text-slate-800 hover:text-blue-600 hover:underline">
+                {tutor.username}
+              </a>
             </div>
 
             {currentUser?.user_type === 'student' && !tutor.chosen && job?.status === 'Open' && (

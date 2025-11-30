@@ -14,6 +14,7 @@ from .views import (
     QuestionViewSet, AnswerViewSet,
     AdminDashboardStatsView,
     CoinGiftViewSet,
+    PublicUserProfileView,
 )
 from .views_admin import (
     AdminUserViewSet, AdminJobViewSet, AdminPaymentViewSet,
@@ -73,6 +74,7 @@ urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/token/', CookieTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('auth/token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
+    path('profile/<str:username>/', PublicUserProfileView.as_view(), name='public-profile'),
     # path('profile/', UserProfileView.as_view(), name='user-profile'),
     # path('profile/edit/', UserProfileUpdateByIdView.as_view(), name='user-profile-edit'),
     # path('credit/update/', CreditUpdateByUserPostView.as_view(), name='credit-update-by-user'),

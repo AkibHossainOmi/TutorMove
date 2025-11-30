@@ -2539,3 +2539,19 @@ class CoinGiftViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(gift)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class PublicUserProfileView(generics.RetrieveAPIView):
+    """
+    Retrieves a user's public profile by username.
+    Publicly accessible.
+    """
+    permission_classes = [AllowAny]
+    serializer_class = UserSerializer
+    lookup_field = 'username'
+    queryset = User.objects.all()
+
+    def retrieve(self, request, *args, **kwargs):
+        username = kwargs.get('username')
+        user = get_object_or_404(User, username=username)
+        serializer = self.get_serializer(user, context={'request': request})
+        return Response(serializer.data)

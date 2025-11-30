@@ -154,7 +154,7 @@ const QuestionDetailsPage = () => {
               <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm">
                 <div className="flex items-center gap-2">
                   <span className="text-gray-500">Asked by</span>
-                  <span className="font-semibold text-indigo-600">{question.student?.username}</span>
+                  <a href={`/profile/${question.student?.username}`} className="font-semibold text-indigo-600 hover:underline">{question.student?.username}</a>
                 </div>
                 <span className="text-gray-400">
                   {new Date(question.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -208,10 +208,10 @@ const QuestionDetailsPage = () => {
                   </div>
                   <div className="flex justify-between items-center mt-4">
                       <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs">
+                        <a href={`/profile/${answer.tutor?.username}`} className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs hover:bg-green-200 transition">
                           {answer.tutor?.username?.[0]?.toUpperCase() || 'T'}
-                        </div>
-                        <span className="font-medium text-gray-900">{answer.tutor?.username}</span>
+                        </a>
+                        <a href={`/profile/${answer.tutor?.username}`} className="font-medium text-gray-900 hover:text-indigo-600 hover:underline">{answer.tutor?.username}</a>
                         <span>•</span>
                         <span>{new Date(answer.created_at).toLocaleDateString()}</span>
                       </div>

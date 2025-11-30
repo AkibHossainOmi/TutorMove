@@ -162,14 +162,14 @@ const TutorCard = ({ tutor, featured = false }) => {
         <div className="flex flex-col gap-3 min-w-[200px] border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 justify-center">
             {currentUserType === 'student' ? (
               <Link
-                to={`/tutors/${tutor.id}`}
+                to={`/profile/${tutor.username}`}
                 className="w-full text-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition shadow-sm hover:shadow"
               >
                 View Profile
               </Link>
             ) : (
                <Link
-                to={`/tutors/${tutor.id}`}
+                to={`/profile/${tutor.username}`}
                  className="w-full text-center px-4 py-2.5 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50 text-sm font-semibold hover:bg-indigo-100 transition"
                >
                  View Profile
