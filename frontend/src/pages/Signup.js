@@ -1,12 +1,13 @@
 // src/pages/Signup.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { authAPI } from "../utils/apiService";
 
 const Signup = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [form, setForm] = useState({
     first_name: "",
     last_name: "",
@@ -16,7 +17,17 @@ const Signup = () => {
     confirm_password: "",
     user_type: "student",
     phone_number: "", // Added phone_number initial state
+    referrer_username: "",
   });
+
+  useEffect(() => {
+    if (location.state?.referrer_username) {
+      setForm((prev) => ({
+        ...prev,
+        referrer_username: location.state.referrer_username,
+      }));
+    }
+  }, [location.state]);
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
