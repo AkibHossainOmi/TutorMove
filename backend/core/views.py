@@ -346,17 +346,26 @@ class UserViewSet(viewsets.ModelViewSet):
     @method_decorator(csrf_exempt)
     @action(detail=False, methods=['post'], permission_classes=[])
     def register(self, request):
-        user_type = request.data.get('user_type')
-        if user_type not in ['student', 'teacher']:
+        data = request.data.copy()
+        user_type = data.get('user_type')
+
+        # Map 'teacher' to 'tutor' to match model choices
+        if user_type == 'teacher':
+            user_type = 'tutor'
+            data['user_type'] = 'tutor'
+
+        if user_type not in ['student', 'tutor']:
             # Prevent 'admin' or 'moderator' signups via public API
             return Response({'error': 'Invalid user type'}, status=status.HTTP_400_BAD_REQUEST)
-        serializer = self.get_serializer(data=request.data)
+
+        serializer = self.get_serializer(data=data)
         if serializer.is_valid():
             user = serializer.save(user_type=user_type)
             UserSettings.objects.create(user=user)
             Credit.objects.create(user=user, balance=100)
             Notification.objects.create(
-                user=user,
+                to_user=user,
+                from_user=user,
                 message="🎉 Welcome! You have received 100 free points to get started."
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -424,9 +433,9 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
     def become_teacher(self, request):
         user = request.user
-        if user.user_type == 'teacher':
+        if user.user_type == 'tutor':
             return Response({'detail': 'Already a teacher.'}, status=400)
-        user.user_type = 'teacher'
+        user.user_type = 'tutor'
         user.save(update_fields=['user_type'])
         user.verification_requested = True
         user.save(update_fields=['verification_requested'])
