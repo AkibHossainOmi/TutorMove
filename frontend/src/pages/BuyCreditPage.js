@@ -99,7 +99,17 @@ const PlanCard = ({
 );
 
 // --- Sticky Selected Package Sidebar ---
-const SelectedPackageSidebar = ({ pkg, isLoading, onProceed, isPremium }) => {
+const SelectedPackageSidebar = ({
+  pkg,
+  isLoading,
+  onProceed,
+  isPremium,
+  couponCode,
+  setCouponCode,
+  onApplyCoupon,
+  couponError,
+  couponApplied
+}) => {
   if (!pkg) {
     return (
       <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-dashed border-gray-300 sticky top-24">
@@ -158,12 +168,57 @@ const SelectedPackageSidebar = ({ pkg, isLoading, onProceed, isPremium }) => {
           </div>
         </div>
 
+        {/* Coupon Section */}
+        <div className="border-t border-gray-200 pt-4">
+          <p className="text-sm font-semibold text-gray-700 mb-2">Have a coupon?</p>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Enter code"
+              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={couponCode}
+              onChange={(e) => setCouponCode(e.target.value)}
+              disabled={!!couponApplied}
+            />
+            {couponApplied ? (
+               <button
+                onClick={() => { setCouponCode(''); onApplyCoupon(null); }}
+                className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-red-100"
+              >
+                Remove
+              </button>
+            ) : (
+              <button
+                onClick={() => onApplyCoupon(couponCode)}
+                className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-900"
+              >
+                Apply
+              </button>
+            )}
+          </div>
+          {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
+          {couponApplied && (
+            <p className="text-green-600 text-xs mt-1 font-semibold">
+              Coupon applied: {couponApplied.discount_percentage}% off!
+            </p>
+          )}
+        </div>
+
         {/* Price */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mt-4">
           <div className="flex justify-between items-center">
             <span className="text-gray-700 font-semibold">Total Price</span>
             <div className="text-right">
-              <p className="text-2xl font-extrabold text-gray-900">৳{pkg.priceBDT}</p>
+              {couponApplied ? (
+                <>
+                  <p className="text-sm text-gray-400 line-through">৳{pkg.priceBDT}</p>
+                  <p className="text-2xl font-extrabold text-green-600">
+                    ৳{Math.round(pkg.priceBDT * (1 - couponApplied.discount_percentage / 100))}
+                  </p>
+                </>
+              ) : (
+                <p className="text-2xl font-extrabold text-gray-900">৳{pkg.priceBDT}</p>
+              )}
               <p className="text-sm text-gray-600">${pkg.priceUSD} USD</p>
             </div>
           </div>
@@ -257,6 +312,11 @@ const BuyPointsAndPremiumPage = () => {
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState(null);
 
+  // Coupon State
+  const [couponCode, setCouponCode] = useState("");
+  const [couponApplied, setCouponApplied] = useState(null);
+  const [couponError, setCouponError] = useState("");
+
   const PREMIUM_PRICE = 500;
 
   // Point packages with more attractive pricing structure
@@ -310,6 +370,26 @@ const BuyPointsAndPremiumPage = () => {
     }
   };
 
+  const handleApplyCoupon = async (code) => {
+    if (code === null) {
+      setCouponApplied(null);
+      setCouponError("");
+      return;
+    }
+    if (!code) {
+      setCouponError("Please enter a code");
+      return;
+    }
+    try {
+      const res = await creditAPI.validateCoupon(code);
+      setCouponApplied(res.data);
+      setCouponError("");
+    } catch (err) {
+      setCouponError(err.response?.data?.error || "Invalid coupon");
+      setCouponApplied(null);
+    }
+  };
+
   // Purchase Points
   const handlePurchasePoints = async () => {
     if (!selectedPackage) {
@@ -319,10 +399,14 @@ const BuyPointsAndPremiumPage = () => {
     setIsLoading(true);
     setError(null);
     try {
+      // Send the original amount, backend will handle the discount
+      const amount = selectedPackage.priceBDT;
+
       const res = await creditAPI.purchaseCredits({
         points: selectedPackage.points,
-        amount: selectedPackage.priceBDT,
+        amount: amount,
         user_id: currentUser?.id,
+        coupon_code: couponApplied ? couponApplied.code : null
       });
       if (res.data.payment_url) {
         window.location.href = res.data.payment_url;
@@ -490,6 +574,11 @@ const BuyPointsAndPremiumPage = () => {
                 isLoading={isLoading}
                 onProceed={handlePurchasePoints}
                 isPremium={isPremium}
+                couponCode={couponCode}
+                setCouponCode={setCouponCode}
+                onApplyCoupon={handleApplyCoupon}
+                couponError={couponError}
+                couponApplied={couponApplied}
               />
             </div>
           </div>

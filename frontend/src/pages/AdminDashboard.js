@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/Navbar';
 import {
   Users, Briefcase, DollarSign, Activity, Shield,
-  FileText, AlertTriangle, Flag, BookOpen
+  FileText, AlertTriangle, Flag, BookOpen, Tag
 } from 'lucide-react';
 import { ResourceManager, OverviewStats } from '../components/DashboardComponents';
 
@@ -30,6 +30,7 @@ const AdminDashboard = () => {
     { id: 'questions', label: 'Questions', icon: AlertTriangle },
     { id: 'reports', label: 'Reports', icon: Flag },
     { id: 'payments', label: 'Payments', icon: DollarSign },
+    { id: 'coupons', label: 'Coupons', icon: Tag },
   ];
 
   const renderTabContent = () => {
@@ -149,6 +150,25 @@ const AdminDashboard = () => {
              { header: 'Status', accessor: 'status' },
           ]}
           formFields={[]} // Read-only typically
+        />;
+      case 'coupons':
+        return <ResourceManager
+          resourceName="Coupon"
+          apiEndpoint="/api/admin/coupons/"
+          columns={[
+             { header: 'Code', accessor: 'code' },
+             { header: 'Discount (%)', accessor: 'discount_percentage' },
+             { header: 'Active', render: c => c.active ? <span className="text-green-600 font-bold">Yes</span> : <span className="text-red-600">No</span> },
+             { header: 'Valid From', render: c => c.valid_from ? new Date(c.valid_from).toLocaleDateString() : 'N/A' },
+             { header: 'Valid To', render: c => c.valid_to ? new Date(c.valid_to).toLocaleDateString() : 'N/A' },
+          ]}
+          formFields={[
+             { name: 'code', label: 'Coupon Code', required: true },
+             { name: 'discount_percentage', label: 'Discount Percentage (0-100)', type: 'number', required: true },
+             { name: 'active', label: 'Is Active', type: 'checkbox' },
+             { name: 'valid_from', label: 'Valid From', type: 'datetime-local' },
+             { name: 'valid_to', label: 'Valid To', type: 'datetime-local' },
+          ]}
         />;
       default: return <div>Select a tab</div>;
     }

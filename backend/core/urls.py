@@ -19,7 +19,8 @@ from .views_admin import (
     AdminUserViewSet, AdminJobViewSet, AdminPaymentViewSet,
     AdminReportViewSet, AdminSubjectViewSet, AdminGigViewSet,
     AdminQuestionViewSet,
-    AdminPointPackageViewSet, AdminPricingTierViewSet, AdminCountryGroupViewSet
+    AdminPointPackageViewSet, AdminPricingTierViewSet, AdminCountryGroupViewSet,
+    AdminCouponViewSet
 )
 
 # ADDED: If you uncommented PaymentViewSet, import its serializer:
@@ -58,6 +59,7 @@ router.register(r'admin/questions', AdminQuestionViewSet, basename='admin-questi
 router.register(r'admin/point-packages', AdminPointPackageViewSet, basename='admin-point-packages')
 router.register(r'admin/pricing-tiers', AdminPricingTierViewSet, basename='admin-pricing-tiers')
 router.register(r'admin/country-groups', AdminCountryGroupViewSet, basename='admin-country-groups')
+router.register(r'admin/coupons', AdminCouponViewSet, basename='admin-coupons')
 
 
 urlpatterns = [
