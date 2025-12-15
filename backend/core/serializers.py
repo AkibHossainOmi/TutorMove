@@ -8,6 +8,7 @@ from .models import (
     ContactUnlock, User, Gig, Credit, Job, Application, Notification,
     UserSettings, Review, Subject, EscrowPayment, AbuseReport,
     Order, Payment, JobUnlock, Question, Answer, CoinGift, Coupon,
+    TutorApplication,
 )
 
 User = get_user_model()
@@ -444,12 +445,25 @@ class PaymentSerializer(serializers.ModelSerializer):
     """
     Serializer for the Payment model.
     """
-    order = serializers.PrimaryKeyRelatedField(queryset=Order.objects.all(), required=False) # Or nested OrderSerializer
-    
+    order = serializers.PrimaryKeyRelatedField(queryset=Order.objects.all(), required=False)
+    order_user = serializers.SerializerMethodField()
+
     class Meta:
         model = Payment
-        fields = '__all__' # Adjust fields as per your API requirements
+        fields = '__all__'
         read_only_fields = ['id', 'transaction_id', 'bank_transaction_id', 'status', 'payment_date', 'validation_status', 'error_message']
+
+    def get_order_user(self, obj):
+        """Get user information from the order"""
+        if obj.order and obj.order.user:
+            return {
+                'id': obj.order.user.id,
+                'username': obj.order.user.username,
+                'email': obj.order.user.email,
+                'user_type': obj.order.user.user_type
+            }
+        return None
+
 # === Q&A SERIALIZERS ===
 
 class QuestionSerializer(serializers.ModelSerializer):
@@ -463,8 +477,12 @@ class QuestionSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Question
-        fields = ['id', 'student', 'student_id', 'title', 'content', 'created_at', 'total_upvotes', 'has_upvoted', 'answers_count']
-        read_only_fields = ['student', 'created_at']
+        fields = [
+            'id', 'student', 'student_id', 'title', 'content', 'created_at',
+            'total_upvotes', 'has_upvoted', 'answers_count',
+            'is_flagged', 'flagged_reason', 'approval_status', 'reviewed_by', 'reviewed_at'
+        ]
+        read_only_fields = ['student', 'created_at', 'is_flagged', 'flagged_reason', 'approval_status', 'reviewed_by', 'reviewed_at']
 
     def get_total_upvotes(self, obj):
         return obj.total_upvotes()
@@ -516,6 +534,14 @@ class PointPackageSerializer(serializers.ModelSerializer):
         model = PointPackage
         fields = '__all__'
 
+    def validate(self, data):
+        # Ensure either new fields or legacy fields are provided
+        if not data.get('points') and not data.get('base_points'):
+            raise serializers.ValidationError("Either 'points' or 'base_points' must be provided")
+        if not data.get('price') and not data.get('price_usd'):
+            raise serializers.ValidationError("Either 'price' or 'price_usd' must be provided")
+        return data
+
 class UnlockPricingTierSerializer(serializers.ModelSerializer):
     class Meta:
         model = UnlockPricingTier
@@ -538,3 +564,20 @@ class CouponSerializer(serializers.ModelSerializer):
     class Meta:
         model = Coupon
         fields = '__all__'
+
+class TutorApplicationSerializer(serializers.ModelSerializer):
+    student = UserSerializer(read_only=True)
+    reviewed_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = TutorApplication
+        fields = [
+            'id', 'student', 'reason', 'subjects', 'experience', 'qualifications',
+            'status', 'created_at', 'reviewed_by', 'reviewed_by_name', 'reviewed_at', 'review_notes'
+        ]
+        read_only_fields = ['student', 'status', 'reviewed_by', 'reviewed_at', 'created_at']
+
+    def get_reviewed_by_name(self, obj):
+        if obj.reviewed_by:
+            return obj.reviewed_by.username
+        return None

@@ -43,6 +43,10 @@ class User(AbstractUser):
     average_rating = models.FloatField(default=0.0)
     review_count = models.PositiveIntegerField(default=0)
 
+    # Dual role support - user can be both student and tutor
+    is_dual_role = models.BooleanField(default=False)
+    original_user_type = models.CharField(max_length=10, blank=True, null=True)
+
     def has_premium(self):
         """Check if user currently has active premium."""
         if self.is_premium and self.premium_expires:
@@ -334,22 +338,40 @@ class JobUnlock(models.Model):
 
 class PointPackage(models.Model):
     name = models.CharField(max_length=100)
-    price_usd = models.DecimalField(max_digits=6, decimal_places=2)
-    base_points = models.PositiveIntegerField()
+    points = models.PositiveIntegerField(null=True, blank=True)  # Base points
+    price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)  # Price in BDT
+    discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    description = models.TextField(blank=True, null=True)
+    is_active = models.BooleanField(default=True)
+
+    # Keep legacy fields for backwards compatibility
+    price_usd = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True)
+    base_points = models.PositiveIntegerField(null=True, blank=True)
     bonus_points = models.PositiveIntegerField(default=0)
 
     @property
     def total_points(self):
-        return self.base_points + self.bonus_points
+        # Use new points field or fall back to legacy base_points
+        base = self.points if self.points else (self.base_points or 0)
+        return base + self.bonus_points
 
     @property
     def savings_percentage(self):
-        base_price_per_point = self.price_usd / self.base_points
-        new_price_per_point = self.price_usd / self.total_points
-        return round(((base_price_per_point - new_price_per_point) / base_price_per_point) * 100, 2)
+        # Calculate based on discount_percentage or legacy logic
+        if self.discount_percentage > 0:
+            return float(self.discount_percentage)
+
+        # Legacy calculation
+        base = self.base_points or self.points or 1
+        price = float(self.price_usd or self.price or 0)
+        if base > 0 and price > 0:
+            base_price_per_point = price / base
+            new_price_per_point = price / self.total_points
+            return round(((base_price_per_point - new_price_per_point) / base_price_per_point) * 100, 2)
+        return 0
 
     def __str__(self):
-        return f"{self.name} - {self.total_points} pts for ${self.price_usd}"
+        return f"{self.name} - {self.points} pts for {self.price} BDT"
 
 class CountryGroupPoint(models.Model):
     group = models.CharField(max_length=5, unique=True)  # G1, G2, etc.
@@ -505,12 +527,51 @@ class AbuseReport(models.Model):
     target_type = models.CharField(max_length=50)
     target_id = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
+
+class TutorApplication(models.Model):
+    APPLICATION_STATUS_CHOICES = (
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
+    student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='tutor_applications')
+    reason = models.TextField(help_text="Why do you want to become a tutor?")
+    subjects = models.JSONField(default=list, help_text="Subjects you can teach")
+    experience = models.TextField(blank=True, null=True, help_text="Teaching experience")
+    qualifications = models.TextField(blank=True, null=True, help_text="Educational qualifications")
+
+    status = models.CharField(max_length=20, choices=APPLICATION_STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_applications')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_notes = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Tutor application from {self.student.username} - {self.status}"
+
 class Question(models.Model):
+    APPROVAL_STATUS_CHOICES = (
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    )
+
     student = models.ForeignKey(User, on_delete=models.CASCADE, related_name='questions')
     title = models.CharField(max_length=255)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     upvotes = models.ManyToManyField(User, related_name='upvoted_questions', blank=True)
+
+    # Adult content filtering fields
+    is_flagged = models.BooleanField(default=False)
+    flagged_reason = models.TextField(blank=True, null=True)
+    approval_status = models.CharField(max_length=20, choices=APPROVAL_STATUS_CHOICES, default='approved')
+    reviewed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='reviewed_questions')
+    reviewed_at = models.DateTimeField(null=True, blank=True)
 
     def total_upvotes(self):
         return self.upvotes.count()

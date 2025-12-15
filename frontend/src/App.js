@@ -44,6 +44,7 @@ import UserProfile from './pages/UserProfile';
 import QnAPage from './pages/qna/QnAPage';
 import CreateQuestionPage from './pages/qna/CreateQuestionPage';
 import QuestionDetailsPage from './pages/qna/QuestionDetailsPage';
+import TutorApplicationPage from './pages/TutorApplicationPage';
 
 
 function App() {
@@ -79,6 +80,7 @@ function App() {
             <Route path="/students/:studentId" element={<StudentProfilePage />} />
             <Route path="/buy-points" element={<BuyCreditsAndPremiumPage />} />
             <Route path="/buy-premium" element={<BuyPremiumPage />} />
+            <Route path="/apply-tutor" element={<TutorApplicationPage />} />
 
             {/* Gigs and Job Listings */}
             <Route path="/tutor/gig/:id" element={<TutorGigPage />} />

@@ -285,6 +285,12 @@ export const ResourceManager = ({
     return `${cleanBase}${cleanEndpoint}`;
   };
 
+  const getBaseUrl = (endpoint) => {
+    // Strip query parameters to get base URL for detail operations
+    const fullUrl = getApiUrl(endpoint);
+    return fullUrl.split('?')[0];
+  };
+
   const fetchAll = async () => {
     setLoading(true);
     try {
@@ -294,7 +300,12 @@ export const ResourceManager = ({
       // Attempt to fetch stats if supported (ignore 404 on stats)
       let statsData = {};
       try {
-          const statsRes = await apiService.get(`${url}stats/`);
+          // Handle query parameters in URL when building stats endpoint
+          const hasQueryParams = url.includes('?');
+          const statsUrl = hasQueryParams
+            ? url.replace('?', 'stats/?')
+            : `${url}stats/`;
+          const statsRes = await apiService.get(statsUrl);
           statsData = statsRes.data;
       } catch (e) {
           // ignore stats error
@@ -326,7 +337,7 @@ export const ResourceManager = ({
     if (!canDelete || !deleteConfirmation.id) return;
 
     try {
-      await apiService.delete(`${getApiUrl(apiEndpoint)}${deleteConfirmation.id}/`);
+      await apiService.delete(`${getBaseUrl(apiEndpoint)}${deleteConfirmation.id}/`);
       setDeleteConfirmation({ isOpen: false, id: null });
       fetchAll();
     } catch (error) {
@@ -355,9 +366,9 @@ export const ResourceManager = ({
       }
 
       if (editingItem) {
-        await apiService.patch(`${getApiUrl(apiEndpoint)}${editingItem.id}/`, payload);
+        await apiService.patch(`${getBaseUrl(apiEndpoint)}${editingItem.id}/`, payload);
       } else {
-        await apiService.post(getApiUrl(apiEndpoint), payload);
+        await apiService.post(getBaseUrl(apiEndpoint), payload);
       }
       setIsModalOpen(false);
       fetchAll();

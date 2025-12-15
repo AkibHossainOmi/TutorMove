@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat:*)",
+      "Bash(cd:*)",
+      "Bash(pip install:*)",
+      "Bash(python manage.py check:*)",
+      "Bash(source:*)",
+      "Bash(python manage.py runserver:*)",
+      "Bash(curl:*)",
+      "Bash(python manage.py makemigrations:*)",
+      "Bash(..venvScriptspython.exe manage.py makemigrations)",
+      "Bash(../venv/Scripts/python.exe:*)",
+      "Bash(./venv/Scripts/python.exe manage.py:*)"
+    ]
+  }
+}

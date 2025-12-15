@@ -6,7 +6,7 @@ from .views import (
     ReviewViewSet, PremiumViewSet, EscrowPaymentViewSet, SubjectViewSet,
     AdminViewSet, LoginView,
     # ADDED: Import new payment callback views
-    payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn, 
+    payment_success_view, payment_fail_view, payment_cancel_view, send_whatsapp, sslcommerz_ipn,
     SendOTPView, ResetPasswordView, VerifyOTPView, SubmitReview, ContactUnlockViewSet,
     CookieTokenObtainPairView, CookieTokenRefreshView, credit_purchase, TutorViewSet, StudentViewSet, verify_otp,
     # If you registered PaymentViewSet with router, also import it here:
@@ -15,13 +15,14 @@ from .views import (
     AdminDashboardStatsView,
     CoinGiftViewSet,
     PublicUserProfileView,
+    TutorApplicationViewSet,
 )
 from .views_admin import (
     AdminUserViewSet, AdminJobViewSet, AdminPaymentViewSet,
     AdminReportViewSet, AdminSubjectViewSet, AdminGigViewSet,
     AdminQuestionViewSet,
     AdminPointPackageViewSet, AdminPricingTierViewSet, AdminCountryGroupViewSet,
-    AdminCouponViewSet
+    AdminCouponViewSet, AdminTutorApplicationViewSet
 )
 
 # ADDED: If you uncommented PaymentViewSet, import its serializer:
@@ -48,6 +49,7 @@ router.register(r'contact-unlock', ContactUnlockViewSet, basename='contact-unloc
 router.register(r'questions', QuestionViewSet, basename='question')
 router.register(r'answers', AnswerViewSet, basename='answer')
 router.register(r'gifts', CoinGiftViewSet, basename='gift')
+router.register(r'tutor-applications', TutorApplicationViewSet, basename='tutor-application')
 
 # Admin ViewSets
 router.register(r'admin/users', AdminUserViewSet, basename='admin-users')
@@ -61,6 +63,7 @@ router.register(r'admin/point-packages', AdminPointPackageViewSet, basename='adm
 router.register(r'admin/pricing-tiers', AdminPricingTierViewSet, basename='admin-pricing-tiers')
 router.register(r'admin/country-groups', AdminCountryGroupViewSet, basename='admin-country-groups')
 router.register(r'admin/coupons', AdminCouponViewSet, basename='admin-coupons')
+router.register(r'admin/tutor-applications', AdminTutorApplicationViewSet, basename='admin-tutor-applications')
 
 
 urlpatterns = [

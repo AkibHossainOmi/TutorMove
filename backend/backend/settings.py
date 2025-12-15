@@ -14,11 +14,16 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
-if not SECRET_KEY and os.getenv("DEBUG", "False") == "True":
-    SECRET_KEY = 'django-insecure-dswq$mer#l$f2p%b8eydalez%(%e_e*su9itll(9+yvvpsqwf@'
-
 DEBUG = os.getenv("DEBUG", "False") == "True"
+
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        # Allow fallback key in development mode only
+        SECRET_KEY = 'django-insecure-dev-key-change-in-production'
+        print("⚠️  WARNING: Using development SECRET_KEY. Set DJANGO_SECRET_KEY environment variable for production!")
+    else:
+        raise ValueError("DJANGO_SECRET_KEY environment variable must be set in production")
 
 ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
@@ -87,8 +92,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
-if DEBUG:
-    CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOW_CREDENTIALS = True
 
 # Authentication backends
 AUTHENTICATION_BACKENDS = [
@@ -266,3 +270,15 @@ JWT_COOKIE = {
 # Secure Cookies
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
+
+# Security Headers
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
+# HTTPS/SSL settings for production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True

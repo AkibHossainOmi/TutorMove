@@ -43,15 +43,15 @@ from core.modules.auth import ( SendOTPView, ResetPasswordView,
 from urllib.parse import urlencode
 from .models import (
     CountryGroup, CountryGroupPoint, UnlockPricingTier, User, Gig, Credit, Job, Application, Notification, UserSettings, Review, Subject, EscrowPayment,
-    Order, Payment, ContactUnlock, JobUnlock, Question, Answer, CoinGift, Coupon,
+    Order, Payment, ContactUnlock, JobUnlock, Question, Answer, CoinGift, Coupon, TutorApplication,
 )
 from .serializers import (
     ContactUnlockSerializer, UserSerializer, GigSerializer, CreditSerializer, JobSerializer,
-    ApplicationSerializer, NotificationSerializer, 
+    ApplicationSerializer, NotificationSerializer,
     UserSettingsSerializer, ReviewSerializer,
     AbuseReportSerializer, SubjectSerializer, EscrowPaymentSerializer,
     PaymentSerializer, CreditUpdateByUserSerializer,
-    JobUnlockSerializer, QuestionSerializer, AnswerSerializer, CoinGiftSerializer,
+    JobUnlockSerializer, QuestionSerializer, AnswerSerializer, CoinGiftSerializer, TutorApplicationSerializer,
 )
 
 from .views_admin import AdminDashboardStatsView, AdminUserViewSet, AdminJobViewSet
@@ -316,6 +316,38 @@ class UserViewSet(viewsets.ModelViewSet):
             return []
         return super().get_permissions()
     
+    @action(detail=False, methods=['post'], url_path='switch-role')
+    def switch_role(self, request):
+        """
+        Allow dual-role users to switch between student and tutor roles.
+        """
+        user = request.user
+
+        if not user.is_dual_role:
+            return Response(
+                {'error': 'You must be approved as a tutor to switch roles.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Toggle between student and tutor
+        if user.user_type == 'student':
+            user.user_type = 'tutor'
+        elif user.user_type == 'tutor':
+            user.user_type = 'student'
+        else:
+            return Response(
+                {'error': 'Invalid user type for role switching.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user.save()
+
+        return Response({
+            'message': f'Switched to {user.user_type} role',
+            'current_role': user.user_type,
+            'is_dual_role': user.is_dual_role
+        })
+
     @action(detail=False, methods=["delete"], url_path="delete-account")
     @transaction.atomic
     def delete_account(self, request):
@@ -536,6 +568,13 @@ class UserViewSet(viewsets.ModelViewSet):
         if not dp_file:
             return Response({'error': 'No file uploaded'}, status=400)
 
+        # Security: Validate file size (max 5MB)
+        MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB in bytes
+        if dp_file.size > MAX_FILE_SIZE:
+            return Response({
+                'error': f'File size too large. Maximum allowed size is 5MB (received {dp_file.size / (1024*1024):.2f}MB)'
+            }, status=400)
+
         # Validate file extension
         ext = os.path.splitext(dp_file.name)[1].lower()
         if ext not in ALLOWED_IMAGE_EXTENSIONS:
@@ -586,8 +625,14 @@ def haversine(lon1, lat1, lon2, lat2):
     return R * c
 
 class UserCreditBalanceView(APIView):
-    permission_classes = [IsAuthenticated]  # no auth required
+    permission_classes = [IsAuthenticated]
     def get(self, request, user_id):
+        # Security: Verify user can only view their own balance
+        if request.user.id != user_id:
+            return Response({
+                "error": "You can only view your own credit balance"
+            }, status=status.HTTP_403_FORBIDDEN)
+
         credit = get_object_or_404(Credit, user__id=user_id)
         return Response({
             "user_id": user_id,
@@ -1871,6 +1916,12 @@ def payment_success_view(request):
         query = urlencode({'tran_id': tran_id or '', 'reason': 'Missing transaction or validation ID'})
         return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
 
+    # Security: Validate payment_type
+    ALLOWED_PAYMENT_TYPES = ['points', 'premium', 'credits']
+    if payment_type and payment_type not in ALLOWED_PAYMENT_TYPES:
+        query = urlencode({'tran_id': tran_id, 'reason': 'Invalid payment type'})
+        return redirect(f"{settings.FRONTEND_SITE_URL}/payments/fail?{query}")
+
     # Safe conversion of numeric fields
     try:
         user_id = int(user_id_str)
@@ -2407,14 +2458,68 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all().order_by('-created_at')
     serializer_class = QuestionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content']
+    ordering_fields = ['created_at', 'total_upvotes']
+    ordering = ['-created_at']  # Default ordering
+
+    def get_queryset(self):
+        # Only show approved questions to regular users
+        # Admins and moderators can see all questions in admin panel
+        queryset = Question.objects.all()
+        if not (self.request.user.is_authenticated and
+                getattr(self.request.user, 'user_type', None) in ['admin', 'moderator']):
+            queryset = queryset.filter(approval_status='approved')
+        return queryset
 
     def perform_create(self, serializer):
+        from .content_moderation import check_question_content
+
         user = self.request.user
-        if user.user_type != 'student':
+        # Allow students and dual-role users (student+tutor) to create questions
+        if user.user_type not in ['student', 'tutor']:
             raise ValidationError("Only students can create questions.")
-        serializer.save(student=user)
+
+        # Check for adult content
+        title = self.request.data.get('title', '')
+        content = self.request.data.get('content', '')
+        is_flagged, reason = check_question_content(title, content)
+
+        # Save the question with appropriate status
+        if is_flagged:
+            serializer.save(
+                student=user,
+                is_flagged=True,
+                flagged_reason=reason,
+                approval_status='pending'
+            )
+        else:
+            serializer.save(
+                student=user,
+                approval_status='approved'
+            )
+
+    def perform_update(self, serializer):
+        from .content_moderation import check_question_content
+
+        # Re-check for adult content after editing
+        title = self.request.data.get('title', '')
+        content = self.request.data.get('content', '')
+        is_flagged, reason = check_question_content(title, content)
+
+        # Update approval status based on content check
+        if is_flagged:
+            serializer.save(
+                is_flagged=True,
+                flagged_reason=reason,
+                approval_status='pending'
+            )
+        else:
+            serializer.save(
+                is_flagged=False,
+                flagged_reason=None,
+                approval_status='approved'
+            )
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def upvote(self, request, pk=None):
@@ -2444,11 +2549,19 @@ class AnswerViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if user.user_type != 'tutor':
+        if user.user_type not in ['tutor', 'student']:  # Allow dual-role users
             raise ValidationError("Only tutors can answer questions.")
 
         question_id = self.request.data.get('question')
-        # Check if tutor has already answered this question? Maybe not required.
+
+        # Prevent users from answering their own questions
+        if question_id:
+            try:
+                question = Question.objects.get(id=question_id)
+                if question.student.id == user.id:
+                    raise ValidationError("You cannot answer your own question.")
+            except Question.DoesNotExist:
+                raise ValidationError("Question not found.")
 
         serializer.save(tutor=user)
 
@@ -2548,6 +2661,41 @@ class CoinGiftViewSet(viewsets.ModelViewSet):
 
             serializer = self.get_serializer(gift)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+class TutorApplicationViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for students to apply to become tutors.
+    Students can create and view their own applications.
+    """
+    queryset = TutorApplication.objects.all()
+    serializer_class = TutorApplicationSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        # Students can only see their own applications
+        return TutorApplication.objects.filter(student=self.request.user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+
+        # Only students can apply
+        if user.user_type != 'student':
+            raise ValidationError("Only students can apply to become tutors.")
+
+        # Check if user already has a pending application
+        existing_pending = TutorApplication.objects.filter(
+            student=user,
+            status='pending'
+        ).exists()
+
+        if existing_pending:
+            raise ValidationError("You already have a pending tutor application.")
+
+        # Check if user is already approved as tutor
+        if user.is_dual_role:
+            raise ValidationError("You are already approved as a tutor.")
+
+        serializer.save(student=user)
 
 class PublicUserProfileView(generics.RetrieveAPIView):
     """

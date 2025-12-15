@@ -238,6 +238,7 @@ export const creditAPI = {
   getPendingPayments: () => apiService.get('/api/credit/pending-payments/'),
   purchaseCredits: (purchaseData) => apiService.post('/api/credits/purchase/', purchaseData),
   validateCoupon: (code) => apiService.post('/api/credits/validate_coupon/', { code }),
+  getPackages: () => apiService.get('/api/admin/point-packages/'),
 };
 
 // Review API calls
@@ -329,6 +330,8 @@ export const qnaAPI = {
   getQuestions: (params) => apiService.get('/api/questions/', { params }),
   createQuestion: (data) => apiService.post('/api/questions/', data),
   getQuestion: (id) => apiService.get(`/api/questions/${id}/`),
+  updateQuestion: (id, data) => apiService.patch(`/api/questions/${id}/`, data),
+  deleteQuestion: (id) => apiService.delete(`/api/questions/${id}/`),
   upvoteQuestion: (id) => apiService.post(`/api/questions/${id}/upvote/`),
 
   createAnswer: (data) => apiService.post('/api/answers/', data),

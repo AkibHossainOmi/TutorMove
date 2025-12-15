@@ -6,6 +6,7 @@ import ModeratorDashboard from './ModeratorDashboard';
 
 const Dashboard = () => {
   const [userType, setUserType] = useState(null);
+  const [isDualRole, setIsDualRole] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -23,12 +24,42 @@ const Dashboard = () => {
         throw new Error('User type is missing.');
       }
       setUserType(user.user_type);
+      setIsDualRole(user.is_dual_role || false);
     } catch (e) {
       setError('Invalid user data in local storage.');
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const handleSwitchRole = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/users/switch-role/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const storedUser = JSON.parse(localStorage.getItem('user'));
+        const updatedUser = {
+          ...storedUser,
+          user_type: data.current_role,
+          is_dual_role: data.is_dual_role
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        window.location.reload();
+      } else {
+        alert('Failed to switch role');
+      }
+    } catch (error) {
+      console.error('Error switching role:', error);
+      alert('Failed to switch role');
+    }
+  };
 
   if (loading) {
     return (
@@ -70,15 +101,49 @@ const Dashboard = () => {
   // I will remove the wrapper `div` and just render the component. This is cleaner and likely correct for full-page components.
   // And for the "Unknown user type" case, I'll wrap that in the div.
 
-  if (userType === 'student') return <StudentDashboard />;
-  if (userType === 'tutor') return <TeacherDashboard />;
-  if (userType === 'admin') return <AdminDashboard />;
-  if (userType === 'moderator') return <ModeratorDashboard />;
+  const renderDashboard = () => {
+    if (userType === 'student') return <StudentDashboard />;
+    if (userType === 'tutor') return <TeacherDashboard />;
+    if (userType === 'admin') return <AdminDashboard />;
+    if (userType === 'moderator') return <ModeratorDashboard />;
+
+    return (
+      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
+        <div className="text-center text-gray-600 text-lg">Unknown user type.</div>
+      </div>
+    );
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-      <div className="text-center text-gray-600 text-lg">Unknown user type.</div>
-    </div>
+    <>
+      {renderDashboard()}
+
+      {/* Floating Role Switch Button for Dual-Role Users */}
+      {isDualRole && (userType === 'student' || userType === 'tutor') && (
+        <button
+          onClick={handleSwitchRole}
+          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 bg-indigo-600 text-white rounded-full shadow-lg hover:bg-indigo-700 transition-all duration-200 hover:scale-105 group"
+          title={`Switch to ${userType === 'student' ? 'Tutor' : 'Student'} Dashboard`}
+        >
+          <svg
+            className="w-5 h-5 group-hover:rotate-180 transition-transform duration-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+            />
+          </svg>
+          <span className="font-medium">
+            Switch to {userType === 'student' ? 'Tutor' : 'Student'}
+          </span>
+        </button>
+      )}
+    </>
   );
 };
 

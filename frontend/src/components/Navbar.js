@@ -56,6 +56,7 @@ const Navbar = () => {
   const userType = userData?.user_type || null;
   const profilePicture = userData?.profile_picture || null;
   const userInitial = userName.charAt(0).toUpperCase();
+  const isDualRole = userData?.is_dual_role || false;
 
   // Refs for click outside
   const tutorsDropdownRef = useRef(null);
@@ -98,6 +99,36 @@ const Navbar = () => {
   const handleRequestTutor = () => {
     isAuthenticated ? navigate("/dashboard") : navigate("/signup");
     setIsMenuOpen(false);
+  };
+
+  const handleSwitchRole = async () => {
+    try {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/users/switch-role/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Update user data in localStorage, preserving is_dual_role
+        const updatedUser = {
+          ...userData,
+          user_type: data.current_role,
+          is_dual_role: data.is_dual_role
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Refresh the page to update UI
+        window.location.reload();
+      } else {
+        alert('Failed to switch role');
+      }
+    } catch (error) {
+      console.error('Error switching role:', error);
+      alert('Failed to switch role');
+    }
   };
 
   return (
@@ -178,8 +209,33 @@ const Navbar = () => {
                       <div className="px-4 py-3 border-b border-gray-100 mb-2">
                         <p className="text-sm font-medium text-gray-900">{userName}</p>
                         <p className="text-xs text-gray-500 capitalize">{userType}</p>
+                        {isDualRole && (
+                          <p className="text-xs text-indigo-600 font-medium mt-1">✨ Dual Role</p>
+                        )}
                       </div>
                       <DropdownLink to="/profile" text="Profile" onClick={() => setIsAccountDropdownOpen(false)} />
+                      {isDualRole && (
+                        <button
+                          onClick={() => {
+                            handleSwitchRole();
+                            setIsAccountDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors font-medium"
+                        >
+                          🔄 Switch to {userType === 'student' ? 'Tutor' : 'Student'}
+                        </button>
+                      )}
+                      {!isDualRole && userType === 'student' && (
+                        <button
+                          onClick={() => {
+                            navigate('/apply-tutor');
+                            setIsAccountDropdownOpen(false);
+                          }}
+                          className="w-full text-left px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 transition-colors font-medium"
+                        >
+                          📝 Apply to be a Tutor
+                        </button>
+                      )}
                       <button
                         onClick={handleLogout}
                         className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"

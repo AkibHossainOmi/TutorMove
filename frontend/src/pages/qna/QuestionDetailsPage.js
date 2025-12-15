@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { qnaAPI, pointsAPI } from '../../utils/apiService';
 import { useAuth } from '../../contexts/UseAuth';
 import Navbar from '../../components/Navbar';
@@ -7,12 +7,15 @@ import GiftCoinModal from '../../components/GiftCoinModal';
 
 const QuestionDetailsPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [question, setQuestion] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [newAnswer, setNewAnswer] = useState('');
   const [loading, setLoading] = useState(true);
   const user = JSON.parse(localStorage.getItem('user'));
   const [submitError, setSubmitError] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({ title: '', content: '' });
 
   // Gift Coin State
   const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
@@ -106,6 +109,41 @@ const QuestionDetailsPage = () => {
       }
   };
 
+  const handleEditClick = () => {
+    setEditData({ title: question.title, content: question.content });
+    setIsEditing(true);
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditData({ title: '', content: '' });
+  };
+
+  const handleSaveEdit = async () => {
+    try {
+      await qnaAPI.updateQuestion(question.id, editData);
+      setIsEditing(false);
+      fetchData();
+      alert('Question updated successfully! It will be reviewed for approval.');
+    } catch (error) {
+      console.error('Error updating question:', error);
+      alert(error.response?.data?.error || 'Failed to update question');
+    }
+  };
+
+  const handleDeleteQuestion = async () => {
+    if (window.confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
+      try {
+        await qnaAPI.deleteQuestion(question.id);
+        alert('Question deleted successfully');
+        navigate('/qna');
+      } catch (error) {
+        console.error('Error deleting question:', error);
+        alert('Failed to delete question');
+      }
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center">
@@ -136,6 +174,7 @@ const QuestionDetailsPage = () => {
                 onClick={handleQuestionUpvote}
                 className={`p-1 rounded hover:bg-gray-100 transition-colors ${question.has_upvoted ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}
                 title="Upvote Question"
+                disabled={isEditing}
               >
                 <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
@@ -146,20 +185,85 @@ const QuestionDetailsPage = () => {
 
             {/* Content Section */}
             <div className="flex-1">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{question.title}</h1>
-              <div className="prose max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed mb-6">
-                {question.content}
-              </div>
-
-              <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500">Asked by</span>
-                  <a href={`/profile/${question.student?.username}`} className="font-semibold text-indigo-600 hover:underline">{question.student?.username}</a>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <input
+                      type="text"
+                      value={editData.title}
+                      onChange={(e) => setEditData({ ...editData, title: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                    <textarea
+                      value={editData.content}
+                      onChange={(e) => setEditData({ ...editData, content: e.target.value })}
+                      rows={6}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={handleSaveEdit}
+                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                    >
+                      Save Changes
+                    </button>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-                <span className="text-gray-400">
-                  {new Date(question.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                </span>
-              </div>
+              ) : (
+                <>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{question.title}</h1>
+                  <div className="prose max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed mb-6">
+                    {question.content}
+                  </div>
+
+                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="text-gray-500">Asked by</span>
+                      <a href={`/profile/${question.student?.username}`} className="font-semibold text-indigo-600 hover:underline">{question.student?.username}</a>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <span className="text-gray-400">
+                        {new Date(question.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(question.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                      {user && question.student?.id === user.id && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={handleEditClick}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors"
+                            title="Edit Question"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            Edit
+                          </button>
+                          <button
+                            onClick={handleDeleteQuestion}
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                            title="Delete Question"
+                          >
+                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>

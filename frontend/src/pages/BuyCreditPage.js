@@ -311,6 +311,7 @@ const BuyPointsAndPremiumPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [error, setError] = useState(null);
+  const [pointPackages, setPointPackages] = useState([]);
 
   // Coupon State
   const [couponCode, setCouponCode] = useState("");
@@ -319,36 +320,54 @@ const BuyPointsAndPremiumPage = () => {
 
   const PREMIUM_PRICE = 500;
 
-  // Point packages with more attractive pricing structure
-  const pointPackages = [
-    { id: 1, points: 50, bonus: 0, totalPoints: 50, priceBDT: 119, priceUSD: 1.0, save: 0 },
-    { id: 2, points: 100, bonus: 5, totalPoints: 105, priceBDT: 235, priceUSD: 1.98, save: 3 },
-    { id: 3, points: 250, bonus: 15, totalPoints: 265, priceBDT: 589, priceUSD: 4.9, save: 5 },
-    { id: 4, points: 500, bonus: 40, totalPoints: 540, priceBDT: 1149, priceUSD: 9.5, save: 8 },
-    { id: 5, points: 1000, bonus: 100, totalPoints: 1100, priceBDT: 2199, priceUSD: 18.2, save: 12 },
-    { id: 6, points: 2500, bonus: 300, totalPoints: 2800, priceBDT: 4849, priceUSD: 40.0, save: 20 },
-    { id: 7, points: 5000, bonus: 800, totalPoints: 5800, priceBDT: 7999, priceUSD: 66.0, save: 34 },
-    { id: 8, points: 7500, bonus: 1500, totalPoints: 9000, priceBDT: 10399, priceUSD: 85.0, save: 43 },
-    { id: 9, points: 10000, bonus: 2000, totalPoints: 12000, priceBDT: 11999, priceUSD: 100.0, save: 50 },
-  ];
-
-  // Load User
+  // Load User and Packages
   useEffect(() => {
-    const loadUser = async () => {
+    const loadData = async () => {
+      setIsLoading(true);
+
+      // Load user data (if logged in)
       try {
-        const res = await userApi.getUser();
-        setCurrentUser(res.data);
-        if (res.data.is_premium) {
+        const userRes = await userApi.getUser();
+        setCurrentUser(userRes.data);
+        if (userRes.data.is_premium) {
           setIsPremium(true);
-          setPremiumExpiry(res.data.premium_expires);
+          setPremiumExpiry(userRes.data.premium_expires);
         }
       } catch (err) {
-        setError("Please log in to continue");
+        console.log("User not logged in");
+      }
+
+      // Load packages from API (available to everyone)
+      try {
+        const packagesRes = await creditAPI.getPackages();
+        const packages = Array.isArray(packagesRes.data)
+          ? packagesRes.data
+          : (packagesRes.data.results || []);
+
+        const activePackages = packages.filter(pkg => pkg.is_active);
+
+        // Transform API packages to match the expected format
+        const transformedPackages = activePackages.map(pkg => ({
+          id: pkg.id,
+          points: pkg.points || pkg.base_points || 0,
+          bonus: Math.round((pkg.discount_percentage / 100) * (pkg.points || pkg.base_points || 0)) || 0,
+          totalPoints: (pkg.points || pkg.base_points || 0) + Math.round((pkg.discount_percentage / 100) * (pkg.points || pkg.base_points || 0)),
+          priceBDT: pkg.price || pkg.price_usd * 120 || 0,
+          priceUSD: pkg.price_usd || (pkg.price / 120).toFixed(2) || 0,
+          save: pkg.discount_percentage || 0,
+          name: pkg.name,
+          description: pkg.description
+        }));
+
+        setPointPackages(transformedPackages);
+      } catch (err) {
+        console.error("Error loading packages:", err);
+        setError("Failed to load packages. Please try again later.");
       } finally {
         setIsLoading(false);
       }
     };
-    loadUser();
+    loadData();
   }, []);
 
   // Purchase Premium

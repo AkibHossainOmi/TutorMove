@@ -66,6 +66,20 @@ export const useProfile = () => {
     }
   };
 
+  // Phone number detection utility
+  const containsPhoneNumber = (text) => {
+    const phonePatterns = [
+      /\b0?1[3-9]\d{8}\b/g, // Bangladeshi mobile: 01XXXXXXXXX or 1XXXXXXXXX
+      /\b\+?880\s?1[3-9]\d{8}\b/g, // Bangladeshi with country code: +880 1XXXXXXXXX
+      /\b\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b/g, // US format: XXX-XXX-XXXX
+      /\b\d{10,11}\b/g, // Generic 10-11 digit numbers
+      /\b\+\d{1,3}[-.\s]?\d{1,14}\b/g, // International format
+      /\b\d{4}[-.\s]?\d{6}\b/g, // Some formats like 0000-000000
+    ];
+
+    return phonePatterns.some(pattern => pattern.test(text));
+  };
+
   // Edit field change
   const handleEditChange = (field, value) => {
     setEditData(prev => ({ ...prev, [field]: value }));
@@ -79,6 +93,25 @@ export const useProfile = () => {
 
   // Profile update
   const handleProfileUpdate = async () => {
+    // Validate all text fields for phone numbers
+    const fieldsToCheck = [
+      { field: 'bio', name: 'Bio' },
+      { field: 'education', name: 'Education' },
+      { field: 'experience', name: 'Experience' },
+      { field: 'location', name: 'Location' }
+    ];
+
+    for (const { field, name } of fieldsToCheck) {
+      if (editData[field] && containsPhoneNumber(editData[field])) {
+        setUpdateStatus({
+          message: `❌ Phone numbers are not allowed in your ${name}. Please remove any phone numbers before saving.`,
+          type: 'error',
+        });
+        setTimeout(() => setUpdateStatus({ message: '', type: '' }), 5000);
+        return;
+      }
+    }
+
     setUpdateStatus({ message: 'Updating...', type: 'info' });
     try {
       const updatedData = { ...editData };

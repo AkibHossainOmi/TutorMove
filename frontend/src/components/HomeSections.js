@@ -16,34 +16,34 @@ const HomeSections = () => {
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Find Tutors Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-               <div className="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-xl flex items-center justify-center mb-6 mx-auto">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-indigo-200 transition-all duration-300 group">
+               <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-blue-600 text-white rounded-xl flex items-center justify-center mb-6 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">For Students</h2>
-              <p className="text-gray-500 mb-6">Find qualified tutors for any subject, online or in-person.</p>
+              <p className="text-gray-600 mb-6">Find qualified tutors for any subject, online or in-person.</p>
               <div className="flex flex-wrap justify-center gap-3">
-                <Link to="/tutors" className="px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg text-sm font-medium hover:bg-indigo-100 transition-colors">Find Tutors</Link>
-                <Link to="/tutors?type=online" className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:border-gray-300 transition-colors">Online</Link>
-                <Link to="/tutors?type=home" className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:border-gray-300 transition-colors">Home</Link>
+                <Link to="/tutors" className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg text-sm font-medium hover:from-indigo-700 hover:to-blue-700 transition-all shadow-md hover:shadow-lg">Find Tutors</Link>
+                <Link to="/tutors?type=online" className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors">Online</Link>
+                <Link to="/tutors?type=home" className="px-4 py-2 bg-white border-2 border-indigo-200 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-50 transition-colors">Home</Link>
               </div>
             </div>
 
             {/* Find Jobs Card */}
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-300">
-               <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center mb-6 mx-auto">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-xl hover:border-emerald-200 transition-all duration-300 group">
+               <div className="w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 text-white rounded-xl flex items-center justify-center mb-6 mx-auto shadow-lg group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
               <h2 className="text-2xl font-bold text-gray-900 mb-4">For Teachers</h2>
-              <p className="text-gray-500 mb-6">Browse teaching jobs and connect with students needing help.</p>
+              <p className="text-gray-600 mb-6">Browse teaching jobs and connect with students needing help.</p>
                <div className="flex flex-wrap justify-center gap-3">
-                <Link to="/jobs" className="px-4 py-2 bg-emerald-50 text-emerald-700 rounded-lg text-sm font-medium hover:bg-emerald-100 transition-colors">Find Jobs</Link>
-                <Link to="/jobs?type=online" className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:border-gray-300 transition-colors">Online</Link>
-                <Link to="/jobs?type=assignment" className="px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:border-gray-300 transition-colors">Assignments</Link>
+                <Link to="/jobs" className="px-5 py-2.5 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-lg text-sm font-medium hover:from-emerald-700 hover:to-green-700 transition-all shadow-md hover:shadow-lg">Find Jobs</Link>
+                <Link to="/jobs?type=online" className="px-4 py-2 bg-white border-2 border-emerald-200 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-colors">Online</Link>
+                <Link to="/jobs?type=assignment" className="px-4 py-2 bg-white border-2 border-emerald-200 text-emerald-600 rounded-lg text-sm font-medium hover:bg-emerald-50 transition-colors">Assignments</Link>
               </div>
             </div>
           </div>

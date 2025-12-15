@@ -56,7 +56,7 @@ const globalStyles = `
 
 // Create style element
 const styleElement = document.createElement('style');
-styleElement.innerHTML = globalStyles;
+styleElement.textContent = globalStyles;
 document.head.appendChild(styleElement);
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
