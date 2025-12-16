@@ -3,6 +3,7 @@ import TutorCard from "../components/TutorCard";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { tutorAPI } from "../utils/apiService";
+import { FiSearch, FiFilter, FiRefreshCw, FiAlertCircle } from "react-icons/fi";
 
 const PAGE_SIZE = 8;
 const SEARCH_DEBOUNCE_MS = 300;
@@ -159,90 +160,81 @@ const TutorList = () => {
   }, [searchQuery, selectedSubject, selectedLevel, priceRange]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="bg-white border-b border-gray-100 mt-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16 text-center">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-4">
-            Find Your Perfect <span className="text-indigo-600">Tutor</span>
+      <div className="relative bg-indigo-900 text-white pt-32 pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 opacity-90"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+
+        <div className="relative max-w-6xl mx-auto px-6 text-center z-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
+            Find Your Perfect <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200">Tutor</span>
           </h1>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-            Connect with certified experts tailored to your learning goals.
+          <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto mb-10">
+             Connect with certified experts tailored to your specific learning goals and schedule.
           </p>
 
-          <div className="max-w-xl mx-auto relative">
+          <div className="relative max-w-2xl mx-auto">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+              <FiSearch className="h-5 w-5 text-slate-400" />
             </div>
             <input
               type="text"
+              className="block w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all shadow-lg"
+              placeholder="Search by subject, name, or keyword..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by subject, name, or keyword..."
-              className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 shadow-sm transition-shadow"
             />
           </div>
         </div>
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white border-b border-gray-200 sticky top-16 z-20 shadow-sm">
+      <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar">
-              <select
+              <FilterSelect
                 value={selectedSubject}
                 onChange={(e) => setSelectedSubject(e.target.value)}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Subjects</option>
-                {subjects.map(subject => (
-                  <option key={subject} value={subject}>{subject}</option>
-                ))}
-              </select>
+                options={subjects}
+                placeholder="All Subjects"
+              />
 
-              <select
+              <FilterSelect
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Levels</option>
-                {levels.map(level => (
-                  <option key={level} value={level}>{level}</option>
-                ))}
-              </select>
+                options={levels}
+                placeholder="All Levels"
+              />
 
-              <select
-                value={priceRange}
-                onChange={(e) => setPriceRange(e.target.value)}
-                className="px-3 py-2 text-sm rounded-lg border border-gray-300 bg-white text-gray-700 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-              >
-                <option value="">All Prices</option>
-                {priceRanges.map(range => (
-                  <option key={range.value} value={range.value}>{range.label}</option>
-                ))}
-              </select>
+              <FilterSelect
+                 value={priceRange}
+                 onChange={(e) => setPriceRange(e.target.value)}
+                 options={priceRanges}
+                 placeholder="All Prices"
+                 isObjectOptions={true}
+              />
 
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleResetFilters}
-                  className="px-3 py-2 text-sm text-indigo-600 font-medium hover:text-indigo-800 whitespace-nowrap"
+                  className="flex items-center gap-1 px-3 py-2 text-sm text-indigo-600 font-bold hover:text-indigo-800 whitespace-nowrap bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
                 >
-                  Reset Filters
+                  <FiRefreshCw className="w-3 h-3" /> Reset
                 </button>
               )}
             </div>
 
-            <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-              <span className="text-sm text-gray-500">Sort by:</span>
+            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+              <span className="text-sm font-medium text-slate-500 hidden md:inline">Sort by:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 text-sm rounded-lg border-none bg-gray-50 text-gray-700 font-medium hover:bg-gray-100 focus:ring-0 cursor-pointer"
+                className="px-4 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:bg-white hover:border-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer transition-all"
               >
                 <option value="popular">Most Popular</option>
                 <option value="rating">Highest Rated</option>
@@ -256,30 +248,32 @@ const TutorList = () => {
       </div>
 
       {/* Results Section */}
-      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full -mt-2">
         {!loading && !error && filteredTutors.length > 0 && (
-          <div className="mb-6 text-gray-500 text-sm font-medium">
-            Showing {filteredTutors.length} results
+          <div className="mb-6 flex items-center justify-between">
+             <p className="text-slate-500 text-sm font-semibold">
+               Showing <span className="text-slate-900">{filteredTutors.length}</span> results
+             </p>
           </div>
         )}
 
         {loading && page === 1 && (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-4" />
-            <p className="text-gray-500 text-sm">Finding best tutors for you...</p>
+          <div className="flex flex-col items-center justify-center py-32">
+            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6" />
+            <p className="text-slate-500 font-medium">Finding best tutors for you...</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-lg mx-auto mt-8">
-            <svg className="w-12 h-12 text-red-400 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <h3 className="text-lg font-medium text-red-800 mb-1">Something went wrong</h3>
-            <p className="text-red-600 mb-4">{error}</p>
+          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center max-w-lg mx-auto mt-12">
+            <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <FiAlertCircle size={32} />
+            </div>
+            <h3 className="text-lg font-bold text-rose-800 mb-2">Something went wrong</h3>
+            <p className="text-rose-600 mb-6">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-medium hover:bg-red-700 transition"
+              className="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-medium hover:bg-rose-700 transition shadow-lg shadow-rose-200"
             >
               Try Again
             </button>
@@ -287,17 +281,15 @@ const TutorList = () => {
         )}
 
         {!loading && !error && filteredTutors.length === 0 && (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center max-w-lg mx-auto mt-8">
-            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center max-w-lg mx-auto mt-12 shadow-sm">
+            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiSearch className="w-10 h-10 text-slate-300" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-1">No tutors found</h3>
-            <p className="text-gray-500 mb-6">We couldn't find any tutors matching your search criteria.</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">No tutors found</h3>
+            <p className="text-slate-500 mb-8 max-w-xs mx-auto">We couldn't find any tutors matching your search criteria. Try adjusting your filters.</p>
             <button
               onClick={handleResetFilters}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition"
+              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
             >
               Clear all filters
             </button>
@@ -311,11 +303,11 @@ const TutorList = () => {
         </div>
 
         {hasMore && !loading && !error && filteredTutors.length > 0 && (
-          <div className="mt-10 text-center">
+          <div className="mt-12 text-center pb-8">
             <button
               onClick={() => setPage((p) => p + 1)}
               disabled={loading}
-              className="px-6 py-3 bg-white border border-gray-300 text-gray-700 font-medium rounded-xl hover:bg-gray-50 hover:text-gray-900 transition shadow-sm"
+              className="px-8 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-600 transition shadow-sm"
             >
               {loading ? "Loading..." : "Load More Tutors"}
             </button>
@@ -327,5 +319,29 @@ const TutorList = () => {
     </div>
   );
 };
+
+const FilterSelect = ({ value, onChange, options, placeholder, isObjectOptions = false }) => (
+  <div className="relative group">
+    <select
+      value={value}
+      onChange={onChange}
+      className="appearance-none pl-4 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-medium hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer shadow-sm"
+    >
+      <option value="">{placeholder}</option>
+      {options.map((opt) => (
+        isObjectOptions ? (
+           <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ) : (
+           <option key={opt} value={opt}>{opt}</option>
+        )
+      ))}
+    </select>
+    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400 group-hover:text-indigo-500">
+      <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
+        <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
+      </svg>
+    </div>
+  </div>
+);
 
 export default TutorList;

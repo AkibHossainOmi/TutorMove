@@ -1,8 +1,11 @@
+// src/pages/qna/QnAPage.js
 import React, { useState, useEffect } from 'react';
 import { qnaAPI } from '../../utils/apiService';
-import { useAuth } from '../../contexts/UseAuth';
 import { Link } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import LoadingSpinner from '../../components/LoadingSpinner';
+import { MessageSquare, ArrowUp, Trash2, Clock, User, Filter, Plus } from 'lucide-react';
 
 const QnAPage = () => {
   const [questions, setQuestions] = useState([]);
@@ -28,7 +31,7 @@ const QnAPage = () => {
   };
 
   const handleUpvote = async (id, e) => {
-    e.preventDefault(); // Prevent link navigation if clicked
+    e.preventDefault();
     try {
       const response = await qnaAPI.upvoteQuestion(id);
       setQuestions(questions.map(q =>
@@ -36,17 +39,15 @@ const QnAPage = () => {
       ));
     } catch (error) {
       console.error("Error upvoting:", error);
-      // Optional: Toast notification here
     }
   };
 
   const handleDeleteQuestion = async (id, e) => {
-    e.preventDefault(); // Prevent link navigation
+    e.preventDefault();
     if (window.confirm('Are you sure you want to delete this question? This action cannot be undone.')) {
       try {
         await qnaAPI.deleteQuestion(id);
         setQuestions(questions.filter(q => q.id !== id));
-        alert('Question deleted successfully');
       } catch (error) {
         console.error('Error deleting question:', error);
         alert('Failed to delete question');
@@ -55,111 +56,127 @@ const QnAPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-600">
       <Navbar />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-10 space-y-4 sm:space-y-0">
+
+      <main className="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 mt-16">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Community Q&A</h1>
-            <p className="text-gray-500 mt-1">Find answers, ask questions, and help others.</p>
+            <h1 className="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
+               <MessageSquare className="w-8 h-8 text-indigo-600" />
+               Community Q&A
+            </h1>
+            <p className="text-slate-500 mt-2 max-w-2xl">
+              Join the discussion. Find answers, ask questions, and share your knowledge with fellow students and tutors.
+            </p>
           </div>
-          <div className="flex items-center gap-3">
-            {/* Sort Dropdown */}
+
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+             {/* Sort Dropdown */}
             <div className="relative">
-              <label className="text-sm text-gray-600 mr-2">Sort by:</label>
-              <select
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Filter className="h-4 w-4 text-slate-400" />
+               </div>
+               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors cursor-pointer"
+                className="w-full sm:w-auto appearance-none pl-9 pr-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-medium text-slate-700 hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow cursor-pointer shadow-sm"
               >
                 <option value="newest">Newest First</option>
-                <option value="most_liked">Most Liked</option>
+                <option value="most_liked">Most Upvoted</option>
               </select>
             </div>
 
             {user && user.user_type === 'student' && (
               <Link
                 to="/qna/create"
-                className="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 shadow-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="inline-flex items-center justify-center px-5 py-2.5 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200 hover:shadow-md transition-all gap-2"
               >
-                <svg className="w-5 h-5 mr-2 -ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Ask a Question
+                <Plus className="w-5 h-5" />
+                Ask Question
               </Link>
             )}
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content List */}
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500"></div>
-          </div>
+           <div className="py-20 flex justify-center">
+              <LoadingSpinner />
+           </div>
         ) : (
           <div className="space-y-4">
             {questions.map(q => (
               <Link
                 to={`/qna/${q.id}`}
                 key={q.id}
-                className="block bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow duration-200 group"
+                className="block bg-white border border-slate-200 rounded-2xl p-6 hover:border-indigo-200 hover:shadow-md transition-all duration-300 group relative overflow-hidden"
               >
-                <div className="flex items-start gap-4">
-                  {/* Vote Counter - Left Side */}
-                  <div className="flex flex-col items-center min-w-[3rem] text-gray-500">
+                 {/* Hover Indication Bar */}
+                 <div className="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+
+                <div className="flex gap-6">
+                  {/* Upvote Column */}
+                  <div className="flex flex-col items-center min-w-[3rem]">
                     <button
                       onClick={(e) => handleUpvote(q.id, e)}
-                      className={`p-1 rounded hover:bg-gray-100 transition-colors ${q.has_upvoted ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-500'}`}
+                      className={`p-2 rounded-lg transition-all ${
+                        q.has_upvoted
+                          ? 'bg-indigo-50 text-indigo-600'
+                          : 'text-slate-400 hover:bg-slate-50 hover:text-indigo-500'
+                      }`}
+                      title={q.has_upvoted ? "Remove Upvote" : "Upvote"}
                     >
-                      <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-                      </svg>
+                       <ArrowUp className={`w-6 h-6 ${q.has_upvoted ? 'fill-current' : ''}`} />
                     </button>
-                    <span className={`font-bold text-lg ${q.has_upvoted ? 'text-indigo-600' : 'text-gray-700'}`}>
+                    <span className={`font-bold text-lg mt-1 ${q.has_upvoted ? 'text-indigo-600' : 'text-slate-600'}`}>
                       {q.total_upvotes}
                     </span>
                   </div>
 
-                  {/* Main Content */}
-                  <div className="flex-1">
-                    <h2 className="text-xl font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors mb-2">
+                  {/* Question Content */}
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-indigo-600 transition-colors line-clamp-1">
                       {q.title}
                     </h2>
-                    <p className="text-gray-600 line-clamp-2 mb-4 text-sm leading-relaxed">
+                    <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 mb-4">
                       {q.content}
                     </p>
 
-                    <div className="flex items-center justify-between flex-wrap gap-4 text-xs text-gray-500 font-medium">
-                      <div className="flex items-center flex-wrap gap-4">
-                        <div className="flex items-center gap-1">
-                          <div className="w-5 h-5 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold">
-                            {q.student?.username?.[0]?.toUpperCase() || 'U'}
-                          </div>
-                          <span>{q.student?.username || 'Anonymous'}</span>
+                    <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-slate-50">
+                      <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+                        {/* Author */}
+                        <div className="flex items-center gap-1.5">
+                           <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[10px]">
+                              {q.student?.username?.[0]?.toUpperCase() || <User className="w-3 h-3" />}
+                           </div>
+                           <span className="text-slate-700">{q.student?.username || 'Anonymous'}</span>
                         </div>
-                        <span>•</span>
-                        <span>
-                          {new Date(q.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} at {new Date(q.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1 text-gray-600">
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                          </svg>
-                          {q.answers_count} Answer{q.answers_count !== 1 ? 's' : ''}
-                        </span>
+
+                        {/* Timestamp */}
+                        <div className="flex items-center gap-1.5">
+                           <Clock className="w-3.5 h-3.5" />
+                           <span>
+                              {new Date(q.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                           </span>
+                        </div>
+
+                        {/* Answers Count */}
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 rounded-md">
+                           <MessageSquare className="w-3.5 h-3.5 text-slate-600" />
+                           <span className="text-slate-700">{q.answers_count} Answers</span>
+                        </div>
                       </div>
+
+                      {/* Delete Action (Owner only) */}
                       {user && q.student?.id === user.id && (
                         <button
                           onClick={(e) => handleDeleteQuestion(q.id, e)}
-                          className="inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-                          title="Delete Question"
+                          className="flex items-center gap-1 text-xs font-semibold text-rose-500 hover:text-rose-700 hover:bg-rose-50 px-2 py-1 rounded transition-colors"
                         >
-                          <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                          Delete
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Delete</span>
                         </button>
                       )}
                     </div>
@@ -168,28 +185,30 @@ const QnAPage = () => {
               </Link>
             ))}
 
+            {/* Empty State */}
             {questions.length === 0 && (
-              <div className="text-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
-                <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                </svg>
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No questions yet</h3>
-                <p className="mt-1 text-sm text-gray-500">Be the first to ask a question to the community.</p>
+              <div className="text-center py-20 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                   <MessageSquare className="w-8 h-8 text-slate-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-1">No questions yet</h3>
+                <p className="text-slate-500 mb-6 max-w-sm mx-auto">
+                   Be the first to start a discussion! Ask a question to get help from our community of tutors.
+                </p>
                 {user && user.user_type === 'student' && (
-                  <div className="mt-6">
-                    <Link
-                      to="/qna/create"
-                      className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                    >
-                      Ask a Question
-                    </Link>
-                  </div>
+                   <Link
+                    to="/qna/create"
+                    className="inline-flex items-center px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 shadow-sm transition-all"
+                   >
+                     Ask a Question
+                   </Link>
                 )}
               </div>
             )}
           </div>
         )}
-      </div>
+      </main>
+      <Footer />
     </div>
   );
 };

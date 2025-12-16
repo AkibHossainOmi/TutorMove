@@ -1,7 +1,10 @@
+// src/pages/qna/CreateQuestionPage.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { qnaAPI } from '../../utils/apiService';
 import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
+import { HelpCircle, AlertCircle, FileText, Type } from 'lucide-react';
 
 const CreateQuestionPage = () => {
   const [title, setTitle] = useState('');
@@ -31,86 +34,99 @@ const CreateQuestionPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-600">
       <Navbar />
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-          <div className="px-8 py-6 border-b border-gray-100 bg-gray-50/50">
-            <h1 className="text-2xl font-bold text-gray-900">Ask a Question</h1>
-            <p className="mt-1 text-sm text-gray-500">Get help from expert tutors in the community.</p>
+      <div className="flex-grow flex justify-center items-start pt-24 pb-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-3xl w-full bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-200 overflow-hidden">
+
+          {/* Header */}
+          <div className="bg-gradient-to-r from-indigo-600 to-indigo-700 px-8 py-8">
+             <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 bg-white/10 rounded-lg">
+                   <HelpCircle className="w-6 h-6 text-white" />
+                </div>
+                <h1 className="text-2xl font-bold text-white tracking-tight">Ask the Community</h1>
+             </div>
+             <p className="text-indigo-100 text-sm max-w-xl">
+               Get help with your homework, assignments, or any subject-related queries from expert tutors.
+             </p>
           </div>
 
           <div className="p-8">
             {error && (
-              <div className="mb-6 bg-red-50 border border-red-100 text-red-600 px-4 py-3 rounded-lg text-sm flex items-center">
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                </svg>
-                {error}
+              <div className="mb-6 bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-lg text-sm flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Title Field */}
               <div>
-                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-                  Question Title <span className="text-red-500">*</span>
+                <label htmlFor="title" className="block text-sm font-bold text-slate-700 mb-2">
+                  Question Title <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  id="title"
-                  type="text"
-                  className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2.5 px-3 border"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. How do I solve quadratic equations?"
-                  required
-                />
-                <p className="mt-1 text-xs text-gray-500">Be specific and imagine you’re asking a question to another person.</p>
+                <div className="relative">
+                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <Type className="h-5 w-5 text-slate-400" />
+                   </div>
+                   <input
+                    id="title"
+                    type="text"
+                    className="block w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="e.g., How do I solve quadratic equations using the formula?"
+                    required
+                  />
+                </div>
+                <p className="mt-2 text-xs text-slate-500">
+                   Be specific and concise. A good title helps you get better answers faster.
+                </p>
               </div>
 
+              {/* Content Field */}
               <div>
-                <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-1">
-                  Details <span className="text-red-500">*</span>
+                <label htmlFor="content" className="block text-sm font-bold text-slate-700 mb-2">
+                  Detailed Explanation <span className="text-rose-500">*</span>
                 </label>
-                <div className="relative rounded-md shadow-sm">
-                  <textarea
+                <div className="relative">
+                   <div className="absolute top-3 left-3 pointer-events-none">
+                      <FileText className="h-5 w-5 text-slate-400" />
+                   </div>
+                   <textarea
                     id="content"
-                    className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm py-2.5 px-3 border h-48 resize-y"
+                    className="block w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all h-48 resize-none placeholder:text-slate-400"
                     value={content}
                     onChange={(e) => setContent(e.target.value)}
-                    placeholder="Describe your problem in detail..."
+                    placeholder="Describe your problem in detail. Include what you've tried so far..."
                     required
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end pt-4 border-t border-gray-100">
+              {/* Actions */}
+              <div className="flex items-center justify-end gap-3 pt-6 border-t border-slate-100">
                 <button
                   type="button"
                   onClick={() => navigate('/qna')}
-                  className="mr-3 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+                  className="px-5 py-2.5 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 hover:text-slate-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-70 disabled:cursor-not-allowed transition-all"
+                  className="inline-flex items-center px-6 py-2.5 bg-indigo-600 text-white text-sm font-bold rounded-xl hover:bg-indigo-700 shadow-sm shadow-indigo-200 hover:shadow-md transition-all disabled:opacity-70 disabled:cursor-wait"
                 >
-                  {submitting ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Posting...
-                    </>
-                  ) : 'Post Question'}
+                  {submitting ? 'Posting...' : 'Post Question'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   );
 };

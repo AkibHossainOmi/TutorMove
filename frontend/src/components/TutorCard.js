@@ -1,9 +1,11 @@
+// src/components/TutorCard.js
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import BuyCreditsModal from './BuyCreditsModal';
 import { contactUnlockAPI } from '../utils/apiService';
 import ProfileImageWithBg from './ProfileImageWithBg';
 import StarRating from './StarRating';
+import { MapPin, CheckCircle, Mail, Phone, Lock, Unlock, ArrowRight } from 'lucide-react';
 
 const TutorCard = ({ tutor, featured = false }) => {
   const [contactInfo, setContactInfo] = useState({ phone: '', email: '' });
@@ -69,149 +71,147 @@ const TutorCard = ({ tutor, featured = false }) => {
 
   return (
     <div
-      className={`bg-white rounded-2xl p-6 transition-all duration-300 border ${
+      className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 ${
         featured
-          ? 'border-yellow-200 shadow-md ring-1 ring-yellow-100'
-          : 'border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-100'
+          ? 'border-2 border-amber-200 shadow-lg ring-4 ring-amber-50'
+          : 'border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-100 hover:-translate-y-1'
       }`}
     >
-      <div className="flex flex-col md:flex-row gap-6">
-        {/* Left: Avatar & Location */}
-        <div className="flex-shrink-0 flex flex-col items-center md:w-48">
-          <div className="relative mb-3">
+      {/* Featured Badge */}
+      {featured && (
+        <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-400 to-amber-300 text-amber-900 text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-sm z-10 uppercase tracking-wider flex items-center gap-1">
+           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
+           Top Rated
+        </div>
+      )}
+
+      <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-8">
+        {/* Left Column: Avatar & Quick Stats */}
+        <div className="flex-shrink-0 flex flex-col items-center md:items-start space-y-4 md:w-56">
+          <div className="relative group-hover:scale-105 transition-transform duration-300">
              {tutor.profile_picture ? (
-                <ProfileImageWithBg imageUrl={tutor.profile_picture} size={96} />
+                <ProfileImageWithBg imageUrl={tutor.profile_picture} size={110} className="rounded-2xl shadow-md" />
              ) : (
-                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-3xl font-bold text-white shadow-inner">
+                <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white shadow-md">
                   {tutor.username?.charAt(0).toUpperCase() || 'T'}
                 </div>
              )}
-            {featured && (
-              <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-[10px] font-bold px-2 py-1 rounded-full shadow-sm uppercase tracking-wider">
-                Featured
-              </div>
-            )}
           </div>
-          <div className="text-center">
-            <div className="flex items-center justify-center gap-1 text-gray-500 text-sm mb-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
+
+          <div className="text-center md:text-left w-full space-y-2">
+            <div className="flex items-center justify-center md:justify-start gap-1.5 text-slate-500 text-sm font-medium">
+              <MapPin className="w-4 h-4 text-slate-400" />
               <span>{tutor.location || 'Remote'}</span>
             </div>
+
             {tutor.hourly_rate && (
-              <div className="font-semibold text-gray-900">
+              <div className="inline-flex items-center justify-center md:justify-start px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-sm font-semibold text-slate-900 w-full md:w-auto">
                 ${tutor.hourly_rate}/hr
               </div>
             )}
           </div>
         </div>
 
-        {/* Middle: Info */}
-        <div className="flex-grow min-w-0">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <h3 className="text-xl font-bold text-gray-900 truncate">
-              {tutor.username || 'Anonymous Tutor'}
-            </h3>
-            <div className="flex items-center gap-2">
-              {tutor.is_verified && (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                  <svg className="mr-1 h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                  Verified
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Rating Display */}
-          <div className="mb-3">
-             <StarRating rating={tutor.average_rating || 0} count={tutor.review_count || 0} />
-          </div>
-
-          <p className="text-gray-600 text-sm line-clamp-2 mb-4">
-            {tutor.bio || "No bio available."}
-          </p>
-
-          <div className="space-y-3">
+        {/* Right Column: Main Info & Actions */}
+        <div className="flex-grow flex flex-col min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
              <div>
-                <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">Teaches</h4>
-                 <div className="flex flex-wrap gap-2">
-                  {tutor.subjects?.length > 0 ? (
-                    tutor.subjects.slice(0, 5).map((subject, i) => (
-                      <span key={i} className="px-2.5 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-lg">
-                        {subject}
-                      </span>
-                    ))
-                  ) : (
-                    <span className="text-sm text-gray-500 italic">No subjects listed</span>
-                  )}
-                  {tutor.subjects?.length > 5 && (
-                     <span className="px-2.5 py-1 text-xs font-medium bg-gray-100 text-gray-600 rounded-lg">
-                       +{tutor.subjects.length - 5}
+                <div className="flex items-center gap-2 mb-1">
+                   <h3 className="text-2xl font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer">
+                      <Link to={`/profile/${tutor.username}`}>{tutor.username || 'Anonymous Tutor'}</Link>
+                   </h3>
+                   {tutor.is_verified && (
+                     <span className="inline-flex items-center p-1 rounded-full bg-blue-50 text-blue-600" title="Verified Tutor">
+                        <CheckCircle className="w-4 h-4" />
                      </span>
-                  )}
+                   )}
+                </div>
+                <div className="flex items-center gap-3">
+                   <StarRating rating={tutor.average_rating || 0} count={tutor.review_count || 0} size={16} />
                 </div>
              </div>
+
+             <div className="hidden sm:block">
+                 {currentUserType === 'student' ? (
+                   <Link
+                      to={`/profile/${tutor.username}`}
+                      className="btn btn-primary px-6 py-2 rounded-full shadow-md shadow-indigo-200 hover:shadow-lg transition-all text-sm"
+                   >
+                      View Profile
+                   </Link>
+                 ) : (
+                    <Link
+                      to={`/profile/${tutor.username}`}
+                      className="btn btn-secondary px-6 py-2 rounded-full text-sm"
+                   >
+                      View Profile
+                   </Link>
+                 )}
+             </div>
           </div>
-        </div>
 
-        {/* Right: Actions */}
-        <div className="flex flex-col gap-3 min-w-[200px] border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 justify-center">
-            {currentUserType === 'student' ? (
-              <Link
-                to={`/profile/${tutor.username}`}
-                className="w-full text-center px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition shadow-sm hover:shadow"
-              >
-                View Profile
-              </Link>
-            ) : (
-               <Link
-                to={`/profile/${tutor.username}`}
-                 className="w-full text-center px-4 py-2.5 rounded-xl border border-indigo-200 text-indigo-700 bg-indigo-50 text-sm font-semibold hover:bg-indigo-100 transition"
-               >
-                 View Profile
-               </Link>
-            )}
+          {/* Subjects Tags */}
+          <div className="mb-4">
+             <div className="flex flex-wrap gap-2">
+                {tutor.subjects?.length > 0 ? (
+                  tutor.subjects.slice(0, 5).map((subject, i) => (
+                    <span key={i} className="px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100">
+                      {subject}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-sm text-slate-400 italic">No subjects listed</span>
+                )}
+                {tutor.subjects?.length > 5 && (
+                   <span className="px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
+                     +{tutor.subjects.length - 5}
+                   </span>
+                )}
+             </div>
+          </div>
 
-            <div className="bg-gray-50 rounded-xl p-3">
-               {isUnlocked ? (
-                  <div className="text-sm space-y-1">
-                     <div className="flex items-center gap-2 text-gray-700">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        <span className="truncate">{contactInfo.phone}</span>
-                     </div>
-                     <div className="flex items-center gap-2 text-gray-700">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                        <span className="truncate">{contactInfo.email}</span>
-                     </div>
-                  </div>
-               ) : (
-                  <button
-                    onClick={handleUnlockContact}
-                    disabled={unlocking}
-                    className="w-full text-center text-sm text-gray-600 hover:text-indigo-600 font-medium transition flex items-center justify-center gap-1"
-                  >
-                     {unlocking ? (
-                        <span>Unlocking...</span>
-                     ) : (
-                        <>
-                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                           </svg>
-                           Unlock Contact (1 pt)
-                        </>
-                     )}
-                  </button>
-               )}
-            </div>
-             {error && <p className="text-xs text-red-600 text-center">{error}</p>}
+          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 mb-6 flex-grow">
+            {tutor.bio || "This tutor hasn't added a bio yet, but they are verified and ready to teach!"}
+          </p>
+
+          {/* Contact & Mobile Action */}
+          <div className="mt-auto pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
+              <div className="w-full sm:w-auto">
+                 {isUnlocked ? (
+                    <div className="flex flex-col sm:flex-row gap-3 text-sm">
+                       <div className="flex items-center gap-2 text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                          <Phone className="w-4 h-4 text-emerald-500" />
+                          <span className="font-medium select-all">{contactInfo.phone || 'N/A'}</span>
+                       </div>
+                       <div className="flex items-center gap-2 text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
+                          <Mail className="w-4 h-4 text-blue-500" />
+                          <span className="font-medium select-all">{contactInfo.email || 'N/A'}</span>
+                       </div>
+                    </div>
+                 ) : (
+                    <button
+                      onClick={handleUnlockContact}
+                      disabled={unlocking}
+                      className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
+                    >
+                       <div className="p-1.5 bg-slate-100 rounded-lg group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
+                          {unlocking ? <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full" /> : <Lock className="w-4 h-4" />}
+                       </div>
+                       <span>{unlocking ? 'Unlocking...' : 'Unlock Contact Info (1 Point)'}</span>
+                    </button>
+                 )}
+                 {error && <p className="text-xs text-rose-500 mt-2 font-medium bg-rose-50 px-2 py-1 rounded inline-block">{error}</p>}
+              </div>
+
+              <div className="sm:hidden w-full">
+                 <Link
+                    to={`/profile/${tutor.username}`}
+                    className="flex items-center justify-center w-full px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-md"
+                 >
+                    View Profile <ArrowRight className="w-4 h-4 ml-2" />
+                 </Link>
+              </div>
+          </div>
         </div>
       </div>
 
