@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import Home from './pages/Home';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -45,14 +46,16 @@ import QnAPage from './pages/qna/QnAPage';
 import CreateQuestionPage from './pages/qna/CreateQuestionPage';
 import QuestionDetailsPage from './pages/qna/QuestionDetailsPage';
 import TutorApplicationPage from './pages/TutorApplicationPage';
+import Notifications from './pages/Notifications';
 
 
 function App() {
   return (
     <AuthProvider>
-      <div className="font-roboto min-h-screen flex flex-col"> {/* Applying font-roboto and flex layout */}
-        <BrowserRouter>
-          <Routes>
+      <ThemeProvider>
+        <div className="font-sans min-h-screen flex flex-col">
+          <BrowserRouter>
+            <Routes>
             {/* Public Routes - Accessible to all users */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -91,6 +94,7 @@ function App() {
 
             {/* Messaging and Point Management */}
             <Route path="/messages" element={<Messages />} />
+            <Route path="/notifications" element={<Notifications />} />
 
             {/* Payment Status Pages */}
             <Route path="/payments/success/" element={<PaymentSuccess />} />
@@ -115,9 +119,10 @@ function App() {
             <Route path="/student-faq" element={<FAQ />} />
             <Route path="/post-requirement" element={<PostRequirement />} />
           </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+          </Routes>
+        </BrowserRouter>
+      </div>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

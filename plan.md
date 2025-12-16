@@ -1,16 +1,14 @@
 **_# New Update:_**
-- Latest 10 notification will be shown. 
-- 2 hours timer will be shown and only the users who received can apply.
-- Bidding page: Show next bidding point.
-- point spends on gig will be resetted after 1 month.
-- Filter in Job page.
-- Sorting in Job page.
-- test ciCd
+- Generalize Users -> 15,000/=
+- Question/Answer Session -> 15,000/=
+- Coin Gifting -> 5,000/=
+- Ad on Q/A page -> 10,000/=
+- Refer & Earn -> 10,000/=
+- Role Bases Admin Panel -> 25,000/=
+- ChatBot -> 15,000/=
+- Android App -> 0.00/=
 
 **_# Future Update:_**
-
--   Frontend Admin Panel
--   Coupon Code
--   Refer & Earn
--   Account Delete
--   Points can go to negative (not supposed to)
+ - Admin login as any user
+ - user ban
+ - 

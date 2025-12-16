@@ -17,7 +17,7 @@ const Profile = () => {
 
   if (profile.loading)
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 dark:bg-dark-bg flex flex-col">
         <Navbar />
         <div className="flex-grow flex justify-center items-center">
           <LoadingSpinner />
@@ -28,10 +28,10 @@ const Profile = () => {
 
   if (profile.error)
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-slate-50 dark:bg-dark-bg flex flex-col">
         <Navbar />
         <div className="flex-grow flex justify-center items-center px-4">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 max-w-md w-full text-center">
+          <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm dark:shadow-dark-md border border-slate-200 dark:border-dark-border p-8 max-w-md w-full text-center">
             <div className="mx-auto w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mb-4">
                <AlertCircle className="w-6 h-6 text-rose-600" />
             </div>
@@ -50,7 +50,7 @@ const Profile = () => {
     );
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-600">
+    <div className="min-h-screen bg-slate-50 dark:bg-dark-bg flex flex-col font-sans text-slate-600 dark:text-dark-text-secondary">
       <Navbar />
       <main className="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 mt-16 space-y-8">
 

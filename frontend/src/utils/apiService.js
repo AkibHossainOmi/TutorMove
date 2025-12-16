@@ -139,7 +139,7 @@ export const contactUnlockAPI = {
 export const tutorAPI = {
   searchTutors: (params) => apiService.post('/api/tutors/search/', params),
   getTutorProfile: (id) => apiService.get(`/api/tutors/${id}/`),
-  getTutors: () => apiService.get(`/api/tutors/`),
+  getTutors: (params) => apiService.get(`/api/tutors/`, { params }),
   createGig: (gigData) => apiService.post('/api/tutors/', gigData),
   updateGig: (id, gigData) => apiService.patch(`/api/tutors/${id}/`, gigData),
   deleteGig: (id) => apiService.delete(`/api/tutors/${id}/`),
@@ -263,10 +263,11 @@ export const messageAPI = {
 
 // Notification API calls
 export const notificationAPI = {
+  getNotifications: (params) => apiService.get('/api/notifications/', { params }),
   getUnreadNotifications: () => apiService.get('/api/notifications/unread/'),
-  markAsRead: () => apiService.post(`/api/notifications/mark-read/`),
-  markAllAsRead: () => apiService.post('/notifications/mark-all-read/'),
-  deleteNotification: (id) => apiService.delete(`/notifications/${id}/`),
+  markAsRead: (id) => apiService.post(`/api/notifications/${id}/mark-read/`),
+  markAllAsRead: () => apiService.post('/api/notifications/mark-all-read/'),
+  deleteNotification: (id) => apiService.delete(`/api/notifications/${id}/`),
   updateNotificationPreferences: (preferences) => apiService.patch('/notifications/preferences/', preferences),
   getLatestNotifications: () => apiService.get('/api/notifications/latest/'),
 };

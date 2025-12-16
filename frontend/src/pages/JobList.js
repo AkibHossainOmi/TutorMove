@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Pagination from "../components/Pagination";
 import {
   FiBriefcase,
   FiMapPin,
@@ -17,43 +18,53 @@ const JobList = () => {
   const [jobs, setJobs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [selectedType, setSelectedType] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const jobsPerPage = 7;
+  const jobsPerPage = 10;
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+        setDebouncedSearch(searchQuery);
+        setCurrentPage(1);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   useEffect(() => {
     const fetchJobs = async () => {
+      setLoading(true);
       try {
-        const res = await jobAPI.getJobs();
-        let allJobs = res.data || [];
-
-        // Sort by date (newest first)
-        allJobs.sort(
-          (a, b) => new Date(b.created_at) - new Date(a.created_at)
-        );
-
         const params = new URLSearchParams(location.search);
-        const type = params.get("type");
+        const type = params.get("type") || "all";
+        setSelectedType(type);
 
-        if (type === "online") {
-          allJobs = allJobs.filter((job) => job.mode?.includes("Online"));
-          setSelectedType("online");
-        } else if (type === "offline") {
-          allJobs = allJobs.filter((job) => job.mode?.includes("Offline"));
-          setSelectedType("offline");
-        } else if (type === "assignment") {
-          allJobs = allJobs.filter(
-            (job) => job.service_type?.toLowerCase() === "assignment help"
-          );
-          setSelectedType("assignment");
+        const apiParams = {
+            page: currentPage,
+            page_size: jobsPerPage,
+            type: type !== "all" ? type : undefined,
+            search: debouncedSearch,
+        };
+
+        const res = await jobAPI.getJobs(apiParams);
+        
+        if (res.data && res.data.results) {
+            setJobs(res.data.results);
+            const totalCount = res.data.count || 0;
+            setTotalPages(Math.ceil(totalCount / jobsPerPage));
+        } else if (Array.isArray(res.data)) {
+            // Fallback
+            setJobs(res.data);
+            setTotalPages(1);
         } else {
-          setSelectedType("all");
+            setJobs([]);
+            setTotalPages(0);
         }
-
-        setJobs(allJobs);
       } catch (err) {
         console.error("Error fetching jobs:", err);
       } finally {
@@ -61,7 +72,7 @@ const JobList = () => {
       }
     };
     fetchJobs();
-  }, [location.search]);
+  }, [location.search, currentPage, debouncedSearch]);
 
   const handleFilterChange = (type) => {
     setSelectedType(type);
@@ -69,35 +80,9 @@ const JobList = () => {
     navigate(type === "all" ? "/jobs" : `/jobs?type=${type}`);
   };
 
-  const filteredJobs = jobs.filter((job) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    const textFields = [
-      job.description,
-      job.location,
-      job.mode,
-      job.service_type,
-      Array.isArray(job.subject_details)
-        ? job.subject_details.join(" ")
-        : job.subject_details,
-    ];
-    return textFields.some((field) =>
-      String(field || "").toLowerCase().includes(query)
-    );
-  });
-
-  // Pagination logic
-  const totalPages = Math.ceil(filteredJobs.length / jobsPerPage);
-  const paginatedJobs = filteredJobs.slice(
-    (currentPage - 1) * jobsPerPage,
-    currentPage * jobsPerPage
-  );
-
-  const changePage = (pageNum) => {
-    if (pageNum >= 1 && pageNum <= totalPages) {
-      setCurrentPage(pageNum);
+  const handlePageChange = (page) => {
+      setCurrentPage(page);
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }
   };
 
   const JobSkeleton = () => (
@@ -139,10 +124,7 @@ const JobList = () => {
               className="block w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all shadow-lg"
               placeholder="Search by subject, skills, or location..."
               value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
@@ -189,7 +171,11 @@ const JobList = () => {
           <div className="lg:col-span-3 space-y-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-2">
               <h2 className="text-xl font-bold text-slate-800">
-                {filteredJobs.length} <span className="font-normal text-slate-500 text-base">Results Found</span>
+                {totalPages > 0 ? (
+                    <>Showing page <span className="text-indigo-600">{currentPage}</span> of {totalPages}</>
+                ) : (
+                    "No Jobs Found"
+                )}
               </h2>
               <span className="text-sm text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full">
                 Newest First
@@ -202,7 +188,7 @@ const JobList = () => {
                   <JobSkeleton key={i} />
                 ))}
               </div>
-            ) : filteredJobs.length === 0 ? (
+            ) : jobs.length === 0 ? (
               <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
                 <div className="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
                   <FiBriefcase className="text-slate-400 text-2xl" />
@@ -224,52 +210,18 @@ const JobList = () => {
             ) : (
               <>
                 <div className="space-y-4">
-                  {paginatedJobs.map((job) => (
+                  {jobs.map((job) => (
                     <JobCard key={job.id} job={job} />
                   ))}
                 </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <div className="flex justify-center items-center mt-12 gap-2">
-                    <button
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
-                        currentPage === 1
-                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                          : "bg-white border border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600"
-                      }`}
-                      onClick={() => changePage(currentPage - 1)}
-                      disabled={currentPage === 1}
-                    >
-                      &lt;
-                    </button>
-
-                    {[...Array(totalPages)].map((_, i) => (
-                      <button
-                        key={i}
-                        onClick={() => changePage(i + 1)}
-                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-semibold transition-all ${
-                          currentPage === i + 1
-                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
-                            : "bg-white border border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600"
-                        }`}
-                      >
-                        {i + 1}
-                      </button>
-                    ))}
-
-                    <button
-                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
-                        currentPage === totalPages
-                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
-                          : "bg-white border border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600"
-                      }`}
-                      onClick={() => changePage(currentPage + 1)}
-                      disabled={currentPage === totalPages}
-                    >
-                      &gt;
-                    </button>
-                  </div>
+                  <Pagination 
+                      currentPage={currentPage} 
+                      totalPages={totalPages} 
+                      onPageChange={handlePageChange} 
+                  />
                 )}
               </>
             )}

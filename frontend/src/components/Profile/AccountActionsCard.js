@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { FaKey, FaTrash, FaExclamationTriangle, FaTimes, FaLock } from 'react-icons/fa';
+import { Sun, Moon } from 'lucide-react';
 import { userApi } from '../../utils/apiService';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const AccountActionsCard = ({ profile }) => {
+  const { isDarkMode, toggleTheme } = useTheme();
   const {
     showPasswordFields,
     setShowPasswordFields,
@@ -56,11 +59,49 @@ const AccountActionsCard = ({ profile }) => {
 
   return (
     <>
-      <div className="bg-white rounded-xl shadow-md p-6">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-100 flex items-center">
-          <FaKey className="text-indigo-500 mr-2" /> Account Actions
+      <div className="bg-white dark:bg-dark-card rounded-xl shadow-md dark:shadow-dark-md p-6 border border-slate-200 dark:border-dark-border">
+        <h2 className="text-xl font-semibold text-gray-800 dark:text-dark-text-primary mb-6 pb-2 border-b border-gray-100 dark:border-dark-border flex items-center">
+          <FaKey className="text-indigo-500 dark:text-indigo-400 mr-2" /> Account Actions
         </h2>
         <div className="space-y-4">
+          {/* Theme Toggle */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40 border border-indigo-100 dark:border-indigo-800/40 shadow-sm dark:shadow-glow-indigo">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30'
+                  : 'bg-amber-100 text-amber-600'
+              }`}>
+                {isDarkMode ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </div>
+              <div>
+                <p className="font-medium text-gray-800 dark:text-dark-text-primary">Theme</p>
+                <p className="text-sm text-gray-500 dark:text-dark-text-muted">{isDarkMode ? 'Dark Mode' : 'Light Mode'}</p>
+              </div>
+            </div>
+            <button
+              onClick={toggleTheme}
+              className={`relative w-14 h-7 rounded-full transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                isDarkMode
+                  ? 'bg-indigo-600 shadow-inner'
+                  : 'bg-gray-300'
+              }`}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              <span
+                className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transform transition-all duration-300 flex items-center justify-center ${
+                  isDarkMode ? 'translate-x-7' : 'translate-x-0'
+                }`}
+              >
+                {isDarkMode ? (
+                  <Moon className="w-3.5 h-3.5 text-indigo-600" />
+                ) : (
+                  <Sun className="w-3.5 h-3.5 text-amber-500" />
+                )}
+              </span>
+            </button>
+          </div>
+
           {/* Change Password */}
           <button
             onClick={() => setShowPasswordFields((prev) => !prev)}

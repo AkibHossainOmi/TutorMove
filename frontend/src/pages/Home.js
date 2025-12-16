@@ -4,18 +4,19 @@ import MapSearch from '../components/MapSearch';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import HomeSections from '../components/HomeSections';
+import ChatBot from '../components/ChatBot';
 import { MapPin } from 'lucide-react';
 
 const Home = () => {
   const [tab] = useState('map');
 
   return (
-    <div className="bg-white min-h-screen flex flex-col font-sans">
+    <div className="bg-gray-50 dark:bg-dark-bg min-h-screen flex flex-col font-sans">
       <Navbar />
 
       {/* Hero Section with Map Overlay */}
       <div className="relative pt-16">
-        <div className="bg-slate-900 pt-16 pb-32 lg:pt-24 lg:pb-48 px-4 sm:px-6 lg:px-8 text-center overflow-hidden">
+        <div className="bg-slate-900 dark:bg-dark-bg-secondary pt-16 pb-32 lg:pt-24 lg:pb-48 px-4 sm:px-6 lg:px-8 text-center overflow-hidden">
            {/* Background Elements */}
            <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none">
               <div className="absolute -top-[20%] -left-[10%] w-[800px] h-[800px] bg-indigo-600/20 rounded-full blur-[100px] opacity-40 mix-blend-screen"></div>
@@ -43,14 +44,14 @@ const Home = () => {
 
         {/* Floating Map Section */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-24 lg:-mt-36 mb-12">
-           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden ring-1 ring-black/5">
-              <div className="p-1 bg-slate-50 border-b border-slate-200 flex justify-between items-center px-4 py-2">
+           <div className="bg-white dark:bg-dark-card rounded-2xl shadow-2xl dark:shadow-dark-xl border border-slate-200 dark:border-dark-border overflow-hidden ring-1 ring-black/5 dark:ring-indigo-500/10">
+              <div className="p-1 bg-slate-50 dark:bg-dark-bg-secondary border-b border-slate-200 dark:border-dark-border flex justify-between items-center px-4 py-2">
                  <div className="flex gap-1.5">
                     <div className="w-3 h-3 rounded-full bg-rose-400"></div>
                     <div className="w-3 h-3 rounded-full bg-amber-400"></div>
                     <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
                  </div>
-                 <div className="text-xs font-mono text-slate-400">Interactive Map Search</div>
+                 <div className="text-xs font-mono text-slate-400 dark:text-dark-text-muted">Interactive Map Search</div>
               </div>
               <div className="h-[500px] relative">
                  {/* Map Component */}
@@ -64,6 +65,9 @@ const Home = () => {
     
       <HomeSections/>
       <Footer />
+
+      {/* ChatBot Assistant */}
+      <ChatBot />
     </div>
   );
 };

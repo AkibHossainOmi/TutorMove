@@ -2,7 +2,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
+import { useTheme } from "../contexts/ThemeContext";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
+import { Sun, Moon } from "lucide-react";
 
 // Icons
 const ChevronDownIcon = ({ className }) => (
@@ -68,6 +70,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthenticated = useAuth();
+  const { isDarkMode, toggleTheme } = useTheme();
   const userData = JSON.parse(localStorage.getItem("user")) || {};
 
   const userName = userData?.username || "User";
@@ -173,8 +176,8 @@ const Navbar = () => {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-1">
 
-            {/* Find Tutors Dropdown (Student or Guest) */}
-            {(userType === "student" || !isAuthenticated) && (
+            {/* Find Tutors Dropdown (Student, Admin, Moderator, or Guest) */}
+            {(userType === "student" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
               <div className="relative group">
                 <button
                   onClick={() => toggleDropdown("tutors")}
@@ -197,8 +200,8 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Find Jobs Dropdown (Tutor or Guest) */}
-            {(userType === "tutor" || !isAuthenticated) && (
+            {/* Find Jobs Dropdown (Tutor, Admin, Moderator, or Guest) */}
+            {(userType === "tutor" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
               <div className="relative">
                 <button
                   onClick={() => toggleDropdown("jobs")}
@@ -225,6 +228,23 @@ const Navbar = () => {
 
           {/* Desktop Auth Actions */}
           <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700 hover:text-yellow-300'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-indigo-600'
+              }`}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+
             {isAuthenticated ? (
               <div className="relative ml-2">
                 <button
@@ -311,8 +331,24 @@ const Navbar = () => {
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center">
-             <button
+          <div className="md:hidden flex items-center gap-2">
+            {/* Mobile Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className={`p-2 rounded-lg transition-all duration-300 ${
+                isDarkMode
+                  ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDarkMode ? (
+                <Sun className="w-5 h-5" />
+              ) : (
+                <Moon className="w-5 h-5" />
+              )}
+            </button>
+            <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
             >
@@ -339,7 +375,7 @@ const Navbar = () => {
                 Home
              </Link>
 
-              {(userType === "student" || !isAuthenticated) && (
+              {(userType === "student" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
                 <>
                   <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Tutors</div>
                   <Link to="/tutors" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Browse All</Link>
@@ -347,7 +383,7 @@ const Navbar = () => {
                 </>
               )}
 
-              {(userType === "tutor" || !isAuthenticated) && (
+              {(userType === "tutor" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
                 <>
                   <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Jobs</div>
                   <Link to="/jobs" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Browse Jobs</Link>

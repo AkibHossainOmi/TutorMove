@@ -2,17 +2,17 @@ import React, { useEffect, useState, useMemo } from "react";
 import TutorCard from "../components/TutorCard";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import Pagination from "../components/Pagination";
 import { tutorAPI } from "../utils/apiService";
 import { FiSearch, FiFilter, FiRefreshCw, FiAlertCircle } from "react-icons/fi";
 
-const PAGE_SIZE = 8;
-const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 10;
+const SEARCH_DEBOUNCE_MS = 500;
 
 const TutorList = () => {
   const [tutors, setTutors] = useState([]);
-  const [filteredTutors, setFilteredTutors] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -20,12 +20,12 @@ const TutorList = () => {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("");
-  const [selectedLevel, setSelectedLevel] = useState("");
-  const [priceRange, setPriceRange] = useState("");
-  const [sortBy, setSortBy] = useState("popular");
+  const [selectedLevel, setSelectedLevel] = useState(""); // Kept for UI consistency, but server filtering might not support it yet
+  const [priceRange, setPriceRange] = useState(""); // Kept for UI
+  const [sortBy, setSortBy] = useState("newest"); // 'popular' is default in UI, but backend defaults to date
 
   // Filter options
-  const subjects = ["Math", "Science", "English", "History", "Programming", "Languages"];
+  const subjects = ["Math", "Science", "English", "History", "Programming", "Languages", "Physics", "Chemistry", "Biology"];
   const levels = ["Elementary", "Middle School", "High School", "College", "Professional"];
   const priceRanges = [
     { label: "Under $20", value: "0-20" },
@@ -36,28 +36,58 @@ const TutorList = () => {
 
   // Debounce searchInput => searchQuery
   useEffect(() => {
-    const id = setTimeout(() => setSearchQuery(searchInput.trim()), SEARCH_DEBOUNCE_MS);
+    const id = setTimeout(() => {
+        setSearchQuery(searchInput.trim());
+        setCurrentPage(1); // Reset to page 1 on search
+    }, SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(id);
   }, [searchInput]);
 
-  // Fetch tutors (pagination)
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSubject, selectedLevel, priceRange, sortBy]);
+
+  // Fetch tutors (Server-side pagination)
   useEffect(() => {
     let cancelled = false;
     const fetchTutors = async () => {
       setLoading(true);
       setError(null);
       try {
-        const params = { page, page_size: PAGE_SIZE };
-        const res = await tutorAPI.getTutors(params);
-        const data = Array.isArray(res.data) ? res.data : res.data.results || [];
+        const params = { 
+            page: currentPage, 
+            page_size: PAGE_SIZE,
+            search: searchQuery,
+            subject: selectedSubject,
+            // level: selectedLevel, // Uncomment when backend supports it
+            // price_range: priceRange, // Uncomment when backend supports it
+            // ordering: sortBy === 'newest' ? '-date_joined' : undefined // Basic ordering mapping
+        };
 
+        const res = await tutorAPI.getTutors(params);
+        
         if (cancelled) return;
 
-        setTutors(prev => (page === 1 ? data : [...prev, ...data]));
-        setHasMore(data.length === PAGE_SIZE);
+        // Handle Paginated Response
+        if (res.data && res.data.results) {
+            setTutors(res.data.results);
+            const totalCount = res.data.count || 0;
+            setTotalPages(Math.ceil(totalCount / PAGE_SIZE));
+        } else if (Array.isArray(res.data)) {
+            // Fallback for non-paginated response (shouldn't happen with new backend)
+            setTutors(res.data);
+            setTotalPages(1);
+        } else {
+            setTutors([]);
+            setTotalPages(0);
+        }
+
       } catch (err) {
-        setError("Failed to fetch tutors. Please try again later.");
-        setHasMore(false);
+        if (!cancelled) {
+            console.error("Fetch error:", err);
+            setError("Failed to fetch tutors. Please try again later.");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -67,84 +97,14 @@ const TutorList = () => {
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [currentPage, searchQuery, selectedSubject, selectedLevel, priceRange, sortBy]);
 
-  // Apply filters + sorting (client-side)
-  useEffect(() => {
-    const byTextMatch = (tutor, q) => {
-      if (!q) return true;
-      const lower = q.toLowerCase();
-      const name = (tutor.username || tutor.name || "").toLowerCase();
-      const bio = (tutor.bio || tutor.description || "").toLowerCase();
-      const subjString = (Array.isArray(tutor.subjects) ? tutor.subjects.join(" ") : tutor.subject || "").toLowerCase();
-      return name.includes(lower) || bio.includes(lower) || subjString.includes(lower);
-    };
-
-    const bySubject = (tutor, subject) => {
-      if (!subject) return true;
-      const subj = subject.toLowerCase();
-      if (Array.isArray(tutor.subjects)) {
-        return tutor.subjects.some(s => (s || "").toLowerCase() === subj);
-      }
-      return (tutor.subject || "").toLowerCase() === subj;
-    };
-
-    const byLevel = (tutor, level) => {
-      if (!level) return true;
-      const lev = level.toLowerCase();
-      if (Array.isArray(tutor.levels)) {
-        return tutor.levels.some(l => (l || "").toLowerCase() === lev);
-      }
-      return (tutor.level || "").toLowerCase() === lev;
-    };
-
-    const byPriceRange = (tutor, rangeVal) => {
-      if (!rangeVal) return true;
-      const price = parseFloat(tutor.hourly_rate ?? tutor.price ?? tutor.rate ?? 0) || 0;
-      if (rangeVal.endsWith("+")) {
-        const min = parseFloat(rangeVal.replace("+", ""));
-        return price >= min;
-      }
-      const parts = rangeVal.split("-");
-      if (parts.length === 2) {
-        const min = parseFloat(parts[0]) || 0;
-        const max = parseFloat(parts[1]) || Infinity;
-        return price >= min && price <= max;
-      }
-      return true;
-    };
-
-    let result = tutors.slice();
-
-    // Apply each filter
-    result = result.filter(t => byTextMatch(t, searchQuery));
-    result = result.filter(t => bySubject(t, selectedSubject));
-    result = result.filter(t => byLevel(t, selectedLevel));
-    result = result.filter(t => byPriceRange(t, priceRange));
-
-    // Sorting
-    const safeNumber = (v) => (typeof v === "number" ? v : parseFloat(v) || 0);
-    switch (sortBy) {
-      case "rating":
-        result.sort((a, b) => safeNumber(b.rating) - safeNumber(a.rating));
-        break;
-      case "newest":
-        result.sort((a, b) => new Date(b.created_at || b.date_joined || 0) - new Date(a.created_at || a.date_joined || 0));
-        break;
-      case "price-low":
-        result.sort((a, b) => safeNumber(a.hourly_rate ?? a.price ?? a.rate) - safeNumber(b.hourly_rate ?? b.price ?? b.rate));
-        break;
-      case "price-high":
-        result.sort((a, b) => safeNumber(b.hourly_rate ?? b.price ?? b.rate) - safeNumber(a.hourly_rate ?? a.price ?? a.rate));
-        break;
-      case "popular":
-      default:
-        result.sort((a, b) => (b.students_count || 0) - (a.students_count || 0));
-        break;
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+        setCurrentPage(newPage);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-
-    setFilteredTutors(result);
-  }, [tutors, searchQuery, selectedSubject, selectedLevel, priceRange, sortBy]);
+  };
 
   const handleResetFilters = () => {
     setSearchInput("");
@@ -152,7 +112,8 @@ const TutorList = () => {
     setSelectedSubject("");
     setSelectedLevel("");
     setPriceRange("");
-    setSortBy("popular");
+    setSortBy("newest");
+    setCurrentPage(1);
   };
 
   const activeFiltersCount = useMemo(() => {
@@ -204,6 +165,7 @@ const TutorList = () => {
                 placeholder="All Subjects"
               />
 
+              {/* Note: Level and Price filters are currently UI-only placeholders until backend support is added */}
               <FilterSelect
                 value={selectedLevel}
                 onChange={(e) => setSelectedLevel(e.target.value)}
@@ -236,11 +198,9 @@ const TutorList = () => {
                 onChange={(e) => setSortBy(e.target.value)}
                 className="px-4 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:bg-white hover:border-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer transition-all"
               >
+                <option value="newest">Newest</option>
                 <option value="popular">Most Popular</option>
                 <option value="rating">Highest Rated</option>
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
               </select>
             </div>
           </div>
@@ -249,15 +209,15 @@ const TutorList = () => {
 
       {/* Results Section */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full -mt-2">
-        {!loading && !error && filteredTutors.length > 0 && (
+        {!loading && !error && tutors.length > 0 && (
           <div className="mb-6 flex items-center justify-between">
              <p className="text-slate-500 text-sm font-semibold">
-               Showing <span className="text-slate-900">{filteredTutors.length}</span> results
+               Showing page <span className="text-slate-900">{currentPage}</span> of <span className="text-slate-900">{totalPages}</span>
              </p>
           </div>
         )}
 
-        {loading && page === 1 && (
+        {loading && (
           <div className="flex flex-col items-center justify-center py-32">
             <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6" />
             <p className="text-slate-500 font-medium">Finding best tutors for you...</p>
@@ -280,7 +240,7 @@ const TutorList = () => {
           </div>
         )}
 
-        {!loading && !error && filteredTutors.length === 0 && (
+        {!loading && !error && tutors.length === 0 && (
           <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center max-w-lg mx-auto mt-12 shadow-sm">
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
               <FiSearch className="w-10 h-10 text-slate-300" />
@@ -297,21 +257,17 @@ const TutorList = () => {
         )}
 
         <div className="grid gap-6">
-          {filteredTutors.map((tutor) => (
+          {tutors.map((tutor) => (
             <TutorCard key={tutor.id} tutor={tutor} />
           ))}
         </div>
 
-        {hasMore && !loading && !error && filteredTutors.length > 0 && (
-          <div className="mt-12 text-center pb-8">
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={loading}
-              className="px-8 py-3 bg-white border border-slate-200 text-slate-700 font-bold rounded-xl hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-600 transition shadow-sm"
-            >
-              {loading ? "Loading..." : "Load More Tutors"}
-            </button>
-          </div>
+        {!loading && !error && tutors.length > 0 && (
+            <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+            />
         )}
       </main>
 

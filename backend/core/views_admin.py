@@ -9,7 +9,7 @@ from datetime import datetime
 from .models import (
     User, Job, Payment, AbuseReport, Subject, Gig, PointPackage,
     UnlockPricingTier, CountryGroup, Question, Coupon, TutorApplication,
-    Answer
+    Answer, Credit
 )
 from .serializers import (
     UserSerializer, JobSerializer, PaymentSerializer, AbuseReportSerializer,
@@ -23,26 +23,50 @@ from .pdf_utils.pdf_generator import PaymentStatementPDF
 class AdminUserSerializer(UserSerializer):
     """
     Serializer for Admin to create/update users, handling password hashing.
+    Includes credit balance from Credit model.
     """
     password = serializers.CharField(write_only=True, required=False)
+    credits = serializers.SerializerMethodField(read_only=True)
+    set_credits = serializers.IntegerField(write_only=True, required=False, min_value=0)
 
     class Meta(UserSerializer.Meta):
         fields = '__all__'
 
+    def get_credits(self, obj):
+        """Get the credit balance from Credit model."""
+        try:
+            credit = Credit.objects.get(user=obj)
+            return credit.balance
+        except Credit.DoesNotExist:
+            return 0
+
     def create(self, validated_data):
         password = validated_data.pop('password', None)
+        set_credits = validated_data.pop('set_credits', None)
         user = super().create(validated_data)
         if password:
             user.set_password(password)
             user.save()
+        # Create Credit entry for new user
+        credit, created = Credit.objects.get_or_create(user=user, defaults={'balance': set_credits or 0})
+        if not created and set_credits is not None:
+            credit.balance = set_credits
+            credit.save()
         return user
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
+        set_credits = validated_data.pop('set_credits', None)
         user = super().update(instance, validated_data)
         if password:
             user.set_password(password)
             user.save()
+        # Update Credit balance if provided
+        if set_credits is not None:
+            credit, created = Credit.objects.get_or_create(user=user, defaults={'balance': set_credits})
+            if not created:
+                credit.balance = set_credits
+                credit.save()
         return user
 
 class AdminDashboardStatsView(APIView):

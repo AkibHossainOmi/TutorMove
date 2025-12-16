@@ -13,6 +13,8 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
       // Pre-fill form data
       const data = {};
       fields.forEach(field => {
+        // Support valueKey to map from a different key in initialValues
+        const valueKey = field.valueKey || field.name;
         if (field.type === 'user-search') {
            // For user search fields, we might need to handle object vs ID
            // If initialValues has an object (e.g. {id: 1, username: 'user'}), use ID
@@ -20,10 +22,10 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
            // However, for display, we might need the username.
            // This simple implementation assumes we just hold the ID in formData.
            // A more complex one would fetch the user details to show the name.
-           const val = initialValues[field.name];
+           const val = initialValues[valueKey];
            data[field.name] = (typeof val === 'object' && val !== null) ? val.id : val;
         } else {
-           data[field.name] = initialValues[field.name];
+           data[field.name] = initialValues[valueKey];
         }
       });
       setFormData(data);

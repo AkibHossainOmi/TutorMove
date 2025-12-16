@@ -64,9 +64,9 @@ const DashboardTabs = ({ activeTab, setActiveTab, dashboardData, handleCreateGig
                 actionLabel="View all"
                 onAction={() => setActiveTab("jobs")}
               >
-                {dashboardData.matchedJobs.length > 0 ? (
+                {(Array.isArray(dashboardData.matchedJobs) ? dashboardData.matchedJobs : []).length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                    {dashboardData.matchedJobs.slice(0, 4).map((job) => (
+                    {(Array.isArray(dashboardData.matchedJobs) ? dashboardData.matchedJobs : []).slice(0, 4).map((job) => (
                       <JobCard key={job.id} job={job} />
                     ))}
                   </div>
@@ -111,16 +111,16 @@ const DashboardTabs = ({ activeTab, setActiveTab, dashboardData, handleCreateGig
               actionLabel="Browse All Jobs"
               onAction={() => (window.location.href = "/jobs")}
             >
-              {dashboardData.matchedJobs.length > 0 ? (
+              {(Array.isArray(dashboardData.matchedJobs) ? dashboardData.matchedJobs : []).length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  {dashboardData.matchedJobs.map((job) => (
+                  {(Array.isArray(dashboardData.matchedJobs) ? dashboardData.matchedJobs : []).map((job) => (
                     <JobCard key={job.id} job={job} />
                   ))}
                 </div>
               ) : (
                 <EmptyState
                   title="No matched jobs"
-                  description="We’ll show jobs that match your gigs here."
+                  description="We'll show jobs that match your gigs here."
                   actionLabel="Browse Jobs"
                   onAction={() => (window.location.href = "/jobs")}
                 />

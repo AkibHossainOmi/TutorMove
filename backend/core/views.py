@@ -57,6 +57,7 @@ from .serializers import (
 from .views_admin import AdminDashboardStatsView, AdminUserViewSet, AdminJobViewSet
 from .payments import SSLCommerzPayment
 from .permissions import IsOwnerOrReadOnly
+from .pagination import StandardResultsSetPagination
 
 __all__ = [
     "SendOTPView",
@@ -76,17 +77,50 @@ def generate_transaction_id():
 
 class TutorViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
-    queryset = User.objects.filter(user_type='tutor')
+    pagination_class = StandardResultsSetPagination
+
+    def get_queryset(self):
+        queryset = User.objects.filter(user_type='tutor')
+        
+        # Search (Name, Bio, Subjects)
+        query = self.request.query_params.get('search', '') or self.request.query_params.get('q', '')
+        if query:
+            queryset = queryset.filter(
+                Q(username__icontains=query) | 
+                Q(first_name__icontains=query) | 
+                Q(last_name__icontains=query) | 
+                Q(bio__icontains=query) |
+                Q(gigs__subject__icontains=query)
+            ).distinct()
+
+        # Subject Filter
+        subject = self.request.query_params.get('subject', '')
+        if subject:
+            queryset = queryset.filter(gigs__subject__icontains=subject).distinct()
+
+        # Location Filter (simple text match)
+        location = self.request.query_params.get('location', '')
+        if location:
+            queryset = queryset.filter(location__icontains=location)
+
+        return queryset.order_by('-date_joined')
 
     def get_permissions(self):
-        if self.action in ['list', 'retrieve']:
+        if self.action in ['list', 'retrieve', 'search']:
             return [AllowAny()]
         return super().get_permissions()
 
     def retrieve(self, request, *args, **kwargs):
         tutor = self.get_object()
         serializer = self.get_serializer(tutor, context={'request': request})
-        return Response(serializer.data)
+        data = serializer.data
+
+        # Include tutor's gigs in the response
+        from .serializers import GigSerializer
+        gigs = Gig.objects.filter(tutor=tutor)
+        data['gigs'] = GigSerializer(gigs, many=True).data
+
+        return Response(data)
 
     @action(detail=False, methods=["post"], url_path="search", permission_classes=[AllowAny])
     def search(self, request):
@@ -140,6 +174,12 @@ class TutorViewSet(viewsets.ModelViewSet):
         )
 
         combined_tutors = [t[0] for t in matched_tutors]
+        
+        page = self.paginate_queryset(combined_tutors)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
         serializer = self.get_serializer(combined_tutors, many=True)
         return Response({
             "count": len(combined_tutors),
@@ -159,7 +199,14 @@ class StudentViewSet(viewsets.ModelViewSet):
     def retrieve(self, request, *args, **kwargs):
         student = self.get_object()
         serializer = self.get_serializer(student, context={'request': request})
-        return Response(serializer.data)
+        data = serializer.data
+
+        # Include student's posted jobs in the response
+        from .serializers import JobSerializer
+        jobs = Job.objects.filter(student=student).order_by('-created_at')
+        data['jobs'] = JobSerializer(jobs, many=True, context={'request': request}).data
+
+        return Response(data)
 
 class JobCreateAPIView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -961,15 +1008,42 @@ class CreditViewSet(viewsets.ModelViewSet):
 class JobViewSet(viewsets.ModelViewSet):
     serializer_class = JobSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter]
-    search_fields = ['title', 'description', 'subject', 'location']
+    search_fields = ['description', 'location', 'subjects__name']
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [AllowAny()]
         return super().get_permissions()
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        
+        # If get_queryset returns a list (e.g. from geo-search), filter_backends won't work automatically.
+        if not isinstance(queryset, list):
+            queryset = self.filter_queryset(queryset)
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
     def get_queryset(self):
         queryset = Job.objects.all()
+        
+        # New: Filter by Type (Online, Offline, Assignment)
+        job_type = self.request.query_params.get('type')
+        if job_type == 'online':
+            queryset = queryset.filter(mode__icontains='Online')
+        elif job_type == 'offline':
+            queryset = queryset.filter(mode__icontains='Offline')
+        elif job_type == 'assignment':
+            queryset = queryset.filter(service_type__iexact='Assignment Help')
+        
         subject = self.request.query_params.get('subject', None)
         location = self.request.query_params.get('location', None)
         lat = self.request.query_params.get('lat')
@@ -977,7 +1051,7 @@ class JobViewSet(viewsets.ModelViewSet):
         radius_km = float(self.request.query_params.get('radius_km', 20))
 
         if subject:
-            queryset = queryset.filter(subject__icontains=subject)
+            queryset = queryset.filter(subjects__name__icontains=subject)
         if location:
             queryset = queryset.filter(location__icontains=location)
 
@@ -993,7 +1067,7 @@ class JobViewSet(viewsets.ModelViewSet):
             jobs_in_radius.sort(key=lambda j: getattr(j, '_distance', 0))
             return jobs_in_radius
 
-        return queryset
+        return queryset.order_by('-created_at')
     
     @action(detail=False, methods=['GET'], permission_classes=[IsAuthenticated])
     def my_jobs(self, request):
@@ -2458,18 +2532,25 @@ class QuestionViewSet(viewsets.ModelViewSet):
     queryset = Question.objects.all().order_by('-created_at')
     serializer_class = QuestionSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly, IsOwnerOrReadOnly]
+    pagination_class = StandardResultsSetPagination
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = ['title', 'content']
-    ordering_fields = ['created_at', 'total_upvotes']
+    ordering_fields = ['created_at', 'total_upvotes', 'answers_count']
     ordering = ['-created_at']  # Default ordering
 
     def get_queryset(self):
+        from django.db.models import Count
+        queryset = Question.objects.annotate(answers_count=Count('answers'))
+        
         # Only show approved questions to regular users
-        # Admins and moderators can see all questions in admin panel
-        queryset = Question.objects.all()
         if not (self.request.user.is_authenticated and
                 getattr(self.request.user, 'user_type', None) in ['admin', 'moderator']):
             queryset = queryset.filter(approval_status='approved')
+
+        # Filter: Unanswered
+        if self.request.query_params.get('unanswered') == 'true':
+            queryset = queryset.filter(answers_count=0)
+
         return queryset
 
     def perform_create(self, serializer):
@@ -2711,4 +2792,16 @@ class PublicUserProfileView(generics.RetrieveAPIView):
         username = kwargs.get('username')
         user = get_object_or_404(User, username=username)
         serializer = self.get_serializer(user, context={'request': request})
-        return Response(serializer.data)
+        data = serializer.data
+
+        # Include gigs for tutors, jobs for students
+        if user.user_type == 'tutor':
+            from .serializers import GigSerializer
+            gigs = Gig.objects.filter(tutor=user)
+            data['gigs'] = GigSerializer(gigs, many=True).data
+        elif user.user_type == 'student':
+            from .serializers import JobSerializer
+            jobs = Job.objects.filter(student=user).order_by('-created_at')
+            data['jobs'] = JobSerializer(jobs, many=True, context={'request': request}).data
+
+        return Response(data)
