@@ -12,6 +12,8 @@ import JobPostModal from '../components/Dashboard/Student/JobPostModal';
 import InsufficientCreditsModal from '../components/Dashboard/Student/InsufficientCreditsModal';
 import { creditAPI, jobAPI, notificationAPI } from '../utils/apiService';
 import { Link } from 'react-router-dom';
+import Pagination from '../components/Pagination'; // Use the new generic Pagination
+import { MapPin, Calendar, Wallet, BookOpen, MessageCircle } from 'lucide-react';
 
 const studentAPI = {
   getCredits: async () => {
@@ -52,430 +54,54 @@ const JobCard = ({ job, onView }) => {
   const subject = job.subject_details;
 
   return (
-    <div className="group bg-white rounded-2xl border border-gray-100 p-6 shadow-sm hover:shadow-md hover:border-gray-200 transition">
+    <div className="group bg-white rounded-xl border border-slate-200 p-5 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all duration-300 flex flex-col h-full">
       <div className="flex items-start justify-between mb-3">
-        <h3 className="text-lg font-semibold text-gray-900 line-clamp-1">
+        <h3 className="text-lg font-bold text-slate-800 line-clamp-1 group-hover:text-indigo-600 transition-colors">
           {job.title || "Tutoring Job"}
         </h3>
         <span
-          className={`px-3 py-1 rounded-full text-xs font-medium ${
-            status === "active" ? "bg-emerald-100 text-emerald-700" :
-            status === "completed" ? "bg-gray-100 text-gray-600" :
-            "bg-blue-100 text-blue-700"
+          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wide border ${
+            status === "active" ? "bg-emerald-50 text-emerald-700 border-emerald-100" :
+            status === "completed" ? "bg-slate-50 text-slate-600 border-slate-200" :
+            "bg-blue-50 text-blue-700 border-blue-100"
           }`}
         >
           {status}
         </span>
       </div>
-      <div className="space-y-1 text-sm text-gray-600 mb-4">
-        <p><strong>Subject:</strong> {subject}</p>
-        <p><strong>Location:</strong> {job.location || "Remote"}</p>
-        <p><strong>Budget:</strong> {job.budget || "Negotiable"}</p>
+
+      <div className="space-y-2 text-sm text-slate-600 mb-4 flex-grow">
+        <div className="flex items-center gap-2">
+            <BookOpen className="w-4 h-4 text-slate-400" />
+            <span className="font-medium text-slate-700">{subject || 'Various Subjects'}</span>
+        </div>
+         <div className="flex items-center gap-2">
+            <MapPin className="w-4 h-4 text-slate-400" />
+            <span>{job.location || "Remote"}</span>
+        </div>
+         <div className="flex items-center gap-2">
+            <Wallet className="w-4 h-4 text-slate-400" />
+            <span>{job.budget || "Negotiable"}</span>
+        </div>
       </div>
-      <p className="text-sm text-gray-700 line-clamp-2 mb-5">
-        {job.description || "No additional details."}
+
+      <p className="text-sm text-slate-500 line-clamp-2 mb-5 h-10">
+        {job.description || "No additional details provided."}
       </p>
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-gray-500">Posted {fmtDate(job.created_at)}</span>
+
+      <div className="pt-4 border-t border-slate-100 flex items-center justify-between mt-auto">
+        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+           <Calendar className="w-3.5 h-3.5" />
+           <span>Posted {fmtDate(job.created_at)}</span>
+        </div>
         <button
           onClick={() => onView(job)}
-          className="text-xs px-3 py-1.5 rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+          className="text-xs px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-600 font-medium hover:bg-indigo-100 transition-colors"
         >
-          View details
+          View Details
         </button>
       </div>
     </div>
-  );
-};
-
-const Pagination = ({ currentPage, totalPages, onPageChange }) => {
-  const pages = [];
-  
-  const maxVisiblePages = 5;
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-  
-  if (endPage - startPage + 1 < maxVisiblePages) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-  }
-
-  for (let i = startPage; i <= endPage; i++) {
-    pages.push(
-      <button
-        key={i}
-        onClick={() => onPageChange(i)}
-        className={`px-3 py-1 rounded-lg text-sm font-medium ${
-          currentPage === i
-            ? 'bg-blue-600 text-white'
-            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-        }`}
-      >
-        {i}
-      </button>
-    );
-  }
-
-  return (
-    <div className="flex items-center justify-center space-x-2 mt-8">
-      <button
-        onClick={() => onPageChange(currentPage - 1)}
-        disabled={currentPage === 1}
-        className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Previous
-      </button>
-      
-      {startPage > 1 && (
-        <>
-          <button
-            onClick={() => onPageChange(1)}
-            className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-          >
-            1
-          </button>
-          {startPage > 2 && <span className="px-2 text-gray-500">...</span>}
-        </>
-      )}
-      
-      {pages}
-      
-      {endPage < totalPages && (
-        <>
-          {endPage < totalPages - 1 && <span className="px-2 text-gray-500">...</span>}
-          <button
-            onClick={() => onPageChange(totalPages)}
-            className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-          >
-            {totalPages}
-          </button>
-        </>
-      )}
-      
-      <button
-        onClick={() => onPageChange(currentPage + 1)}
-        disabled={currentPage === totalPages}
-        className="px-3 py-1 rounded-lg text-sm font-medium bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        Next
-      </button>
-    </div>
-  );
-};
-
-// Easter Egg Card Component
-const PlayingCard = ({ type, isRevealed, delay }) => {
-  const isAce = type === 'ace';
-  
-  return (
-    <div
-      className="playing-card"
-      style={{
-        animationDelay: `${delay}s`,
-        opacity: isRevealed ? 1 : 0,
-        transform: isRevealed ? 'translateY(0)' : 'translateY(50px)'
-      }}
-    >
-      <div 
-        className="card-inner"
-        style={{
-          transform: isRevealed ? 'rotateY(180deg)' : 'rotateY(0deg)'
-        }}
-      >
-        {/* Card Back */}
-        <div className="card-back">
-          <div className="card-pattern"></div>
-        </div>
-        
-        {/* Card Front */}
-        <div className="card-front">
-          {isAce ? (
-            // Ace of Spades Card
-            <div className="card-content ace-card">
-              <div className="card-corner top-left">
-                <div className="rank">A</div>
-                <div className="suit">♠</div>
-              </div>
-              <div className="card-center">
-                <div className="spade-icon">♠</div>
-              </div>
-              <div className="card-info">
-                <h3 className="dev-name">Rahadul Islam</h3>
-                <p className="dev-title">CSE Graduate (BRACU)</p>
-                <p className="dev-title">Junior Software Developer</p>
-                <p className="dev-company">Inovi Solutions</p>
-              </div>
-              <div className="card-corner bottom-right">
-                <div className="rank">A</div>
-                <div className="suit">♠</div>
-              </div>
-            </div>
-          ) : (
-            // Ace of Diamonds Card
-            <div className="card-content diamond-card">
-              <div className="card-corner top-left">
-                <div className="rank red">A</div>
-                <div className="suit red">♦</div>
-              </div>
-              <div className="card-center">
-                <div className="diamond-icon">♦</div>
-              </div>
-              <div className="card-info">
-                <h3 className="dev-name">Akib Hossain Omi</h3>
-                <p className="dev-title">CS Graduate</p>
-                <p className="dev-title">Software Developer</p>
-                <p className="dev-company">Telcobright Ltd.</p>
-              </div>
-              <div className="card-corner bottom-right">
-                <div className="rank red">A</div>
-                <div className="suit red">♦</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const EasterEggOverlay = ({ isVisible, onClose }) => {
-  const [cardsRevealed, setCardsRevealed] = useState(false);
-
-  useEffect(() => {
-    if (isVisible) {
-      setTimeout(() => setCardsRevealed(true), 100);
-    } else {
-      setCardsRevealed(false);
-    }
-  }, [isVisible]);
-
-  if (!isVisible) return null;
-
-  return (
-    <>
-      <style>{`
-        .easter-egg-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: rgba(0, 0, 0, 0.95);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 9999;
-          animation: fadeIn 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .cards-container {
-          display: flex;
-          gap: 60px;
-          perspective: 1000px;
-          position: relative;
-        }
-
-        .playing-card {
-          width: 320px;
-          height: 480px;
-          position: relative;
-          transition: all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-          perspective: 1000px;
-        }
-
-        .card-inner {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          transform-style: preserve-3d;
-          transition: transform 1s ease-in-out;
-        }
-
-        .card-back,
-        .card-front {
-          width: 100%;
-          height: 100%;
-          position: absolute;
-          backface-visibility: hidden;
-          border-radius: 16px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-        }
-
-        .card-back {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .card-pattern {
-          width: 280px;
-          height: 440px;
-          background-image: 
-            repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px),
-            repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(255,255,255,.1) 10px, rgba(255,255,255,.1) 20px);
-          border-radius: 12px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-        }
-
-        .card-front {
-          background: white;
-          transform: rotateY(180deg);
-          padding: 20px;
-        }
-
-        .card-content {
-          width: 100%;
-          height: 100%;
-          position: relative;
-          display: flex;
-          flex-direction: column;
-        }
-
-        .ace-card {
-          border: 3px solid #000;
-          border-radius: 12px;
-        }
-
-        .diamond-card {
-          border: 3px solid #c41e3a;
-          border-radius: 12px;
-        }
-
-        .card-corner {
-          position: absolute;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          font-weight: bold;
-        }
-
-        .top-left {
-          top: 10px;
-          left: 15px;
-        }
-
-        .bottom-right {
-          bottom: 10px;
-          right: 15px;
-          transform: rotate(180deg);
-        }
-
-        .rank {
-          font-size: 42px;
-          line-height: 1;
-          color: #000;
-        }
-
-        .rank.red {
-          color: #c41e3a;
-        }
-
-        .suit {
-          font-size: 36px;
-          line-height: 1;
-          color: #000;
-        }
-
-        .suit.red {
-          color: #c41e3a;
-        }
-
-        .card-center {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 40px 0;
-        }
-
-        .spade-icon {
-          font-size: 120px;
-          color: #000;
-          animation: pulse 2s ease-in-out infinite;
-        }
-
-        .diamond-icon {
-          font-size: 120px;
-          color: #c41e3a;
-          animation: sparkle 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-
-        @keyframes sparkle {
-          0%, 100% { 
-            transform: scale(1) rotate(0deg);
-            filter: drop-shadow(0 0 10px rgba(196, 30, 58, 0.5));
-          }
-          50% { 
-            transform: scale(1.08) rotate(5deg);
-            filter: drop-shadow(0 0 20px rgba(196, 30, 58, 0.8));
-          }
-        }
-
-        .card-info {
-          background: rgba(255, 255, 255, 0.95);
-          border-radius: 8px;
-          padding: 16px;
-          text-align: center;
-          margin-top: auto;
-        }
-
-        .dev-name {
-          font-size: 22px;
-          font-weight: bold;
-          color: #1a1a1a;
-          margin-bottom: 8px;
-        }
-
-        .dev-title {
-          font-size: 14px;
-          color: #555;
-          margin: 4px 0;
-        }
-
-        .dev-company {
-          font-size: 16px;
-          font-weight: 600;
-          color: #2563eb;
-          margin-top: 8px;
-        }
-
-        .close-hint {
-          position: absolute;
-          bottom: 40px;
-          left: 50%;
-          transform: translateX(-50%);
-          color: white;
-          font-size: 14px;
-          opacity: 0.7;
-          animation: blink 2s ease-in-out infinite;
-        }
-
-        @keyframes blink {
-          0%, 100% { opacity: 0.7; }
-          50% { opacity: 0.3; }
-        }
-      `}</style>
-
-      <div className="easter-egg-overlay" onClick={onClose}>
-        <div className="cards-container" onClick={(e) => e.stopPropagation()}>
-          <PlayingCard type="ace" isRevealed={cardsRevealed} delay={0} />
-          <PlayingCard type="diamond" isRevealed={cardsRevealed} delay={0.3} />
-        </div>
-        <div className="close-hint">
-          Actual Developers of this project.
-        </div>
-      </div>
-    </>
   );
 };
 
@@ -497,25 +123,14 @@ const StudentDashboard = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 6;
 
-  // Easter Egg State
-  const [showEasterEgg, setShowEasterEgg] = useState(false);
-
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     if (storedUser?.user_type === 'student') setUser(storedUser);
-    else setIsLoading(false);
-  }, []);
-
-  // Easter Egg Keyboard Listener
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === 'Delete') {
-        setShowEasterEgg(prev => !prev);
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    else {
+        // Mock user for UI dev if not present, or redirect
+        // For now, assume auth handles redirect if not logged in
+        setIsLoading(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -525,9 +140,7 @@ const StudentDashboard = () => {
       try {
         const res = await notificationAPI.getLatestNotifications();
         const allNotifications = res.data || [];
-
         setNotifications(allNotifications);
-        // Count only unread notifications
         const unreadCount = allNotifications.filter(n => !n.is_read).length;
         setUnreadNotificationCount(unreadCount);
       } catch {}
@@ -584,7 +197,7 @@ const StudentDashboard = () => {
     else setIsJobFormOpen(true);
   };
 
-  const handleNavigateToBuyCredits = () => window.location.href = '/buy-points';
+  const handleNavigateToBuyCredits = () => navigate('/buy-points');
   const handleToggleNotifications = () => {
     if (!showNotifications) handleMarkNotificationsRead();
     setShowNotifications(!showNotifications);
@@ -609,15 +222,17 @@ const StudentDashboard = () => {
   };
 
   if (isLoading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50">
       <LoadingSpinner />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-600">
       <Navbar />
-      <main className="max-w-7xl mx-auto mt-20 px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto mt-16 px-4 sm:px-6 lg:px-8 py-8">
+
+        {/* Dashboard Header */}
         <DashboardHeader
           user={user}
           creditBalance={dashboardData.points}
@@ -630,44 +245,66 @@ const StudentDashboard = () => {
           onMarkNotificationsRead={handleMarkNotificationsRead}
           unreadMessagesCount={0}
         />
-        <DashboardStats
-          stats={{
-            creditBalance: dashboardData.points,
-            activeJobs: dashboardData.stats.activeJobs,
-            completedJobs: dashboardData.stats.completedJobs
-          }}
-          favoriteTeachersCount={favoriteTeachers.length}
-        />
 
-        {/* Q&A Button Section */}
-        <section className="mt-8">
-           <Link to="/qna/create" className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition shadow">
-              Ask a Question in Forum
-           </Link>
-           <Link to="/qna" className="ml-4 text-blue-600 hover:underline">
-              Browse Q&A Forum
-           </Link>
+        {/* Stats Section */}
+        <div className="mt-8">
+            <DashboardStats
+            stats={{
+                creditBalance: dashboardData.points,
+                activeJobs: dashboardData.stats.activeJobs,
+                completedJobs: dashboardData.stats.completedJobs
+            }}
+            favoriteTeachersCount={favoriteTeachers.length}
+            />
+        </div>
+
+        {/* Quick Actions / Q&A Banner */}
+        <section className="mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6 text-white shadow-lg flex flex-col sm:flex-row items-center justify-between gap-6">
+           <div>
+              <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
+                 <MessageCircle className="w-6 h-6" />
+                 Need help with a question?
+              </h2>
+              <p className="text-indigo-100 max-w-xl">
+                 Post a question in our Q&A Forum and get answers from expert tutors. It's a great way to find the right help quickly.
+              </p>
+           </div>
+           <div className="flex gap-4 shrink-0">
+               <Link to="/qna/create" className="px-5 py-2.5 bg-white text-indigo-600 rounded-lg font-bold hover:bg-indigo-50 transition-colors shadow-sm">
+                  Ask Question
+               </Link>
+               <Link to="/qna" className="px-5 py-2.5 bg-indigo-700/50 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors border border-indigo-500">
+                  Browse Forum
+               </Link>
+           </div>
         </section>
 
+        {/* Job Posts Section */}
         <section id="job-posts-section" className="mt-12">
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
-              Your Job Posts {totalJobs > 0 && `(${totalJobs})`}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+               <BriefcaseIcon className="w-5 h-5 text-indigo-600" />
+               Your Job Posts {totalJobs > 0 && <span className="text-sm font-normal text-slate-500 ml-1">({totalJobs})</span>}
             </h2>
             {totalJobs > 0 && (
-              <div className="text-sm text-gray-500">
-                Showing {Math.min(jobsPerPage, currentJobs.length)} of {totalJobs} jobs
-              </div>
+              <span className="text-sm text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
+                Page {currentPage} of {totalPages}
+              </span>
             )}
           </div>
+
           {dashboardData.postedJobs.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center">
-              <p className="text-gray-700 font-medium">No jobs posted yet</p>
+            <div className="bg-white rounded-2xl border-2 border-dashed border-slate-200 p-12 text-center">
+              <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                 <BriefcaseIcon className="w-8 h-8 text-slate-400" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-1">No jobs posted yet</h3>
+              <p className="text-slate-500 mb-6">Create your first job post to find the perfect tutor.</p>
               <button
                 onClick={handlePostJobClick}
-                className="mt-4 inline-flex items-center rounded-xl bg-gradient-to-br from-blue-600 to-blue-700 text-white px-4 py-2 text-sm font-medium hover:bg-black"
+                className="inline-flex items-center px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition-all shadow-sm hover:shadow-md"
               >
-                Create Job
+                Create Job Post
               </button>
             </div>
           ) : (
@@ -688,22 +325,31 @@ const StudentDashboard = () => {
             </>
           )}
         </section>
+
+        {/* Favorites Section */}
         {favoriteTeachers.length > 0 && (
-          <section className="mt-12">
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Favorite Teachers</h2>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {favoriteTeachers.slice(0, 6).map((t, idx) => (
-                <div key={t?.id || idx} className="bg-white border border-gray-100 rounded-2xl p-4">
-                  <p className="font-medium text-gray-900">{t?.name || 'Teacher'}</p>
-                  <p className="text-sm text-gray-600">{t?.subject || '—'}</p>
+          <section className="mt-12 mb-12">
+            <h2 className="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+               <StarIcon className="w-5 h-5 text-amber-500" />
+               Favorite Teachers
+            </h2>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {favoriteTeachers.slice(0, 4).map((t, idx) => (
+                <div key={t?.id || idx} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center gap-3 hover:border-indigo-200 transition-colors cursor-pointer" onClick={() => navigate(`/profile/${t.username}`)}>
+                   <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                      {t?.name ? t.name.charAt(0) : 'T'}
+                   </div>
+                   <div>
+                      <p className="font-semibold text-slate-900 text-sm">{t?.name || 'Teacher'}</p>
+                      <p className="text-xs text-slate-500">{t?.subject || 'Tutor'}</p>
+                   </div>
                 </div>
               ))}
             </div>
           </section>
         )}
-        <div className="mt-16">
-        </div>
       </main>
+
       <JobPostModal
         isOpen={isJobFormOpen}
         onClose={() => setIsJobFormOpen(false)}
@@ -714,15 +360,22 @@ const StudentDashboard = () => {
         onClose={() => setShowInsufficientCreditsModal(false)}
         onBuyCredits={handleNavigateToBuyCredits}
       />
-      <EasterEggOverlay 
-        isVisible={showEasterEgg} 
-        onClose={() => setShowEasterEgg(false)} 
-      />
-      <div className="w-screen relative left-1/2 right-1/2 -mx-[50.4vw] h-20">
-        <Footer />
-      </div>
+      <Footer />
     </div>
   );
 };
+
+// Helper Icons
+const BriefcaseIcon = ({ className }) => (
+  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+
+const StarIcon = ({ className }) => (
+  <svg className={className} fill="currentColor" viewBox="0 0 20 20">
+    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+  </svg>
+);
 
 export default StudentDashboard;

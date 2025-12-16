@@ -4,6 +4,7 @@ import { useNavigate, Link, useLocation } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { authAPI } from "../utils/apiService";
+import { User, Mail, Lock, Phone, UserPlus, ArrowRight, ShieldCheck } from "lucide-react";
 
 const Signup = () => {
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const Signup = () => {
     password: "",
     confirm_password: "",
     user_type: "student",
-    phone_number: "", // Added phone_number initial state
+    phone_number: "",
     referrer_username: "",
   });
 
@@ -28,6 +29,7 @@ const Signup = () => {
       }));
     }
   }, [location.state]);
+
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -125,239 +127,265 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
       <Navbar />
 
       <div className="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 mt-16">
-        <div className="max-w-2xl w-full space-y-8 bg-white p-10 rounded-2xl shadow-sm border border-gray-100">
-          <div>
-            <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
-              Create your account
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Already have an account?{" "}
-              <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Log in
-              </Link>
-            </p>
-          </div>
+        <div className="max-w-2xl w-full">
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+             {/* Header */}
+            <div className="bg-slate-900 px-8 py-10 text-center">
+               <div className="mx-auto w-12 h-12 bg-indigo-500 rounded-xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-500/20">
+                 <UserPlus className="w-6 h-6 text-white" />
+               </div>
+               <h2 className="text-2xl font-bold text-white tracking-tight">
+                Create Account
+               </h2>
+               <p className="mt-2 text-slate-400 text-sm">
+                 Join our community of learners and educators today.
+               </p>
+            </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            {error && (
-              <div className="rounded-md bg-red-50 p-4 border border-red-200">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                    </svg>
+            <div className="p-8">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                 {/* Role Selection */}
+                 {!otpSent && (
+                   <div className="bg-slate-50 p-1.5 rounded-xl flex">
+                    {["student", "tutor"].map((type) => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => handleTypeToggle(type)}
+                        className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 focus:outline-none ${
+                          form.user_type === type
+                            ? "bg-white text-slate-900 shadow-sm ring-1 ring-black/5"
+                            : "text-slate-500 hover:text-slate-700 hover:bg-slate-100/50"
+                        }`}
+                      >
+                        Join as {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
                   </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                 )}
+
+                {error && (
+                  <div className="p-4 rounded-lg bg-rose-50 border border-rose-100 flex items-start gap-3">
+                    <svg className="w-5 h-5 text-rose-500 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm font-medium text-rose-800">{error}</p>
+                  </div>
+                )}
+                {success && (
+                  <div className="p-4 rounded-lg bg-emerald-50 border border-emerald-100 flex items-start gap-3">
+                     <ShieldCheck className="w-5 h-5 text-emerald-500 mt-0.5" />
+                     <p className="text-sm font-medium text-emerald-800">{success}</p>
+                  </div>
+                )}
+
+                <div className={`space-y-6 ${otpSent ? 'opacity-50 pointer-events-none hidden' : ''}`}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">First Name</label>
+                      <input
+                        name="first_name"
+                        type="text"
+                        required
+                        className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                        value={form.first_name}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Last Name</label>
+                      <input
+                        name="last_name"
+                        type="text"
+                        required
+                        className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                        value={form.last_name}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Username</label>
+                     <div className="relative">
+                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <User className="h-5 w-5 text-slate-400" />
+                       </div>
+                       <input
+                          name="username"
+                          type="text"
+                          required
+                          className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                          value={form.username}
+                          onChange={handleChange}
+                          placeholder="johndoe"
+                        />
+                     </div>
+                  </div>
+
+                  <div>
+                     <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Address</label>
+                     <div className="relative">
+                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <Mail className="h-5 w-5 text-slate-400" />
+                       </div>
+                       <input
+                          name="email"
+                          type="email"
+                          required
+                          className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                          value={form.email}
+                          onChange={handleChange}
+                          placeholder="john@example.com"
+                        />
+                     </div>
+                  </div>
+
+                  {form.user_type === 'tutor' && (
+                     <div>
+                       <label className="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+                       <div className="relative">
+                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <Phone className="h-5 w-5 text-slate-400" />
+                         </div>
+                         <input
+                            name="phone_number"
+                            type="tel"
+                            required
+                            className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                            value={form.phone_number}
+                            onChange={handleChange}
+                            placeholder="+1 (555) 000-0000"
+                          />
+                       </div>
+                     </div>
+                  )}
+
+                  <div>
+                     <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                       Referrer Username <span className="text-slate-400 font-normal">(Optional)</span>
+                     </label>
+                     <input
+                        name="referrer_username"
+                        type="text"
+                        className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                        value={form.referrer_username || ""}
+                        onChange={handleChange}
+                        placeholder="Who invited you?"
+                      />
+                      <p className="mt-1.5 text-xs text-indigo-600 font-medium">
+                        ✨ Referrer gets a 10% bonus on your first purchase!
+                      </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Password</label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                           <Lock className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                           name="password"
+                           type="password"
+                           required
+                           className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                           value={form.password}
+                           onChange={handleChange}
+                         />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-1.5">Confirm Password</label>
+                       <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                           <Lock className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                           name="confirm_password"
+                           type="password"
+                           required
+                           className="block w-full pl-10 pr-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                           value={form.confirm_password}
+                           onChange={handleChange}
+                         />
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-            {success && (
-              <div className="rounded-md bg-green-50 p-4 border border-green-200">
-                 <div className="flex">
-                  <div className="flex-shrink-0">
-                    <svg className="h-5 w-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-green-800">{success}</h3>
-                  </div>
-                 </div>
-              </div>
-            )}
 
-            <div className="bg-gray-50 p-1 rounded-lg flex mb-6">
-              {["student", "tutor"].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => handleTypeToggle(type)}
-                  className={`flex-1 py-2 text-sm font-medium rounded-md transition-all duration-200 focus:outline-none ${
-                    form.user_type === type
-                      ? "bg-white text-gray-900 shadow-sm ring-1 ring-black ring-opacity-5"
-                      : "text-gray-500 hover:text-gray-900"
-                  }`}
-                >
-                  Join as {type.charAt(0).toUpperCase() + type.slice(1)}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-               <div>
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  First Name
-                </label>
-                <input
-                  id="first_name"
-                  name="first_name"
-                  type="text"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.first_name}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
-                  Last Name
-                </label>
-                <input
-                  id="last_name"
-                  name="last_name"
-                  type="text"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.last_name}
-                  onChange={handleChange}
-                />
-              </div>
-               <div>
-                <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Username
-                </label>
-                <input
-                  id="username"
-                  name="username"
-                  type="text"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.username}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email address
-                </label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.email}
-                  onChange={handleChange}
-                />
-              </div>
-              {form.user_type === 'tutor' && (
-                  <div className="">
-                    <label htmlFor="phone_number" className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number
-                    </label>
-                    <input
-                      id="phone_number"
-                      name="phone_number"
-                      type="tel"
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      value={form.phone_number}
-                      onChange={handleChange}
-                      placeholder="e.g. 017XXXXXXXX"
-                    />
+                {otpSent && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="text-center mb-6">
+                       <h3 className="text-lg font-semibold text-slate-900">Verify Your Email</h3>
+                       <p className="text-sm text-slate-500 mt-1">
+                         We sent a code to <span className="font-medium text-slate-900">{form.email}</span>
+                       </p>
+                    </div>
+                    <div className="max-w-xs mx-auto">
+                      <label className="sr-only">Verification Code</label>
+                      <input
+                        type="text"
+                        className="block w-full text-center text-2xl tracking-[0.5em] font-bold px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="000000"
+                        maxLength={6}
+                      />
+                    </div>
                   </div>
-              )}
-              <div>
-                <label htmlFor="referrer_username" className="block text-sm font-medium text-gray-700 mb-1">
-                  Referred By (Optional)
-                </label>
-                <input
-                  id="referrer_username"
-                  name="referrer_username"
-                  type="text"
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.referrer_username || ""}
-                  onChange={handleChange}
-                  placeholder="Username of who referred you"
-                />
-                <p className="mt-1 text-xs text-indigo-600">
-                  Referrer gets 10% bonus points on your first purchase!
+                )}
+
+                <div className="pt-2">
+                   {!otpSent ? (
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all ${
+                          loading ? 'opacity-75 cursor-wait' : ''
+                        }`}
+                      >
+                        {loading ? 'Processing...' : 'Create Account'}
+                        {!loading && <ArrowRight className="ml-2 w-4 h-4" />}
+                      </button>
+                   ) : (
+                      <div className="space-y-3">
+                         <button
+                            type="submit"
+                            disabled={loading}
+                            className={`w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all ${
+                              loading ? 'opacity-75 cursor-wait' : ''
+                            }`}
+                          >
+                            {loading ? 'Verifying...' : 'Verify Email & Register'}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={resendTimeout > 0}
+                            onClick={sendOtp}
+                             className={`w-full py-2 px-4 text-sm font-medium text-indigo-600 hover:text-indigo-700 disabled:text-slate-400 disabled:cursor-not-allowed`}
+                          >
+                             {resendTimeout > 0 ? `Resend code in ${resendTimeout}s` : "Resend Verification Code"}
+                          </button>
+                      </div>
+                   )}
+                </div>
+              </form>
+
+              <div className="mt-6 text-center">
+                <p className="text-sm text-slate-600">
+                  Already have an account?{" "}
+                  <Link to="/login" className="font-semibold text-indigo-600 hover:text-indigo-700 transition-colors">
+                    Log in
+                  </Link>
                 </p>
               </div>
-               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.password}
-                  onChange={handleChange}
-                />
-              </div>
-              <div>
-                <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirm_password"
-                  name="confirm_password"
-                  type="password"
-                  required
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                  value={form.confirm_password}
-                  onChange={handleChange}
-                />
-              </div>
             </div>
-
-            {!otpSent ? (
-              <div>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
-                     loading ? "bg-indigo-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700"
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors`}
-                >
-                  {loading ? "Sending..." : "Create Account"}
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                 <div>
-                    <label htmlFor="otp" className="block text-sm font-medium text-gray-700 mb-1">
-                      Verification Code
-                    </label>
-                    <input
-                      id="otp"
-                      type="text"
-                      className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm text-center tracking-widest"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="XXXXXX"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={loading}
-                    className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white ${
-                       loading ? "bg-green-400 cursor-not-allowed" : "bg-green-600 hover:bg-green-700"
-                    } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors`}
-                  >
-                    {loading ? "Verifying..." : "Verify & Register"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={resendTimeout > 0}
-                    onClick={sendOtp}
-                     className={`w-full flex justify-center py-2 px-4 border border-transparent rounded-lg text-sm font-medium ${
-                       resendTimeout > 0 ? "text-gray-400 cursor-not-allowed" : "text-indigo-600 hover:text-indigo-500"
-                    } focus:outline-none`}
-                  >
-                     {resendTimeout > 0 ? `Resend code in ${resendTimeout}s` : "Resend code"}
-                  </button>
-              </div>
-            )}
-          </form>
+          </div>
         </div>
       </div>
       <Footer />

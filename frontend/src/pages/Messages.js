@@ -1,3 +1,4 @@
+// src/pages/Messages.js
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -5,6 +6,7 @@ import ChatSocket from '../components/ChatSocket';
 import UnlockContactModal from '../components/UnlockContactModal';
 import BuyCreditsModal from '../components/BuyCreditsModal';
 import UnlockJobModal from '../components/UnlockJobModal';
+import { Search, Send, Smile, Paperclip, MoreVertical, ArrowLeft, Lock } from 'lucide-react';
 
 export default function WhatsAppLikeMessaging() {
   const [showUnlockJobModal, setShowUnlockJobModal] = useState(false);
@@ -299,28 +301,20 @@ export default function WhatsAppLikeMessaging() {
       <Navbar />
       
       {/* Main Chat Container - Responsive */}
-      <div className="fixed top-16 left-0 right-0 bottom-0 flex overflow-hidden bg-gray-50">
+      <div className="fixed top-16 left-0 right-0 bottom-0 flex overflow-hidden bg-slate-50">
         {/* Left Sidebar - Conversations List - Responsive */}
         <div className={`${
-          showMobileSidebar ? 'block' : 'hidden'
-        } md:block w-full md:w-96 bg-white border-r border-gray-200 flex flex-col absolute md:relative inset-0 md:inset-auto z-20 md:z-auto`}>
+          showMobileSidebar ? 'flex' : 'hidden'
+        } md:flex flex-col w-full md:w-96 bg-white border-r border-slate-200 shadow-sm z-20`}>
+
           {/* Sidebar Header */}
-          <div className="p-3 md:p-4 border-b border-gray-200 bg-white flex-shrink-0">
-            <div className="flex items-center justify-between mb-3 md:mb-4">
-              <h1 className="text-xl md:text-2xl font-bold text-gray-900">Messages</h1>
-              <button className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <svg className="w-5 h-5 md:w-6 md:h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-              </button>
-            </div>
+          <div className="p-4 border-b border-slate-200 bg-white">
+            <h1 className="text-xl font-bold text-slate-800 mb-4">Messages</h1>
             
             {/* Search Bar */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+                <Search className="h-4 w-4 text-slate-400" />
               </div>
               <input
                 type="text"
@@ -328,32 +322,32 @@ export default function WhatsAppLikeMessaging() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-9 md:pl-10 pr-4 py-2 md:py-2.5 text-sm md:text-base bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all"
+                className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-500"
               />
             </div>
           </div>
 
           {/* Conversations List */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
             {searchResults.length > 0 && (
-              <div className="border-b border-gray-200">
-                <div className="px-3 md:px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wide bg-gray-50">
+              <div className="border-b border-slate-100">
+                <div className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50">
                   Search Results
                 </div>
                 {searchResults.map((u) => (
                   <div
                     key={u.id}
                     onClick={() => startConversation(u)}
-                    className="flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 hover:bg-gray-50 cursor-pointer transition-colors border-b border-gray-100"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0"
                   >
                     <img
                       src={u.avatar}
                       alt={u.username}
-                      className="w-10 h-10 md:w-12 md:h-12 rounded-full ring-2 ring-white"
+                      className="w-10 h-10 rounded-full ring-2 ring-white shadow-sm"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-sm md:text-base text-gray-900">{u.username}</div>
-                      <div className="text-xs md:text-sm text-indigo-600 font-medium">Start conversation →</div>
+                      <div className="font-semibold text-slate-900">{u.username}</div>
+                      <div className="text-xs text-indigo-600 font-medium">Start conversation →</div>
                     </div>
                   </div>
                 ))}
@@ -362,18 +356,16 @@ export default function WhatsAppLikeMessaging() {
 
             <div>
               {isLoading && conversations.length === 0 ? (
-                <div className="flex justify-center items-center py-8 md:py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 md:h-8 md:w-8 border-b-2 border-indigo-600"></div>
+                <div className="flex justify-center items-center py-12">
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent"></div>
                 </div>
               ) : conversations.length === 0 ? (
-                <div className="text-center py-8 md:py-12 px-4">
-                  <div className="w-12 h-12 md:w-16 md:h-16 bg-gray-100 rounded-full flex items-center justify-center mb-3 md:mb-4 mx-auto">
-                    <svg className="w-6 h-6 md:w-8 md:h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
+                <div className="text-center py-12 px-4">
+                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <Search className="w-8 h-8 text-slate-400" />
                   </div>
-                  <h3 className="text-base md:text-lg font-semibold text-gray-900 mb-1">No conversations yet</h3>
-                  <p className="text-xs md:text-sm text-gray-500">Search for users above to start chatting</p>
+                  <h3 className="text-base font-semibold text-slate-900 mb-1">No conversations yet</h3>
+                  <p className="text-sm text-slate-500">Search for users above to start chatting</p>
                 </div>
               ) : (
                 conversations.map((conv) => {
@@ -386,35 +378,33 @@ export default function WhatsAppLikeMessaging() {
                     <div
                       key={conv.id}
                       onClick={() => selectConversation(conv)}
-                      className={`flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2.5 md:py-3 cursor-pointer transition-all border-b border-gray-100 ${
+                      className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-slate-50 ${
                         isActive 
-                          ? 'bg-indigo-50 border-l-4 border-l-indigo-600' 
-                          : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                          ? 'bg-indigo-50 border-l-4 border-l-indigo-600 pl-3'
+                          : 'hover:bg-slate-50 border-l-4 border-l-transparent pl-3'
                       }`}
                     >
                       <div className="relative flex-shrink-0">
                         <img
                           src={other?.avatar}
                           alt={other?.username}
-                          className="w-10 h-10 md:w-12 md:h-12 rounded-full ring-2 ring-white"
+                          className="w-11 h-11 rounded-full ring-2 ring-white shadow-sm object-cover"
                         />
                         {hasUnread && (
-                          <div className="absolute -top-0.5 -right-0.5 md:-top-1 md:-right-1 w-4 h-4 md:w-5 md:h-5 bg-indigo-600 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-white font-bold">•</span>
-                          </div>
+                          <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-indigo-600 rounded-full ring-2 ring-white"></div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between mb-0.5">
-                          <div className={`font-semibold text-sm md:text-base truncate ${hasUnread ? 'text-gray-900' : 'text-gray-700'}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className={`font-semibold text-sm truncate ${hasUnread ? 'text-slate-900' : 'text-slate-700'}`}>
                             {other?.username || 'Deleted User'}
                           </div>
-                          <div className="text-xs text-gray-500 whitespace-nowrap ml-2">
+                          <div className="text-xs text-slate-400 whitespace-nowrap ml-2">
                             {formatTime(conv.last_message?.timestamp)}
                           </div>
                         </div>
-                        <div className={`text-xs md:text-sm truncate ${
-                          hasUnread ? 'text-gray-900 font-medium' : 'text-gray-500'
+                        <div className={`text-xs truncate ${
+                          hasUnread ? 'text-slate-800 font-medium' : 'text-slate-500'
                         }`}>
                           {lastMsg.length > 35 ? `${lastMsg.slice(0, 32)}...` : lastMsg}
                         </div>
@@ -430,31 +420,29 @@ export default function WhatsAppLikeMessaging() {
         {/* Right Side - Chat Area - Responsive */}
         <div className={`${
           !showMobileSidebar || activeConversation ? 'flex' : 'hidden'
-        } md:flex flex-1 flex-col bg-white absolute md:relative inset-0 md:inset-auto z-10 md:z-auto`}>
+        } md:flex flex-1 flex-col bg-white w-full h-full relative z-10`}>
           {activeConversation ? (
             <>
               {/* Chat Header */}
-              <div className="px-3 md:px-6 py-3 md:py-4 bg-white border-b border-gray-200 flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
+              <div className="px-4 py-3 bg-white border-b border-slate-200 flex items-center justify-between flex-shrink-0 shadow-sm z-20">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
                   {/* Back button for mobile */}
                   <button
                     onClick={handleBackToConversations}
-                    className="md:hidden p-2 hover:bg-gray-100 rounded-full transition-colors flex-shrink-0"
+                    className="md:hidden p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
                   >
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
+                    <ArrowLeft className="w-5 h-5 text-slate-600" />
                   </button>
                   
                   <div className="relative flex-shrink-0">
                     <img
                       src={getOtherUser(activeConversation)?.avatar}
                       alt={getOtherUser(activeConversation)?.username}
-                      className="w-9 h-9 md:w-11 md:h-11 rounded-full ring-2 ring-white shadow-sm"
+                      className="w-10 h-10 rounded-full ring-2 ring-slate-100 object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-gray-900 text-sm md:text-lg truncate">
+                    <div className="font-bold text-slate-900 text-sm md:text-base truncate">
                       {user ? (
                         <Link
                           to={`/profile/${getOtherUser(activeConversation)?.username}`}
@@ -466,37 +454,20 @@ export default function WhatsAppLikeMessaging() {
                         'Unknown'
                       )}
                     </div>
-                    <div className="text-xs md:text-sm text-gray-500">
+                    <div className="text-xs text-slate-500 h-4">
                       {partnerTyping ? (
-                        <span className="text-indigo-600 font-medium flex items-center gap-1">
-                          <span className="flex gap-1">
-                            <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-1 h-1 md:w-1.5 md:h-1.5 bg-indigo-600 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
-                          </span>
-                          <span className="ml-1">Typing</span>
+                        <span className="text-indigo-600 font-medium flex items-center gap-1 animate-pulse">
+                          Typing...
                         </span>
                       ) : (
-                        <span className="text-gray-500">Click name to view profile</span>
+                        <span className="truncate">Active now</span>
                       )}
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1 md:gap-2">
-                  <button className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-                    <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </button>
-                  <button className="hidden md:block p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-                    <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
-                  <button className="p-1.5 md:p-2.5 hover:bg-gray-100 rounded-full transition-colors">
-                    <svg className="w-4 h-4 md:w-5 md:h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                    </svg>
+                <div className="flex gap-1">
+                  <button className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+                    <MoreVertical className="w-5 h-5" />
                   </button>
                 </div>
               </div>
@@ -504,9 +475,10 @@ export default function WhatsAppLikeMessaging() {
               {/* Messages Area */}
               <div 
                 ref={messageContainerRef}
-                className="flex-1 overflow-y-auto p-3 md:p-6 bg-gradient-to-b from-gray-50 to-white"
+                className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 scroll-smooth"
+                style={{ backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)', backgroundSize: '20px 20px' }}
               >
-                <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
+                <div className="max-w-3xl mx-auto space-y-4">
                   {messages.map((msg, index) => {
                     const isSelf = msg.sender.id === user?.user_id;
                     const showDate = index === 0 || 
@@ -515,48 +487,34 @@ export default function WhatsAppLikeMessaging() {
                     return (
                       <React.Fragment key={msg.id}>
                         {showDate && (
-                          <div className="flex justify-center my-4 md:my-6">
-                            <div className="bg-white px-3 md:px-4 py-1 md:py-1.5 rounded-full text-xs font-medium text-gray-600 shadow-sm border border-gray-200">
+                          <div className="flex justify-center my-6">
+                            <div className="bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-medium text-slate-500 shadow-sm border border-slate-100">
                               {formatDate(msg.timestamp)}
                             </div>
                           </div>
                         )}
                         <div className={`flex ${isSelf ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`flex items-end gap-1.5 md:gap-2 max-w-[85%] md:max-w-[70%] ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}>
+                          <div className={`flex items-end gap-2 max-w-[85%] md:max-w-[70%] ${isSelf ? 'flex-row-reverse' : 'flex-row'}`}>
                             {!isSelf && (
                               <img
                                 src={msg.sender.avatar || getOtherUser(activeConversation)?.avatar}
                                 alt=""
-                                className="w-6 h-6 md:w-8 md:h-8 rounded-full flex-shrink-0"
+                                className="w-8 h-8 rounded-full flex-shrink-0 shadow-sm object-cover"
                               />
                             )}
-                            <div className={`rounded-2xl px-3 md:px-4 py-2 md:py-2.5 shadow-sm ${
+                            <div className={`rounded-2xl px-4 py-2.5 shadow-sm ${
                               isSelf 
                                 ? 'bg-indigo-600 text-white rounded-br-sm' 
-                                : 'bg-white text-gray-900 rounded-bl-sm border border-gray-200'
+                                : 'bg-white text-slate-800 rounded-bl-sm border border-slate-200'
                             }`}>
-                              <div className="text-sm md:text-[15px] leading-relaxed break-words">{msg.content}</div>
-                              <div className={`text-xs mt-1 flex items-center gap-1 md:gap-1.5 ${
-                                isSelf ? 'text-indigo-200 justify-end' : 'text-gray-500'
+                              <div className="text-[15px] leading-relaxed break-words">{msg.content}</div>
+                              <div className={`text-[10px] mt-1 flex items-center gap-1 ${
+                                isSelf ? 'text-indigo-200 justify-end' : 'text-slate-400'
                               }`}>
                                 <span>{formatTime(msg.timestamp)}</span>
                                 {isSelf && (
-                                  <span className="text-xs md:text-sm">
-                                    {msg.status === 'seen' ? (
-                                      <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                                        <path d="M12.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-1-1a1 1 0 011.414-1.414l.293.293 7.293-7.293a1 1 0 011.414 0z"/>
-                                      </svg>
-                                    ) : msg.status === 'delivered' ? (
-                                      <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                                        <path d="M12.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-1-1a1 1 0 011.414-1.414l.293.293 7.293-7.293a1 1 0 011.414 0z"/>
-                                      </svg>
-                                    ) : (
-                                      <svg className="w-3 h-3 md:w-4 md:h-4" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"/>
-                                      </svg>
-                                    )}
+                                  <span>
+                                    {msg.status === 'seen' ? '✓✓' : msg.status === 'delivered' ? '✓✓' : '✓'}
                                   </span>
                                 )}
                               </div>
@@ -569,17 +527,17 @@ export default function WhatsAppLikeMessaging() {
                   
                   {partnerTyping && (
                     <div className="flex justify-start">
-                      <div className="flex items-end gap-1.5 md:gap-2">
+                      <div className="flex items-end gap-2">
                         <img
                           src={getOtherUser(activeConversation)?.avatar}
                           alt=""
-                          className="w-6 h-6 md:w-8 md:h-8 rounded-full"
+                          className="w-8 h-8 rounded-full shadow-sm"
                         />
-                        <div className="bg-white border border-gray-200 rounded-2xl rounded-bl-sm px-3 md:px-4 py-2 md:py-3 shadow-sm">
-                          <div className="flex gap-1">
-                            <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-1.5 h-1.5 md:w-2 md:h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                        <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                          <div className="flex gap-1.5">
+                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                           </div>
                         </div>
                       </div>
@@ -589,14 +547,9 @@ export default function WhatsAppLikeMessaging() {
               </div>
 
               {/* Message Input */}
-              <div className="px-3 md:px-6 py-3 md:py-4 bg-white border-t border-gray-200 flex-shrink-0">
-                <div className="max-w-4xl mx-auto flex items-end gap-2 md:gap-3">
-                  <button className="hidden md:block p-2.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition-colors flex-shrink-0">
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                  </button>
-                  <div className="flex-1 bg-gray-100 rounded-3xl flex items-center px-3 md:px-4 py-1.5 md:py-2 focus-within:ring-2 focus-within:ring-indigo-500 transition-all">
+              <div className="px-4 py-4 bg-white border-t border-slate-200 flex-shrink-0">
+                <div className="max-w-3xl mx-auto flex items-end gap-3">
+                  <div className="flex-1 bg-slate-100 rounded-2xl flex items-center px-4 py-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:bg-white transition-all border border-transparent focus-within:border-indigo-200">
                     <input
                       type="text"
                       value={newMessage}
@@ -606,47 +559,38 @@ export default function WhatsAppLikeMessaging() {
                       }}
                       onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                       placeholder="Type a message..."
-                      className="flex-1 bg-transparent focus:outline-none text-gray-900 placeholder-gray-500 text-sm md:text-[15px]"
+                      className="flex-1 bg-transparent focus:outline-none text-slate-800 placeholder-slate-500 text-sm md:text-base py-1"
                     />
-                    <button className="p-1 md:p-1.5 text-gray-500 hover:text-indigo-600 rounded-full transition-colors">
-                      <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                    </button>
                   </div>
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className={`p-2 md:p-3 rounded-full transition-all flex-shrink-0 ${
+                    className={`p-3 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${
                       newMessage.trim() 
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/50' 
-                        : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:-translate-y-0.5'
+                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     }`}
                   >
-                    <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
+                    <Send className="w-5 h-5" />
                   </button>
                 </div>
               </div>
             </>
           ) : (
             /* Empty Chat State */
-            <div className="flex-1 flex flex-col items-center justify-center bg-gradient-to-br from-gray-50 to-white p-4">
-              <div className="text-center max-w-md px-4 md:px-6">
-                <div className="w-16 h-16 md:w-24 md:h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full flex items-center justify-center mb-4 md:mb-6 mx-auto shadow-xl">
-                  <svg className="w-8 h-8 md:w-12 md:h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                  </svg>
+            <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-6">
+              <div className="text-center max-w-sm">
+                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 mx-auto shadow-sm border border-slate-200">
+                  <Send className="w-8 h-8 text-indigo-500 ml-1" />
                 </div>
-                <h2 className="text-xl md:text-3xl font-bold text-gray-900 mb-2 md:mb-3">Welcome to Tutormove Messages</h2>
-                <p className="text-gray-600 text-sm md:text-lg leading-relaxed">
-                  Select a conversation from the left sidebar or search for users to start chatting.
+                <h2 className="text-2xl font-bold text-slate-900 mb-3">Your Messages</h2>
+                <p className="text-slate-500 text-base leading-relaxed mb-8">
+                  Select a conversation from the sidebar or start a new one to connect with tutors and students.
                 </p>
                 {/* Show back button on mobile when no conversation is selected */}
                 <button
                   onClick={handleBackToConversations}
-                  className="md:hidden mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                  className="md:hidden w-full px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
                 >
                   View Conversations
                 </button>

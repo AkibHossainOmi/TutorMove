@@ -1,41 +1,59 @@
 // src/components/Navbar.jsx
 import React, { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
 
-// Chevron Icon
-const ChevronDownIcon = () => (
+// Icons
+const ChevronDownIcon = ({ className }) => (
   <svg
-    className="ml-1 h-4 w-4 text-gray-400 group-hover:text-indigo-600 transition-colors"
-    viewBox="0 0 20 20"
-    fill="currentColor"
-    aria-hidden="true"
+    className={`w-4 h-4 transition-transform duration-200 ${className}`}
+    fill="none"
+    viewBox="0 0 24 24"
+    stroke="currentColor"
+    strokeWidth={2}
   >
-    <path
-      fillRule="evenodd"
-      d="M5.23 7.21a.75.75 0 011.06.02L10 10.939l3.71-3.71a.75.75 0 011.08 1.04l-4.24 4.25a.75.75 0 01-1.08 0L5.25 8.27a.75.75 0 01-.02-1.06z"
-      clipRule="evenodd"
-    />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+  </svg>
+);
+
+const MenuIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+  </svg>
+);
+
+const CloseIcon = () => (
+  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 
 // NavLink Component
-const NavLink = ({ to, text, onClick }) => (
-  <Link
-    to={to}
-    className="text-gray-600 hover:text-indigo-600 font-medium text-[15px] px-3 py-2 rounded-lg transition-all duration-200"
-    onClick={onClick}
-  >
-    {text}
-  </Link>
-);
+const NavLink = ({ to, text }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
+  return (
+    <Link
+      to={to}
+      className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+        isActive ? "text-indigo-600" : "text-slate-600 hover:text-indigo-600"
+      }`}
+    >
+      {text}
+      {isActive && (
+        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full transform scale-x-100 transition-transform duration-300" />
+      )}
+    </Link>
+  );
+};
 
 // DropdownLink Component
 const DropdownLink = ({ to, text, onClick }) => (
   <Link
     to={to}
-    className="block px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-50 hover:text-indigo-600 transition-colors"
+    className="block px-4 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
     onClick={onClick}
   >
     {text}
@@ -44,11 +62,11 @@ const DropdownLink = ({ to, text, onClick }) => (
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isTutorsDropdownOpen, setIsTutorsDropdownOpen] = useState(false);
-  const [isJobsDropdownOpen, setIsJobsDropdownOpen] = useState(false);
-  const [isAccountDropdownOpen, setIsAccountDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState(null); // 'tutors', 'jobs', 'account'
+  const [scrolled, setScrolled] = useState(false);
 
   const navigate = useNavigate();
+  const location = useLocation();
   const isAuthenticated = useAuth();
   const userData = JSON.parse(localStorage.getItem("user")) || {};
 
@@ -58,30 +76,22 @@ const Navbar = () => {
   const userInitial = userName.charAt(0).toUpperCase();
   const isDualRole = userData?.is_dual_role || false;
 
-  // Refs for click outside
-  const tutorsDropdownRef = useRef(null);
-  const jobsDropdownRef = useRef(null);
-  const accountDropdownRef = useRef(null);
-  const mobileMenuRef = useRef(null);
-  const mobileMenuButtonRef = useRef(null);
+  const navRef = useRef(null);
 
+  // Handle scroll effect
   useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (tutorsDropdownRef.current && !tutorsDropdownRef.current.contains(e.target)) {
-        setIsTutorsDropdownOpen(false);
-      }
-      if (jobsDropdownRef.current && !jobsDropdownRef.current.contains(e.target)) {
-        setIsJobsDropdownOpen(false);
-      }
-      if (accountDropdownRef.current && !accountDropdownRef.current.contains(e.target)) {
-        setIsAccountDropdownOpen(false);
-      }
-      if (
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(e.target) &&
-        mobileMenuButtonRef.current &&
-        !mobileMenuButtonRef.current.contains(e.target)
-      ) {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Close dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) {
+        setActiveDropdown(null);
         setIsMenuOpen(false);
       }
     };
@@ -89,16 +99,26 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setIsMenuOpen(false);
+    setActiveDropdown(null);
+  }, [location]);
+
+  const toggleDropdown = (name) => {
+    setActiveDropdown(activeDropdown === name ? null : name);
+  };
+
   const handleLogin = () => navigate("/login");
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     navigate("/");
-    setIsMenuOpen(false);
+    window.location.reload();
   };
+
   const handleRequestTutor = () => {
     isAuthenticated ? navigate("/dashboard") : navigate("/signup");
-    setIsMenuOpen(false);
   };
 
   const handleSwitchRole = async () => {
@@ -113,14 +133,12 @@ const Navbar = () => {
 
       if (response.ok) {
         const data = await response.json();
-        // Update user data in localStorage, preserving is_dual_role
         const updatedUser = {
           ...userData,
           user_type: data.current_role,
           is_dual_role: data.is_dual_role
         };
         localStorage.setItem('user', JSON.stringify(updatedUser));
-        // Refresh the page to update UI
         window.location.reload();
       } else {
         alert('Failed to switch role');
@@ -132,225 +150,281 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[1100] bg-white border-b border-gray-100 shadow-sm">
+    <nav
+      ref={navRef}
+      className={`fixed top-0 left-0 right-0 z-[50] transition-all duration-300 ${
+        scrolled || isMenuOpen ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200/50" : "bg-white border-b border-transparent"
+      }`}
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link
-            to="/"
-            className="text-2xl font-bold text-gray-900 tracking-tight hover:text-indigo-600 transition-colors"
-          >
-            TutorMove
-          </Link>
+          <div className="flex-shrink-0 flex items-center">
+            <Link to="/" className="flex items-center gap-2 group">
+              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-indigo-200 shadow-lg group-hover:scale-105 transition-transform">
+                T
+              </div>
+              <span className="text-xl font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">
+                TutorMove
+              </span>
+            </Link>
+          </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-6">
+          <div className="hidden md:flex items-center space-x-1">
+
+            {/* Find Tutors Dropdown (Student or Guest) */}
             {(userType === "student" || !isAuthenticated) && (
-              <div className="relative" ref={tutorsDropdownRef}>
+              <div className="relative group">
                 <button
-                  onClick={() => setIsTutorsDropdownOpen((prev) => !prev)}
-                  className="group flex items-center text-gray-600 hover:text-indigo-600 font-medium text-[15px] px-3 py-2"
+                  onClick={() => toggleDropdown("tutors")}
+                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    activeDropdown === "tutors" ? "text-indigo-600 bg-indigo-50" : "text-slate-600 hover:text-indigo-600 hover:bg-slate-50"
+                  }`}
                 >
                   Find Tutors
-                  <ChevronDownIcon />
+                  <ChevronDownIcon className={activeDropdown === "tutors" ? "rotate-180" : ""} />
                 </button>
-                {isTutorsDropdownOpen && (
-                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20 overflow-hidden ring-1 ring-black ring-opacity-5">
-                    <DropdownLink to="/tutors" text="All Tutors" onClick={() => setIsTutorsDropdownOpen(false)} />
-                    <DropdownLink to="/tutors?type=online" text="Online Tutors" onClick={() => setIsTutorsDropdownOpen(false)} />
-                    <DropdownLink to="/tutors?type=home" text="Home Tutors" onClick={() => setIsTutorsDropdownOpen(false)} />
+
+                {/* Desktop Dropdown Panel */}
+                {activeDropdown === "tutors" && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                     <DropdownLink to="/tutors" text="Browse All Tutors" onClick={() => setActiveDropdown(null)} />
+                     <DropdownLink to="/tutors?type=online" text="Online Tutors" onClick={() => setActiveDropdown(null)} />
+                     <DropdownLink to="/tutors?type=home" text="Home Tutors" onClick={() => setActiveDropdown(null)} />
                   </div>
                 )}
               </div>
             )}
 
+            {/* Find Jobs Dropdown (Tutor or Guest) */}
             {(userType === "tutor" || !isAuthenticated) && (
-              <div className="relative" ref={jobsDropdownRef}>
+              <div className="relative">
                 <button
-                  onClick={() => setIsJobsDropdownOpen((prev) => !prev)}
-                  className="group flex items-center text-gray-600 hover:text-indigo-600 font-medium text-[15px] px-3 py-2"
+                  onClick={() => toggleDropdown("jobs")}
+                   className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                    activeDropdown === "jobs" ? "text-indigo-600 bg-indigo-50" : "text-slate-600 hover:text-indigo-600 hover:bg-slate-50"
+                  }`}
                 >
                   Find Jobs
-                  <ChevronDownIcon />
+                  <ChevronDownIcon className={activeDropdown === "jobs" ? "rotate-180" : ""} />
                 </button>
-                {isJobsDropdownOpen && (
-                  <div className="absolute left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-20 overflow-hidden ring-1 ring-black ring-opacity-5">
-                    <DropdownLink to="/jobs" text="All Jobs" onClick={() => setIsJobsDropdownOpen(false)} />
-                    <DropdownLink to="/jobs?type=online" text="Online Teaching" onClick={() => setIsJobsDropdownOpen(false)} />
-                    <DropdownLink to="/jobs?type=assignment" text="Assignment Jobs" onClick={() => setIsJobsDropdownOpen(false)} />
+                {activeDropdown === "jobs" && (
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <DropdownLink to="/jobs" text="Browse All Jobs" onClick={() => setActiveDropdown(null)} />
+                    <DropdownLink to="/jobs?type=online" text="Online Teaching Jobs" onClick={() => setActiveDropdown(null)} />
+                    <DropdownLink to="/jobs?type=assignment" text="Assignment Help" onClick={() => setActiveDropdown(null)} />
                   </div>
                 )}
               </div>
             )}
 
             <NavLink to="/qna" text="Q&A Forum" />
-
             {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" />}
+          </div>
 
-            {/* Auth Buttons */}
-            <div className="flex items-center gap-4 ml-2">
-              {isAuthenticated ? (
-                <div className="relative" ref={accountDropdownRef}>
-                  <button
-                    onClick={() => setIsAccountDropdownOpen((prev) => !prev)}
-                    className="flex items-center space-x-2 p-1 rounded-full hover:bg-gray-50 transition-colors"
-                  >
-                    {profilePicture ? (
-                      <ProfileImageWithBg imageUrl={profilePicture} size={36} />
+          {/* Desktop Auth Actions */}
+          <div className="hidden md:flex items-center gap-3">
+            {isAuthenticated ? (
+              <div className="relative ml-2">
+                <button
+                  onClick={() => toggleDropdown("account")}
+                  className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all bg-white"
+                >
+                  <span className="text-sm font-medium text-slate-700 pl-1">{userName}</span>
+                   {profilePicture ? (
+                      <ProfileImageWithBg imageUrl={profilePicture} size={32} className="rounded-full ring-2 ring-white" />
                     ) : (
-                      <div className="w-9 h-9 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-sm shadow-sm">
+                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-sm">
                         {userInitial}
                       </div>
                     )}
-                    <ChevronDownIcon />
-                  </button>
-                  {isAccountDropdownOpen && (
-                    <div className="absolute right-0 mt-3 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-2 z-30 ring-1 ring-black ring-opacity-5">
-                      <div className="px-4 py-3 border-b border-gray-100 mb-2">
-                        <p className="text-sm font-medium text-gray-900">{userName}</p>
-                        <p className="text-xs text-gray-500 capitalize">{userType}</p>
-                        {isDualRole && (
-                          <p className="text-xs text-indigo-600 font-medium mt-1">✨ Dual Role</p>
+                </button>
+
+                {activeDropdown === "account" && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-3 border-b border-slate-50">
+                      <p className="text-sm font-semibold text-slate-900">{userName}</p>
+                      <p className="text-xs text-slate-500 capitalize">{userType}</p>
+                       {isDualRole && (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 mt-1">
+                            Dual Role Account
+                          </span>
                         )}
-                      </div>
-                      <DropdownLink to="/profile" text="Profile" onClick={() => setIsAccountDropdownOpen(false)} />
-                      {isDualRole && (
+                    </div>
+
+                    <div className="py-1">
+                      <DropdownLink to="/profile" text="My Profile" onClick={() => setActiveDropdown(null)} />
+                      <DropdownLink to="/dashboard" text="Dashboard" onClick={() => setActiveDropdown(null)} />
+                      <DropdownLink to="/messages" text="Messages" onClick={() => setActiveDropdown(null)} />
+                    </div>
+
+                    <div className="border-t border-slate-50 py-1">
+                       {isDualRole && (
                         <button
                           onClick={() => {
                             handleSwitchRole();
-                            setIsAccountDropdownOpen(false);
+                            setActiveDropdown(null);
                           }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors font-medium"
+                           className="w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors"
                         >
-                          🔄 Switch to {userType === 'student' ? 'Tutor' : 'Student'}
+                          Switch to {userType === 'student' ? 'Tutor' : 'Student'}
                         </button>
                       )}
                       {!isDualRole && userType === 'student' && (
                         <button
                           onClick={() => {
                             navigate('/apply-tutor');
-                            setIsAccountDropdownOpen(false);
+                            setActiveDropdown(null);
                           }}
-                          className="w-full text-left px-4 py-2.5 text-sm text-green-600 hover:bg-green-50 transition-colors font-medium"
+                          className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 transition-colors"
                         >
-                          📝 Apply to be a Tutor
+                          Become a Tutor
                         </button>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
                       >
-                        Logout
+                        Sign Out
                       </button>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <button
-                    onClick={handleLogin}
-                    className="px-5 py-2.5 text-[15px] font-medium text-gray-700 hover:text-indigo-600 transition-colors"
-                  >
-                    Log In
-                  </button>
-                  <button
-                    onClick={handleRequestTutor}
-                    className="px-5 py-2.5 text-[15px] font-medium rounded-full bg-indigo-600 text-white shadow-sm hover:bg-indigo-700 hover:shadow transition-all duration-200"
-                  >
-                    Sign Up
-                  </button>
-                </>
-              )}
-            </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                <button
+                  onClick={handleLogin}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
+                >
+                  Log In
+                </button>
+                <button
+                  onClick={handleRequestTutor}
+                  className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-full hover:bg-indigo-700 shadow-sm hover:shadow-indigo-200 hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                >
+                  Get Started
+                </button>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 text-gray-600 hover:text-indigo-600 transition-colors rounded-lg hover:bg-gray-50"
-            ref={mobileMenuButtonRef}
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              {isMenuOpen ? (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              ) : (
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              )}
-            </svg>
-          </button>
+          <div className="md:hidden flex items-center">
+             <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+            >
+              {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* Mobile Menu Overlay */}
       <div
-        ref={mobileMenuRef}
-        className={`lg:hidden fixed inset-x-0 top-16 bg-white border-b border-gray-100 shadow-lg transform transition-all duration-300 ease-in-out ${
-          isMenuOpen ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
+        className={`md:hidden fixed inset-x-0 top-[64px] bg-white border-b border-slate-100 shadow-lg transform transition-all duration-300 origin-top overflow-y-auto max-h-[calc(100vh-64px)] ${
+          isMenuOpen ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0"
         }`}
       >
-        <div className="px-4 py-6 space-y-4 max-h-[80vh] overflow-y-auto">
-          {(userType === "student" || !isAuthenticated) && (
-            <div className="space-y-2">
-              <p className="px-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Find Tutors</p>
-              <NavLink to="/tutors" text="All Tutors" onClick={() => setIsMenuOpen(false)} />
-              <NavLink to="/tutors?type=online" text="Online Tutors" onClick={() => setIsMenuOpen(false)} />
-              <NavLink to="/tutors?type=home" text="Home Tutors" onClick={() => setIsMenuOpen(false)} />
-            </div>
-          )}
+        <div className="px-4 py-6 space-y-4">
+           {/* Mobile Navigation Links */}
+           <div className="space-y-1">
+             <Link
+                to="/"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                onClick={() => setIsMenuOpen(false)}
+             >
+                Home
+             </Link>
 
-          {(userType === "tutor" || !isAuthenticated) && (
-            <div className="space-y-2 pt-2 border-t border-gray-100">
-              <p className="px-2 mt-4 text-xs font-semibold text-gray-400 uppercase tracking-wider">Find Jobs</p>
-              <NavLink to="/jobs" text="All Jobs" onClick={() => setIsMenuOpen(false)} />
-              <NavLink to="/jobs?type=online" text="Online Teaching" onClick={() => setIsMenuOpen(false)} />
-              <NavLink to="/jobs?type=assignment" text="Assignment Jobs" onClick={() => setIsMenuOpen(false)} />
-            </div>
-          )}
+              {(userType === "student" || !isAuthenticated) && (
+                <>
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Tutors</div>
+                  <Link to="/tutors" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Browse All</Link>
+                  <Link to="/tutors?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Online Tutors</Link>
+                </>
+              )}
 
-          <div className="pt-4 border-t border-gray-100">
-             <NavLink to="/qna" text="Q&A Forum" onClick={() => setIsMenuOpen(false)} />
-             {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" onClick={() => setIsMenuOpen(false)} />}
-          </div>
+              {(userType === "tutor" || !isAuthenticated) && (
+                <>
+                  <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Jobs</div>
+                  <Link to="/jobs" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Browse Jobs</Link>
+                  <Link to="/jobs?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Online Jobs</Link>
+                </>
+              )}
 
-          {isAuthenticated ? (
-            <div className="pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-3 px-2 mb-4">
-                {profilePicture ? (
-                  <ProfileImageWithBg imageUrl={profilePicture} size={40} />
-                ) : (
-                  <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-base shadow-sm">
-                    {userInitial}
-                  </div>
-                )}
-                <div>
-                  <span className="block font-medium text-gray-900">{userName}</span>
-                  <span className="block text-xs text-gray-500 capitalize">{userType}</span>
-                </div>
-              </div>
-              <NavLink to="/profile" text="Profile" onClick={() => setIsMenuOpen(false)} />
-              <button
-                onClick={handleLogout}
-                className="w-full mt-3 text-left px-3 py-2.5 rounded-lg text-red-600 font-medium hover:bg-red-50 transition-colors"
+              <Link
+                to="/qna"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 mt-2"
+                onClick={() => setIsMenuOpen(false)}
               >
-                Logout
-              </button>
-            </div>
-          ) : (
-            <div className="pt-6 border-t border-gray-100 grid grid-cols-2 gap-4">
-              <button
-                onClick={handleLogin}
-                className="w-full px-4 py-2.5 border border-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-300 transition-all"
-              >
-                Log In
-              </button>
-              <button
-                onClick={handleRequestTutor}
-                className="w-full px-4 py-2.5 bg-indigo-600 text-white rounded-lg font-medium shadow-sm hover:bg-indigo-700 transition-all"
-              >
-                Sign Up
-              </button>
-            </div>
-          )}
+                Q&A Forum
+              </Link>
+
+              {isAuthenticated && (
+                <Link
+                  to="/dashboard"
+                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Dashboard
+                </Link>
+              )}
+           </div>
+
+           {/* Mobile Auth Actions */}
+           <div className="pt-6 border-t border-slate-100">
+             {isAuthenticated ? (
+               <div className="space-y-3 px-3">
+                 <div className="flex items-center gap-3 mb-4">
+                   {profilePicture ? (
+                      <ProfileImageWithBg imageUrl={profilePicture} size={40} className="rounded-full" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-base">
+                        {userInitial}
+                      </div>
+                    )}
+                   <div>
+                     <div className="font-semibold text-slate-900">{userName}</div>
+                     <div className="text-xs text-slate-500 capitalize">{userType}</div>
+                   </div>
+                 </div>
+
+                 <Link to="/profile" className="block text-slate-600 hover:text-indigo-600 font-medium" onClick={() => setIsMenuOpen(false)}>My Profile</Link>
+                 <Link to="/messages" className="block text-slate-600 hover:text-indigo-600 font-medium" onClick={() => setIsMenuOpen(false)}>Messages</Link>
+
+                 <button
+                    onClick={handleLogout}
+                    className="block w-full text-left text-rose-600 font-medium hover:text-rose-700"
+                 >
+                    Sign Out
+                 </button>
+               </div>
+             ) : (
+               <div className="grid grid-cols-2 gap-4 px-3">
+                 <button
+                    onClick={() => {
+                      handleLogin();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex justify-center items-center px-4 py-2 border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50"
+                 >
+                   Log In
+                 </button>
+                 <button
+                    onClick={() => {
+                      handleRequestTutor();
+                      setIsMenuOpen(false);
+                    }}
+                    className="flex justify-center items-center px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 shadow-sm"
+                 >
+                   Sign Up
+                 </button>
+               </div>
+             )}
+           </div>
         </div>
       </div>
     </nav>

@@ -1,34 +1,13 @@
+// src/components/LoadingSpinner.js
 import React from 'react';
 
-const LoadingSpinner = ({ size = '40px', color = '#007bff' }) => {
+const LoadingSpinner = ({ size = '40px' }) => {
   return (
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px'
-      }}
-    >
+    <div className="flex justify-center items-center p-8">
       <div
-        style={{
-          width: size,
-          height: size,
-          border: `4px solid ${color}`,
-          borderRadius: '50%',
-          borderTopColor: 'transparent',
-          animation: 'spin 1s linear infinite'
-        }}
-      />
-      <style>
-        {`
-          @keyframes spin {
-            to {
-              transform: rotate(360deg);
-            }
-          }
-        `}
-      </style>
+        className="animate-spin rounded-full border-4 border-indigo-100 border-t-indigo-600"
+        style={{ width: size, height: size }}
+      ></div>
     </div>
   );
 };

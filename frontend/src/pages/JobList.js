@@ -9,6 +9,7 @@ import {
   FiClock,
   FiSearch,
   FiUser,
+  FiFilter,
 } from "react-icons/fi";
 import { jobAPI } from "../utils/apiService";
 
@@ -100,34 +101,43 @@ const JobList = () => {
   };
 
   const JobSkeleton = () => (
-    <div className="relative rounded-2xl bg-white shadow-md p-6 animate-pulse">
-      <div className="h-6 w-3/4 bg-gray-200 rounded mb-3"></div>
-      <div className="h-4 w-full bg-gray-200 rounded mb-2"></div>
-      <div className="h-4 w-5/6 bg-gray-200 rounded mb-4"></div>
-      <div className="h-10 w-32 bg-gray-200 rounded-xl mx-auto"></div>
+    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 animate-pulse">
+      <div className="h-6 w-3/4 bg-slate-100 rounded mb-3"></div>
+      <div className="h-4 w-1/2 bg-slate-100 rounded mb-6"></div>
+      <div className="flex gap-4">
+        <div className="h-4 w-20 bg-slate-100 rounded"></div>
+        <div className="h-4 w-20 bg-slate-100 rounded"></div>
+        <div className="h-4 w-20 bg-slate-100 rounded"></div>
+      </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-indigo-600 via-sky-500 to-purple-600 text-white py-20 text-center overflow-hidden">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-white/10 rounded-full blur-3xl" />
-        <div className="relative max-w-3xl mx-auto px-6">
-          <h1 className="text-4xl md:text-5xl font-extrabold drop-shadow-lg">
-            Find Your Next Opportunity
+      <div className="relative bg-indigo-900 text-white pt-32 pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 opacity-90"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+
+        <div className="relative max-w-6xl mx-auto px-6 text-center z-10">
+          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
+            Find Your Next <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200">Opportunity</span>
           </h1>
-          <p className="mt-4 text-lg md:text-xl text-white/90">
-            Discover jobs that match your skills and expertise
+          <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto mb-10">
+            Browse hundreds of tutoring jobs and connect with students who need your expertise.
           </p>
-          <div className="mt-8 relative max-w-2xl mx-auto">
-            <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+
+          <div className="relative max-w-2xl mx-auto">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <FiSearch className="h-5 w-5 text-slate-400" />
+            </div>
             <input
               type="text"
-              className="w-full rounded-xl border border-gray-200 bg-white/80 backdrop-blur px-10 py-4 text-gray-900 placeholder-gray-400 focus:ring-4 focus:ring-indigo-100 focus:border-indigo-500 outline-none"
-              placeholder="Search jobs by title, skills, or location"
+              className="block w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all shadow-lg"
+              placeholder="Search by subject, skills, or location..."
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
@@ -139,110 +149,132 @@ const JobList = () => {
       </div>
 
       {/* Main Section */}
-      <main className="flex-grow max-w-6xl mx-auto px-6 py-12 -mt-10">
-        {/* Filters */}
-        <div className="relative rounded-3xl bg-white shadow p-6 mb-10">
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <JobFilters
-              selectedType={selectedType}
-              onFilterChange={handleFilterChange}
-            />
-          </div>
-        </div>
+      <main className="flex-grow max-w-6xl mx-auto px-6 py-12 w-full -mt-10 relative z-20">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-        {/* Job Count Header */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold text-gray-900">
-            {filteredJobs.length}{" "}
-            {filteredJobs.length === 1 ? "Job" : "Jobs"} Available
-          </h2>
-          <div className="text-sm text-gray-500">
-            Sorted by: <span className="font-medium">Newest First</span>
-          </div>
-        </div>
+          {/* Filters Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
+              <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold">
+                <FiFilter className="w-5 h-5" />
+                <span>Filters</span>
+              </div>
 
-        {/* Job List */}
-        {loading ? (
-          <div className="space-y-6">
-            {[...Array(4)].map((_, i) => (
-              <JobSkeleton key={i} />
-            ))}
-          </div>
-        ) : filteredJobs.length === 0 ? (
-          <div className="text-center py-16 rounded-3xl bg-white shadow-xl">
-            <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-              <FiBriefcase className="text-gray-400 text-3xl" />
+              <div className="space-y-2">
+                <FilterButton
+                  isActive={selectedType === "all"}
+                  onClick={() => handleFilterChange("all")}
+                  label="All Jobs"
+                />
+                <FilterButton
+                  isActive={selectedType === "online"}
+                  onClick={() => handleFilterChange("online")}
+                  label="Online Only"
+                />
+                <FilterButton
+                  isActive={selectedType === "offline"}
+                  onClick={() => handleFilterChange("offline")}
+                  label="In-Person"
+                />
+                <FilterButton
+                  isActive={selectedType === "assignment"}
+                  onClick={() => handleFilterChange("assignment")}
+                  label="Assignments"
+                />
+              </div>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No jobs found
-            </h3>
-            <p className="text-gray-600 max-w-md mx-auto">
-              {searchQuery
-                ? `No jobs match your search for "${searchQuery}".`
-                : "We couldn't find any jobs matching your criteria."}
-            </p>
-            {(searchQuery || selectedType !== "all") && (
-              <button
-                onClick={() => {
-                  setSearchQuery("");
-                  handleFilterChange("all");
-                }}
-                className="mt-6 rounded-xl bg-indigo-600 px-6 py-3 text-sm font-medium text-white shadow hover:bg-indigo-700"
-              >
-                Clear Filters
-              </button>
+          </div>
+
+          {/* Job List */}
+          <div className="lg:col-span-3 space-y-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-2">
+              <h2 className="text-xl font-bold text-slate-800">
+                {filteredJobs.length} <span className="font-normal text-slate-500 text-base">Results Found</span>
+              </h2>
+              <span className="text-sm text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full">
+                Newest First
+              </span>
+            </div>
+
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <JobSkeleton key={i} />
+                ))}
+              </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
+                <div className="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                  <FiBriefcase className="text-slate-400 text-2xl" />
+                </div>
+                <h3 className="text-lg font-bold text-slate-800 mb-2">No jobs found</h3>
+                <p className="text-slate-500 max-w-md mx-auto mb-6">
+                  Try adjusting your search or filters to find what you're looking for.
+                </p>
+                <button
+                  onClick={() => {
+                    setSearchQuery("");
+                    handleFilterChange("all");
+                  }}
+                  className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                >
+                  Clear Filters
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-4">
+                  {paginatedJobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                  ))}
+                </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex justify-center items-center mt-12 gap-2">
+                    <button
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                        currentPage === 1
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          : "bg-white border border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600"
+                      }`}
+                      onClick={() => changePage(currentPage - 1)}
+                      disabled={currentPage === 1}
+                    >
+                      &lt;
+                    </button>
+
+                    {[...Array(totalPages)].map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => changePage(i + 1)}
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl font-semibold transition-all ${
+                          currentPage === i + 1
+                            ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200"
+                            : "bg-white border border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600"
+                        }`}
+                      >
+                        {i + 1}
+                      </button>
+                    ))}
+
+                    <button
+                      className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${
+                        currentPage === totalPages
+                          ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+                          : "bg-white border border-slate-200 hover:border-indigo-500 text-slate-600 hover:text-indigo-600"
+                      }`}
+                      onClick={() => changePage(currentPage + 1)}
+                      disabled={currentPage === totalPages}
+                    >
+                      &gt;
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
-        ) : (
-          <>
-            <div className="space-y-6">
-              {paginatedJobs.map((job) => (
-                <JobCard key={job.id} job={job} />
-              ))}
-            </div>
-
-            {/* Pagination Controls */}
-            <div className="flex justify-center items-center mt-10 gap-2 flex-wrap">
-              <button
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  currentPage === 1
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white border border-gray-200 hover:bg-indigo-50"
-                }`}
-                onClick={() => changePage(currentPage - 1)}
-                disabled={currentPage === 1}
-              >
-                Previous
-              </button>
-
-              {[...Array(totalPages)].map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => changePage(i + 1)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                    currentPage === i + 1
-                      ? "bg-indigo-600 text-white shadow"
-                      : "bg-white border border-gray-200 hover:bg-indigo-50"
-                  }`}
-                >
-                  {i + 1}
-                </button>
-              ))}
-
-              <button
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-                  currentPage === totalPages || totalPages === 0
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                    : "bg-white border border-gray-200 hover:bg-indigo-50"
-                }`}
-                onClick={() => changePage(currentPage + 1)}
-                disabled={currentPage === totalPages || totalPages === 0}
-              >
-                Next
-              </button>
-            </div>
-          </>
-        )}
+        </div>
       </main>
 
       <Footer />
@@ -250,112 +282,99 @@ const JobList = () => {
   );
 };
 
-// Job Card Component
+const FilterButton = ({ isActive, onClick, label }) => (
+  <button
+    onClick={onClick}
+    className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+      isActive
+        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
+        : "text-slate-600 hover:bg-slate-50"
+    }`}
+  >
+    {label}
+  </button>
+);
+
 const JobCard = ({ job }) => (
-  <div className="relative flex flex-col md:flex-row items-center justify-between gap-6 bg-white rounded-2xl shadow-md hover:shadow-lg transition-all p-6 border border-gray-100 hover:border-indigo-100">
-    <div className="flex flex-col md:flex-row md:items-center gap-6 flex-1">
-      <div className="flex-shrink-0 bg-indigo-50 p-4 rounded-xl">
-        <FiBriefcase className="text-indigo-600 text-2xl" />
-      </div>
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">
-          {job.description || "Untitled Job"}
-        </h3>
-        <div className="flex flex-wrap gap-2 mb-2">
-          <span className="px-3 py-1 text-xs font-medium rounded-full bg-indigo-100 text-indigo-800">
-            {job.service_type || "General"}
-          </span>
-          {job.mode?.includes("Online") && (
-            <span className="px-3 py-1 text-xs font-medium rounded-full bg-emerald-100 text-emerald-800">
-              Remote
-            </span>
-          )}
-          {job.mode?.includes("Offline") && (
-            <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800">
-              On-site
-            </span>
-          )}
+  <div className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-200 transition-all duration-300">
+    <div className="flex flex-col md:flex-row gap-6">
+      <div className="flex-shrink-0">
+        <div className="w-14 h-14 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform duration-300">
+          <FiBriefcase className="w-6 h-6" />
         </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-gray-600">
+      </div>
+
+      <div className="flex-grow">
+        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
+          <div>
+            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
+              {job.description || "Untitled Job"}
+            </h3>
+            <div className="flex flex-wrap gap-2 mt-2">
+              <Badge>{job.service_type || "General"}</Badge>
+              {job.mode?.includes("Online") && (
+                <Badge color="green">Remote</Badge>
+              )}
+              {job.mode?.includes("Offline") && (
+                <Badge color="amber">On-site</Badge>
+              )}
+            </div>
+          </div>
+
+          <div className="text-right flex-shrink-0">
+            <span className="block text-lg font-bold text-slate-900">{job.budget || "Negotiable"}</span>
+            <span className="text-xs text-slate-500 uppercase tracking-wide">Budget</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-4 text-sm text-slate-500 mt-4 pt-4 border-t border-slate-100">
+          <InfoItem icon={<FiBook className="w-4 h-4" />} text={job.subject_details?.join(", ") || "N/A"} />
+          <InfoItem icon={<FiMapPin className="w-4 h-4" />} text={job.location || "Remote"} />
+          <InfoItem icon={<FiUser className="w-4 h-4" />} text={job.mode || "N/A"} />
           <InfoItem
-            icon={<FiBook />}
-            text={job.subject_details?.join(", ") || "Not specified"}
-          />
-          <InfoItem icon={<FiMapPin />} text={job.location || "Remote"} />
-          <InfoItem icon={<FiUser />} text={job.mode || "Not specified"} />
-          <InfoItem
-            icon={<FiClock />}
-            text={`Posted ${new Date(
-              job.created_at
-            ).toLocaleDateString("en-GB", {
-              day: "2-digit",
+            icon={<FiClock className="w-4 h-4" />}
+            text={new Date(job.created_at).toLocaleDateString("en-GB", {
+              day: "numeric",
               month: "short",
-              year: "numeric",
-            })}`}
+            })}
           />
         </div>
       </div>
     </div>
 
-    <div className="flex flex-col items-end gap-3">
-      <div className="text-lg font-semibold text-indigo-600">
-        {job.budget || "Negotiable"}
-      </div>
+    <div className="mt-5 flex justify-end">
       <Link
         to={`/jobs/${job.id}`}
-        className="inline-flex items-center rounded-xl bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 transition"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-indigo-600 transition-colors shadow-sm"
       >
         View Details
-        <svg
-          className="w-4 h-4 ml-2"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="M9 5l7 7-7 7"
-          />
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
         </svg>
       </Link>
     </div>
   </div>
 );
 
-const InfoItem = ({ icon, text }) => (
-  <div className="flex items-center gap-2">
-    <span className="text-gray-500">{icon}</span>
-    <span>{text}</span>
-  </div>
-);
-
-const JobFilters = ({ selectedType, onFilterChange }) => {
-  const filters = [
-    { id: "all", label: "All Jobs" },
-    { id: "online", label: "Online Jobs" },
-    { id: "offline", label: "Offline Jobs" },
-    { id: "assignment", label: "Assignments" },
-  ];
+const Badge = ({ children, color = "indigo" }) => {
+  const colors = {
+    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
+    green: "bg-emerald-50 text-emerald-700 border-emerald-100",
+    amber: "bg-amber-50 text-amber-700 border-amber-100",
+  };
 
   return (
-    <div className="flex flex-wrap justify-center gap-3">
-      {filters.map((filter) => (
-        <button
-          key={filter.id}
-          onClick={() => onFilterChange(filter.id)}
-          className={`px-5 py-2 rounded-xl text-sm font-medium border transition-all ${
-            selectedType === filter.id
-              ? "bg-indigo-600 text-white border-indigo-600 shadow"
-              : "bg-white text-gray-700 border-gray-200 hover:border-gray-300"
-          }`}
-        >
-          {filter.label}
-        </button>
-      ))}
-    </div>
+    <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${colors[color] || colors.indigo}`}>
+      {children}
+    </span>
   );
 };
+
+const InfoItem = ({ icon, text }) => (
+  <div className="flex items-center gap-2 truncate">
+    <span className="text-slate-400 flex-shrink-0">{icon}</span>
+    <span className="truncate" title={text}>{text}</span>
+  </div>
+);
 
 export default JobList;

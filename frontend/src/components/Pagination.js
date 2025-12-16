@@ -1,3 +1,4 @@
+// src/components/Pagination.js
 import React from 'react';
 
 const Pagination = ({ 
@@ -11,7 +12,6 @@ const Pagination = ({
     let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
     let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
 
-    // Adjust start page if we're near the end
     if (endPage - startPage + 1 < maxVisiblePages) {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
@@ -25,147 +25,76 @@ const Pagination = ({
 
   const pageNumbers = getPageNumbers();
 
-  const buttonStyle = {
-    padding: '8px 12px',
-    margin: '0 4px',
-    border: '1px solid #dee2e6',
-    backgroundColor: 'white',
-    color: '#007bff',
-    cursor: 'pointer',
-    borderRadius: '4px',
-    fontSize: '14px',
-    transition: 'all 0.2s'
-  };
+  const Button = ({ children, onClick, active, disabled, className = "" }) => (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`
+        relative inline-flex items-center justify-center px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200
+        ${active
+          ? 'z-10 bg-indigo-600 text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500'
+          : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50 hover:text-indigo-600 focus:ring-2 focus:ring-slate-200'}
+        ${disabled
+          ? 'opacity-50 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
+          : 'cursor-pointer'}
+        ${className}
+      `}
+    >
+      {children}
+    </button>
+  );
 
-  const activeButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#007bff',
-    color: 'white',
-    borderColor: '#007bff'
-  };
-
-  const disabledButtonStyle = {
-    ...buttonStyle,
-    backgroundColor: '#f8f9fa',
-    color: '#6c757d',
-    cursor: 'not-allowed',
-    opacity: 0.65
-  };
+  if (totalPages <= 1) return null;
 
   return (
-    <div style={{
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      margin: '20px 0',
-      gap: '4px'
-    }}>
-      {/* First Page */}
-      <button
+    <div className="flex justify-center items-center gap-2 py-8">
+      <Button
         onClick={() => onPageChange(1)}
         disabled={currentPage === 1}
-        style={currentPage === 1 ? disabledButtonStyle : buttonStyle}
-        onMouseEnter={(e) => {
-          if (currentPage !== 1) {
-            e.target.style.backgroundColor = '#f8f9fa';
-            e.target.style.borderColor = '#007bff';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (currentPage !== 1) {
-            e.target.style.backgroundColor = 'white';
-            e.target.style.borderColor = '#dee2e6';
-          }
-        }}
+        className="hidden sm:inline-flex"
       >
-        «
-      </button>
+        First
+      </Button>
 
-      {/* Previous Page */}
-      <button
+      <Button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        style={currentPage === 1 ? disabledButtonStyle : buttonStyle}
-        onMouseEnter={(e) => {
-          if (currentPage !== 1) {
-            e.target.style.backgroundColor = '#f8f9fa';
-            e.target.style.borderColor = '#007bff';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (currentPage !== 1) {
-            e.target.style.backgroundColor = 'white';
-            e.target.style.borderColor = '#dee2e6';
-          }
-        }}
       >
-        ‹
-      </button>
+        <span className="sr-only">Previous</span>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+      </Button>
 
-      {/* Page Numbers */}
-      {pageNumbers.map(number => (
-        <button
-          key={number}
-          onClick={() => onPageChange(number)}
-          style={number === currentPage ? activeButtonStyle : buttonStyle}
-          onMouseEnter={(e) => {
-            if (number !== currentPage) {
-              e.target.style.backgroundColor = '#f8f9fa';
-              e.target.style.borderColor = '#007bff';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (number !== currentPage) {
-              e.target.style.backgroundColor = 'white';
-              e.target.style.borderColor = '#dee2e6';
-            }
-          }}
-        >
-          {number}
-        </button>
-      ))}
+      <div className="flex gap-1">
+        {pageNumbers.map(number => (
+          <Button
+            key={number}
+            onClick={() => onPageChange(number)}
+            active={number === currentPage}
+          >
+            {number}
+          </Button>
+        ))}
+      </div>
 
-      {/* Next Page */}
-      <button
+      <Button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        style={currentPage === totalPages ? disabledButtonStyle : buttonStyle}
-        onMouseEnter={(e) => {
-          if (currentPage !== totalPages) {
-            e.target.style.backgroundColor = '#f8f9fa';
-            e.target.style.borderColor = '#007bff';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (currentPage !== totalPages) {
-            e.target.style.backgroundColor = 'white';
-            e.target.style.borderColor = '#dee2e6';
-          }
-        }}
       >
-        ›
-      </button>
+        <span className="sr-only">Next</span>
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+        </svg>
+      </Button>
 
-      {/* Last Page */}
-      <button
+      <Button
         onClick={() => onPageChange(totalPages)}
         disabled={currentPage === totalPages}
-        style={currentPage === totalPages ? disabledButtonStyle : buttonStyle}
-        onMouseEnter={(e) => {
-          if (currentPage !== totalPages) {
-            e.target.style.backgroundColor = '#f8f9fa';
-            e.target.style.borderColor = '#007bff';
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (currentPage !== totalPages) {
-            e.target.style.backgroundColor = 'white';
-            e.target.style.borderColor = '#dee2e6';
-          }
-        }}
+        className="hidden sm:inline-flex"
       >
-        »
-      </button>
+        Last
+      </Button>
     </div>
   );
 };

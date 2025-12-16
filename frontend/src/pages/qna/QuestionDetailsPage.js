@@ -1,9 +1,11 @@
+// src/pages/qna/QuestionDetailsPage.js
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { qnaAPI, pointsAPI } from '../../utils/apiService';
-import { useAuth } from '../../contexts/UseAuth';
 import Navbar from '../../components/Navbar';
+import Footer from '../../components/Footer';
 import GiftCoinModal from '../../components/GiftCoinModal';
+import { ArrowUp, ArrowDown, Trash2, Edit2, User, Clock, MessageSquare, Gift, CornerDownRight, AlertCircle, Save, X } from 'lucide-react';
 
 const QuestionDetailsPage = () => {
   const { id } = useParams();
@@ -105,7 +107,6 @@ const QuestionDetailsPage = () => {
           setIsGiftModalOpen(true);
       } catch (err) {
           console.error("Failed to fetch balance", err);
-          // Fallback or show error
       }
   };
 
@@ -146,121 +147,129 @@ const QuestionDetailsPage = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="min-h-screen bg-slate-50 flex justify-center items-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
       </div>
     );
   }
 
   if (!question) {
     return (
-      <div className="min-h-screen bg-gray-50 flex justify-center items-center">
-        <p className="text-gray-500 text-lg">Question not found.</p>
+      <div className="min-h-screen bg-slate-50 flex justify-center items-center flex-col gap-4">
+        <AlertCircle className="w-12 h-12 text-slate-300" />
+        <p className="text-slate-500 text-lg font-medium">Question not found.</p>
+        <Link to="/qna" className="text-indigo-600 hover:underline">Back to Q&A</Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-600 flex flex-col">
       <Navbar />
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12">
+      <main className="flex-grow max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-16 w-full">
 
         {/* Question Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sm:p-8 mb-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 mb-8">
           <div className="flex gap-6">
             {/* Vote Section */}
-            <div className="flex flex-col items-center gap-1">
+            <div className="flex flex-col items-center gap-1 min-w-[3rem]">
               <button
                 onClick={handleQuestionUpvote}
-                className={`p-1 rounded hover:bg-gray-100 transition-colors ${question.has_upvoted ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}
+                className={`p-2 rounded-lg transition-all ${
+                  question.has_upvoted
+                    ? 'bg-indigo-50 text-indigo-600'
+                    : 'text-slate-400 hover:bg-slate-50 hover:text-indigo-500'
+                }`}
                 title="Upvote Question"
                 disabled={isEditing}
               >
-                <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-                </svg>
+                <ArrowUp className={`w-6 h-6 ${question.has_upvoted ? 'fill-current' : ''}`} />
               </button>
-              <span className="text-xl font-bold text-gray-700">{question.total_upvotes}</span>
+              <span className={`text-xl font-bold ${question.has_upvoted ? 'text-indigo-600' : 'text-slate-600'}`}>
+                {question.total_upvotes}
+              </span>
             </div>
 
             {/* Content Section */}
-            <div className="flex-1">
+            <div className="flex-1 min-w-0">
               {isEditing ? (
-                <div className="space-y-4">
+                <div className="space-y-5 animate-in fade-in duration-300">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Title</label>
                     <input
                       type="text"
                       value={editData.title}
                       onChange={(e) => setEditData({ ...editData, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                    <label className="block text-sm font-bold text-slate-700 mb-2">Content</label>
                     <textarea
                       value={editData.content}
                       onChange={(e) => setEditData({ ...editData, content: e.target.value })}
                       rows={6}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all resize-y"
                     />
                   </div>
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 pt-2">
                     <button
                       onClick={handleSaveEdit}
-                      className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+                      className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium text-sm"
                     >
-                      Save Changes
+                      <Save className="w-4 h-4 mr-2" /> Save Changes
                     </button>
                     <button
                       onClick={handleCancelEdit}
-                      className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+                      className="inline-flex items-center px-4 py-2 border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors font-medium text-sm"
                     >
-                      Cancel
+                      <X className="w-4 h-4 mr-2" /> Cancel
                     </button>
                   </div>
                 </div>
               ) : (
                 <>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4">{question.title}</h1>
-                  <div className="prose max-w-none text-gray-700 whitespace-pre-wrap leading-relaxed mb-6">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-4 leading-tight">{question.title}</h1>
+                  <div className="prose max-w-none text-slate-700 whitespace-pre-wrap leading-relaxed mb-8">
                     {question.content}
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-gray-100 text-sm">
-                    <div className="flex items-center gap-2">
-                      <span className="text-gray-500">Asked by</span>
-                      <a href={`/profile/${question.student?.username}`} className="font-semibold text-indigo-600 hover:underline">{question.student?.username}</a>
+                  <div className="flex flex-wrap items-center justify-between gap-4 pt-6 border-t border-slate-100 text-sm">
+                    <div className="flex items-center gap-4 text-slate-500 text-xs font-medium">
+                        <div className="flex items-center gap-1.5">
+                           <div className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-[10px]">
+                              {question.student?.username?.[0]?.toUpperCase() || <User className="w-3 h-3" />}
+                           </div>
+                           <Link to={`/profile/${question.student?.username}`} className="text-slate-700 hover:text-indigo-600 hover:underline">
+                              {question.student?.username}
+                           </Link>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                           <Clock className="w-3.5 h-3.5" />
+                           <span>
+                              {new Date(question.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                           </span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-4">
-                      <span className="text-gray-400">
-                        {new Date(question.created_at).toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} at {new Date(question.created_at).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                      {user && question.student?.id === user.id && (
+
+                    {user && question.student?.id === user.id && (
                         <div className="flex gap-2">
                           <button
                             onClick={handleEditClick}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded hover:bg-indigo-100 transition-colors"
-                            title="Edit Question"
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
+                            <Edit2 className="w-3.5 h-3.5 mr-1.5" />
                             Edit
                           </button>
                           <button
                             onClick={handleDeleteQuestion}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-                            title="Delete Question"
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium text-rose-600 bg-rose-50 rounded-lg hover:bg-rose-100 transition-colors"
                           >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
+                            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
                             Delete
                           </button>
                         </div>
                       )}
-                    </div>
                   </div>
                 </>
               )}
@@ -270,65 +279,73 @@ const QuestionDetailsPage = () => {
 
         {/* Answers Count Header */}
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-xl font-bold text-gray-900">{answers.length} Answers</h2>
-          <div className="h-px flex-1 bg-gray-200"></div>
+          <h2 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+             <MessageSquare className="w-5 h-5 text-indigo-600" />
+             {answers.length} Answers
+          </h2>
+          <div className="h-px flex-1 bg-slate-200"></div>
         </div>
 
         {/* Answers List */}
-        <div className="space-y-6 mb-10">
+        <div className="space-y-6 mb-12">
           {answers.map(answer => {
             const score = answer.total_upvotes - answer.total_downvotes;
             return (
-              <div key={answer.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex gap-6">
+              <div key={answer.id} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex gap-6 group">
                 {/* Vote Controls */}
-                <div className="flex flex-col items-center gap-1 pt-1">
+                <div className="flex flex-col items-center gap-1 pt-1 min-w-[3rem]">
                   <button
                     onClick={() => handleAnswerVote(answer.id, 'up')}
-                    className={`p-1 rounded hover:bg-gray-100 transition-colors ${answer.has_upvoted ? 'text-indigo-600' : 'text-gray-400 hover:text-indigo-600'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                       answer.has_upvoted ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:bg-slate-50 hover:text-indigo-600'
+                    }`}
                     title="Upvote"
                   >
-                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M14.707 12.707a1 1 0 01-1.414 0L10 9.414l-3.293 3.293a1 1 0 01-1.414-1.414l4-4a1 1 0 011.414 0l4 4a1 1 0 010 1.414z" clipRule="evenodd" />
-                    </svg>
+                    <ArrowUp className={`w-5 h-5 ${answer.has_upvoted ? 'fill-current' : ''}`} />
                   </button>
-                  <span className={`font-bold text-lg ${score > 0 ? 'text-indigo-600' : score < 0 ? 'text-red-500' : 'text-gray-600'}`}>
+
+                  <span className={`font-bold text-lg ${score > 0 ? 'text-indigo-600' : score < 0 ? 'text-rose-500' : 'text-slate-600'}`}>
                     {score}
                   </span>
+
                   <button
                     onClick={() => handleAnswerVote(answer.id, 'down')}
-                    className={`p-1 rounded hover:bg-gray-100 transition-colors ${answer.has_downvoted ? 'text-red-600' : 'text-gray-400 hover:text-red-600'}`}
+                    className={`p-1.5 rounded-lg transition-colors ${
+                       answer.has_downvoted ? 'bg-rose-50 text-rose-600' : 'text-slate-400 hover:bg-slate-50 hover:text-rose-600'
+                    }`}
                     title="Downvote"
                   >
-                    <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                    </svg>
+                    <ArrowDown className={`w-5 h-5 ${answer.has_downvoted ? 'fill-current' : ''}`} />
                   </button>
                 </div>
 
                 {/* Answer Content */}
-                <div className="flex-1">
-                  <div className="prose max-w-none text-gray-800 whitespace-pre-wrap mb-4 leading-relaxed">
+                <div className="flex-1 min-w-0">
+                  <div className="prose max-w-none text-slate-800 whitespace-pre-wrap mb-6 leading-relaxed">
                     {answer.content}
                   </div>
-                  <div className="flex justify-between items-center mt-4">
-                      <div className="flex items-center gap-2 text-sm text-gray-500">
-                        <a href={`/profile/${answer.tutor?.username}`} className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs hover:bg-green-200 transition">
-                          {answer.tutor?.username?.[0]?.toUpperCase() || 'T'}
-                        </a>
-                        <a href={`/profile/${answer.tutor?.username}`} className="font-medium text-gray-900 hover:text-indigo-600 hover:underline">{answer.tutor?.username}</a>
-                        <span>•</span>
-                        <span>{new Date(answer.created_at).toLocaleDateString()}</span>
+
+                  <div className="flex flex-wrap justify-between items-center pt-4 border-t border-slate-50 gap-4">
+                      <div className="flex items-center gap-3 text-xs text-slate-500 font-medium">
+                         <div className="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100">
+                            <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-[10px]">
+                              {answer.tutor?.username?.[0]?.toUpperCase() || 'T'}
+                            </div>
+                            <Link to={`/profile/${answer.tutor?.username}`} className="text-slate-700 hover:text-indigo-600 hover:underline">
+                               {answer.tutor?.username}
+                            </Link>
+                         </div>
+                         <span>•</span>
+                         <span>{new Date(answer.created_at).toLocaleDateString()}</span>
                       </div>
 
                       {/* Gift Coin Button */}
                       {user && user.user_type === 'student' && user.id !== answer.tutor?.id && (
                           <button
                             onClick={() => handleGiftClick(answer.tutor)}
-                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded text-amber-600 bg-amber-50 hover:bg-amber-100 transition-colors"
+                            className="inline-flex items-center px-3 py-1.5 text-xs font-bold rounded-lg text-amber-600 bg-amber-50 hover:bg-amber-100 border border-amber-200/50 transition-colors shadow-sm"
                           >
-                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7.858 5.485a1 1 0 00-1.715 1.03L7.633 9H7a1 1 0 100 2h1.838l.179 1.074c.128.766.726 1.347 1.488 1.446l.495.064c.783.102 1.446-.543 1.345-1.326l-.064-.495a1.2 1.2 0 00-1.22-1.042l-1.954-.253-.178-1.074H13a1 1 0 100-2h-2.383l1.49-2.485a1 1 0 00-1.715-1.03L8.91 8.243 7.858 5.485z" clipRule="evenodd" />
-                             </svg>
+                             <Gift className="w-3.5 h-3.5 mr-1.5" />
                              Gift Coin
                           </button>
                       )}
@@ -339,36 +356,43 @@ const QuestionDetailsPage = () => {
           })}
 
           {answers.length === 0 && (
-            <div className="text-center py-10 bg-gray-50 rounded-lg border border-dashed border-gray-300">
-              <p className="text-gray-500">No answers yet. Waiting for a tutor to respond.</p>
+            <div className="text-center py-16 bg-white rounded-2xl border-2 border-dashed border-slate-200">
+               <div className="w-12 h-12 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <MessageSquare className="w-6 h-6 text-slate-300" />
+               </div>
+               <p className="text-slate-500 font-medium">No answers yet.</p>
+               <p className="text-slate-400 text-sm">Waiting for expert tutors to respond.</p>
             </div>
           )}
         </div>
 
         {/* Post Answer Section */}
         {user && user.user_type === 'tutor' ? (
-          <div className="bg-white rounded-xl shadow-lg border border-indigo-100 overflow-hidden">
-            <div className="px-6 py-4 bg-indigo-50/50 border-b border-indigo-100">
-              <h3 className="text-lg font-semibold text-indigo-900">Your Answer</h3>
+          <div className="bg-white rounded-2xl shadow-lg shadow-indigo-100 border border-indigo-100 overflow-hidden">
+            <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-white border-b border-indigo-100 flex items-center gap-2">
+              <CornerDownRight className="w-5 h-5 text-indigo-600" />
+              <h3 className="text-lg font-bold text-indigo-900">Write an Answer</h3>
             </div>
-            <div className="p-6">
+            <div className="p-6 sm:p-8">
               {submitError && (
-                <div className="mb-4 text-red-600 text-sm bg-red-50 p-3 rounded border border-red-100">
-                  {submitError}
+                <div className="mb-6 flex items-start gap-3 bg-rose-50 border border-rose-100 text-rose-700 px-4 py-3 rounded-xl text-sm font-medium">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <span>{submitError}</span>
                 </div>
               )}
               <form onSubmit={submitAnswer}>
                 <textarea
-                  className="w-full border-gray-300 rounded-lg shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-4 text-gray-800 h-40 resize-y mb-4"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 p-4 text-slate-800 h-48 resize-y mb-6 transition-all placeholder:text-slate-400 outline-none"
                   value={newAnswer}
                   onChange={(e) => setNewAnswer(e.target.value)}
-                  placeholder="Write a helpful and detailed answer..."
+                  placeholder="Share your knowledge! Write a helpful and detailed answer..."
                   required
                 />
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="px-6 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors shadow-sm"
+                    disabled={!newAnswer.trim()}
+                    className="px-8 py-3 bg-indigo-600 text-white font-bold rounded-xl hover:bg-indigo-700 focus:outline-none focus:ring-4 focus:ring-indigo-500/30 transition-all shadow-md shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transform active:scale-95"
                   >
                     Post Answer
                   </button>
@@ -378,19 +402,25 @@ const QuestionDetailsPage = () => {
           </div>
         ) : (
           !user ? (
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 text-center">
-              <p className="text-blue-800 mb-2">Join the community to answer questions.</p>
-              <p className="text-sm text-blue-600">
-                Please <a href="/login" className="underline font-semibold hover:text-blue-800">log in</a> as a Tutor to contribute.
-              </p>
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-8 text-center">
+              <h3 className="text-lg font-bold text-indigo-900 mb-2">Know the answer?</h3>
+              <p className="text-indigo-700/80 mb-6">Join our community of tutors to help students and earn reputation.</p>
+              <div className="flex justify-center gap-4">
+                 <Link to="/login" className="px-6 py-2.5 bg-white text-indigo-600 font-semibold rounded-xl border border-indigo-200 hover:bg-indigo-50 transition-colors shadow-sm">
+                    Log In
+                 </Link>
+                 <Link to="/signup" className="px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm">
+                    Sign Up
+                 </Link>
+              </div>
             </div>
           ) : (
-            <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
-              <p className="text-gray-500 italic">Only registered Tutors can post answers.</p>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-6 text-center">
+              <p className="text-slate-500 italic font-medium">Only registered Tutors can post answers.</p>
             </div>
           )
         )}
-      </div>
+      </main>
 
       {/* Gift Modal */}
       {selectedTutor && (
@@ -402,6 +432,7 @@ const QuestionDetailsPage = () => {
             currentBalance={userCreditBalance}
         />
       )}
+      <Footer />
     </div>
   );
 };
