@@ -40,12 +40,12 @@ const NavLink = ({ to, text }) => {
     <Link
       to={to}
       className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-        isActive ? "text-indigo-600" : "text-slate-600 hover:text-indigo-600"
+        isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400"
       }`}
     >
       {text}
       {isActive && (
-        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 rounded-full transform scale-x-100 transition-transform duration-300" />
+        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full transform scale-x-100 transition-transform duration-300" />
       )}
     </Link>
   );
@@ -55,7 +55,7 @@ const NavLink = ({ to, text }) => {
 const DropdownLink = ({ to, text, onClick }) => (
   <Link
     to={to}
-    className="block px-4 py-2 text-sm text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+    className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
     onClick={onClick}
   >
     {text}
@@ -156,7 +156,9 @@ const Navbar = () => {
     <nav
       ref={navRef}
       className={`fixed top-0 left-0 right-0 z-[50] transition-all duration-300 ${
-        scrolled || isMenuOpen ? "bg-white/90 backdrop-blur-md shadow-sm border-b border-slate-200/50" : "bg-white border-b border-transparent"
+        scrolled || isMenuOpen
+          ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border-b border-slate-200/50 dark:border-slate-800"
+          : "bg-white dark:bg-slate-900 border-b border-transparent dark:border-transparent"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -167,7 +169,7 @@ const Navbar = () => {
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-indigo-200 shadow-lg group-hover:scale-105 transition-transform">
                 T
               </div>
-              <span className="text-xl font-bold text-slate-900 tracking-tight group-hover:text-indigo-600 transition-colors">
+              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                 TutorMove
               </span>
             </Link>
@@ -182,7 +184,9 @@ const Navbar = () => {
                 <button
                   onClick={() => toggleDropdown("tutors")}
                   className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeDropdown === "tutors" ? "text-indigo-600 bg-indigo-50" : "text-slate-600 hover:text-indigo-600 hover:bg-slate-50"
+                    activeDropdown === "tutors"
+                      ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   Find Tutors
@@ -191,7 +195,7 @@ const Navbar = () => {
 
                 {/* Desktop Dropdown Panel */}
                 {activeDropdown === "tutors" && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                      <DropdownLink to="/tutors" text="Browse All Tutors" onClick={() => setActiveDropdown(null)} />
                      <DropdownLink to="/tutors?type=online" text="Online Tutors" onClick={() => setActiveDropdown(null)} />
                      <DropdownLink to="/tutors?type=home" text="Home Tutors" onClick={() => setActiveDropdown(null)} />
@@ -206,14 +210,16 @@ const Navbar = () => {
                 <button
                   onClick={() => toggleDropdown("jobs")}
                    className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    activeDropdown === "jobs" ? "text-indigo-600 bg-indigo-50" : "text-slate-600 hover:text-indigo-600 hover:bg-slate-50"
+                    activeDropdown === "jobs"
+                      ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800"
                   }`}
                 >
                   Find Jobs
                   <ChevronDownIcon className={activeDropdown === "jobs" ? "rotate-180" : ""} />
                 </button>
                 {activeDropdown === "jobs" && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
                     <DropdownLink to="/jobs" text="Browse All Jobs" onClick={() => setActiveDropdown(null)} />
                     <DropdownLink to="/jobs?type=online" text="Online Teaching Jobs" onClick={() => setActiveDropdown(null)} />
                     <DropdownLink to="/jobs?type=assignment" text="Assignment Help" onClick={() => setActiveDropdown(null)} />
@@ -249,11 +255,11 @@ const Navbar = () => {
               <div className="relative ml-2">
                 <button
                   onClick={() => toggleDropdown("account")}
-                  className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-slate-200 hover:border-indigo-200 hover:shadow-md transition-all bg-white"
+                  className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-slate-200 dark:border-slate-700 hover:border-indigo-200 hover:shadow-md transition-all bg-white dark:bg-slate-900"
                 >
-                  <span className="text-sm font-medium text-slate-700 pl-1">{userName}</span>
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 pl-1">{userName}</span>
                    {profilePicture ? (
-                      <ProfileImageWithBg imageUrl={profilePicture} size={32} className="rounded-full ring-2 ring-white" />
+                      <ProfileImageWithBg imageUrl={profilePicture} size={32} className="rounded-full ring-2 ring-white dark:ring-slate-800" />
                     ) : (
                       <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-sm">
                         {userInitial}
@@ -262,12 +268,12 @@ const Navbar = () => {
                 </button>
 
                 {activeDropdown === "account" && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-slate-100 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-3 border-b border-slate-50">
-                      <p className="text-sm font-semibold text-slate-900">{userName}</p>
-                      <p className="text-xs text-slate-500 capitalize">{userType}</p>
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{userName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userType}</p>
                        {isDualRole && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 text-indigo-700 mt-1">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 mt-1">
                             Dual Role Account
                           </span>
                         )}
@@ -279,14 +285,14 @@ const Navbar = () => {
                       <DropdownLink to="/messages" text="Messages" onClick={() => setActiveDropdown(null)} />
                     </div>
 
-                    <div className="border-t border-slate-50 py-1">
+                    <div className="border-t border-slate-50 dark:border-slate-800 py-1">
                        {isDualRole && (
                         <button
                           onClick={() => {
                             handleSwitchRole();
                             setActiveDropdown(null);
                           }}
-                           className="w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 transition-colors"
+                           className="w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
                         >
                           Switch to {userType === 'student' ? 'Tutor' : 'Student'}
                         </button>
@@ -297,14 +303,14 @@ const Navbar = () => {
                             navigate('/apply-tutor');
                             setActiveDropdown(null);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 transition-colors"
+                          className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
                         >
                           Become a Tutor
                         </button>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-colors"
+                        className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
                       >
                         Sign Out
                       </button>
@@ -316,7 +322,7 @@ const Navbar = () => {
               <>
                 <button
                   onClick={handleLogin}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                 >
                   Log In
                 </button>
@@ -350,7 +356,7 @@ const Navbar = () => {
             </button>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
             >
               {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
             </button>
@@ -360,7 +366,7 @@ const Navbar = () => {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`md:hidden fixed inset-x-0 top-[64px] bg-white border-b border-slate-100 shadow-lg transform transition-all duration-300 origin-top overflow-y-auto max-h-[calc(100vh-64px)] ${
+        className={`md:hidden fixed inset-x-0 top-[64px] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-lg transform transition-all duration-300 origin-top overflow-y-auto max-h-[calc(100vh-64px)] ${
           isMenuOpen ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0"
         }`}
       >
@@ -369,7 +375,7 @@ const Navbar = () => {
            <div className="space-y-1">
              <Link
                 to="/"
-                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
                 onClick={() => setIsMenuOpen(false)}
              >
                 Home
@@ -378,22 +384,22 @@ const Navbar = () => {
               {(userType === "student" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
                 <>
                   <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Tutors</div>
-                  <Link to="/tutors" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Browse All</Link>
-                  <Link to="/tutors?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Online Tutors</Link>
+                  <Link to="/tutors" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Browse All</Link>
+                  <Link to="/tutors?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Online Tutors</Link>
                 </>
               )}
 
               {(userType === "tutor" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
                 <>
                   <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Jobs</div>
-                  <Link to="/jobs" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Browse Jobs</Link>
-                  <Link to="/jobs?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 hover:text-indigo-600 pl-6" onClick={() => setIsMenuOpen(false)}>Online Jobs</Link>
+                  <Link to="/jobs" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Browse Jobs</Link>
+                  <Link to="/jobs?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Online Jobs</Link>
                 </>
               )}
 
               <Link
                 to="/qna"
-                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600 mt-2"
+                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 mt-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Q&A Forum
@@ -402,7 +408,7 @@ const Navbar = () => {
               {isAuthenticated && (
                 <Link
                   to="/dashboard"
-                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 hover:bg-slate-50 hover:text-indigo-600"
+                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
@@ -411,7 +417,7 @@ const Navbar = () => {
            </div>
 
            {/* Mobile Auth Actions */}
-           <div className="pt-6 border-t border-slate-100">
+           <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
              {isAuthenticated ? (
                <div className="space-y-3 px-3">
                  <div className="flex items-center gap-3 mb-4">
@@ -423,17 +429,17 @@ const Navbar = () => {
                       </div>
                     )}
                    <div>
-                     <div className="font-semibold text-slate-900">{userName}</div>
-                     <div className="text-xs text-slate-500 capitalize">{userType}</div>
+                     <div className="font-semibold text-slate-900 dark:text-white">{userName}</div>
+                     <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userType}</div>
                    </div>
                  </div>
 
-                 <Link to="/profile" className="block text-slate-600 hover:text-indigo-600 font-medium" onClick={() => setIsMenuOpen(false)}>My Profile</Link>
-                 <Link to="/messages" className="block text-slate-600 hover:text-indigo-600 font-medium" onClick={() => setIsMenuOpen(false)}>Messages</Link>
+                 <Link to="/profile" className="block text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium" onClick={() => setIsMenuOpen(false)}>My Profile</Link>
+                 <Link to="/messages" className="block text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium" onClick={() => setIsMenuOpen(false)}>Messages</Link>
 
                  <button
                     onClick={handleLogout}
-                    className="block w-full text-left text-rose-600 font-medium hover:text-rose-700"
+                    className="block w-full text-left text-rose-600 dark:text-rose-400 font-medium hover:text-rose-700 dark:hover:text-rose-300"
                  >
                     Sign Out
                  </button>
@@ -445,7 +451,7 @@ const Navbar = () => {
                       handleLogin();
                       setIsMenuOpen(false);
                     }}
-                    className="flex justify-center items-center px-4 py-2 border border-slate-200 rounded-lg text-slate-700 font-medium hover:bg-slate-50"
+                    className="flex justify-center items-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800"
                  >
                    Log In
                  </button>
