@@ -40,7 +40,7 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="bg-slate-900 text-slate-300 pt-16 pb-8 border-t border-slate-800">
+    <footer className="bg-slate-900 dark:bg-slate-950 text-slate-300 dark:text-slate-400 pt-16 pb-8 border-t border-slate-800 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-12">
 
@@ -54,7 +54,7 @@ const Footer = () => {
                 TutorMove
               </span>
             </Link>
-            <p className="text-slate-400 text-sm leading-relaxed mb-6 max-w-sm">
+            <p className="text-slate-400 dark:text-slate-500 text-sm leading-relaxed mb-6 max-w-sm">
               Connecting students with expert tutors worldwide. Join our community to learn, teach, and grow together.
             </p>
             <div className="flex gap-4">
@@ -64,7 +64,7 @@ const Footer = () => {
                   href={social.href}
                   target="_blank"
                   rel="noreferrer"
-                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 text-slate-400 hover:bg-indigo-600 hover:text-white transition-all duration-300"
+                  className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-800 dark:bg-slate-900 text-slate-400 dark:text-slate-500 hover:bg-indigo-600 dark:hover:bg-indigo-600 hover:text-white dark:hover:text-white transition-all duration-300"
                   aria-label={social.name}
                 >
                   <social.icon size={14} />
@@ -79,7 +79,7 @@ const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.platform.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.to} className="text-sm hover:text-indigo-400 transition-colors">
+                  <Link to={link.to} className="text-sm hover:text-indigo-400 dark:hover:text-indigo-400 transition-colors">
                     {link.name}
                   </Link>
                 </li>
@@ -92,7 +92,7 @@ const Footer = () => {
             <ul className="space-y-3">
               {footerLinks.tutors.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.to} className="text-sm hover:text-indigo-400 transition-colors">
+                  <Link to={link.to} className="text-sm hover:text-indigo-400 dark:hover:text-indigo-400 transition-colors">
                     {link.name}
                   </Link>
                 </li>
@@ -105,7 +105,7 @@ const Footer = () => {
              <ul className="space-y-3">
               {footerLinks.students.map((link) => (
                 <li key={link.name}>
-                  <Link to={link.to} className="text-sm hover:text-indigo-400 transition-colors">
+                  <Link to={link.to} className="text-sm hover:text-indigo-400 dark:hover:text-indigo-400 transition-colors">
                     {link.name}
                   </Link>
                 </li>
@@ -115,13 +115,13 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-slate-500 text-center md:text-left">
+        <div className="pt-8 border-t border-slate-800 dark:border-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-slate-500 dark:text-slate-600 text-center md:text-left">
             &copy; {currentYear} TutorMove Inc. All rights reserved.
           </p>
           <div className="flex gap-6">
              {footerLinks.legal.map((link) => (
-                <Link key={link.name} to={link.to} className="text-xs text-slate-500 hover:text-slate-300 transition-colors">
+                <Link key={link.name} to={link.to} className="text-xs text-slate-500 dark:text-slate-600 hover:text-slate-300 dark:hover:text-slate-400 transition-colors">
                   {link.name}
                 </Link>
              ))}

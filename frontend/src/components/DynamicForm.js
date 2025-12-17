@@ -65,10 +65,10 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-      <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-        <h3 className="text-lg font-bold text-gray-900">{title || 'Form'}</h3>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-lg border border-gray-200 dark:border-slate-800 overflow-hidden">
+      <div className="px-6 py-4 bg-gray-50 dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
+        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{title || 'Form'}</h3>
+        <button onClick={onCancel} className="text-gray-400 dark:text-slate-400 hover:text-gray-600 dark:hover:text-slate-200">
           <FaTimes />
         </button>
       </div>
@@ -76,13 +76,13 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
       <form onSubmit={handleSubmit} className="p-6 space-y-5">
         {fields.map((field) => (
           <div key={field.name}>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-300 mb-1">
               {field.label} {field.required && <span className="text-red-500">*</span>}
             </label>
 
             {field.type === 'textarea' ? (
               <textarea
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-white dark:bg-slate-800 dark:text-white"
                 rows={4}
                 value={formData[field.name] || ''}
                 onChange={(e) => handleChange(field.name, e.target.value)}
@@ -91,7 +91,7 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
             ) : field.type === 'select' ? (
               <div className="relative">
                 <select
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-white"
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg appearance-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-white dark:bg-slate-800 dark:text-white"
                   value={formData[field.name] || ''}
                   onChange={(e) => handleChange(field.name, e.target.value)}
                   required={field.required}
@@ -101,7 +101,7 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-slate-400">
                   <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                 </div>
               </div>
@@ -110,11 +110,11 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
                 <input
                   type="checkbox"
                   id={field.name}
-                  className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  className="w-5 h-5 text-indigo-600 border-gray-300 dark:border-slate-700 rounded focus:ring-indigo-500 dark:bg-slate-800"
                   checked={!!formData[field.name]}
                   onChange={(e) => handleChange(field.name, e.target.checked)}
                 />
-                <label htmlFor={field.name} className="text-sm text-gray-600 cursor-pointer select-none">
+                <label htmlFor={field.name} className="text-sm text-gray-600 dark:text-slate-400 cursor-pointer select-none">
                   {field.label}
                 </label>
               </div>
@@ -123,35 +123,35 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
                 <div className="relative">
                   <input
                     type="text"
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-white dark:bg-slate-800 dark:text-white"
                     placeholder="Search user..."
                     onChange={(e) => handleUserSearch(field.name, e.target.value)}
                   />
-                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-slate-500" />
                   {searching[field.name] && (
                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 animate-spin">⟳</div>
                   )}
                 </div>
                 {/* Selected Value Display */}
                 {formData[field.name] && (
-                   <div className="mt-2 text-sm text-green-600 flex items-center gap-1 font-medium bg-green-50 px-3 py-1 rounded w-fit">
+                   <div className="mt-2 text-sm text-green-600 dark:text-green-400 flex items-center gap-1 font-medium bg-green-50 dark:bg-green-900/30 px-3 py-1 rounded w-fit">
                       <FaCheck /> ID Selected: {formData[field.name]}
                    </div>
                 )}
                 {/* Search Results Dropdown */}
                 {searchResults[field.name] && searchResults[field.name].length > 0 && (
-                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                     {searchResults[field.name].map(user => (
                       <div
                         key={user.id}
-                        className="px-4 py-2 hover:bg-gray-50 cursor-pointer flex justify-between items-center"
+                        className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-slate-700 cursor-pointer flex justify-between items-center dark:text-slate-300"
                         onClick={() => {
                           handleChange(field.name, user.id);
                           setSearchResults(prev => ({ ...prev, [field.name]: [] }));
                         }}
                       >
                         <span className="font-medium">{user.username}</span>
-                        <span className="text-xs text-gray-500">{user.email}</span>
+                        <span className="text-xs text-gray-500 dark:text-slate-500">{user.email}</span>
                       </div>
                     ))}
                   </div>
@@ -160,7 +160,7 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
             ) : (
               <input
                 type={field.type || 'text'}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all outline-none bg-white dark:bg-slate-800 dark:text-white"
                 value={formData[field.name] || ''}
                 onChange={(e) => handleChange(field.name, e.target.value)}
                 required={field.required}
@@ -169,11 +169,11 @@ const DynamicForm = ({ fields, initialValues, onSubmit, onCancel, title }) => {
           </div>
         ))}
 
-        <div className="pt-4 flex gap-3 justify-end border-t border-gray-100">
+        <div className="pt-4 flex gap-3 justify-end border-t border-gray-100 dark:border-slate-700">
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2.5 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+            className="px-6 py-2.5 rounded-lg border border-gray-300 dark:border-slate-700 text-gray-700 dark:text-slate-300 font-medium hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
           >
             Cancel
           </button>
