@@ -1,8 +1,8 @@
-// src/pages/StudentFAQ.jsx
+// src/pages/FAQ.jsx
 import { useState } from "react";
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-
+import { ChevronDown, ChevronUp, MessageCircle, HelpCircle, Search } from 'lucide-react';
 
 const faqs = [
   {
@@ -37,7 +37,7 @@ const faqs = [
   },
 ];
 
-export default function StudentFAQ() {
+export default function FAQ() {
   const [openIndex, setOpenIndex] = useState(null);
 
   const toggleFAQ = (index) => {
@@ -45,54 +45,87 @@ export default function StudentFAQ() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col font-sans text-gray-600 dark:text-gray-300 transition-colors duration-300">
         <Navbar />
-      <div className="max-w-3xl w-full items-center mx-auto bg-white rounded-2xl shadow-lg p-8 mt-10">
-        <h1 className="text-4xl font-bold text-blue-700 mb-8 text-center">
-          Student FAQ
-        </h1>
-        <p className="text-center text-gray-600 mb-10">
-          Here are some of the most common questions students ask about using
-          TutorMove.
-        </p>
 
+        {/* Header */}
+        <div className="pt-32 pb-16 text-center px-4 sm:px-6 relative overflow-hidden">
+           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-5xl bg-gradient-to-b from-primary-500/5 to-transparent -z-10 rounded-b-[3rem]"></div>
+           <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white mb-6">
+             Frequently Asked Questions
+           </h1>
+           <p className="text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+             Everything you need to know about finding the perfect tutor or growing your teaching business.
+           </p>
+        </div>
+
+      <div className="flex-grow max-w-4xl w-full mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <div
               key={index}
-              className="bg-white rounded-xl shadow-md p-5 cursor-pointer hover:shadow-lg transition"
-              onClick={() => toggleFAQ(index)}
+              className={`bg-white dark:bg-dark-card rounded-2xl border transition-all duration-300 overflow-hidden ${
+                openIndex === index
+                  ? 'border-primary-200 dark:border-primary-500/30 shadow-md dark:shadow-glow'
+                  : 'border-gray-100 dark:border-dark-border hover:border-gray-200 dark:hover:border-dark-border-hover'
+              }`}
             >
-              <div className="flex justify-between items-center">
-                <h3 className="text-lg font-semibold text-blue-700">
-                  {faq.question}
-                </h3>
-                <span className="text-gray-500 text-2xl">
-                  {openIndex === index ? "−" : "+"}
+              <button
+                className="w-full flex justify-between items-center p-6 text-left focus:outline-none"
+                onClick={() => toggleFAQ(index)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                    openIndex === index
+                      ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                      : 'bg-gray-100 dark:bg-dark-bg-secondary text-gray-500 dark:text-gray-400'
+                  }`}>
+                    <HelpCircle className="w-5 h-5" />
+                  </div>
+                  <h3 className={`text-lg font-bold transition-colors ${
+                    openIndex === index
+                      ? 'text-primary-700 dark:text-primary-400'
+                      : 'text-gray-900 dark:text-white'
+                  }`}>
+                    {faq.question}
+                  </h3>
+                </div>
+                <span className={`ml-6 flex-shrink-0 transition-transform duration-300 ${openIndex === index ? 'rotate-180' : ''}`}>
+                  <ChevronDown className={`w-5 h-5 ${openIndex === index ? 'text-primary-500' : 'text-gray-400'}`} />
                 </span>
+              </button>
+
+              <div
+                className={`transition-all duration-300 ease-in-out ${
+                  openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+                }`}
+              >
+                <div className="px-6 pb-6 pl-[4.5rem]">
+                  <p className="text-gray-600 dark:text-gray-400 leading-relaxed border-l-2 border-primary-100 dark:border-primary-900/30 pl-4">
+                    {faq.answer}
+                  </p>
+                </div>
               </div>
-              {openIndex === index && (
-                <p className="mt-3 text-gray-600 leading-relaxed">
-                  {faq.answer}
-                </p>
-              )}
             </div>
           ))}
         </div>
 
-        <div className="mt-12 text-center">
-          <h2 className="text-2xl font-bold text-blue-700 mb-3">
-            Still have questions?
-          </h2>
-          <p className="text-gray-600 mb-4">
-            If you can’t find the answer here, feel free to contact us anytime.
-          </p>
-          <a
-            href="/contact"
-            className="inline-block bg-blue-600 text-white px-6 py-2 rounded-xl font-semibold hover:bg-blue-700 transition"
-          >
-            Contact Support
-          </a>
+        <div className="mt-16 text-center">
+          <div className="inline-block p-8 bg-gradient-to-br from-primary-50 to-white dark:from-dark-card dark:to-dark-bg-secondary border border-primary-100 dark:border-dark-border rounded-3xl shadow-sm max-w-2xl w-full">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3 flex items-center justify-center gap-2">
+              <MessageCircle className="w-6 h-6 text-primary-500" />
+              Still have questions?
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              If you can’t find the answer here, feel free to contact us anytime. We are here to help!
+            </p>
+            <a
+              href="/contact"
+              className="inline-flex items-center justify-center px-8 py-3.5 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 text-white rounded-xl font-bold shadow-lg hover:shadow-glow transform hover:-translate-y-0.5 transition-all"
+            >
+              Contact Support
+            </a>
+          </div>
         </div>
       </div>
       <Footer />

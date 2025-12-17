@@ -21,47 +21,50 @@ const PlanCard = ({
 }) => (
   <div
     onClick={onClick}
-    className={`relative flex flex-col rounded-xl border-2 transition-all duration-300 cursor-pointer overflow-hidden h-full
+    className={`relative flex flex-col rounded-2xl border transition-all duration-300 cursor-pointer overflow-hidden h-full group
       ${
         isActive
-          ? "border-blue-600 shadow-2xl bg-gradient-to-br from-blue-50 via-white to-blue-50 transform scale-105"
-          : "border-gray-200 bg-white hover:shadow-xl hover:border-blue-300 hover:scale-102"
+          ? "border-primary-500 shadow-xl bg-white dark:bg-dark-card transform scale-[1.02]"
+          : "border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card hover:shadow-lg hover:border-primary-300 dark:hover:border-primary-700 hover:scale-[1.01]"
       }
       ${isPremiumCard ? "md:min-h-[400px]" : ""}
     `}
   >
+    {/* Background Glow */}
+    {isActive && <div className="absolute inset-0 bg-primary-500/5 pointer-events-none"></div>}
+
     {/* Popular Badge */}
     {isPopular && (
-      <div className="absolute -top-1 -right-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs font-bold px-4 py-1 rounded-bl-lg rounded-tr-lg shadow-lg">
+      <div className="absolute top-0 right-0 bg-gradient-to-r from-amber-400 to-orange-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm z-10">
         ⭐ {badgeText || "BEST VALUE"}
       </div>
     )}
 
     {/* Active Indicator */}
     {isActive && (
-      <div className="absolute top-4 right-4 bg-blue-600 text-white p-2 rounded-full shadow-lg">
-        <FaCheckCircle className="text-lg" />
+      <div className="absolute top-4 right-4 text-primary-600 dark:text-primary-400 animate-in fade-in zoom-in duration-300">
+        <FaCheckCircle className="text-2xl drop-shadow-sm" />
       </div>
     )}
 
     {/* Content */}
-    <div className="p-6 flex flex-col h-full">
+    <div className="p-6 flex flex-col h-full relative z-10">
       {/* Title & Icon */}
       <div className="flex items-center gap-3 mb-4">
-        {icon && <span className="text-3xl">{icon}</span>}
-        <h3 className="text-xl font-bold text-gray-900">{title}</h3>
+        {icon && <span className="text-3xl filter drop-shadow-sm">{icon}</span>}
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white">{title}</h3>
       </div>
 
       {/* Pricing */}
       {priceBDT && (
         <div className="mb-4">
           <div className="flex items-baseline gap-2">
-            <span className="text-4xl font-extrabold text-gray-900">৳{priceBDT}</span>
-            <span className="text-lg text-gray-500 font-medium">${priceUSD}</span>
+            <span className="text-4xl font-extrabold text-gray-900 dark:text-white">৳{priceBDT}</span>
+            <span className="text-lg text-gray-500 dark:text-gray-400 font-medium">${priceUSD}</span>
           </div>
           {subtext && (
-            <p className="text-sm text-blue-600 font-semibold mt-1 flex items-center gap-1">
-              <span className="text-green-500">✨</span> {subtext}
+            <p className="text-sm font-semibold mt-1 flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+              <span className="text-emerald-500">✨</span> {subtext}
             </p>
           )}
         </div>
@@ -70,8 +73,8 @@ const PlanCard = ({
       {/* Features */}
       <ul className="space-y-3 mb-6 flex-grow">
         {features.map((f, i) => (
-          <li key={i} className="flex items-start gap-3 text-gray-700 text-sm">
-            <FaCheckCircle className="text-green-500 mt-0.5 flex-shrink-0" />
+          <li key={i} className="flex items-start gap-3 text-gray-600 dark:text-gray-300 text-sm">
+            <FaCheckCircle className="text-emerald-500 mt-0.5 flex-shrink-0" />
             <span>{f}</span>
           </li>
         ))}
@@ -79,11 +82,11 @@ const PlanCard = ({
 
       {/* Action Button */}
       <button
-        className={`w-full py-3.5 rounded-lg font-semibold text-white transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5
+        className={`w-full py-3.5 rounded-xl font-bold text-white transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5
           ${
             isActive
-              ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-              : "bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
+              ? "bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700"
+              : "bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800"
           }`}
       >
         {isActive ? (
@@ -112,15 +115,15 @@ const SelectedPackageSidebar = ({
 }) => {
   if (!pkg) {
     return (
-      <div className="bg-white rounded-xl shadow-lg p-6 border-2 border-dashed border-gray-300 sticky top-24">
+      <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border-2 border-dashed border-gray-200 dark:border-dark-border sticky top-24 p-6">
         <div className="text-center py-8">
-          <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <FaCoins className="text-4xl text-gray-400" />
+          <div className="w-20 h-20 bg-gray-50 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaCoins className="text-4xl text-gray-300 dark:text-gray-600" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             No Package Selected
           </h3>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             Choose a point package from the left to continue
           </p>
         </div>
@@ -129,139 +132,142 @@ const SelectedPackageSidebar = ({
   }
 
   return (
-    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl shadow-2xl p-6 border-2 border-blue-200 sticky top-24">
-      {/* Header */}
-      <div className="text-center mb-6">
-        <div className="w-16 h-16 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-lg">
-          <FaCoins className="text-3xl text-white" />
-        </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-1">Selected Package</h3>
-        <p className="text-sm text-gray-600">Review your selection</p>
-      </div>
-
-      {/* Package Details */}
-      <div className="bg-white rounded-lg p-5 mb-5 shadow-md space-y-4">
-        {/* Package Title */}
-        <div className="border-b border-gray-200 pb-3">
-          <p className="text-lg font-bold text-gray-800">Package {pkg.id}</p>
-        </div>
-
-        {/* Points Breakdown */}
-        <div className="space-y-3">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 font-medium">Base Points</span>
-            <span className="text-lg font-bold text-gray-900">{pkg.points}</span>
+    <div className="bg-white dark:bg-dark-card rounded-2xl shadow-xl dark:shadow-glow border border-primary-100 dark:border-primary-900/30 sticky top-24 overflow-hidden">
+      <div className="bg-gradient-to-br from-primary-50 to-white dark:from-dark-bg-secondary dark:to-dark-card p-6 border-b border-primary-100 dark:border-dark-border">
+        {/* Header */}
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto mb-3 shadow-md">
+            <FaCoins className="text-3xl text-white" />
           </div>
-          
-          {pkg.bonus > 0 && (
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">Selected Package</h3>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Review your selection</p>
+        </div>
+
+        {/* Package Details */}
+        <div className="space-y-4">
+          <div className="border-b border-gray-100 dark:border-dark-border pb-3">
+            <p className="text-lg font-bold text-gray-800 dark:text-gray-200">Package {pkg.id}</p>
+          </div>
+
+          {/* Points Breakdown */}
+          <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <span className="text-green-600 font-medium">Bonus Points</span>
-              <span className="text-lg font-bold text-green-600">+{pkg.bonus}</span>
+              <span className="text-gray-600 dark:text-gray-400 font-medium">Base Points</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{pkg.points}</span>
             </div>
-          )}
 
-          <div className="border-t-2 border-gray-200 pt-3 flex justify-between items-center">
-            <span className="text-gray-900 font-semibold">Total Points</span>
-            <span className="text-2xl font-extrabold text-blue-600">
-              {pkg.totalPoints}
-            </span>
-          </div>
-        </div>
-
-        {/* Coupon Section */}
-        <div className="border-t border-gray-200 pt-4">
-          <p className="text-sm font-semibold text-gray-700 mb-2">Have a coupon?</p>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Enter code"
-              className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={couponCode}
-              onChange={(e) => setCouponCode(e.target.value)}
-              disabled={!!couponApplied}
-            />
-            {couponApplied ? (
-               <button
-                onClick={() => { setCouponCode(''); onApplyCoupon(null); }}
-                className="bg-red-50 text-red-600 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-red-100"
-              >
-                Remove
-              </button>
-            ) : (
-              <button
-                onClick={() => onApplyCoupon(couponCode)}
-                className="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-900"
-              >
-                Apply
-              </button>
+            {pkg.bonus > 0 && (
+              <div className="flex justify-between items-center">
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">Bonus Points</span>
+                <span className="text-lg font-bold text-emerald-600 dark:text-emerald-400">+{pkg.bonus}</span>
+              </div>
             )}
-          </div>
-          {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
-          {couponApplied && (
-            <p className="text-green-600 text-xs mt-1 font-semibold">
-              Coupon applied: {couponApplied.discount_percentage}% off!
-            </p>
-          )}
-        </div>
 
-        {/* Price */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg p-4 mt-4">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-700 font-semibold">Total Price</span>
-            <div className="text-right">
-              {couponApplied ? (
-                <>
-                  <p className="text-sm text-gray-400 line-through">৳{pkg.priceBDT}</p>
-                  <p className="text-2xl font-extrabold text-green-600">
-                    ৳{Math.round(pkg.priceBDT * (1 - couponApplied.discount_percentage / 100))}
-                  </p>
-                </>
-              ) : (
-                <p className="text-2xl font-extrabold text-gray-900">৳{pkg.priceBDT}</p>
-              )}
-              <p className="text-sm text-gray-600">${pkg.priceUSD} USD</p>
-            </div>
-          </div>
-          {pkg.save > 0 && (
-            <div className="mt-2 text-center">
-              <span className="inline-block bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
-                SAVE {pkg.save}%
+            <div className="border-t border-gray-100 dark:border-dark-border pt-3 flex justify-between items-center">
+              <span className="text-gray-900 dark:text-white font-semibold">Total Points</span>
+              <span className="text-2xl font-extrabold text-primary-600 dark:text-primary-400">
+                {pkg.totalPoints}
               </span>
             </div>
-          )}
+          </div>
+
+          {/* Coupon Section */}
+          <div className="border-t border-gray-100 dark:border-dark-border pt-4">
+            <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Have a coupon?</p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                placeholder="Enter code"
+                className="flex-1 bg-gray-50 dark:bg-dark-bg-secondary border border-gray-200 dark:border-dark-border rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                disabled={!!couponApplied}
+              />
+              {couponApplied ? (
+                 <button
+                  onClick={() => { setCouponCode(''); onApplyCoupon(null); }}
+                  className="bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 px-3 py-2 rounded-lg text-sm font-semibold hover:bg-rose-100 dark:hover:bg-rose-900/50 transition-colors"
+                >
+                  Remove
+                </button>
+              ) : (
+                <button
+                  onClick={() => onApplyCoupon(couponCode)}
+                  className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-800 dark:hover:bg-gray-100 transition-colors"
+                >
+                  Apply
+                </button>
+              )}
+            </div>
+            {couponError && <p className="text-rose-500 text-xs mt-1">{couponError}</p>}
+            {couponApplied && (
+              <p className="text-emerald-600 dark:text-emerald-400 text-xs mt-1 font-semibold">
+                Coupon applied: {couponApplied.discount_percentage}% off!
+              </p>
+            )}
+          </div>
+
+          {/* Price */}
+          <div className="bg-primary-50 dark:bg-primary-900/20 rounded-xl p-4 mt-4 border border-primary-100 dark:border-primary-800/30">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700 dark:text-gray-300 font-semibold">Total Price</span>
+              <div className="text-right">
+                {couponApplied ? (
+                  <>
+                    <p className="text-sm text-gray-400 line-through">৳{pkg.priceBDT}</p>
+                    <p className="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400">
+                      ৳{Math.round(pkg.priceBDT * (1 - couponApplied.discount_percentage / 100))}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-2xl font-extrabold text-gray-900 dark:text-white">৳{pkg.priceBDT}</p>
+                )}
+                <p className="text-sm text-gray-500 dark:text-gray-400">${pkg.priceUSD} USD</p>
+              </div>
+            </div>
+            {pkg.save > 0 && (
+              <div className="mt-2 text-center">
+                <span className="inline-block bg-emerald-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                  SAVE {pkg.save}%
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Action Button */}
-      <button
-        onClick={onProceed}
-        disabled={isLoading}
-        className={`w-full py-4 rounded-lg font-bold text-white text-lg transition-all shadow-lg transform
-          ${
-            isLoading
-              ? "bg-gray-400 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-700 hover:from-blue-700 hover:via-blue-800 hover:to-indigo-800 hover:shadow-2xl hover:-translate-y-1"
-          }
-        `}
-      >
-        {isLoading ? (
-          <div className="flex items-center justify-center gap-3">
-            <LoadingSpinner size="sm" />
-            Processing...
-          </div>
-        ) : (
-          <span className="flex items-center justify-center gap-2">
-            Proceed to Payment →
-          </span>
-        )}
-      </button>
+      <div className="p-6 bg-white dark:bg-dark-card border-t border-gray-100 dark:border-dark-border">
+        {/* Action Button */}
+        <button
+          onClick={onProceed}
+          disabled={isLoading}
+          className={`w-full py-4 rounded-xl font-bold text-white text-lg transition-all shadow-lg transform
+            ${
+              isLoading
+                ? "bg-gray-400 dark:bg-gray-700 cursor-not-allowed"
+                : "bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 hover:shadow-xl hover:-translate-y-1"
+            }
+          `}
+        >
+          {isLoading ? (
+            <div className="flex items-center justify-center gap-3">
+              <LoadingSpinner size="sm" />
+              Processing...
+            </div>
+          ) : (
+            <span className="flex items-center justify-center gap-2">
+              Proceed to Payment →
+            </span>
+          )}
+        </button>
 
-      {/* Security Badge */}
-      <div className="mt-4 text-center">
-        <p className="text-xs text-gray-600 flex items-center justify-center gap-1">
-          <span className="text-green-500">🔒</span>
-          Secure payment powered by bKash
-        </p>
+        {/* Security Badge */}
+        <div className="mt-4 text-center">
+          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center justify-center gap-1">
+            <span className="text-emerald-500">🔒</span>
+            Secure payment powered by bKash
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -270,24 +276,24 @@ const SelectedPackageSidebar = ({
 // --- Status Banner ---
 const StatusBanner = ({ type, message, onClose }) => (
   <div
-    className={`rounded-lg p-4 mb-6 flex items-center justify-between shadow-md animate-slideDown
+    className={`rounded-xl p-4 mb-6 flex items-center justify-between shadow-sm animate-in slide-in-from-top-2
     ${
       type === "error"
-        ? "bg-red-50 border-l-4 border-red-500"
-        : "bg-blue-50 border-l-4 border-blue-500"
+        ? "bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800"
+        : "bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800"
     }`}
   >
     <div className="flex items-center gap-3">
       <div
         className={`w-8 h-8 rounded-full flex items-center justify-center
-        ${type === "error" ? "bg-red-100" : "bg-blue-100"}
+        ${type === "error" ? "bg-rose-100 dark:bg-rose-800/50 text-rose-600 dark:text-rose-200" : "bg-blue-100 dark:bg-blue-800/50 text-blue-600 dark:text-blue-200"}
       `}
       >
         <span className="text-lg">{type === "error" ? "⚠️" : "ℹ️"}</span>
       </div>
       <p
         className={`font-medium ${
-          type === "error" ? "text-red-800" : "text-blue-800"
+          type === "error" ? "text-rose-800 dark:text-rose-200" : "text-blue-800 dark:text-blue-200"
         }`}
       >
         {message}
@@ -295,9 +301,9 @@ const StatusBanner = ({ type, message, onClose }) => (
     </div>
     <button
       onClick={onClose}
-      className="text-gray-500 hover:text-gray-700 transition-colors"
+      className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
     >
-      <FaTimes className="text-xl" />
+      <FaTimes className="text-lg" />
     </button>
   </div>
 );
@@ -445,13 +451,13 @@ const BuyPointsAndPremiumPage = () => {
   // Loading State
   if (isLoading && !currentUser && !error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
         <div className="text-center">
           <div className="w-20 h-20 mx-auto mb-6">
             <LoadingSpinner size="lg" />
           </div>
-          <p className="text-xl font-semibold text-gray-700">Loading your account...</p>
-          <p className="text-sm text-gray-500 mt-2">Please wait a moment</p>
+          <p className="text-xl font-semibold text-gray-700 dark:text-gray-300">Loading your account...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Please wait a moment</p>
         </div>
       </div>
     );
@@ -460,18 +466,18 @@ const BuyPointsAndPremiumPage = () => {
   // Error State - Not Logged In
   if (error && !currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-orange-50 px-4">
-        <div className="bg-white shadow-2xl p-10 rounded-2xl text-center max-w-md">
-          <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg px-4 transition-colors duration-300">
+        <div className="bg-white dark:bg-dark-card shadow-2xl dark:shadow-glow p-10 rounded-2xl text-center max-w-md border border-gray-100 dark:border-dark-border">
+          <div className="w-20 h-20 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-4xl">🔒</span>
           </div>
-          <h2 className="text-red-600 font-bold text-2xl mb-4">
+          <h2 className="text-rose-600 dark:text-rose-400 font-bold text-2xl mb-4">
             Authentication Required
           </h2>
-          <p className="text-gray-600 mb-8 text-lg">{error}</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-8 text-lg">{error}</p>
           <button
             onClick={() => (window.location.href = "/login")}
-            className="bg-gradient-to-r from-blue-600 to-blue-700 text-white py-4 px-10 rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl w-full text-lg font-semibold"
+            className="bg-gradient-to-r from-primary-600 to-primary-700 text-white py-4 px-10 rounded-xl hover:from-primary-700 hover:to-primary-800 transition-all shadow-lg hover:shadow-xl w-full text-lg font-bold"
           >
             Go to Login
           </button>
@@ -482,16 +488,18 @@ const BuyPointsAndPremiumPage = () => {
 
   // --- Main UI ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col font-sans transition-colors duration-300">
       <Navbar />
       
       <main className="flex-grow container mx-auto px-4 py-8 mt-16 max-w-7xl">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 mb-4 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            Upgrade Your Experience
+        <div className="text-center mb-12 pt-8">
+          <h1 className="text-4xl md:text-6xl font-extrabold text-gray-900 dark:text-white mb-6">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 via-secondary-500 to-primary-600">
+              Upgrade Your Experience
+            </span>
           </h1>
-          <p className="text-gray-600 text-lg max-w-3xl mx-auto leading-relaxed">
+          <p className="text-gray-600 dark:text-gray-300 text-lg max-w-3xl mx-auto leading-relaxed">
             Unlock unlimited possibilities with our flexible plans. Choose premium for full access or buy points as needed.
           </p>
         </div>
@@ -503,13 +511,15 @@ const BuyPointsAndPremiumPage = () => {
         )}
 
         {/* Premium Membership Section */}
-        <section className="mb-12">
-          <div className="flex items-center gap-3 mb-6">
-            <FaCrown className="text-3xl text-yellow-500" />
-            <h2 className="text-3xl font-bold text-gray-900">Membership Plans</h2>
+        <section className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 bg-amber-100 dark:bg-amber-900/30 rounded-xl">
+               <FaCrown className="text-2xl text-amber-500" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Membership Plans</h2>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
             <PlanCard
               title="Free Plan"
               priceBDT="0"
@@ -542,7 +552,7 @@ const BuyPointsAndPremiumPage = () => {
               isPopular={!isPremium}
               isActive={isPremium}
               onClick={!isPremium ? handlePurchasePremium : undefined}
-              icon={<FaCrown />}
+              icon={<FaCrown className="text-amber-500" />}
               badgeText="BEST VALUE"
               isPremiumCard
             />
@@ -550,13 +560,15 @@ const BuyPointsAndPremiumPage = () => {
         </section>
 
         {/* Point Packages Section with Sidebar Layout */}
-        <section>
-          <div className="flex items-center gap-3 mb-6">
-            <FaCoins className="text-3xl text-yellow-500" />
-            <h2 className="text-3xl font-bold text-gray-900">Point Packages</h2>
+        <section className="pb-12">
+          <div className="flex items-center gap-3 mb-8">
+            <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl">
+               <FaCoins className="text-2xl text-yellow-500" />
+            </div>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Point Packages</h2>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
             {/* Left Side - Point Packages (2 columns) */}
             <div className="lg:col-span-2">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -604,33 +616,33 @@ const BuyPointsAndPremiumPage = () => {
         </section>
 
         {/* Info Section */}
-        <section className="mt-12 bg-white rounded-xl shadow-lg p-8 border border-gray-200">
-          <h3 className="text-2xl font-bold text-gray-900 mb-4">Why Choose Our Points System?</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
+        <section className="mt-8 bg-white dark:bg-dark-card rounded-2xl shadow-lg dark:shadow-dark-lg p-10 border border-gray-100 dark:border-dark-border">
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-8 text-center">Why Choose Our Points System?</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="text-center p-4">
+              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">⚡</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Instant Delivery</h4>
-              <p className="text-gray-600 text-sm">
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Instant Delivery</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Points are added to your account immediately after payment
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4">
+              <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">🎁</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Bonus Points</h4>
-              <p className="text-gray-600 text-sm">
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Bonus Points</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Get up to 20% extra points on larger packages
               </p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="text-center p-4">
+              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <span className="text-3xl">♾️</span>
               </div>
-              <h4 className="font-semibold text-gray-900 mb-2">Never Expire</h4>
-              <p className="text-gray-600 text-sm">
+              <h4 className="text-lg font-bold text-gray-900 dark:text-white mb-2">Never Expire</h4>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">
                 Your points remain in your account forever, use them anytime
               </p>
             </div>

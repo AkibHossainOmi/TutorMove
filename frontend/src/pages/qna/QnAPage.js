@@ -145,60 +145,57 @@ const QnAPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col font-sans transition-colors duration-300">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative bg-slate-900 dark:bg-dark-bg-secondary pt-24 pb-20 lg:pt-28 lg:pb-28 overflow-hidden">
+      <div className="relative bg-dark-bg-secondary pt-24 pb-20 lg:pt-28 lg:pb-28 overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] bg-violet-600/20 rounded-full blur-[120px]" />
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-violet-500/20 rounded-full blur-[100px]" />
-          <div className="absolute bottom-0 left-1/2 w-[300px] h-[300px] bg-fuchsia-500/10 rounded-full blur-[80px]" />
+          <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] bg-secondary-600/20 rounded-full blur-[120px]" />
+          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary-500/20 rounded-full blur-[100px]" />
+          <div className="absolute bottom-0 left-1/2 w-[300px] h-[300px] bg-secondary-500/10 rounded-full blur-[80px]" />
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Pill Badge */}
           <div className="flex justify-center mb-6">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 backdrop-blur-sm">
-              <Sparkles className="w-4 h-4 text-violet-400" />
-              <span className="text-sm font-medium text-violet-200">Community Driven</span>
+              <Sparkles className="w-4 h-4 text-secondary-400" />
+              <span className="text-sm font-medium text-secondary-200">Community Driven</span>
             </div>
           </div>
 
           {/* Title */}
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-center text-white tracking-tight mb-4">
-            Questions & <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-fuchsia-400">Answers</span>
+            Questions & <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary-400 to-primary-400">Answers</span>
           </h1>
 
-          <p className="text-lg text-slate-400 text-center max-w-2xl mx-auto mb-10">
+          <p className="text-lg text-gray-400 text-center max-w-2xl mx-auto mb-10">
             Get help from our community. Ask questions, share knowledge, and learn together.
           </p>
 
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search questions..."
-                className="w-full pl-12 pr-4 py-4 bg-white/10 dark:bg-dark-card/50 backdrop-blur-sm border border-white/20 dark:border-dark-border rounded-2xl text-white placeholder-slate-400 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition-all"
+                className="w-full pl-12 pr-4 py-4 bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl text-white placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-transparent transition-all shadow-lg"
               />
             </div>
           </div>
 
           {/* Quick Stats */}
           <div className="flex flex-wrap justify-center gap-6 mt-10">
-            <div className="flex items-center gap-2 text-slate-300">
-              <HelpCircle className="w-5 h-5 text-violet-400" />
+            <div className="flex items-center gap-2 text-gray-300">
+              <HelpCircle className="w-5 h-5 text-secondary-400" />
               <span className="font-semibold">{totalQuestions}</span>
-              <span className="text-slate-400">Questions</span>
+              <span className="text-gray-400">Questions</span>
             </div>
-            {/* Note: Total answers and contributors cannot be easily calculated with pagination without a separate API call. 
-                Leaving static or hiding for now, or showing partial data.
-            */}
           </div>
         </div>
       </div>
@@ -206,7 +203,7 @@ const QnAPage = () => {
       {/* Main Content */}
       <main className="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 -mt-6">
         {/* Controls Card */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm dark:shadow-dark-md border border-gray-200 dark:border-dark-border p-4 mb-6">
+        <div className="bg-white dark:bg-dark-card rounded-2xl shadow-lg dark:shadow-glow border border-gray-100 dark:border-dark-border p-4 mb-6 relative z-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Tabs */}
             <div className="flex flex-wrap gap-2">
@@ -216,8 +213,8 @@ const QnAPage = () => {
                   onClick={() => setActiveTab(tab.id)}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                     activeTab === tab.id
-                      ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300'
-                      : 'text-slate-600 dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary'
+                      ? 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-700 dark:text-secondary-300 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary'
                   }`}
                 >
                   {tab.label}
@@ -228,7 +225,7 @@ const QnAPage = () => {
             {/* Ask Question Button */}
             {user && user.user_type === 'student' && (
               <Link to="/qna/create">
-                <Button icon={Plus} size="md">
+                <Button icon={Plus} size="md" className="bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 border-none shadow-md hover:shadow-lg">
                   Ask Question
                 </Button>
               </Link>
@@ -249,23 +246,24 @@ const QnAPage = () => {
                 key={q.id}
                 className="block group"
               >
-                <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-dark-border shadow-sm dark:shadow-dark-md hover:shadow-xl dark:hover:shadow-dark-lg hover:border-violet-200 dark:hover:border-violet-800/50 transition-all duration-300 overflow-hidden">
+                <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-100 dark:border-dark-border shadow-sm hover:shadow-xl dark:hover:shadow-glow hover:border-secondary-200 dark:hover:border-secondary-500/30 transition-all duration-300 overflow-hidden transform hover:-translate-y-0.5">
                   {/* Card Header - Author & Date */}
-                  <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-3 border-b border-gray-50 dark:border-dark-border">
+                  <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-3 border-b border-gray-50 dark:border-dark-border/50">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <Avatar
                           fallback={q.student?.username}
                           size="sm"
                           src={q.student?.profile_picture}
+                          className="bg-primary-100 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300"
                         />
                         <div>
-                          <p className="text-sm font-semibold text-slate-800 dark:text-dark-text-primary">
+                          <p className="text-sm font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                             {q.student?.username || 'Anonymous'}
                           </p>
-                          <div className="flex items-center gap-1.5 text-slate-400 dark:text-dark-text-muted">
+                          <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
                             <Calendar className="w-3 h-3" />
-                            <span className="text-xs">{formatDateTime(q.created_at)}</span>
+                            <span className="text-xs font-medium">{formatDateTime(q.created_at)}</span>
                           </div>
                         </div>
                       </div>
@@ -274,7 +272,7 @@ const QnAPage = () => {
                       {user && q.student?.id === user.id && (
                         <button
                           onClick={(e) => handleDeleteQuestion(q.id, e)}
-                          className="p-2 text-slate-400 dark:text-dark-text-muted hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          className="p-2 text-gray-400 dark:text-gray-500 hover:text-rose-500 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-colors"
                           title="Delete question"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -285,10 +283,10 @@ const QnAPage = () => {
 
                   {/* Card Body - Question Content */}
                   <div className="px-5 sm:px-6 py-4">
-                    <h2 className="text-lg sm:text-xl font-semibold text-slate-900 dark:text-dark-text-primary group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors line-clamp-2 mb-2">
+                    <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white group-hover:text-secondary-600 dark:group-hover:text-secondary-400 transition-colors line-clamp-2 mb-2">
                       {q.title}
                     </h2>
-                    <p className="text-slate-500 dark:text-dark-text-secondary text-sm leading-relaxed line-clamp-3">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed line-clamp-3">
                       {q.content}
                     </p>
                   </div>
@@ -300,10 +298,10 @@ const QnAPage = () => {
                         {/* Upvote Button */}
                         <button
                           onClick={(e) => handleUpvote(q.id, e)}
-                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-bold transition-all ${
                             q.has_upvoted
-                              ? 'bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 ring-1 ring-violet-200 dark:ring-violet-800/50'
-                              : 'bg-slate-100 dark:bg-dark-bg-tertiary text-slate-600 dark:text-dark-text-secondary hover:bg-violet-50 dark:hover:bg-violet-950/30 hover:text-violet-600 dark:hover:text-violet-400'
+                              ? 'bg-secondary-100 dark:bg-secondary-900/40 text-secondary-700 dark:text-secondary-300 ring-1 ring-secondary-200 dark:ring-secondary-800/50'
+                              : 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-600 dark:text-gray-400 hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:text-secondary-600 dark:hover:text-secondary-400'
                           }`}
                         >
                           <ThumbsUp className={`w-4 h-4 ${q.has_upvoted ? 'fill-current' : ''}`} />
@@ -315,15 +313,16 @@ const QnAPage = () => {
                           color={q.answers_count > 0 ? 'success' : 'neutral'}
                           size="sm"
                           icon={MessageSquare}
+                          className={q.answers_count > 0 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-dark-bg-tertiary dark:text-gray-400'}
                         >
                           {q.answers_count} {q.answers_count === 1 ? 'Answer' : 'Answers'}
                         </Badge>
                       </div>
 
                       {/* View Link */}
-                      <span className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-600 dark:text-violet-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Eye className="w-4 h-4" />
+                      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-primary-600 dark:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 duration-300">
                         View
+                        <Eye className="w-4 h-4" />
                       </span>
                     </div>
                   </div>
@@ -333,15 +332,15 @@ const QnAPage = () => {
 
             {/* Empty State */}
             {questions.length === 0 && !loading && (
-              <div className="text-center py-16 sm:py-20 bg-white dark:bg-dark-card rounded-2xl border-2 border-dashed border-slate-200 dark:border-dark-border">
-                <div className="w-20 h-20 bg-gradient-to-br from-violet-100 dark:from-violet-950/40 to-fuchsia-100 dark:to-fuchsia-950/40 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
-                  <MessageSquare className="w-10 h-10 text-violet-500 dark:text-violet-400" />
+              <div className="text-center py-16 sm:py-20 bg-white dark:bg-dark-card rounded-2xl border-2 border-dashed border-gray-200 dark:border-dark-border">
+                <div className="w-20 h-20 bg-gradient-to-br from-secondary-100 dark:from-secondary-900/40 to-primary-100 dark:to-primary-900/40 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
+                  <MessageSquare className="w-10 h-10 text-secondary-500 dark:text-secondary-400" />
                 </div>
 
                 {searchQuery ? (
                   <>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-dark-text-primary mb-2">No results found</h3>
-                    <p className="text-slate-500 dark:text-dark-text-secondary mb-6 max-w-sm mx-auto">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No results found</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
                       We couldn't find any questions matching "{searchQuery}". Try a different search term.
                     </p>
                     <Button variant="secondary" onClick={() => setSearchQuery('')}>
@@ -350,8 +349,8 @@ const QnAPage = () => {
                   </>
                 ) : activeTab === 'unanswered' ? (
                   <>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-dark-text-primary mb-2">All caught up!</h3>
-                    <p className="text-slate-500 dark:text-dark-text-secondary mb-6 max-w-sm mx-auto">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">All caught up!</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
                       There are no unanswered questions at the moment. Check back later or browse all questions.
                     </p>
                     <Button variant="secondary" onClick={() => setActiveTab('all')}>
@@ -360,8 +359,8 @@ const QnAPage = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="text-xl font-semibold text-slate-900 dark:text-dark-text-primary mb-2">No questions yet</h3>
-                    <p className="text-slate-500 dark:text-dark-text-secondary mb-6 max-w-sm mx-auto">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No questions yet</h3>
+                    <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
                       Be the first to start a discussion! Ask a question to get help from our community.
                     </p>
                     {user && user.user_type === 'student' && (
@@ -392,18 +391,18 @@ const QnAPage = () => {
         {/* Bottom CTA */}
         {questions.length > 0 && user && user.user_type === 'student' && (
           <div className="mt-12 text-center">
-            <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 bg-gradient-to-r from-violet-50 dark:from-violet-950/30 to-fuchsia-50 dark:to-fuchsia-950/30 rounded-2xl border border-violet-100 dark:border-violet-800/40">
+            <div className="inline-flex flex-col sm:flex-row items-center gap-4 p-6 bg-gradient-to-r from-secondary-50 dark:from-secondary-900/30 to-primary-50 dark:to-primary-900/30 rounded-2xl border border-secondary-100 dark:border-secondary-800/40">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-white dark:bg-dark-card rounded-xl flex items-center justify-center shadow-sm dark:shadow-dark-sm">
-                  <TrendingUp className="w-6 h-6 text-violet-600 dark:text-violet-400" />
+                <div className="w-12 h-12 bg-white dark:bg-dark-card rounded-xl flex items-center justify-center shadow-sm dark:shadow-glow">
+                  <TrendingUp className="w-6 h-6 text-secondary-600 dark:text-secondary-400" />
                 </div>
                 <div className="text-left">
-                  <p className="font-semibold text-slate-900 dark:text-dark-text-primary">Can't find what you're looking for?</p>
-                  <p className="text-sm text-slate-500 dark:text-dark-text-secondary">Ask your own question and get answers from the community.</p>
+                  <p className="font-bold text-gray-900 dark:text-white">Can't find what you're looking for?</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Ask your own question and get answers from the community.</p>
                 </div>
               </div>
               <Link to="/qna/create">
-                <Button icon={Plus}>
+                <Button icon={Plus} className="bg-white dark:bg-dark-card text-secondary-700 dark:text-secondary-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary border border-secondary-200 dark:border-secondary-800/50 shadow-sm">
                   Ask Question
                 </Button>
               </Link>

@@ -31,27 +31,27 @@ import {
 // Stats Card Component
 const StatCard = ({ icon: Icon, label, value, color = "purple" }) => {
   const colorClasses = {
-    purple: "bg-purple-100 text-purple-600",
-    blue: "bg-blue-100 text-blue-600",
-    emerald: "bg-emerald-100 text-emerald-600",
-    amber: "bg-amber-100 text-amber-600",
-    rose: "bg-rose-100 text-rose-600",
-    indigo: "bg-indigo-100 text-indigo-600"
+    purple: "bg-secondary-50 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400",
+    blue: "bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400",
+    emerald: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400",
+    amber: "bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400",
+    rose: "bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400",
+    indigo: "bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400"
   };
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm hover:shadow-md transition-shadow"
+      className="bg-white dark:bg-dark-card rounded-xl p-4 border border-gray-100 dark:border-dark-border shadow-sm hover:shadow-md transition-all"
     >
       <div className="flex items-center gap-3">
         <div className={`w-10 h-10 rounded-lg ${colorClasses[color]} flex items-center justify-center`}>
           <Icon className="w-5 h-5" />
         </div>
         <div>
-          <p className="text-2xl font-bold text-slate-900">{value}</p>
-          <p className="text-xs text-slate-500 font-medium">{label}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white">{value}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">{label}</p>
         </div>
       </div>
     </motion.div>
@@ -65,15 +65,15 @@ const JobCard = ({ job }) => {
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'open':
-        return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+        return 'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800/30';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-700 border-blue-200';
+        return 'bg-primary-100 text-primary-700 border-primary-200 dark:bg-primary-900/30 dark:text-primary-400 dark:border-primary-800/30';
       case 'completed':
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+        return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-dark-bg-tertiary dark:text-gray-300 dark:border-dark-border';
       case 'closed':
-        return 'bg-red-100 text-red-700 border-red-200';
+        return 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800/30';
       default:
-        return 'bg-slate-100 text-slate-700 border-slate-200';
+        return 'bg-gray-100 text-gray-700 border-gray-200 dark:bg-dark-bg-tertiary dark:text-gray-300 dark:border-dark-border';
     }
   };
 
@@ -88,10 +88,10 @@ const JobCard = ({ job }) => {
       animate={{ opacity: 1, y: 0 }}
       whileHover={{ y: -4 }}
       onClick={() => navigate(`/jobs/${job.id}`)}
-      className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-lg transition-all cursor-pointer group"
+      className="bg-white dark:bg-dark-card rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm hover:shadow-lg dark:hover:shadow-glow transition-all cursor-pointer group"
     >
       {/* Job Header with gradient */}
-      <div className="h-20 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 relative overflow-hidden">
+      <div className="h-20 bg-gradient-to-br from-primary-500 via-secondary-500 to-pink-500 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNiIgc3Ryb2tlPSJyZ2JhKDI1NSwyNTUsMjU1LDAuMSkiIHN0cm9rZS13aWR0aD0iMiIvPjwvZz48L3N2Zz4=')] opacity-30"></div>
         <div className="absolute bottom-3 left-4 right-4 flex items-center justify-between">
           <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-white/20 backdrop-blur-sm text-white border border-white/20">
@@ -106,17 +106,17 @@ const JobCard = ({ job }) => {
 
       {/* Job Content */}
       <div className="p-4">
-        <h4 className="font-semibold text-slate-900 group-hover:text-purple-600 transition-colors mb-2 line-clamp-2">
+        <h4 className="font-semibold text-gray-900 dark:text-white group-hover:text-secondary-600 dark:group-hover:text-secondary-400 transition-colors mb-2 line-clamp-2">
           {job.subject_details?.length > 0
             ? `${job.subject_details.join(', ')} Tutoring`
             : "Tutoring Request"}
         </h4>
-        <p className="text-slate-500 text-sm line-clamp-2 mb-4">
+        <p className="text-gray-500 dark:text-gray-400 text-sm line-clamp-2 mb-4">
           {job.description || "No description provided"}
         </p>
 
         {/* Job Meta */}
-        <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-3">
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500 dark:text-gray-400 mb-3">
           {job.location && (
             <span className="flex items-center gap-1">
               <MapPin className="w-3 h-3" />
@@ -124,7 +124,7 @@ const JobCard = ({ job }) => {
             </span>
           )}
           {job.budget && (
-            <span className="flex items-center gap-1 text-purple-600 font-medium">
+            <span className="flex items-center gap-1 text-secondary-600 dark:text-secondary-400 font-medium">
               <DollarSign className="w-3 h-3" />
               ${job.budget}{job.budget_type === 'Hourly' ? '/hr' : ''}
             </span>
@@ -132,8 +132,8 @@ const JobCard = ({ job }) => {
         </div>
 
         {/* Job Footer */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-          <span className="text-xs text-slate-400 flex items-center gap-1">
+        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-dark-border">
+          <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
             <Calendar className="w-3 h-3" />
             {job.created_at
               ? new Date(job.created_at).toLocaleDateString('en-US', {
@@ -143,7 +143,7 @@ const JobCard = ({ job }) => {
                 })
               : "Recently"}
           </span>
-          <span className="text-xs text-slate-400 flex items-center gap-1 group-hover:text-purple-500 transition-colors">
+          <span className="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1 group-hover:text-secondary-500 dark:group-hover:text-secondary-400 transition-colors">
             View Details
             <ChevronRight className="w-3 h-3" />
           </span>
@@ -159,15 +159,15 @@ const TabButton = ({ active, onClick, icon: Icon, label, count }) => (
     onClick={onClick}
     className={`flex items-center gap-2 px-4 py-2.5 rounded-lg font-medium text-sm transition-all ${
       active
-        ? 'bg-purple-100 text-purple-700'
-        : 'text-slate-600 hover:bg-slate-100'
+        ? 'bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-400'
+        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary'
     }`}
   >
     <Icon className="w-4 h-4" />
     {label}
     {count !== undefined && (
       <span className={`px-1.5 py-0.5 rounded-full text-xs ${
-        active ? 'bg-purple-200 text-purple-800' : 'bg-slate-200 text-slate-600'
+        active ? 'bg-secondary-200 dark:bg-secondary-800/50 text-secondary-800 dark:text-secondary-200' : 'bg-gray-200 dark:bg-dark-border text-gray-600 dark:text-gray-400'
       }`}>
         {count}
       </span>
@@ -212,19 +212,19 @@ export default function StudentProfilePage({ initialData }) {
   }, [studentId, initialData]);
 
   if (loading) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-dark-bg flex flex-col items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col items-center justify-center">
       <LoadingSpinner />
-      <p className="mt-4 text-slate-500 dark:text-dark-text-muted">Loading profile...</p>
+      <p className="mt-4 text-gray-500 dark:text-gray-400">Loading profile...</p>
     </div>
   );
 
   if (error) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-dark-bg flex items-center justify-center">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 bg-red-100 dark:bg-red-950/30 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl">⚠️</span>
         </div>
-        <p className="text-red-600 font-medium">{error}</p>
+        <p className="text-rose-600 dark:text-rose-400 font-medium">{error}</p>
       </div>
     </div>
   );
@@ -243,17 +243,17 @@ export default function StudentProfilePage({ initialData }) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-dark-bg font-sans text-slate-900 dark:text-dark-text-primary">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg font-sans text-gray-900 dark:text-white transition-colors duration-300">
       <Navbar />
 
       <main className="min-h-screen dark:bg-dark-bg">
         {/* Hero Cover Section */}
-        <div className="relative h-64 md:h-72 bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 overflow-hidden">
+        <div className="relative h-64 md:h-72 bg-gradient-to-br from-primary-600 via-secondary-600 to-pink-500 overflow-hidden">
           {/* Decorative elements */}
           <div className="absolute inset-0">
             <div className="absolute -top-1/2 -right-1/4 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
             <div className="absolute -bottom-1/2 -left-1/4 w-96 h-96 bg-pink-400/20 rounded-full blur-3xl"></div>
-            <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-indigo-400/10 rounded-full blur-2xl"></div>
+            <div className="absolute top-1/4 left-1/3 w-64 h-64 bg-primary-400/10 rounded-full blur-2xl"></div>
           </div>
 
           {/* Pattern overlay */}
@@ -266,13 +266,13 @@ export default function StudentProfilePage({ initialData }) {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden mb-6"
+            className="bg-white dark:bg-dark-card rounded-2xl shadow-xl dark:shadow-glow border border-gray-100 dark:border-dark-border overflow-hidden mb-6"
           >
             <div className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row md:items-end gap-6">
                 {/* Profile Picture */}
                 <div className="relative flex-shrink-0 mx-auto md:mx-0">
-                  <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl border-4 border-white shadow-lg overflow-hidden bg-gradient-to-br from-indigo-500 to-purple-600">
+                  <div className="w-32 h-32 md:w-36 md:h-36 rounded-2xl border-4 border-white dark:border-dark-card shadow-lg overflow-hidden bg-gradient-to-br from-primary-500 to-secondary-600">
                     {profile.profile_picture ? (
                       <img
                         src={profile.profile_picture}
@@ -286,7 +286,7 @@ export default function StudentProfilePage({ initialData }) {
                     )}
                   </div>
                   {profile.is_verified && (
-                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                    <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-dark-card">
                       <CheckCircle className="w-5 h-5 text-white" />
                     </div>
                   )}
@@ -295,37 +295,37 @@ export default function StudentProfilePage({ initialData }) {
                 {/* Profile Info */}
                 <div className="flex-1 text-center md:text-left">
                   <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mb-2">
-                    <h1 className="text-2xl md:text-3xl font-bold text-slate-900">
+                    <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
                       {profile.first_name && profile.last_name
                         ? `${profile.first_name} ${profile.last_name}`
                         : profile.username}
                     </h1>
                     {profile.is_verified && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-700">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400">
                         <Shield className="w-3 h-3" />
                         Verified
                       </span>
                     )}
                     {profile.is_premium && (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
                         <Sparkles className="w-3 h-3" />
                         Premium
                       </span>
                     )}
                   </div>
 
-                  <p className="text-slate-500 mb-1">@{profile.username}</p>
+                  <p className="text-gray-500 dark:text-gray-400 mb-1">@{profile.username}</p>
 
                   {/* Student Badge */}
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-full text-sm font-medium mt-2">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 rounded-full text-sm font-medium mt-2">
                     <User className="w-4 h-4" />
                     Student
                   </div>
 
                   {/* Location */}
                   {profile.location && (
-                    <div className="flex items-center justify-center md:justify-start gap-1.5 text-sm text-slate-600 mt-3">
-                      <MapPin className="w-4 h-4 text-slate-400" />
+                    <div className="flex items-center justify-center md:justify-start gap-1.5 text-sm text-gray-600 dark:text-gray-400 mt-3">
+                      <MapPin className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                       {profile.location}
                     </div>
                   )}
@@ -336,7 +336,7 @@ export default function StudentProfilePage({ initialData }) {
                   {!isOwnProfile && (
                     <button
                       onClick={() => navigate(`/messages/?username=${encodeURIComponent(profile.username)}`)}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-primary-600 to-secondary-600 text-white font-semibold shadow-lg hover:shadow-glow hover:-translate-y-0.5 transition-all"
                     >
                       <MessageCircle className="w-5 h-5" />
                       Message
@@ -345,7 +345,7 @@ export default function StudentProfilePage({ initialData }) {
                   {isOwnProfile && (
                     <button
                       onClick={() => navigate('/profile')}
-                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold transition-all"
+                      className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-dark-bg-tertiary hover:bg-gray-200 dark:hover:bg-dark-bg-secondary text-gray-700 dark:text-gray-200 font-semibold transition-all"
                     >
                       Edit Profile
                     </button>
@@ -355,7 +355,7 @@ export default function StudentProfilePage({ initialData }) {
             </div>
 
             {/* Stats Bar */}
-            <div className="border-t border-slate-100 bg-slate-50/50 px-6 py-4">
+            <div className="border-t border-gray-100 dark:border-dark-border bg-gray-50/50 dark:bg-dark-bg-secondary/30 px-6 py-4">
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <StatCard icon={Briefcase} label="Jobs Posted" value={stats.jobsPosted} color="purple" />
                 <StatCard icon={HelpCircle} label="Questions Asked" value={stats.questionsAsked} color="blue" />
@@ -369,7 +369,7 @@ export default function StudentProfilePage({ initialData }) {
             {/* Left Column - Main Content */}
             <div className="lg:col-span-2 space-y-6">
               {/* Tabs */}
-              <div className="bg-white rounded-xl p-2 border border-slate-200 shadow-sm">
+              <div className="bg-white dark:bg-dark-card rounded-xl p-2 border border-gray-200 dark:border-dark-border shadow-sm">
                 <div className="flex flex-wrap gap-2">
                   <TabButton
                     active={activeTab === 'about'}
@@ -398,24 +398,24 @@ export default function StudentProfilePage({ initialData }) {
                     className="space-y-6"
                   >
                     {/* About Me */}
-                    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                      <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                          <User className="w-4 h-4 text-purple-600" />
+                    <div className="bg-white dark:bg-dark-card rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-sm">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <div className="w-8 h-8 bg-secondary-100 dark:bg-secondary-900/30 rounded-lg flex items-center justify-center">
+                          <User className="w-4 h-4 text-secondary-600 dark:text-secondary-400" />
                         </div>
                         About Me
                       </h3>
-                      <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
+                      <p className="text-gray-600 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                         {profile.bio || "This student hasn't written a bio yet."}
                       </p>
                     </div>
 
                     {/* Learning Goals or Interests (if available) */}
                     {profile.interests && profile.interests.length > 0 && (
-                      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                        <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                          <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
-                            <Target className="w-4 h-4 text-indigo-600" />
+                      <div className="bg-white dark:bg-dark-card rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-sm">
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                          <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">
+                            <Target className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                           </div>
                           Learning Interests
                         </h3>
@@ -423,7 +423,7 @@ export default function StudentProfilePage({ initialData }) {
                           {profile.interests.map((interest, i) => (
                             <span
                               key={i}
-                              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-indigo-50 to-purple-50 text-indigo-700 border border-indigo-200"
+                              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-primary-50 to-secondary-50 dark:from-primary-900/20 dark:to-secondary-900/20 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800/30"
                             >
                               {interest}
                             </span>
@@ -433,21 +433,21 @@ export default function StudentProfilePage({ initialData }) {
                     )}
 
                     {/* Activity Summary */}
-                    <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm">
-                      <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
-                        <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <Award className="w-4 h-4 text-emerald-600" />
+                    <div className="bg-white dark:bg-dark-card rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-sm">
+                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+                        <div className="w-8 h-8 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                          <Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
                         Activity Summary
                       </h3>
                       <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                          <p className="text-2xl font-bold text-slate-900">{stats.jobsPosted}</p>
-                          <p className="text-sm text-slate-500">Jobs Posted</p>
+                        <div className="p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.jobsPosted}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Jobs Posted</p>
                         </div>
-                        <div className="p-4 bg-slate-50 rounded-lg">
-                          <p className="text-2xl font-bold text-slate-900">{stats.questionsAsked}</p>
-                          <p className="text-sm text-slate-500">Questions Asked</p>
+                        <div className="p-4 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
+                          <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.questionsAsked}</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">Questions Asked</p>
                         </div>
                       </div>
                     </div>
@@ -475,16 +475,16 @@ export default function StudentProfilePage({ initialData }) {
                         ))}
                       </div>
                     ) : (
-                      <div className="bg-white rounded-xl p-12 border border-slate-200 text-center">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                          <Briefcase className="w-8 h-8 text-slate-400" />
+                      <div className="bg-white dark:bg-dark-card rounded-xl p-12 border border-gray-200 dark:border-dark-border text-center">
+                        <div className="w-16 h-16 bg-gray-100 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                          <Briefcase className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                         </div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-2">No Jobs Posted</h3>
-                        <p className="text-slate-500 mb-4">This student hasn't posted any tutoring jobs yet.</p>
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">No Jobs Posted</h3>
+                        <p className="text-gray-500 dark:text-gray-400 mb-4">This student hasn't posted any tutoring jobs yet.</p>
                         {isOwnProfile && (
                           <button
                             onClick={() => navigate('/jobs/create')}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-medium transition-colors"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-secondary-600 hover:bg-secondary-700 text-white font-medium transition-colors"
                           >
                             Post Your First Job
                           </button>
@@ -503,30 +503,30 @@ export default function StudentProfilePage({ initialData }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm sticky top-24"
+                className="bg-white dark:bg-dark-card rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-sm sticky top-24"
               >
-                <h3 className="text-lg font-bold text-slate-900 mb-4">Contact Information</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Contact Information</h3>
 
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <Mail className="w-5 h-5 text-blue-600" />
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
+                    <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">Email</p>
-                      <p className="text-sm font-semibold text-slate-900 truncate">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Email</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {profile.email || "Hidden"}
                       </p>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
-                    <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                      <Phone className="w-5 h-5 text-emerald-600" />
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-dark-bg-secondary rounded-lg">
+                    <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg flex items-center justify-center">
+                      <Phone className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-xs text-slate-500 font-medium uppercase tracking-wide">WhatsApp</p>
-                      <p className="text-sm font-semibold text-slate-900 truncate">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">WhatsApp</p>
+                      <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                         {profile.phone_number || "Hidden"}
                       </p>
                     </div>
@@ -535,8 +535,8 @@ export default function StudentProfilePage({ initialData }) {
 
                 {/* Member Since */}
                 {profile.date_joined && (
-                  <div className="mt-6 pt-4 border-t border-slate-100">
-                    <p className="text-sm text-slate-500 flex items-center gap-2">
+                  <div className="mt-6 pt-4 border-t border-gray-100 dark:border-dark-border">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
                       <Clock className="w-4 h-4" />
                       Member since {new Date(profile.date_joined).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -552,7 +552,7 @@ export default function StudentProfilePage({ initialData }) {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3 }}
-                className="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-6 text-white"
+                className="bg-gradient-to-br from-primary-600 to-secondary-600 rounded-xl p-6 text-white"
               >
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
@@ -560,11 +560,11 @@ export default function StudentProfilePage({ initialData }) {
                   </div>
                   <div>
                     <h3 className="font-bold">Looking for a Tutor?</h3>
-                    <p className="text-indigo-200 text-sm">Find the perfect match</p>
+                    <p className="text-primary-200 text-sm">Find the perfect match</p>
                   </div>
                 </div>
 
-                <p className="text-indigo-100 text-sm mb-4">
+                <p className="text-primary-100 text-sm mb-4">
                   Browse our network of qualified tutors and find the perfect match for your learning needs.
                 </p>
 
@@ -582,25 +582,25 @@ export default function StudentProfilePage({ initialData }) {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.4 }}
-                  className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm"
+                  className="bg-white dark:bg-dark-card rounded-xl p-6 border border-gray-200 dark:border-dark-border shadow-sm"
                 >
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                      <FileText className="w-5 h-5 text-purple-600" />
+                    <div className="w-10 h-10 bg-secondary-100 dark:bg-secondary-900/30 rounded-lg flex items-center justify-center">
+                      <FileText className="w-5 h-5 text-secondary-600 dark:text-secondary-400" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900">Need Help?</h3>
-                      <p className="text-slate-500 text-sm">Post a tutoring job</p>
+                      <h3 className="font-bold text-gray-900 dark:text-white">Need Help?</h3>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">Post a tutoring job</p>
                     </div>
                   </div>
 
-                  <p className="text-slate-600 text-sm mb-4">
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">
                     Create a job listing and let qualified tutors apply to help you.
                   </p>
 
                   <button
                     onClick={() => navigate('/jobs/create')}
-                    className="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors"
+                    className="w-full py-2.5 bg-secondary-600 hover:bg-secondary-700 text-white rounded-lg font-medium transition-colors"
                   >
                     Post a Job
                   </button>

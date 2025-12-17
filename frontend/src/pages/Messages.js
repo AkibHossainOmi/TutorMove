@@ -301,20 +301,20 @@ export default function WhatsAppLikeMessaging() {
       <Navbar />
       
       {/* Main Chat Container - Responsive */}
-      <div className="fixed top-16 left-0 right-0 bottom-0 flex overflow-hidden bg-slate-50">
+      <div className="fixed top-16 left-0 right-0 bottom-0 flex overflow-hidden bg-gray-50 dark:bg-dark-bg transition-colors duration-300">
         {/* Left Sidebar - Conversations List - Responsive */}
         <div className={`${
           showMobileSidebar ? 'flex' : 'hidden'
-        } md:flex flex-col w-full md:w-96 bg-white border-r border-slate-200 shadow-sm z-20`}>
+        } md:flex flex-col w-full md:w-96 bg-white dark:bg-dark-card border-r border-gray-200 dark:border-dark-border shadow-sm z-20`}>
 
           {/* Sidebar Header */}
-          <div className="p-4 border-b border-slate-200 bg-white">
-            <h1 className="text-xl font-bold text-slate-800 mb-4">Messages</h1>
+          <div className="p-4 border-b border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card">
+            <h1 className="text-xl font-bold text-gray-800 dark:text-white mb-4">Messages</h1>
             
             {/* Search Bar */}
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-slate-400" />
+                <Search className="h-4 w-4 text-gray-400 dark:text-gray-500" />
               </div>
               <input
                 type="text"
@@ -322,7 +322,7 @@ export default function WhatsAppLikeMessaging() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="w-full pl-9 pr-4 py-2 bg-slate-100 border-none rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-500"
+                className="w-full pl-9 pr-4 py-2 bg-gray-100 dark:bg-dark-bg-secondary border-none rounded-lg text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all placeholder-gray-500"
               />
             </div>
           </div>
@@ -330,24 +330,24 @@ export default function WhatsAppLikeMessaging() {
           {/* Conversations List */}
           <div className="flex-1 overflow-y-auto custom-scrollbar">
             {searchResults.length > 0 && (
-              <div className="border-b border-slate-100">
-                <div className="px-4 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50">
+              <div className="border-b border-gray-100 dark:border-dark-border">
+                <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide bg-gray-50 dark:bg-dark-bg-secondary">
                   Search Results
                 </div>
                 {searchResults.map((u) => (
                   <div
                     key={u.id}
                     onClick={() => startConversation(u)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-100 last:border-0"
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary cursor-pointer transition-colors border-b border-gray-100 dark:border-dark-border last:border-0"
                   >
                     <img
                       src={u.avatar}
                       alt={u.username}
-                      className="w-10 h-10 rounded-full ring-2 ring-white shadow-sm"
+                      className="w-10 h-10 rounded-full ring-2 ring-white dark:ring-dark-card shadow-sm"
                     />
                     <div className="flex-1 min-w-0">
-                      <div className="font-semibold text-slate-900">{u.username}</div>
-                      <div className="text-xs text-indigo-600 font-medium">Start conversation →</div>
+                      <div className="font-semibold text-gray-900 dark:text-white">{u.username}</div>
+                      <div className="text-xs text-primary-600 dark:text-primary-400 font-medium">Start conversation →</div>
                     </div>
                   </div>
                 ))}
@@ -357,15 +357,15 @@ export default function WhatsAppLikeMessaging() {
             <div>
               {isLoading && conversations.length === 0 ? (
                 <div className="flex justify-center items-center py-12">
-                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-indigo-600 border-t-transparent"></div>
+                  <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary-600 border-t-transparent"></div>
                 </div>
               ) : conversations.length === 0 ? (
                 <div className="text-center py-12 px-4">
-                  <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 mx-auto">
-                    <Search className="w-8 h-8 text-slate-400" />
+                  <div className="w-16 h-16 bg-gray-100 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mb-4 mx-auto">
+                    <Search className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   </div>
-                  <h3 className="text-base font-semibold text-slate-900 mb-1">No conversations yet</h3>
-                  <p className="text-sm text-slate-500">Search for users above to start chatting</p>
+                  <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-1">No conversations yet</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Search for users above to start chatting</p>
                 </div>
               ) : (
                 conversations.map((conv) => {
@@ -378,33 +378,33 @@ export default function WhatsAppLikeMessaging() {
                     <div
                       key={conv.id}
                       onClick={() => selectConversation(conv)}
-                      className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-slate-50 ${
+                      className={`flex items-center gap-3 px-4 py-3.5 cursor-pointer transition-all border-b border-gray-50 dark:border-dark-border ${
                         isActive 
-                          ? 'bg-indigo-50 border-l-4 border-l-indigo-600 pl-3'
-                          : 'hover:bg-slate-50 border-l-4 border-l-transparent pl-3'
+                          ? 'bg-primary-50 dark:bg-primary-900/20 border-l-4 border-l-primary-600 pl-3'
+                          : 'hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary border-l-4 border-l-transparent pl-3'
                       }`}
                     >
                       <div className="relative flex-shrink-0">
                         <img
                           src={other?.avatar}
                           alt={other?.username}
-                          className="w-11 h-11 rounded-full ring-2 ring-white shadow-sm object-cover"
+                          className="w-11 h-11 rounded-full ring-2 ring-white dark:ring-dark-card shadow-sm object-cover"
                         />
                         {hasUnread && (
-                          <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-indigo-600 rounded-full ring-2 ring-white"></div>
+                          <div className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-primary-600 rounded-full ring-2 ring-white dark:ring-dark-card"></div>
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <div className={`font-semibold text-sm truncate ${hasUnread ? 'text-slate-900' : 'text-slate-700'}`}>
+                          <div className={`font-semibold text-sm truncate ${hasUnread ? 'text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}>
                             {other?.username || 'Deleted User'}
                           </div>
-                          <div className="text-xs text-slate-400 whitespace-nowrap ml-2">
+                          <div className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap ml-2">
                             {formatTime(conv.last_message?.timestamp)}
                           </div>
                         </div>
                         <div className={`text-xs truncate ${
-                          hasUnread ? 'text-slate-800 font-medium' : 'text-slate-500'
+                          hasUnread ? 'text-gray-800 dark:text-gray-200 font-medium' : 'text-gray-500 dark:text-gray-400'
                         }`}>
                           {lastMsg.length > 35 ? `${lastMsg.slice(0, 32)}...` : lastMsg}
                         </div>
@@ -420,33 +420,33 @@ export default function WhatsAppLikeMessaging() {
         {/* Right Side - Chat Area - Responsive */}
         <div className={`${
           !showMobileSidebar || activeConversation ? 'flex' : 'hidden'
-        } md:flex flex-1 flex-col bg-white w-full h-full relative z-10`}>
+        } md:flex flex-1 flex-col bg-white dark:bg-dark-card w-full h-full relative z-10`}>
           {activeConversation ? (
             <>
               {/* Chat Header */}
-              <div className="px-4 py-3 bg-white border-b border-slate-200 flex items-center justify-between flex-shrink-0 shadow-sm z-20">
+              <div className="px-4 py-3 bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border flex items-center justify-between flex-shrink-0 shadow-sm z-20">
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   {/* Back button for mobile */}
                   <button
                     onClick={handleBackToConversations}
-                    className="md:hidden p-2 hover:bg-slate-100 rounded-full transition-colors -ml-2"
+                    className="md:hidden p-2 hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-full transition-colors -ml-2"
                   >
-                    <ArrowLeft className="w-5 h-5 text-slate-600" />
+                    <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                   </button>
                   
                   <div className="relative flex-shrink-0">
                     <img
                       src={getOtherUser(activeConversation)?.avatar}
                       alt={getOtherUser(activeConversation)?.username}
-                      className="w-10 h-10 rounded-full ring-2 ring-slate-100 object-cover"
+                      className="w-10 h-10 rounded-full ring-2 ring-gray-100 dark:ring-dark-border object-cover"
                     />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-slate-900 text-sm md:text-base truncate">
+                    <div className="font-bold text-gray-900 dark:text-white text-sm md:text-base truncate">
                       {user ? (
                         <Link
                           to={`/profile/${getOtherUser(activeConversation)?.username}`}
-                          className="hover:text-indigo-600 transition-colors"
+                          className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                         >
                           {getOtherUser(activeConversation)?.username}
                         </Link>
@@ -454,9 +454,9 @@ export default function WhatsAppLikeMessaging() {
                         'Unknown'
                       )}
                     </div>
-                    <div className="text-xs text-slate-500 h-4">
+                    <div className="text-xs text-gray-500 dark:text-gray-400 h-4">
                       {partnerTyping ? (
-                        <span className="text-indigo-600 font-medium flex items-center gap-1 animate-pulse">
+                        <span className="text-primary-600 dark:text-primary-400 font-medium flex items-center gap-1 animate-pulse">
                           Typing...
                         </span>
                       ) : (
@@ -466,7 +466,7 @@ export default function WhatsAppLikeMessaging() {
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <button className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-500">
+                  <button className="p-2 hover:bg-gray-100 dark:hover:bg-dark-bg-tertiary rounded-full transition-colors text-gray-500 dark:text-gray-400">
                     <MoreVertical className="w-5 h-5" />
                   </button>
                 </div>
@@ -475,8 +475,8 @@ export default function WhatsAppLikeMessaging() {
               {/* Messages Area */}
               <div 
                 ref={messageContainerRef}
-                className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-50 scroll-smooth"
-                style={{ backgroundImage: 'radial-gradient(#e2e8f0 1px, transparent 1px)', backgroundSize: '20px 20px' }}
+                className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50 dark:bg-dark-bg scroll-smooth"
+                style={{ backgroundImage: 'radial-gradient(rgba(0,0,0,0.05) 1px, transparent 1px)', backgroundSize: '20px 20px' }}
               >
                 <div className="max-w-3xl mx-auto space-y-4">
                   {messages.map((msg, index) => {
@@ -488,7 +488,7 @@ export default function WhatsAppLikeMessaging() {
                       <React.Fragment key={msg.id}>
                         {showDate && (
                           <div className="flex justify-center my-6">
-                            <div className="bg-white/80 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-medium text-slate-500 shadow-sm border border-slate-100">
+                            <div className="bg-white/80 dark:bg-dark-card/80 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-medium text-gray-500 dark:text-gray-400 shadow-sm border border-gray-100 dark:border-dark-border">
                               {formatDate(msg.timestamp)}
                             </div>
                           </div>
@@ -504,12 +504,12 @@ export default function WhatsAppLikeMessaging() {
                             )}
                             <div className={`rounded-2xl px-4 py-2.5 shadow-sm ${
                               isSelf 
-                                ? 'bg-indigo-600 text-white rounded-br-sm' 
-                                : 'bg-white text-slate-800 rounded-bl-sm border border-slate-200'
+                                ? 'bg-primary-600 text-white rounded-br-sm'
+                                : 'bg-white dark:bg-dark-card text-gray-800 dark:text-gray-200 rounded-bl-sm border border-gray-200 dark:border-dark-border'
                             }`}>
                               <div className="text-[15px] leading-relaxed break-words">{msg.content}</div>
                               <div className={`text-[10px] mt-1 flex items-center gap-1 ${
-                                isSelf ? 'text-indigo-200 justify-end' : 'text-slate-400'
+                                isSelf ? 'text-primary-200 justify-end' : 'text-gray-400 dark:text-gray-500'
                               }`}>
                                 <span>{formatTime(msg.timestamp)}</span>
                                 {isSelf && (
@@ -533,11 +533,11 @@ export default function WhatsAppLikeMessaging() {
                           alt=""
                           className="w-8 h-8 rounded-full shadow-sm"
                         />
-                        <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                        <div className="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
                           <div className="flex gap-1.5">
-                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
-                            <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                            <span className="w-1.5 h-1.5 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
                           </div>
                         </div>
                       </div>
@@ -547,9 +547,9 @@ export default function WhatsAppLikeMessaging() {
               </div>
 
               {/* Message Input */}
-              <div className="px-4 py-4 bg-white border-t border-slate-200 flex-shrink-0">
+              <div className="px-4 py-4 bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border flex-shrink-0">
                 <div className="max-w-3xl mx-auto flex items-end gap-3">
-                  <div className="flex-1 bg-slate-100 rounded-2xl flex items-center px-4 py-2 focus-within:ring-2 focus-within:ring-indigo-500 focus-within:bg-white transition-all border border-transparent focus-within:border-indigo-200">
+                  <div className="flex-1 bg-gray-100 dark:bg-dark-bg-secondary rounded-2xl flex items-center px-4 py-2 focus-within:ring-2 focus-within:ring-primary-500 focus-within:bg-white dark:focus-within:bg-dark-bg-tertiary transition-all border border-transparent focus-within:border-primary-200 dark:focus-within:border-primary-800">
                     <input
                       type="text"
                       value={newMessage}
@@ -559,7 +559,7 @@ export default function WhatsAppLikeMessaging() {
                       }}
                       onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
                       placeholder="Type a message..."
-                      className="flex-1 bg-transparent focus:outline-none text-slate-800 placeholder-slate-500 text-sm md:text-base py-1"
+                      className="flex-1 bg-transparent focus:outline-none text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 text-sm md:text-base py-1"
                     />
                   </div>
                   <button
@@ -567,8 +567,8 @@ export default function WhatsAppLikeMessaging() {
                     disabled={!newMessage.trim()}
                     className={`p-3 rounded-xl transition-all flex-shrink-0 flex items-center justify-center ${
                       newMessage.trim() 
-                        ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-md shadow-indigo-200 hover:-translate-y-0.5'
-                        : 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                        ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-md shadow-primary-200 dark:shadow-primary-900/30 hover:-translate-y-0.5'
+                        : 'bg-gray-100 dark:bg-dark-bg-secondary text-gray-400 dark:text-gray-500 cursor-not-allowed'
                     }`}
                   >
                     <Send className="w-5 h-5" />
@@ -578,19 +578,19 @@ export default function WhatsAppLikeMessaging() {
             </>
           ) : (
             /* Empty Chat State */
-            <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 p-6">
+            <div className="flex-1 flex flex-col items-center justify-center bg-gray-50 dark:bg-dark-bg p-6">
               <div className="text-center max-w-sm">
-                <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mb-6 mx-auto shadow-sm border border-slate-200">
-                  <Send className="w-8 h-8 text-indigo-500 ml-1" />
+                <div className="w-20 h-20 bg-white dark:bg-dark-card rounded-full flex items-center justify-center mb-6 mx-auto shadow-sm border border-gray-200 dark:border-dark-border">
+                  <Send className="w-8 h-8 text-primary-500 ml-1" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-3">Your Messages</h2>
-                <p className="text-slate-500 text-base leading-relaxed mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Your Messages</h2>
+                <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed mb-8">
                   Select a conversation from the sidebar or start a new one to connect with tutors and students.
                 </p>
                 {/* Show back button on mobile when no conversation is selected */}
                 <button
                   onClick={handleBackToConversations}
-                  className="md:hidden w-full px-6 py-3 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-200"
+                  className="md:hidden w-full px-6 py-3 bg-primary-600 text-white rounded-xl font-medium hover:bg-primary-700 transition-colors shadow-lg shadow-primary-200 dark:shadow-primary-900/30"
                 >
                   View Conversations
                 </button>
