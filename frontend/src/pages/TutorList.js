@@ -121,30 +121,30 @@ const TutorList = () => {
   }, [searchQuery, selectedSubject, selectedLevel, priceRange]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-dark-bg font-sans text-gray-900 dark:text-gray-300 transition-colors duration-300">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative bg-indigo-900 text-white pt-32 pb-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 opacity-90"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="relative bg-dark-bg-secondary text-white pt-32 pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-dark-bg-secondary to-secondary-900 opacity-90"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary-500/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
 
         <div className="relative max-w-6xl mx-auto px-6 text-center z-10">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
-            Find Your Perfect <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200">Tutor</span>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+            Find Your Perfect <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-secondary-400">Tutor</span>
           </h1>
-          <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-10">
              Connect with certified experts tailored to your specific learning goals and schedule.
           </p>
 
           <div className="relative max-w-2xl mx-auto">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <FiSearch className="h-5 w-5 text-slate-400" />
+              <FiSearch className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all shadow-lg"
+              className="block w-full pl-12 pr-4 py-4 bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all shadow-lg"
               placeholder="Search by subject, name, or keyword..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
@@ -154,7 +154,7 @@ const TutorList = () => {
       </div>
 
       {/* Filters Section */}
-      <div className="bg-white border-b border-slate-200 sticky top-16 z-30 shadow-sm">
+      <div className="bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border sticky top-16 z-30 shadow-sm transition-colors duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-3 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto hide-scrollbar">
@@ -184,7 +184,7 @@ const TutorList = () => {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={handleResetFilters}
-                  className="flex items-center gap-1 px-3 py-2 text-sm text-indigo-600 font-bold hover:text-indigo-800 whitespace-nowrap bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+                  className="flex items-center gap-1 px-3 py-2 text-sm text-primary-600 dark:text-primary-400 font-bold hover:text-primary-800 dark:hover:text-primary-300 whitespace-nowrap bg-primary-50 dark:bg-primary-900/20 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-900/40 transition-colors"
                 >
                   <FiRefreshCw className="w-3 h-3" /> Reset
                 </button>
@@ -192,11 +192,11 @@ const TutorList = () => {
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-              <span className="text-sm font-medium text-slate-500 hidden md:inline">Sort by:</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400 hidden md:inline">Sort by:</span>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 text-sm rounded-xl border border-slate-200 bg-slate-50 text-slate-700 font-semibold hover:bg-white hover:border-indigo-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none cursor-pointer transition-all"
+                className="px-4 py-2 text-sm rounded-xl border border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg-secondary text-gray-700 dark:text-gray-200 font-semibold hover:bg-white dark:hover:bg-dark-card hover:border-primary-300 dark:hover:border-primary-700 focus:ring-2 focus:ring-primary-500 focus:outline-none cursor-pointer transition-all"
               >
                 <option value="newest">Newest</option>
                 <option value="popular">Most Popular</option>
@@ -211,29 +211,29 @@ const TutorList = () => {
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full -mt-2">
         {!loading && !error && tutors.length > 0 && (
           <div className="mb-6 flex items-center justify-between">
-             <p className="text-slate-500 text-sm font-semibold">
-               Showing page <span className="text-slate-900">{currentPage}</span> of <span className="text-slate-900">{totalPages}</span>
+             <p className="text-gray-500 dark:text-gray-400 text-sm font-semibold">
+               Showing page <span className="text-gray-900 dark:text-white">{currentPage}</span> of <span className="text-gray-900 dark:text-white">{totalPages}</span>
              </p>
           </div>
         )}
 
         {loading && (
           <div className="flex flex-col items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin mb-6" />
-            <p className="text-slate-500 font-medium">Finding best tutors for you...</p>
+            <div className="w-12 h-12 border-4 border-primary-200 dark:border-primary-900 border-t-primary-600 dark:border-t-primary-500 rounded-full animate-spin mb-6" />
+            <p className="text-gray-500 dark:text-gray-400 font-medium">Finding best tutors for you...</p>
           </div>
         )}
 
         {error && (
-          <div className="bg-rose-50 border border-rose-200 rounded-2xl p-8 text-center max-w-lg mx-auto mt-12">
-            <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800/30 rounded-2xl p-8 text-center max-w-lg mx-auto mt-12">
+            <div className="w-16 h-16 bg-rose-100 dark:bg-rose-900/40 text-rose-500 dark:text-rose-400 rounded-full flex items-center justify-center mx-auto mb-4">
               <FiAlertCircle size={32} />
             </div>
-            <h3 className="text-lg font-bold text-rose-800 mb-2">Something went wrong</h3>
-            <p className="text-rose-600 mb-6">{error}</p>
+            <h3 className="text-lg font-bold text-rose-800 dark:text-rose-200 mb-2">Something went wrong</h3>
+            <p className="text-rose-600 dark:text-rose-300 mb-6">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="px-6 py-2.5 bg-rose-600 text-white rounded-xl font-medium hover:bg-rose-700 transition shadow-lg shadow-rose-200"
+              className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-medium transition shadow-lg shadow-rose-500/30"
             >
               Try Again
             </button>
@@ -241,15 +241,15 @@ const TutorList = () => {
         )}
 
         {!loading && !error && tutors.length === 0 && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-16 text-center max-w-lg mx-auto mt-12 shadow-sm">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-              <FiSearch className="w-10 h-10 text-slate-300" />
+          <div className="bg-white dark:bg-dark-card rounded-2xl border border-gray-200 dark:border-dark-border p-16 text-center max-w-lg mx-auto mt-12 shadow-sm">
+            <div className="w-20 h-20 bg-gray-50 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mx-auto mb-6">
+              <FiSearch className="w-10 h-10 text-gray-300 dark:text-gray-600" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">No tutors found</h3>
-            <p className="text-slate-500 mb-8 max-w-xs mx-auto">We couldn't find any tutors matching your search criteria. Try adjusting your filters.</p>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No tutors found</h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-8 max-w-xs mx-auto">We couldn't find any tutors matching your search criteria. Try adjusting your filters.</p>
             <button
               onClick={handleResetFilters}
-              className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-200"
+              className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-xl font-bold transition shadow-lg shadow-primary-500/30"
             >
               Clear all filters
             </button>
@@ -281,7 +281,7 @@ const FilterSelect = ({ value, onChange, options, placeholder, isObjectOptions =
     <select
       value={value}
       onChange={onChange}
-      className="appearance-none pl-4 pr-10 py-2.5 text-sm rounded-xl border border-slate-200 bg-white text-slate-700 font-medium hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer shadow-sm"
+      className="appearance-none pl-4 pr-10 py-2.5 text-sm rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-card text-gray-700 dark:text-gray-200 font-medium hover:border-primary-300 dark:hover:border-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 transition-all cursor-pointer shadow-sm"
     >
       <option value="">{placeholder}</option>
       {options.map((opt) => (
@@ -292,7 +292,7 @@ const FilterSelect = ({ value, onChange, options, placeholder, isObjectOptions =
         )
       ))}
     </select>
-    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-slate-400 group-hover:text-indigo-500">
+    <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none text-gray-400 dark:text-gray-500 group-hover:text-primary-500">
       <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20">
         <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" fillRule="evenodd" />
       </svg>

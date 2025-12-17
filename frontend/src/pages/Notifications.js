@@ -152,23 +152,23 @@ const Notifications = () => {
   const getNotificationColor = (type) => {
     switch (type) {
       case 'message':
-        return 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400';
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400';
       case 'payment':
       case 'credit':
-        return 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400';
+        return 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400';
       case 'follow':
       case 'new_user':
-        return 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400';
+        return 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400';
       case 'job':
       case 'gig':
-        return 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400';
+        return 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400';
       case 'review':
       case 'rating':
-        return 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400';
+        return 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400';
       case 'gift':
-        return 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400';
+        return 'bg-secondary-100 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400';
       default:
-        return 'bg-slate-100 dark:bg-slate-800/40 text-slate-600 dark:text-slate-400';
+        return 'bg-gray-100 dark:bg-dark-bg-tertiary text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -192,11 +192,11 @@ const Notifications = () => {
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-bg flex flex-col font-sans transition-colors duration-300">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-500 pt-24 pb-20 lg:pt-28 lg:pb-24 overflow-hidden">
+      <div className="relative bg-gradient-to-br from-primary-600 via-secondary-600 to-pink-500 pt-24 pb-20 lg:pt-28 lg:pb-24 overflow-hidden">
         {/* Background Elements */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           <div className="absolute -top-1/4 -left-1/4 w-[600px] h-[600px] bg-white/10 rounded-full blur-[120px]" />
@@ -242,7 +242,7 @@ const Notifications = () => {
       {/* Main Content */}
       <main className="flex-grow max-w-5xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 -mt-6">
         {/* Controls Card */}
-        <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm dark:shadow-dark-md border border-gray-200 dark:border-dark-border p-4 mb-6">
+        <div className="bg-white dark:bg-dark-card rounded-2xl shadow-lg dark:shadow-glow border border-gray-100 dark:border-dark-border p-4 mb-6 relative z-20">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             {/* Filter Tabs */}
             <div className="flex flex-wrap gap-2">
@@ -250,8 +250,8 @@ const Notifications = () => {
                 onClick={() => { setFilter('all'); setCurrentPage(1); }}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   filter === 'all'
-                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                    : 'text-slate-600 dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary'
+                    ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary'
                 }`}
               >
                 <Filter className="w-4 h-4 inline mr-1.5" />
@@ -261,8 +261,8 @@ const Notifications = () => {
                 onClick={() => { setFilter('unread'); setCurrentPage(1); }}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   filter === 'unread'
-                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                    : 'text-slate-600 dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary'
+                    ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary'
                 }`}
               >
                 Unread {unreadCount > 0 && `(${unreadCount})`}
@@ -271,8 +271,8 @@ const Notifications = () => {
                 onClick={() => { setFilter('read'); setCurrentPage(1); }}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   filter === 'read'
-                    ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300'
-                    : 'text-slate-600 dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary'
+                    ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary'
                 }`}
               >
                 Read
@@ -283,7 +283,7 @@ const Notifications = () => {
             <div className="flex gap-2">
               <button
                 onClick={fetchNotifications}
-                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 dark:text-dark-text-secondary hover:bg-slate-100 dark:hover:bg-dark-bg-tertiary rounded-xl transition-colors"
+                className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary rounded-xl transition-colors"
               >
                 <RefreshCw className="w-4 h-4" />
                 Refresh
@@ -292,7 +292,7 @@ const Notifications = () => {
                 <button
                   onClick={handleMarkAllAsRead}
                   disabled={markingAll}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/50 rounded-xl transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30 hover:bg-primary-100 dark:hover:bg-primary-900/50 rounded-xl transition-colors disabled:opacity-50"
                 >
                   <CheckCheck className="w-4 h-4" />
                   Mark All Read
@@ -313,10 +313,10 @@ const Notifications = () => {
               <div
                 key={notification.id}
                 onClick={() => handleNotificationClick(notification)}
-                className={`group bg-white dark:bg-dark-card rounded-2xl border shadow-sm dark:shadow-dark-md hover:shadow-md dark:hover:shadow-dark-lg transition-all duration-300 overflow-hidden cursor-pointer ${
+                className={`group bg-white dark:bg-dark-card rounded-2xl border shadow-sm dark:shadow-dark-md hover:shadow-lg dark:hover:shadow-glow transition-all duration-300 overflow-hidden cursor-pointer transform hover:-translate-y-0.5 ${
                   notification.is_read
                     ? 'border-gray-100 dark:border-dark-border'
-                    : 'border-indigo-200 dark:border-indigo-800/50 bg-indigo-50/30 dark:bg-indigo-950/20'
+                    : 'border-primary-200 dark:border-primary-800/50 bg-primary-50/30 dark:bg-primary-900/10'
                 }`}
               >
                 <div className="p-5 flex items-start gap-4">
@@ -328,36 +328,36 @@ const Notifications = () => {
                   {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-3 mb-1">
-                      <p className={`text-base font-semibold ${
+                      <p className={`text-base font-bold ${
                         notification.is_read
-                          ? 'text-slate-800 dark:text-dark-text-primary'
-                          : 'text-slate-900 dark:text-white'
+                          ? 'text-gray-800 dark:text-white'
+                          : 'text-gray-900 dark:text-white'
                       }`}>
                         {notification.title || 'Notification'}
                       </p>
                       {!notification.is_read && (
-                        <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-indigo-600 dark:bg-indigo-400 mt-1.5"></div>
+                        <div className="flex-shrink-0 w-2.5 h-2.5 rounded-full bg-primary-600 dark:bg-primary-400 mt-1.5 shadow-sm shadow-primary-500/50"></div>
                       )}
                     </div>
 
-                    <p className="text-sm text-slate-600 dark:text-dark-text-secondary mb-3 line-clamp-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2 leading-relaxed">
                       {notification.message || notification.content}
                     </p>
 
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 text-slate-400 dark:text-dark-text-muted">
+                      <div className="flex items-center gap-1.5 text-gray-400 dark:text-gray-500">
                         <Calendar className="w-3.5 h-3.5" />
-                        <span className="text-xs">{formatDateTime(notification.created_at)}</span>
+                        <span className="text-xs font-medium">{formatDateTime(notification.created_at)}</span>
                       </div>
 
-                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity transform translate-x-2 group-hover:translate-x-0 duration-300">
                         {!notification.is_read && (
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               handleMarkAsRead(notification.id);
                             }}
-                            className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-lg transition-colors"
+                            className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
                             title="Mark as read"
                           >
                             <Check className="w-4 h-4" />
@@ -368,7 +368,7 @@ const Notifications = () => {
                             e.stopPropagation();
                             handleDelete(notification.id);
                           }}
-                          className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg transition-colors"
+                          className="p-2 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/30 rounded-lg transition-colors"
                           title="Delete"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -382,15 +382,15 @@ const Notifications = () => {
 
             {/* Empty State */}
             {notifications.length === 0 && (
-              <div className="text-center py-16 sm:py-20 bg-white dark:bg-dark-card rounded-2xl border-2 border-dashed border-slate-200 dark:border-dark-border">
-                <div className="w-20 h-20 bg-gradient-to-br from-indigo-100 dark:from-indigo-950/40 to-purple-100 dark:to-purple-950/40 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
-                  <Bell className="w-10 h-10 text-indigo-500 dark:text-indigo-400" />
+              <div className="text-center py-16 sm:py-20 bg-white dark:bg-dark-card rounded-2xl border-2 border-dashed border-gray-200 dark:border-dark-border">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary-100 dark:from-primary-950/40 to-secondary-100 dark:to-secondary-950/40 rounded-2xl flex items-center justify-center mx-auto mb-6 rotate-3">
+                  <Bell className="w-10 h-10 text-primary-500 dark:text-primary-400" />
                 </div>
 
-                <h3 className="text-xl font-semibold text-slate-900 dark:text-dark-text-primary mb-2">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
                   {filter === 'unread' ? 'All caught up!' : 'No notifications yet'}
                 </h3>
-                <p className="text-slate-500 dark:text-dark-text-secondary mb-6 max-w-sm mx-auto">
+                <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-sm mx-auto">
                   {filter === 'unread'
                     ? "You've read all your notifications. Check back later for updates."
                     : "You don't have any notifications at the moment."}
@@ -398,7 +398,7 @@ const Notifications = () => {
                 {filter !== 'all' && (
                   <button
                     onClick={() => setFilter('all')}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors shadow-sm"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary-600 text-white font-bold rounded-xl hover:bg-primary-700 transition-colors shadow-md hover:shadow-lg"
                   >
                     View All Notifications
                   </button>

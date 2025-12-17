@@ -86,42 +86,42 @@ const JobList = () => {
   };
 
   const JobSkeleton = () => (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-6 animate-pulse">
-      <div className="h-6 w-3/4 bg-slate-100 rounded mb-3"></div>
-      <div className="h-4 w-1/2 bg-slate-100 rounded mb-6"></div>
+    <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border p-6 animate-pulse">
+      <div className="h-6 w-3/4 bg-gray-100 dark:bg-dark-bg-secondary rounded mb-3"></div>
+      <div className="h-4 w-1/2 bg-gray-100 dark:bg-dark-bg-secondary rounded mb-6"></div>
       <div className="flex gap-4">
-        <div className="h-4 w-20 bg-slate-100 rounded"></div>
-        <div className="h-4 w-20 bg-slate-100 rounded"></div>
-        <div className="h-4 w-20 bg-slate-100 rounded"></div>
+        <div className="h-4 w-20 bg-gray-100 dark:bg-dark-bg-secondary rounded"></div>
+        <div className="h-4 w-20 bg-gray-100 dark:bg-dark-bg-secondary rounded"></div>
+        <div className="h-4 w-20 bg-gray-100 dark:bg-dark-bg-secondary rounded"></div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 font-sans text-slate-900">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-dark-bg font-sans text-gray-900 dark:text-gray-300 transition-colors duration-300">
       <Navbar />
 
       {/* Hero Section */}
-      <div className="relative bg-indigo-900 text-white pt-32 pb-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-indigo-800 to-violet-900 opacity-90"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-violet-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+      <div className="relative bg-dark-bg-secondary text-white pt-32 pb-24 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-dark-bg-secondary to-secondary-900 opacity-90"></div>
+        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary-500/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
 
         <div className="relative max-w-6xl mx-auto px-6 text-center z-10">
-          <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-6">
-            Find Your Next <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200">Opportunity</span>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+            Find Your Next <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-secondary-400">Opportunity</span>
           </h1>
-          <p className="text-lg md:text-xl text-indigo-100 max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-10">
             Browse hundreds of tutoring jobs and connect with students who need your expertise.
           </p>
 
           <div className="relative max-w-2xl mx-auto">
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <FiSearch className="h-5 w-5 text-slate-400" />
+              <FiSearch className="h-5 w-5 text-gray-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-12 pr-4 py-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-white placeholder-indigo-200 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all shadow-lg"
+              className="block w-full pl-12 pr-4 py-4 bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all shadow-lg"
               placeholder="Search by subject, skills, or location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -136,8 +136,8 @@ const JobList = () => {
 
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sticky top-24">
-              <div className="flex items-center gap-2 mb-6 text-slate-800 font-bold">
+            <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border p-6 sticky top-24">
+              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white font-bold">
                 <FiFilter className="w-5 h-5" />
                 <span>Filters</span>
               </div>
@@ -169,15 +169,15 @@ const JobList = () => {
 
           {/* Job List */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-200 mb-2">
-              <h2 className="text-xl font-bold text-slate-800">
+            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-dark-border mb-2">
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">
                 {totalPages > 0 ? (
-                    <>Showing page <span className="text-indigo-600">{currentPage}</span> of {totalPages}</>
+                    <>Showing page <span className="text-primary-600 dark:text-primary-400">{currentPage}</span> of {totalPages}</>
                 ) : (
                     "No Jobs Found"
                 )}
               </h2>
-              <span className="text-sm text-slate-500 font-medium bg-slate-100 px-3 py-1 rounded-full">
+              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-dark-bg-tertiary px-3 py-1 rounded-full">
                 Newest First
               </span>
             </div>
@@ -189,12 +189,12 @@ const JobList = () => {
                 ))}
               </div>
             ) : jobs.length === 0 ? (
-              <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-                <div className="mx-auto w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
-                  <FiBriefcase className="text-slate-400 text-2xl" />
+              <div className="text-center py-20 bg-white dark:bg-dark-card rounded-2xl border border-dashed border-gray-300 dark:border-dark-border">
+                <div className="mx-auto w-16 h-16 bg-gray-50 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mb-4">
+                  <FiBriefcase className="text-gray-400 dark:text-gray-500 text-2xl" />
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 mb-2">No jobs found</h3>
-                <p className="text-slate-500 max-w-md mx-auto mb-6">
+                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">No jobs found</h3>
+                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
                   Try adjusting your search or filters to find what you're looking for.
                 </p>
                 <button
@@ -202,7 +202,7 @@ const JobList = () => {
                     setSearchQuery("");
                     handleFilterChange("all");
                   }}
-                  className="px-6 py-2 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 transition-colors"
+                  className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition-colors shadow-md"
                 >
                   Clear Filters
                 </button>
@@ -239,8 +239,8 @@ const FilterButton = ({ isActive, onClick, label }) => (
     onClick={onClick}
     className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
       isActive
-        ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
-        : "text-slate-600 hover:bg-slate-50"
+        ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 border border-primary-100 dark:border-primary-800/30"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary"
     }`}
   >
     {label}
@@ -248,10 +248,10 @@ const FilterButton = ({ isActive, onClick, label }) => (
 );
 
 const JobCard = ({ job }) => (
-  <div className="group bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:shadow-md hover:border-indigo-200 transition-all duration-300">
+  <div className="group bg-white dark:bg-dark-card rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-border hover:shadow-lg dark:hover:shadow-glow hover:border-primary-200 dark:hover:border-primary-500/30 transition-all duration-300">
     <div className="flex flex-col md:flex-row gap-6">
       <div className="flex-shrink-0">
-        <div className="w-14 h-14 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform duration-300">
+        <div className="w-14 h-14 bg-primary-50 dark:bg-primary-900/20 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300">
           <FiBriefcase className="w-6 h-6" />
         </div>
       </div>
@@ -259,7 +259,7 @@ const JobCard = ({ job }) => (
       <div className="flex-grow">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
           <div>
-            <h3 className="text-lg font-bold text-slate-900 mb-1 group-hover:text-indigo-600 transition-colors">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {job.description || "Untitled Job"}
             </h3>
             <div className="flex flex-wrap gap-2 mt-2">
@@ -274,12 +274,12 @@ const JobCard = ({ job }) => (
           </div>
 
           <div className="text-right flex-shrink-0">
-            <span className="block text-lg font-bold text-slate-900">{job.budget || "Negotiable"}</span>
-            <span className="text-xs text-slate-500 uppercase tracking-wide">Budget</span>
+            <span className="block text-lg font-bold text-gray-900 dark:text-white">{job.budget || "Negotiable"}</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</span>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-4 text-sm text-slate-500 mt-4 pt-4 border-t border-slate-100">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-4 text-sm text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
           <InfoItem icon={<FiBook className="w-4 h-4" />} text={job.subject_details?.join(", ") || "N/A"} />
           <InfoItem icon={<FiMapPin className="w-4 h-4" />} text={job.location || "Remote"} />
           <InfoItem icon={<FiUser className="w-4 h-4" />} text={job.mode || "N/A"} />
@@ -297,7 +297,7 @@ const JobCard = ({ job }) => (
     <div className="mt-5 flex justify-end">
       <Link
         to={`/jobs/${job.id}`}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-indigo-600 transition-colors shadow-sm"
+        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold hover:bg-primary-600 dark:hover:bg-primary-400 dark:hover:text-white transition-colors shadow-sm"
       >
         View Details
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,13 +310,13 @@ const JobCard = ({ job }) => (
 
 const Badge = ({ children, color = "indigo" }) => {
   const colors = {
-    indigo: "bg-indigo-50 text-indigo-700 border-indigo-100",
-    green: "bg-emerald-50 text-emerald-700 border-emerald-100",
-    amber: "bg-amber-50 text-amber-700 border-amber-100",
+    indigo: "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 border-primary-100 dark:border-primary-800/30",
+    green: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/30",
+    amber: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800/30",
   };
 
   return (
-    <span className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${colors[color] || colors.indigo}`}>
+    <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${colors[color] || colors.indigo}`}>
       {children}
     </span>
   );
@@ -324,7 +324,7 @@ const Badge = ({ children, color = "indigo" }) => {
 
 const InfoItem = ({ icon, text }) => (
   <div className="flex items-center gap-2 truncate">
-    <span className="text-slate-400 flex-shrink-0">{icon}</span>
+    <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">{icon}</span>
     <span className="truncate" title={text}>{text}</span>
   </div>
 );
