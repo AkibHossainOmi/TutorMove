@@ -1,5 +1,7 @@
 // tailwind.config.js
 /** @type {import('tailwindcss').Config} */
+const colors = require('tailwindcss/colors')
+
 module.exports = {
   content: [
     "./index.html",
@@ -9,45 +11,59 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        inter: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
       },
       colors: {
-        // Professional Dark Mode Palette (Slate/Zinc based)
+        // Semantic color system
+        primary: colors.indigo,   // Professional, trustworthy
+        secondary: colors.fuchsia, // Creative, vibrant
+        accent: colors.cyan,       // Modern, tech
+        success: colors.emerald,
+        warning: colors.amber,
+        error: colors.rose,
+        info: colors.sky,
+
+        // Neutral scales for dark mode backgrounds (Zinc is professional and modern)
         dark: {
-          // Background layers - Neutral, deep slate
-          bg: '#020617',         // slate-950
-          'bg-secondary': '#0f172a', // slate-900
-          'bg-tertiary': '#1e293b',  // slate-800
-
-          // Card backgrounds
-          card: '#0f172a',       // slate-900
-          'card-hover': '#1e293b',   // slate-800
-          'card-elevated': '#1e293b', // slate-800
-
-          // Borders - Crisp and subtle
-          border: '#1e293b',     // slate-800
-          'border-hover': '#334155', // slate-700
-          'border-bright': '#475569', // slate-600
-
-          // Text colors - High contrast
+          bg: '#09090b',         // zinc-950
+          'bg-secondary': '#18181b', // zinc-900
+          'bg-tertiary': '#27272a',  // zinc-800
+          card: '#18181b',       // zinc-900
+          border: '#27272a',     // zinc-800
+          'border-hover': '#3f3f46', // zinc-700
           text: {
-            primary: '#f8fafc',   // slate-50
-            secondary: '#cbd5e1', // slate-300
-            muted: '#94a3b8',     // slate-400
-          },
-        },
+            primary: '#fafafa',   // zinc-50
+            secondary: '#a1a1aa', // zinc-400
+            muted: '#52525b',     // zinc-600
+          }
+        }
       },
       boxShadow: {
-        'dark-sm': '0 1px 2px 0 rgba(0, 0, 0, 0.5)',
-        'dark-md': '0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -2px rgba(0, 0, 0, 0.5)',
-        'dark-lg': '0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -4px rgba(0, 0, 0, 0.5)',
-        'dark-xl': '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
-        'glow-indigo': '0 0 20px rgba(99, 102, 241, 0.15), 0 0 40px rgba(99, 102, 241, 0.05)',
+        'glow-primary': '0 0 20px rgba(79, 70, 229, 0.15)',
+        'glow-secondary': '0 0 20px rgba(192, 38, 211, 0.15)',
+        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+        'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.3)',
       },
-      backgroundImage: {
-        'dark-gradient': 'linear-gradient(180deg, #020617 0%, #0f172a 100%)',
-        'dark-gradient-radial': 'radial-gradient(circle at top, #1e293b 0%, #020617 100%)',
+      animation: {
+        'gradient-x': 'gradient-x 3s ease infinite',
+        'float': 'float 3s ease-in-out infinite',
       },
+      keyframes: {
+        'gradient-x': {
+          '0%, 100%': {
+            'background-size': '200% 200%',
+            'background-position': 'left center'
+          },
+          '50%': {
+            'background-size': '200% 200%',
+            'background-position': 'right center'
+          },
+        },
+        'float': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-10px)' },
+        }
+      }
     },
   },
   plugins: [],

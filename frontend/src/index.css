@@ -4,28 +4,23 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* ==============================
-   BASE STYLES
-   ============================== */
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
   }
 
   body {
-    @apply font-sans text-slate-600 antialiased bg-gray-50 selection:bg-indigo-500/30 selection:text-indigo-200;
-    font-family: 'Inter', sans-serif;
-  }
-
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-bold text-slate-900 tracking-tight;
+    @apply font-sans antialiased bg-gray-50 text-slate-900 transition-colors duration-200 selection:bg-primary-500/30 selection:text-primary-600;
   }
 
   /* Dark mode base overrides */
-  .dark body,
-  html.dark body {
-    @apply bg-dark-bg text-dark-text-secondary;
-    /* Clean, professional dark background without gaming gradients */
+  .dark body {
+    @apply bg-dark-bg text-dark-text-secondary selection:bg-primary-500/30 selection:text-primary-300;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold tracking-tight text-slate-900;
   }
 
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
@@ -33,280 +28,129 @@
   }
 }
 
+@layer components {
+  /* ==============================
+     BUTTONS
+     ============================== */
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:-translate-y-0.5 border border-transparent;
+  }
+
+  .dark .btn-primary {
+    @apply from-primary-600 to-primary-500 shadow-primary-900/20 hover:shadow-primary-900/40 ring-offset-dark-bg;
+  }
+
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-200 shadow-sm hover:bg-slate-50 hover:border-slate-300 focus:ring-slate-200;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-dark-bg-secondary text-dark-text-primary border-dark-border hover:bg-dark-bg-tertiary hover:border-dark-border-hover ring-offset-dark-bg !important;
+  }
+
+  .btn-accent {
+    @apply bg-gradient-to-r from-secondary-500 to-pink-500 text-white shadow-lg shadow-secondary-500/25 hover:shadow-secondary-500/40 hover:-translate-y-0.5 border border-transparent;
+  }
+
+  .btn-ghost {
+    @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900 bg-transparent;
+  }
+
+  .dark .btn-ghost {
+    @apply text-dark-text-secondary hover:bg-dark-bg-tertiary hover:text-dark-text-primary;
+  }
+
+  /* ==============================
+     CARDS & SURFACES
+     ============================== */
+  .card {
+    @apply bg-white border border-slate-100 rounded-2xl shadow-sm transition-all duration-300;
+  }
+
+  .dark .card {
+    @apply bg-dark-card border-dark-border shadow-dark-bg/50 !important;
+  }
+
+  .card-hover {
+    @apply hover:shadow-xl hover:shadow-primary-900/5 hover:-translate-y-1 hover:border-primary-100;
+  }
+
+  .dark .card-hover {
+    @apply hover:shadow-none hover:bg-dark-bg-tertiary hover:border-dark-border-hover;
+  }
+
+  /* ==============================
+     INPUTS
+     ============================== */
+  .input-field {
+    @apply w-full rounded-xl border-slate-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-900 placeholder:text-slate-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 transition-all;
+  }
+
+  .dark .input-field {
+    @apply border-dark-border bg-dark-bg-secondary text-dark-text-primary placeholder:text-dark-text-muted focus:border-primary-500 focus:ring-primary-500/10 !important;
+  }
+
+  /* ==============================
+     GLASSMORPHISM
+     ============================== */
+  .glass {
+    @apply bg-white/70 backdrop-blur-xl border border-white/40 shadow-glass;
+  }
+
+  .dark .glass {
+    @apply bg-dark-bg/70 backdrop-blur-xl border-white/5 shadow-glass-dark !important;
+  }
+}
+
 /* ==============================
-   CUSTOM SCROLLBAR
+   UTILITIES & OVERRIDES
    ============================== */
+.text-gradient {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-primary-600 to-secondary-500;
+}
+
+.dark .text-gradient {
+  @apply from-primary-400 to-secondary-400;
+}
+
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-300 rounded-full hover:bg-slate-400 transition-colors;
+  @apply bg-slate-300 rounded-full hover:bg-slate-400 border-2 border-transparent bg-clip-content;
 }
-
 .dark ::-webkit-scrollbar-thumb {
-  @apply bg-slate-700 hover:bg-slate-600;
+  @apply bg-dark-border hover:bg-dark-border-hover;
 }
 
-/* ==============================
-   GLASSMORPHISM
-   ============================== */
-.glass {
-  @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-sm;
+/* Dark mode generic overrides for Tailwind classes */
+.dark .bg-white { @apply bg-dark-card !important; }
+.dark .bg-gray-50 { @apply bg-dark-bg !important; }
+.dark .bg-gray-100 { @apply bg-dark-bg-secondary !important; }
+.dark .bg-slate-50 { @apply bg-dark-bg !important; }
+.dark .bg-slate-100 { @apply bg-dark-bg-secondary !important; }
+
+.dark .border-gray-100, .dark .border-gray-200, .dark .border-slate-100, .dark .border-slate-200 {
+  @apply border-dark-border !important;
 }
 
-.dark .glass {
-  @apply bg-slate-900/80 backdrop-blur-md border-slate-800 shadow-lg !important;
-  border-color: rgba(30, 41, 59, 0.5) !important; /* slate-800 */
-}
+.dark .text-gray-900, .dark .text-slate-900 { @apply text-dark-text-primary !important; }
+.dark .text-gray-600, .dark .text-slate-600, .dark .text-gray-700, .dark .text-slate-700 { @apply text-dark-text-secondary !important; }
+.dark .text-gray-500, .dark .text-slate-500 { @apply text-dark-text-muted !important; }
 
-/* ==============================
-   CARD EFFECTS
-   ============================== */
-.hover-card {
-  @apply transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
-}
-
-.dark .hover-card {
-  @apply hover:shadow-dark-lg hover:border-slate-700;
-  /* Removed purple glow */
-}
-
-/* ==============================
-   BUTTONS
-   ============================== */
-.btn {
-  @apply inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
-}
-
-.btn-primary {
-  @apply bg-indigo-600 text-white hover:bg-indigo-700 focus:ring-indigo-500 shadow-sm hover:shadow-md;
-}
-
-.dark .btn-primary {
-  @apply bg-indigo-600 hover:bg-indigo-500 shadow-none border border-transparent;
-}
-
-.btn-secondary {
-  @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:ring-slate-200 shadow-sm;
-}
-
-.dark .btn-secondary {
-  @apply bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-slate-600 !important;
-}
-
-.btn-ghost {
-  @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900;
-}
-
-.dark .btn-ghost {
-  @apply text-slate-400 hover:bg-slate-800 hover:text-slate-200;
-}
-
-/* ==============================
-   DARK MODE OVERRIDES - BACKGROUNDS
-   ============================== */
-/* Map light mode backgrounds to professional dark equivalents */
-
-.dark .bg-white {
-  @apply bg-slate-900 !important; /* dark.card */
-}
-
-.dark .bg-gray-50,
-.dark .bg-slate-50 {
-  @apply bg-slate-950 !important; /* dark.bg */
-}
-
-.dark .bg-slate-100,
-.dark .bg-gray-100 {
-  @apply bg-slate-800 !important; /* dark.bg-tertiary */
-}
-
-.dark .bg-slate-200,
-.dark .bg-gray-200 {
-  @apply bg-slate-700 !important;
-}
-
-/* Navbar specific */
-.dark nav,
-.dark .bg-white\/90 {
-  background-color: rgba(15, 23, 42, 0.9) !important; /* slate-900/90 */
-  @apply backdrop-blur-md border-b border-slate-800 !important;
-}
-
-/* ==============================
-   TEXT COLORS
-   ============================== */
-.dark .text-slate-900,
-.dark .text-gray-900,
-.dark .text-black {
-  @apply text-slate-50 !important; /* Primary text */
-}
-
-.dark .text-slate-800,
-.dark .text-gray-800 {
-  @apply text-slate-100 !important;
-}
-
-.dark .text-slate-700,
-.dark .text-gray-700,
-.dark .text-slate-600,
-.dark .text-gray-600 {
-  @apply text-slate-300 !important; /* Secondary text */
-}
-
-.dark .text-slate-500,
-.dark .text-gray-500,
-.dark .text-gray-400 {
-  @apply text-slate-400 !important; /* Muted text */
-}
-
-/* Remove circular dependency for text-slate-400 */
-/* .dark .text-slate-400 is already slate-400, no need to override */
-
-
-/* ==============================
-   BORDERS
-   ============================== */
-.dark .border-slate-100,
-.dark .border-gray-100,
-.dark .border-slate-200,
-.dark .border-gray-200,
-.dark .border-slate-300,
-.dark .border-gray-300 {
-  @apply border-slate-800 !important;
-}
-
-.dark .divide-slate-200 > :not([hidden]) ~ :not([hidden]),
-.dark .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
-  @apply border-slate-800 !important;
-}
-
-.dark .border-white {
-  @apply border-slate-700 !important;
-}
-
-/* ==============================
-   HOVER STATES
-   ============================== */
-.dark .hover\:bg-slate-50:hover,
-.dark .hover\:bg-gray-50:hover {
-  @apply bg-slate-800 !important;
-}
-
-.dark .hover\:bg-slate-100:hover,
-.dark .hover\:bg-gray-100:hover {
-  @apply bg-slate-800 !important;
-}
-
-.dark .hover\:bg-white:hover {
-  @apply bg-slate-800 !important;
-}
-
-.dark .hover\:text-indigo-600:hover {
-  @apply text-indigo-300 !important;
-}
-
-/* ==============================
-   ACCENT COLORS
-   ============================== */
-.dark .text-indigo-600 {
-  @apply text-indigo-400 !important;
-}
-.dark .text-indigo-700 {
-  @apply text-indigo-300 !important;
-}
-.dark .bg-indigo-50 {
-  @apply bg-indigo-950/50 !important;
-}
-.dark .bg-indigo-100 {
-  @apply bg-indigo-900/50 !important;
-}
-/* Removed bg-indigo-600 recursive apply */
-
-/* Status colors */
-.dark .text-emerald-600 { @apply text-emerald-400 !important; }
-.dark .bg-emerald-50 { @apply bg-emerald-950/50 !important; }
-
-.dark .text-amber-600 { @apply text-amber-400 !important; }
-.dark .bg-amber-50 { @apply bg-amber-950/50 !important; }
-
-.dark .text-rose-600 { @apply text-rose-400 !important; }
-.dark .bg-rose-50 { @apply bg-rose-950/50 !important; }
-
-.dark .text-blue-600 { @apply text-blue-400 !important; }
-.dark .bg-blue-50 { @apply bg-blue-950/50 !important; }
-
-/* ==============================
-   FORMS
-   ============================== */
-.dark input:not([type="checkbox"]):not([type="radio"]),
-.dark textarea,
-.dark select {
-  @apply bg-slate-900 border-slate-700 text-slate-100 placeholder:text-slate-500 !important;
-}
-
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  @apply border-indigo-500 ring-indigo-500/50 bg-slate-900 !important;
-}
-
-/* Ring offsets */
-.dark .focus\:ring-offset-2:focus {
-  --tw-ring-offset-color: #0f172a; /* slate-900 */
-}
-
-/* ==============================
-   MODALS
-   ============================== */
-.dark .bg-black\/50,
-.dark .bg-black.bg-opacity-50 {
-  @apply bg-slate-950/80 !important;
-}
-
-/* ==============================
-   REACT-SELECT
-   ============================== */
-/* Keep react-select overrides but map to slate */
-.dark .react-select__control {
-  @apply bg-slate-900 border-slate-700 !important;
-}
-.dark .react-select__menu {
-  @apply bg-slate-900 border-slate-700 !important;
-}
-.dark .react-select__option {
-  @apply text-slate-300 !important;
-}
-.dark .react-select__option--is-focused {
-  @apply bg-slate-800 !important;
-}
-.dark .react-select__single-value {
-  @apply text-slate-100 !important;
-}
-.dark .react-select__input-container {
-  @apply text-slate-100 !important;
-}
-
-/* ==============================
-   LOADING SPINNERS
-   ============================== */
-.dark .animate-spin {
-  @apply text-indigo-500 !important;
-}
-
-/* ==============================
-   TRANSITIONS
-   ============================== */
-* {
-  transition-property: background-color, border-color, color;
-  transition-duration: 150ms;
-}
-
-/* Remove transition on page load for theme toggle */
-.preload * {
-  transition: none !important;
-}
+/* React Select Dark Mode Overrides */
+.dark .react-select__control { @apply bg-dark-bg-secondary border-dark-border !important; }
+.dark .react-select__menu { @apply bg-dark-card border-dark-border !important; }
+.dark .react-select__option { @apply text-dark-text-secondary bg-transparent !important; }
+.dark .react-select__option--is-focused { @apply bg-dark-bg-tertiary text-dark-text-primary !important; }
+.dark .react-select__single-value { @apply text-dark-text-primary !important; }
+.dark .react-select__input-container { @apply text-dark-text-primary !important; }
