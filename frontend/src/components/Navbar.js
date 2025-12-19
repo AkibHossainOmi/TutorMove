@@ -4,32 +4,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../contexts/UseAuth";
 import { useTheme } from "../contexts/ThemeContext";
 import ProfileImageWithBg from "../components/ProfileImageWithBg";
-import { Sun, Moon } from "lucide-react";
-
-// Icons
-const ChevronDownIcon = ({ className }) => (
-  <svg
-    className={`w-4 h-4 transition-transform duration-200 ${className}`}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-    strokeWidth={2}
-  >
-    <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-  </svg>
-);
-
-const MenuIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-  </svg>
-);
+import { Sun, Moon, Menu, X, ChevronDown, User, LogOut, MessageSquare, LayoutDashboard, SwitchCamera, GraduationCap } from "lucide-react";
 
 // NavLink Component
 const NavLink = ({ to, text }) => {
@@ -39,25 +14,28 @@ const NavLink = ({ to, text }) => {
   return (
     <Link
       to={to}
-      className={`relative px-3 py-2 text-sm font-medium transition-colors duration-200 ${
-        isActive ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400"
+      className={`relative px-3 py-2 text-sm font-medium transition-all duration-300 rounded-lg group ${
+        isActive
+          ? "text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/10"
+          : "text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-slate-50 dark:hover:bg-white/5"
       }`}
     >
       {text}
       {isActive && (
-        <span className="absolute bottom-0 left-0 w-full h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full transform scale-x-100 transition-transform duration-300" />
+        <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary-600 dark:bg-primary-400 rounded-full" />
       )}
     </Link>
   );
 };
 
 // DropdownLink Component
-const DropdownLink = ({ to, text, onClick }) => (
+const DropdownLink = ({ to, text, onClick, icon: Icon }) => (
   <Link
     to={to}
-    className="block px-4 py-2 text-sm text-slate-600 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-400 transition-all rounded-lg mx-1"
     onClick={onClick}
   >
+    {Icon && <Icon className="w-4 h-4 opacity-70" />}
     {text}
   </Link>
 );
@@ -157,46 +135,47 @@ const Navbar = () => {
       ref={navRef}
       className={`fixed top-0 left-0 right-0 z-[50] transition-all duration-300 ${
         scrolled || isMenuOpen
-          ? "bg-white/90 dark:bg-slate-900/90 backdrop-blur-md shadow-sm border-b border-slate-200/50 dark:border-slate-800"
-          : "bg-white dark:bg-slate-900 border-b border-transparent dark:border-transparent"
+          ? "glass border-b border-white/20 dark:border-white/5 py-2"
+          : "bg-transparent py-4"
       }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-12">
           {/* Logo */}
           <div className="flex-shrink-0 flex items-center">
             <Link to="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-indigo-200 shadow-lg group-hover:scale-105 transition-transform">
+              <div className="w-9 h-9 bg-gradient-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary-500/30 group-hover:scale-105 transition-transform duration-300">
                 T
               </div>
-              <span className="text-xl font-bold text-slate-900 dark:text-white tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 tracking-tight group-hover:to-primary-500 transition-all">
                 TutorMove
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center space-x-1">
+          <div className="hidden md:flex items-center space-x-1 bg-white/50 dark:bg-white/5 backdrop-blur-sm px-2 py-1.5 rounded-2xl border border-white/20 dark:border-white/5 shadow-sm">
 
-            {/* Find Tutors Dropdown (Student, Admin, Moderator, or Guest) */}
+            {/* Find Tutors Dropdown */}
             {(userType === "student" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
               <div className="relative group">
                 <button
                   onClick={() => toggleDropdown("tutors")}
-                  className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                     activeDropdown === "tutors"
-                      ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400"
-                      : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      ? "text-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-slate-50 dark:hover:bg-white/5"
                   }`}
                 >
                   Find Tutors
-                  <ChevronDownIcon className={activeDropdown === "tutors" ? "rotate-180" : ""} />
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === "tutors" ? "rotate-180" : ""}`} />
                 </button>
 
                 {/* Desktop Dropdown Panel */}
                 {activeDropdown === "tutors" && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                     <DropdownLink to="/tutors" text="Browse All Tutors" onClick={() => setActiveDropdown(null)} />
+                  <div className="absolute top-full left-0 mt-3 w-64 bg-white dark:bg-dark-card rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-100 dark:border-white/10 p-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                     <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Browse</div>
+                     <DropdownLink to="/tutors" text="All Tutors" onClick={() => setActiveDropdown(null)} />
                      <DropdownLink to="/tutors?type=online" text="Online Tutors" onClick={() => setActiveDropdown(null)} />
                      <DropdownLink to="/tutors?type=home" text="Home Tutors" onClick={() => setActiveDropdown(null)} />
                   </div>
@@ -204,31 +183,32 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Find Jobs Dropdown (Tutor, Admin, Moderator, or Guest) */}
+            {/* Find Jobs Dropdown */}
             {(userType === "tutor" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
               <div className="relative">
                 <button
                   onClick={() => toggleDropdown("jobs")}
-                   className={`flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
+                   className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-300 ${
                     activeDropdown === "jobs"
-                      ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 dark:text-indigo-400"
-                      : "text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-800"
+                      ? "text-primary-600 bg-primary-50 dark:bg-primary-900/20 dark:text-primary-400"
+                      : "text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 hover:bg-slate-50 dark:hover:bg-white/5"
                   }`}
                 >
                   Find Jobs
-                  <ChevronDownIcon className={activeDropdown === "jobs" ? "rotate-180" : ""} />
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === "jobs" ? "rotate-180" : ""}`} />
                 </button>
                 {activeDropdown === "jobs" && (
-                  <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <DropdownLink to="/jobs" text="Browse All Jobs" onClick={() => setActiveDropdown(null)} />
-                    <DropdownLink to="/jobs?type=online" text="Online Teaching Jobs" onClick={() => setActiveDropdown(null)} />
+                  <div className="absolute top-full left-0 mt-3 w-64 bg-white dark:bg-dark-card rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-100 dark:border-white/10 p-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    <div className="px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">Browse</div>
+                    <DropdownLink to="/jobs" text="All Jobs" onClick={() => setActiveDropdown(null)} />
+                    <DropdownLink to="/jobs?type=online" text="Online Jobs" onClick={() => setActiveDropdown(null)} />
                     <DropdownLink to="/jobs?type=assignment" text="Assignment Help" onClick={() => setActiveDropdown(null)} />
                   </div>
                 )}
               </div>
             )}
 
-            <NavLink to="/qna" text="Q&A Forum" />
+            <NavLink to="/qna" text="Q&A" />
             {isAuthenticated && <NavLink to="/dashboard" text="Dashboard" />}
           </div>
 
@@ -237,10 +217,10 @@ const Navbar = () => {
             {/* Theme Toggle Button */}
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-all duration-300 ${
+              className={`p-2.5 rounded-xl transition-all duration-300 border ${
                 isDarkMode
-                  ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700 hover:text-yellow-300'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-indigo-600'
+                  ? 'bg-slate-800/50 border-slate-700 text-yellow-400 hover:bg-slate-700 hover:text-yellow-300 hover:shadow-glow-secondary'
+                  : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50 hover:text-primary-600 hover:border-primary-200'
               }`}
               aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
@@ -255,45 +235,46 @@ const Navbar = () => {
               <div className="relative ml-2">
                 <button
                   onClick={() => toggleDropdown("account")}
-                  className="flex items-center gap-2 p-1 pl-2 pr-1 rounded-full border border-slate-200 dark:border-slate-700 hover:border-indigo-200 hover:shadow-md transition-all bg-white dark:bg-slate-900"
+                  className="flex items-center gap-2.5 pl-3 pr-1.5 py-1.5 rounded-full border border-slate-200 dark:border-white/10 hover:border-primary-300 dark:hover:border-primary-500/50 hover:shadow-lg hover:shadow-primary-500/10 transition-all bg-white dark:bg-white/5 group"
                 >
-                  <span className="text-sm font-medium text-slate-700 dark:text-slate-200 pl-1">{userName}</span>
+                  <span className="text-sm font-semibold text-slate-700 dark:text-slate-200 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">{userName}</span>
                    {profilePicture ? (
-                      <ProfileImageWithBg imageUrl={profilePicture} size={32} className="rounded-full ring-2 ring-white dark:ring-slate-800" />
+                      <ProfileImageWithBg imageUrl={profilePicture} size={36} className="rounded-full ring-2 ring-white dark:ring-slate-800 shadow-sm" />
                     ) : (
-                      <div className="w-8 h-8 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-sm">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary-600 to-secondary-500 text-white flex items-center justify-center font-bold text-sm shadow-md">
                         {userInitial}
                       </div>
                     )}
                 </button>
 
                 {activeDropdown === "account" && (
-                  <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-100 dark:border-slate-800 py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="px-4 py-3 border-b border-slate-50 dark:border-slate-800">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-white">{userName}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userType}</p>
+                  <div className="absolute right-0 top-full mt-3 w-72 bg-white dark:bg-dark-card rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-black/50 border border-slate-100 dark:border-white/10 p-2 animate-in fade-in slide-in-from-top-2 duration-200 z-50">
+                    <div className="px-4 py-4 mb-2 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-100 dark:border-white/5">
+                      <p className="text-base font-bold text-slate-900 dark:text-white">{userName}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wide font-semibold mt-1">{userType}</p>
                        {isDualRole && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 mt-1">
+                          <div className="mt-2 inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-gradient-to-r from-primary-500/10 to-secondary-500/10 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">
                             Dual Role Account
-                          </span>
+                          </div>
                         )}
                     </div>
 
-                    <div className="py-1">
-                      <DropdownLink to="/profile" text="My Profile" onClick={() => setActiveDropdown(null)} />
-                      <DropdownLink to="/dashboard" text="Dashboard" onClick={() => setActiveDropdown(null)} />
-                      <DropdownLink to="/messages" text="Messages" onClick={() => setActiveDropdown(null)} />
+                    <div className="space-y-1">
+                      <DropdownLink to="/profile" text="My Profile" icon={User} onClick={() => setActiveDropdown(null)} />
+                      <DropdownLink to="/dashboard" text="Dashboard" icon={LayoutDashboard} onClick={() => setActiveDropdown(null)} />
+                      <DropdownLink to="/messages" text="Messages" icon={MessageSquare} onClick={() => setActiveDropdown(null)} />
                     </div>
 
-                    <div className="border-t border-slate-50 dark:border-slate-800 py-1">
+                    <div className="border-t border-slate-100 dark:border-white/10 my-2 pt-2 space-y-1">
                        {isDualRole && (
                         <button
                           onClick={() => {
                             handleSwitchRole();
                             setActiveDropdown(null);
                           }}
-                           className="w-full text-left px-4 py-2 text-sm text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 transition-colors"
+                           className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all rounded-lg mx-1"
                         >
+                          <SwitchCamera className="w-4 h-4" />
                           Switch to {userType === 'student' ? 'Tutor' : 'Student'}
                         </button>
                       )}
@@ -303,15 +284,17 @@ const Navbar = () => {
                             navigate('/apply-tutor');
                             setActiveDropdown(null);
                           }}
-                          className="w-full text-left px-4 py-2 text-sm text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 transition-colors"
+                          className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all rounded-lg mx-1"
                         >
+                          <GraduationCap className="w-4 h-4" />
                           Become a Tutor
                         </button>
                       )}
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/30 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-all rounded-lg mx-1"
                       >
+                        <LogOut className="w-4 h-4" />
                         Sign Out
                       </button>
                     </div>
@@ -319,46 +302,40 @@ const Navbar = () => {
                 )}
               </div>
             ) : (
-              <>
+              <div className="flex items-center gap-3">
                 <button
                   onClick={handleLogin}
-                  className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                 >
                   Log In
                 </button>
                 <button
                   onClick={handleRequestTutor}
-                  className="px-5 py-2 text-sm font-medium text-white bg-indigo-600 rounded-full hover:bg-indigo-700 shadow-sm hover:shadow-indigo-200 hover:shadow-lg transition-all transform hover:-translate-y-0.5"
+                  className="btn-primary px-6 py-2.5 text-sm font-semibold rounded-xl"
                 >
                   Get Started
                 </button>
-              </>
+              </div>
             )}
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="md:hidden flex items-center gap-2">
-            {/* Mobile Theme Toggle */}
+          <div className="md:hidden flex items-center gap-3">
             <button
               onClick={toggleTheme}
-              className={`p-2 rounded-lg transition-all duration-300 ${
+              className={`p-2 rounded-lg transition-all ${
                 isDarkMode
-                  ? 'bg-slate-800 text-yellow-400 hover:bg-slate-700'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-slate-800 text-yellow-400'
+                  : 'bg-slate-100 text-slate-600'
               }`}
-              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
             >
-              {isDarkMode ? (
-                <Sun className="w-5 h-5" />
-              ) : (
-                <Moon className="w-5 h-5" />
-              )}
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
             </button>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5"
             >
-              {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
+              {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
@@ -366,16 +343,16 @@ const Navbar = () => {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`md:hidden fixed inset-x-0 top-[64px] bg-white dark:bg-slate-900 border-b border-slate-100 dark:border-slate-800 shadow-lg transform transition-all duration-300 origin-top overflow-y-auto max-h-[calc(100vh-64px)] ${
+        className={`md:hidden fixed inset-x-0 top-[60px] bg-white dark:bg-dark-bg border-b border-slate-100 dark:border-white/5 shadow-xl transform transition-all duration-300 origin-top overflow-y-auto max-h-[calc(100vh-60px)] ${
           isMenuOpen ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0"
         }`}
       >
-        <div className="px-4 py-6 space-y-4">
+        <div className="px-4 py-6 space-y-6">
            {/* Mobile Navigation Links */}
            <div className="space-y-1">
              <Link
                 to="/"
-                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                className="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-400"
                 onClick={() => setIsMenuOpen(false)}
              >
                 Home
@@ -383,23 +360,23 @@ const Navbar = () => {
 
               {(userType === "student" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
                 <>
-                  <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Tutors</div>
-                  <Link to="/tutors" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Browse All</Link>
-                  <Link to="/tutors?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Online Tutors</Link>
+                  <div className="px-4 pt-4 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Find Tutors</div>
+                  <Link to="/tutors" className="block px-4 py-3 rounded-xl text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5" onClick={() => setIsMenuOpen(false)}>Browse All</Link>
+                  <Link to="/tutors?type=online" className="block px-4 py-3 rounded-xl text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5" onClick={() => setIsMenuOpen(false)}>Online Tutors</Link>
                 </>
               )}
 
               {(userType === "tutor" || userType === "admin" || userType === "moderator" || !isAuthenticated) && (
                 <>
-                  <div className="px-3 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider mt-4">Jobs</div>
-                  <Link to="/jobs" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Browse Jobs</Link>
-                  <Link to="/jobs?type=online" className="block px-3 py-2 text-base font-medium text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 pl-6" onClick={() => setIsMenuOpen(false)}>Online Jobs</Link>
+                  <div className="px-4 pt-4 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Find Jobs</div>
+                  <Link to="/jobs" className="block px-4 py-3 rounded-xl text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5" onClick={() => setIsMenuOpen(false)}>Browse Jobs</Link>
+                  <Link to="/jobs?type=online" className="block px-4 py-3 rounded-xl text-base font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5" onClick={() => setIsMenuOpen(false)}>Online Jobs</Link>
                 </>
               )}
 
               <Link
                 to="/qna"
-                className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400 mt-2"
+                className="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-400 mt-2"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Q&A Forum
@@ -408,7 +385,7 @@ const Navbar = () => {
               {isAuthenticated && (
                 <Link
                   to="/dashboard"
-                  className="block px-3 py-2 rounded-lg text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  className="block px-4 py-3 rounded-xl text-base font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 hover:text-primary-600 dark:hover:text-primary-400"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Dashboard
@@ -417,41 +394,43 @@ const Navbar = () => {
            </div>
 
            {/* Mobile Auth Actions */}
-           <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+           <div className="pt-6 border-t border-slate-100 dark:border-white/5">
              {isAuthenticated ? (
-               <div className="space-y-3 px-3">
-                 <div className="flex items-center gap-3 mb-4">
+               <div className="space-y-4 px-2">
+                 <div className="flex items-center gap-4 p-3 bg-slate-50 dark:bg-white/5 rounded-2xl">
                    {profilePicture ? (
-                      <ProfileImageWithBg imageUrl={profilePicture} size={40} className="rounded-full" />
+                      <ProfileImageWithBg imageUrl={profilePicture} size={48} className="rounded-full" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-semibold text-base">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-600 to-secondary-500 text-white flex items-center justify-center font-bold text-lg">
                         {userInitial}
                       </div>
                     )}
                    <div>
-                     <div className="font-semibold text-slate-900 dark:text-white">{userName}</div>
+                     <div className="font-bold text-slate-900 dark:text-white">{userName}</div>
                      <div className="text-xs text-slate-500 dark:text-slate-400 capitalize">{userType}</div>
                    </div>
                  </div>
 
-                 <Link to="/profile" className="block text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium" onClick={() => setIsMenuOpen(false)}>My Profile</Link>
-                 <Link to="/messages" className="block text-slate-600 dark:text-slate-300 hover:text-indigo-600 dark:hover:text-indigo-400 font-medium" onClick={() => setIsMenuOpen(false)}>Messages</Link>
+                 <div className="grid grid-cols-2 gap-2">
+                   <Link to="/profile" className="flex justify-center py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 font-medium" onClick={() => setIsMenuOpen(false)}>Profile</Link>
+                   <Link to="/messages" className="flex justify-center py-2.5 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-200 font-medium" onClick={() => setIsMenuOpen(false)}>Messages</Link>
+                 </div>
 
                  <button
                     onClick={handleLogout}
-                    className="block w-full text-left text-rose-600 dark:text-rose-400 font-medium hover:text-rose-700 dark:hover:text-rose-300"
+                    className="block w-full py-3 rounded-xl text-center text-rose-600 dark:text-rose-400 font-medium bg-rose-50 dark:bg-rose-900/10 hover:bg-rose-100 dark:hover:bg-rose-900/20"
                  >
                     Sign Out
                  </button>
                </div>
              ) : (
-               <div className="grid grid-cols-2 gap-4 px-3">
+               <div className="flex flex-col gap-3 px-2">
                  <button
                     onClick={() => {
                       handleLogin();
                       setIsMenuOpen(false);
                     }}
-                    className="flex justify-center items-center px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-slate-700 dark:text-slate-200 font-medium hover:bg-slate-50 dark:hover:bg-slate-800"
+                    className="w-full py-3 rounded-xl border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-200 font-bold hover:bg-slate-50 dark:hover:bg-white/5"
                  >
                    Log In
                  </button>
@@ -460,9 +439,9 @@ const Navbar = () => {
                       handleRequestTutor();
                       setIsMenuOpen(false);
                     }}
-                    className="flex justify-center items-center px-4 py-2 bg-indigo-600 rounded-lg text-white font-medium hover:bg-indigo-700 shadow-sm"
+                    className="w-full py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 shadow-lg shadow-primary-500/20"
                  >
-                   Sign Up
+                   Get Started
                  </button>
                </div>
              )}
