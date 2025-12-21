@@ -1,18 +1,20 @@
+// src/pages/JobList.js
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Pagination from "../components/Pagination";
+import JobCard from "../components/JobCard";
 import {
-  FiBriefcase,
-  FiMapPin,
-  FiBook,
-  FiClock,
-  FiSearch,
-  FiUser,
-  FiFilter,
-} from "react-icons/fi";
+  Briefcase,
+  MapPin,
+  BookOpen,
+  Clock,
+  Search,
+  Filter,
+} from "lucide-react";
 import { jobAPI } from "../utils/apiService";
+import Button from "../components/ui/Button";
 
 const JobList = () => {
   const [jobs, setJobs] = useState([]);
@@ -86,42 +88,45 @@ const JobList = () => {
   };
 
   const JobSkeleton = () => (
-    <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border p-6 animate-pulse">
-      <div className="h-6 w-3/4 bg-gray-100 dark:bg-dark-bg-secondary rounded mb-3"></div>
-      <div className="h-4 w-1/2 bg-gray-100 dark:bg-dark-bg-secondary rounded mb-6"></div>
+    <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 p-6 animate-pulse">
+      <div className="h-6 w-3/4 bg-slate-100 dark:bg-dark-bg-secondary rounded mb-3"></div>
+      <div className="h-4 w-1/2 bg-slate-100 dark:bg-dark-bg-secondary rounded mb-6"></div>
       <div className="flex gap-4">
-        <div className="h-4 w-20 bg-gray-100 dark:bg-dark-bg-secondary rounded"></div>
-        <div className="h-4 w-20 bg-gray-100 dark:bg-dark-bg-secondary rounded"></div>
-        <div className="h-4 w-20 bg-gray-100 dark:bg-dark-bg-secondary rounded"></div>
+        <div className="h-4 w-20 bg-slate-100 dark:bg-dark-bg-secondary rounded"></div>
+        <div className="h-4 w-20 bg-slate-100 dark:bg-dark-bg-secondary rounded"></div>
+        <div className="h-4 w-20 bg-slate-100 dark:bg-dark-bg-secondary rounded"></div>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-dark-bg font-sans text-gray-900 dark:text-gray-300 transition-colors duration-300">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-dark-bg font-sans text-slate-900 dark:text-slate-300 transition-colors duration-300">
       <Navbar />
 
       {/* Hero Section */}
       <div className="relative bg-dark-bg-secondary text-white pt-32 pb-24 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-dark-bg-secondary to-secondary-900 opacity-90"></div>
-        <div className="absolute -top-24 -right-24 w-96 h-96 bg-primary-500/20 rounded-full blur-3xl animate-pulse-slow"></div>
-        <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-secondary-500/20 rounded-full blur-3xl animate-pulse-slow" style={{ animationDelay: '2s' }}></div>
+        {/* Background Effects */}
+        <div className="absolute inset-0 z-0">
+           <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-950 to-slate-900 opacity-90"></div>
+           <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary-600/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+           <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-secondary-600/10 rounded-full blur-[100px] animate-float"></div>
+        </div>
 
         <div className="relative max-w-6xl mx-auto px-6 text-center z-10">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6">
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             Find Your Next <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-400 to-secondary-400">Opportunity</span>
           </h1>
-          <p className="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-10">
+          <p className="text-lg md:text-xl text-slate-300 max-w-2xl mx-auto mb-10 font-light animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
             Browse hundreds of tutoring jobs and connect with students who need your expertise.
           </p>
 
-          <div className="relative max-w-2xl mx-auto">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <FiSearch className="h-5 w-5 text-gray-400" />
+          <div className="relative max-w-2xl mx-auto animate-in fade-in zoom-in duration-500 delay-200">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+              <Search className="h-5 w-5 text-slate-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-12 pr-4 py-4 bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all shadow-lg"
+              className="block w-full pl-12 pr-4 py-4.5 bg-white/10 dark:bg-black/30 backdrop-blur-md border border-white/20 dark:border-white/10 rounded-2xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all shadow-xl hover:bg-white/15 dark:hover:bg-black/40"
               placeholder="Search by subject, skills, or location..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -136,9 +141,9 @@ const JobList = () => {
 
           {/* Filters Sidebar */}
           <div className="lg:col-span-1">
-            <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-gray-100 dark:border-dark-border p-6 sticky top-24">
-              <div className="flex items-center gap-2 mb-6 text-gray-800 dark:text-white font-bold">
-                <FiFilter className="w-5 h-5" />
+            <div className="bg-white dark:bg-dark-card rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 p-6 sticky top-24">
+              <div className="flex items-center gap-2 mb-6 text-slate-800 dark:text-white font-bold">
+                <Filter className="w-5 h-5" />
                 <span>Filters</span>
               </div>
 
@@ -169,15 +174,15 @@ const JobList = () => {
 
           {/* Job List */}
           <div className="lg:col-span-3 space-y-6">
-            <div className="flex items-center justify-between pb-4 border-b border-gray-200 dark:border-dark-border mb-2">
-              <h2 className="text-xl font-bold text-gray-800 dark:text-white">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 mb-2">
+              <h2 className="text-xl font-bold text-slate-800 dark:text-white">
                 {totalPages > 0 ? (
                     <>Showing page <span className="text-primary-600 dark:text-primary-400">{currentPage}</span> of {totalPages}</>
                 ) : (
                     "No Jobs Found"
                 )}
               </h2>
-              <span className="text-sm text-gray-500 dark:text-gray-400 font-medium bg-gray-100 dark:bg-dark-bg-tertiary px-3 py-1 rounded-full">
+              <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-lg">
                 Newest First
               </span>
             </div>
@@ -189,27 +194,27 @@ const JobList = () => {
                 ))}
               </div>
             ) : jobs.length === 0 ? (
-              <div className="text-center py-20 bg-white dark:bg-dark-card rounded-2xl border border-dashed border-gray-300 dark:border-dark-border">
-                <div className="mx-auto w-16 h-16 bg-gray-50 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mb-4">
-                  <FiBriefcase className="text-gray-400 dark:text-gray-500 text-2xl" />
+              <div className="text-center py-20 bg-white dark:bg-dark-card rounded-2xl border border-dashed border-slate-300 dark:border-white/10">
+                <div className="mx-auto w-16 h-16 bg-slate-50 dark:bg-dark-bg-secondary rounded-full flex items-center justify-center mb-4">
+                  <Briefcase className="text-slate-400 dark:text-slate-500 w-8 h-8" />
                 </div>
-                <h3 className="text-lg font-bold text-gray-800 dark:text-white mb-2">No jobs found</h3>
-                <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-6">
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-2">No jobs found</h3>
+                <p className="text-slate-500 dark:text-slate-400 max-w-md mx-auto mb-6 text-sm">
                   Try adjusting your search or filters to find what you're looking for.
                 </p>
-                <button
+                <Button
                   onClick={() => {
                     setSearchQuery("");
                     handleFilterChange("all");
                   }}
-                  className="px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-xl transition-colors shadow-md"
+                  variant="primary"
                 >
                   Clear Filters
-                </button>
+                </Button>
               </div>
             ) : (
               <>
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
                   {jobs.map((job) => (
                     <JobCard key={job.id} job={job} />
                   ))}
@@ -217,11 +222,13 @@ const JobList = () => {
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                  <Pagination 
-                      currentPage={currentPage} 
-                      totalPages={totalPages} 
-                      onPageChange={handlePageChange} 
-                  />
+                  <div className="mt-8">
+                     <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={handlePageChange}
+                     />
+                  </div>
                 )}
               </>
             )}
@@ -239,94 +246,12 @@ const FilterButton = ({ isActive, onClick, label }) => (
     onClick={onClick}
     className={`w-full text-left px-4 py-3 rounded-xl text-sm font-medium transition-all ${
       isActive
-        ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 border border-primary-100 dark:border-primary-800/30"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-dark-bg-tertiary"
+        ? "bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 border border-primary-100 dark:border-primary-800/30 font-semibold"
+        : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5"
     }`}
   >
     {label}
   </button>
-);
-
-const JobCard = ({ job }) => (
-  <div className="group bg-white dark:bg-dark-card rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-dark-border hover:shadow-lg dark:hover:shadow-glow hover:border-primary-200 dark:hover:border-primary-500/30 transition-all duration-300">
-    <div className="flex flex-col md:flex-row gap-6">
-      <div className="flex-shrink-0">
-        <div className="w-14 h-14 bg-primary-50 dark:bg-primary-900/20 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300">
-          <FiBriefcase className="w-6 h-6" />
-        </div>
-      </div>
-
-      <div className="flex-grow">
-        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-3">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-              {job.description || "Untitled Job"}
-            </h3>
-            <div className="flex flex-wrap gap-2 mt-2">
-              <Badge>{job.service_type || "General"}</Badge>
-              {job.mode?.includes("Online") && (
-                <Badge color="green">Remote</Badge>
-              )}
-              {job.mode?.includes("Offline") && (
-                <Badge color="amber">On-site</Badge>
-              )}
-            </div>
-          </div>
-
-          <div className="text-right flex-shrink-0">
-            <span className="block text-lg font-bold text-gray-900 dark:text-white">{job.budget || "Negotiable"}</span>
-            <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Budget</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-y-2 gap-x-4 text-sm text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-100 dark:border-dark-border">
-          <InfoItem icon={<FiBook className="w-4 h-4" />} text={job.subject_details?.join(", ") || "N/A"} />
-          <InfoItem icon={<FiMapPin className="w-4 h-4" />} text={job.location || "Remote"} />
-          <InfoItem icon={<FiUser className="w-4 h-4" />} text={job.mode || "N/A"} />
-          <InfoItem
-            icon={<FiClock className="w-4 h-4" />}
-            text={new Date(job.created_at).toLocaleDateString("en-GB", {
-              day: "numeric",
-              month: "short",
-            })}
-          />
-        </div>
-      </div>
-    </div>
-
-    <div className="mt-5 flex justify-end">
-      <Link
-        to={`/jobs/${job.id}`}
-        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-gray-900 text-sm font-bold hover:bg-primary-600 dark:hover:bg-primary-400 dark:hover:text-white transition-colors shadow-sm"
-      >
-        View Details
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-        </svg>
-      </Link>
-    </div>
-  </div>
-);
-
-const Badge = ({ children, color = "indigo" }) => {
-  const colors = {
-    indigo: "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400 border-primary-100 dark:border-primary-800/30",
-    green: "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/30",
-    amber: "bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-800/30",
-  };
-
-  return (
-    <span className={`px-2.5 py-0.5 rounded-md text-xs font-bold border ${colors[color] || colors.indigo}`}>
-      {children}
-    </span>
-  );
-};
-
-const InfoItem = ({ icon, text }) => (
-  <div className="flex items-center gap-2 truncate">
-    <span className="text-gray-400 dark:text-gray-500 flex-shrink-0">{icon}</span>
-    <span className="truncate" title={text}>{text}</span>
-  </div>
 );
 
 export default JobList;

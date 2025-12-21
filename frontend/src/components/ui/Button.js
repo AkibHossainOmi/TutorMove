@@ -1,95 +1,52 @@
+// src/components/ui/Button.js
 import React from 'react';
-import PropTypes from 'prop-types';
+import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+
+const variants = {
+  primary: "bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-lg shadow-primary-500/25 border-transparent hover:shadow-primary-500/40",
+  secondary: "bg-white dark:bg-dark-card text-slate-700 dark:text-slate-200 border-slate-200 dark:border-dark-border hover:bg-slate-50 dark:hover:bg-dark-bg-secondary hover:border-slate-300 dark:hover:border-dark-border-hover shadow-sm",
+  accent: "bg-gradient-to-r from-secondary-500 to-pink-500 text-white shadow-lg shadow-secondary-500/25 border-transparent hover:shadow-secondary-500/40",
+  ghost: "bg-transparent text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-dark-bg-secondary hover:text-slate-900 dark:hover:text-slate-200 border-transparent shadow-none",
+  danger: "bg-red-500 text-white hover:bg-red-600 shadow-md shadow-red-500/20 border-transparent",
+  success: "bg-emerald-500 text-white hover:bg-emerald-600 shadow-md shadow-emerald-500/20 border-transparent",
+  outline: "bg-transparent border-2 border-primary-500 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+};
+
+const sizes = {
+  sm: "px-3 py-1.5 text-xs",
+  md: "px-5 py-2.5 text-sm",
+  lg: "px-6 py-3 text-base",
+  xl: "px-8 py-4 text-lg"
+};
 
 const Button = ({
   children,
   variant = 'primary',
   size = 'md',
-  loading = false,
-  disabled = false,
-  icon: Icon = null,
-  iconPosition = 'left',
-  fullWidth = false,
+  isLoading = false,
+  leftIcon,
+  rightIcon,
   className = '',
-  onClick,
-  type = 'button',
+  disabled,
   ...props
 }) => {
-  // Base styles
-  const baseStyles = 'inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
-
-  // Variant styles - Purple Theme
-  const variantStyles = {
-    primary: 'bg-gradient-to-r from-purple-600 to-purple-700 text-white hover:from-purple-700 hover:to-purple-800 hover:shadow-lg hover:-translate-y-0.5 focus:ring-purple-500 shadow-md',
-    secondary: 'bg-purple-50 text-purple-700 hover:bg-purple-100 hover:shadow-md focus:ring-purple-500 shadow-sm border border-purple-200',
-    outline: 'border-2 border-purple-500 text-purple-600 hover:bg-purple-50 focus:ring-purple-500 bg-white',
-    ghost: 'text-purple-600 hover:bg-purple-50 focus:ring-purple-500',
-    link: 'text-purple-600 hover:text-purple-700 underline-offset-4 hover:underline focus:ring-purple-500',
-    danger: 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:-translate-y-0.5 focus:ring-red-500 shadow-md',
-    success: 'bg-emerald-600 text-white hover:bg-emerald-700 hover:shadow-lg hover:-translate-y-0.5 focus:ring-emerald-500 shadow-md',
-  };
-
-  // Size styles
-  const sizeStyles = {
-    xs: 'px-2.5 py-1.5 text-xs rounded-md gap-1',
-    sm: 'px-3 py-2 text-sm rounded-lg gap-1.5',
-    md: 'px-4 py-2.5 text-base rounded-lg gap-2',
-    lg: 'px-6 py-3 text-lg rounded-xl gap-2',
-    xl: 'px-8 py-4 text-xl rounded-xl gap-2.5',
-  };
-
-  // Width style
-  const widthStyle = fullWidth ? 'w-full' : '';
-
-  // Icon sizes
-  const iconSizes = {
-    xs: 14,
-    sm: 16,
-    md: 18,
-    lg: 20,
-    xl: 22,
-  };
-
-  const iconSize = iconSizes[size];
-
-  // Combined className
-  const buttonClasses = `${baseStyles} ${variantStyles[variant]} ${sizeStyles[size]} ${widthStyle} ${className}`;
+  const baseStyles = "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 dark:ring-offset-dark-bg disabled:opacity-60 disabled:cursor-not-allowed border";
 
   return (
-    <button
-      type={type}
-      className={buttonClasses}
-      onClick={onClick}
-      disabled={disabled || loading}
+    <motion.button
+      whileHover={{ scale: disabled || isLoading ? 1 : 1.02, y: disabled || isLoading ? 0 : -1 }}
+      whileTap={{ scale: disabled || isLoading ? 1 : 0.98 }}
+      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      disabled={disabled || isLoading}
       {...props}
     >
-      {loading && (
-        <Loader2 size={iconSize} className="animate-spin" />
-      )}
-      {!loading && Icon && iconPosition === 'left' && (
-        <Icon size={iconSize} />
-      )}
+      {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+      {!isLoading && leftIcon && <span className="mr-2">{leftIcon}</span>}
       {children}
-      {!loading && Icon && iconPosition === 'right' && (
-        <Icon size={iconSize} />
-      )}
-    </button>
+      {!isLoading && rightIcon && <span className="ml-2">{rightIcon}</span>}
+    </motion.button>
   );
-};
-
-Button.propTypes = {
-  children: PropTypes.node.isRequired,
-  variant: PropTypes.oneOf(['primary', 'secondary', 'outline', 'ghost', 'link', 'danger', 'success']),
-  size: PropTypes.oneOf(['xs', 'sm', 'md', 'lg', 'xl']),
-  loading: PropTypes.bool,
-  disabled: PropTypes.bool,
-  icon: PropTypes.elementType,
-  iconPosition: PropTypes.oneOf(['left', 'right']),
-  fullWidth: PropTypes.bool,
-  className: PropTypes.string,
-  onClick: PropTypes.func,
-  type: PropTypes.oneOf(['button', 'submit', 'reset']),
 };
 
 export default Button;

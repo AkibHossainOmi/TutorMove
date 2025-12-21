@@ -1,7 +1,10 @@
+// src/components/Profile/ProfileHeader.js
 import React from 'react';
-import { FaCamera, FaEdit, FaSave, FaCopy } from 'react-icons/fa';
+import { Camera, Edit2, Save, Copy, Check } from 'lucide-react';
 import ProfileImageWithBg from '../ProfileImageWithBg';
 import { toast } from 'react-hot-toast';
+import Button from '../ui/Button';
+import Card from '../ui/Card';
 
 const ProfileHeader = ({ profile }) => {
   const {
@@ -20,57 +23,61 @@ const ProfileHeader = ({ profile }) => {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-lg overflow-hidden p-6 flex flex-col md:flex-row items-center justify-between gap-6">
-      <div className="flex items-center gap-6 w-full md:w-auto">
-        <div className="relative">
-          <ProfileImageWithBg
-            imageUrl={previewImage || userData.profile_picture}
-            size={96}
-          />
-          {isEditing && (
-            <label className="absolute bottom-0 right-0 bg-indigo-600 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-700">
-              <FaCamera />
-              <input
-                type="file"
-                className="hidden"
-                onChange={e => handleProfileFileChange(e.target.files[0])}
-              />
-            </label>
-          )}
-        </div>
-        <div className="flex flex-col justify-center">
-          <h1 className="text-2xl md:text-3xl font-bold">{userData.first_name} {userData.last_name}</h1>
-          <p className="text-gray-600">{userType.charAt(0).toUpperCase() + userType.slice(1)}</p>
-        </div>
-      </div>
+    <Card className="p-8 mb-8 overflow-hidden relative border-none shadow-elevation-2 dark:shadow-none">
+      {/* Decorative Background */}
+      <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-primary-600 to-secondary-600 dark:from-primary-900 dark:to-secondary-900 opacity-90 z-0"></div>
 
-      <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
-        <button
-          onClick={copyReferralLink}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition w-full sm:w-auto bg-purple-600 text-white hover:bg-purple-700"
-        >
-          <FaCopy className="text-sm" /> Copy Referral Link
-        </button>
-        <button
-          onClick={toggleEdit}
-          className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-medium transition w-full sm:w-auto ${
-            isEditing
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-white text-indigo-700 border border-indigo-700 hover:bg-indigo-50'
-          }`}
-        >
-          {isEditing ? (
-            <>
-              <FaSave className="text-sm" /> Save Changes
-            </>
-          ) : (
-            <>
-              <FaEdit className="text-sm" /> Edit Profile
-            </>
-          )}
-        </button>
+      <div className="relative z-10 flex flex-col md:flex-row items-end md:items-center justify-between gap-6 mt-12">
+        <div className="flex items-end gap-6 w-full md:w-auto">
+          <div className="relative group">
+            <div className="p-1 bg-white dark:bg-dark-card rounded-2xl shadow-sm">
+                <ProfileImageWithBg
+                    imageUrl={previewImage || userData.profile_picture}
+                    size={120}
+                    className="rounded-xl border-2 border-white dark:border-dark-bg"
+                />
+            </div>
+            {isEditing && (
+              <label className="absolute bottom-2 right-2 bg-primary-600 text-white p-2 rounded-full cursor-pointer hover:bg-primary-700 shadow-lg hover:scale-110 transition-transform">
+                <Camera className="w-4 h-4" />
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={e => handleProfileFileChange(e.target.files[0])}
+                />
+              </label>
+            )}
+          </div>
+
+          <div className="flex flex-col mb-2">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white leading-tight">
+              {userData.first_name || userData.username} {userData.last_name}
+            </h1>
+            <p className="text-slate-500 dark:text-slate-300 font-medium text-lg">
+              {userType.charAt(0).toUpperCase() + userType.slice(1)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto mb-2">
+          <Button
+            variant="secondary"
+            onClick={copyReferralLink}
+            leftIcon={<Copy className="w-4 h-4" />}
+          >
+             Referral Link
+          </Button>
+
+          <Button
+            variant={isEditing ? 'success' : 'primary'}
+            onClick={toggleEdit}
+            leftIcon={isEditing ? <Save className="w-4 h-4" /> : <Edit2 className="w-4 h-4" />}
+          >
+            {isEditing ? 'Save Changes' : 'Edit Profile'}
+          </Button>
+        </div>
       </div>
-    </div>
+    </Card>
   );
 };
 

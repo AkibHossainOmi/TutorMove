@@ -5,7 +5,10 @@ import BuyCreditsModal from './BuyCreditsModal';
 import { contactUnlockAPI } from '../utils/apiService';
 import ProfileImageWithBg from './ProfileImageWithBg';
 import StarRating from './StarRating';
-import { MapPin, CheckCircle, Mail, Phone, Lock, Unlock, ArrowRight } from 'lucide-react';
+import { MapPin, CheckCircle, Mail, Phone, Lock, Unlock, ArrowRight, BookOpen } from 'lucide-react';
+import Card from './ui/Card';
+import Badge from './ui/Badge';
+import Button from './ui/Button';
 
 const TutorCard = ({ tutor, featured = false }) => {
   const [contactInfo, setContactInfo] = useState({ phone: '', email: '' });
@@ -41,7 +44,7 @@ const TutorCard = ({ tutor, featured = false }) => {
     try {
       const user = JSON.parse(localStorage.getItem('user'));
       if (!user || user.user_type !== 'student') {
-        setError('Only students can unlock tutor contact info. Please log in as a student.');
+        setError('Only students can unlock contact info.');
         setUnlocking(false);
         return;
       }
@@ -70,43 +73,51 @@ const TutorCard = ({ tutor, featured = false }) => {
   };
 
   return (
-    <div
-      className={`group relative bg-white rounded-2xl overflow-hidden transition-all duration-300 ${
-        featured
-          ? 'border-2 border-amber-200 shadow-lg ring-4 ring-amber-50'
-          : 'border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-100 hover:-translate-y-1'
-      }`}
+    <Card
+      className={`group h-full flex flex-col ${featured ? 'ring-2 ring-amber-400/50 dark:ring-amber-500/30' : ''}`}
+      hover={true}
+      noPadding={false}
     >
       {/* Featured Badge */}
       {featured && (
-        <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-400 to-amber-300 text-amber-900 text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-sm z-10 uppercase tracking-wider flex items-center gap-1">
-           <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-           Top Rated
+        <div className="absolute top-0 right-0 z-10">
+          <div className="bg-gradient-to-l from-amber-400 to-amber-300 text-amber-950 text-[10px] font-extrabold px-3 py-1 rounded-bl-xl shadow-sm uppercase tracking-wider flex items-center gap-1">
+             <StarRating rating={1} count={0} size={10} className="text-amber-900" />
+             Top Rated
+          </div>
         </div>
       )}
 
-      <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-8">
+      <div className="flex flex-col md:flex-row gap-6">
         {/* Left Column: Avatar & Quick Stats */}
-        <div className="flex-shrink-0 flex flex-col items-center md:items-start space-y-4 md:w-56">
+        <div className="flex-shrink-0 flex flex-col items-center md:items-start space-y-4 md:w-48">
           <div className="relative group-hover:scale-105 transition-transform duration-300">
              {tutor.profile_picture ? (
-                <ProfileImageWithBg imageUrl={tutor.profile_picture} size={110} className="rounded-2xl shadow-md" />
+                <ProfileImageWithBg imageUrl={tutor.profile_picture} size={96} className="rounded-2xl shadow-md border-2 border-white dark:border-dark-bg" />
              ) : (
-                <div className="w-28 h-28 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-4xl font-bold text-white shadow-md">
+                <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 dark:from-primary-600 dark:to-primary-700 flex items-center justify-center text-3xl font-bold text-white shadow-md border-2 border-white dark:border-dark-bg">
                   {tutor.username?.charAt(0).toUpperCase() || 'T'}
+                </div>
+             )}
+             {tutor.is_verified && (
+                <div className="absolute -bottom-2 -right-2 bg-white dark:bg-dark-bg p-1 rounded-full shadow-sm">
+                   <CheckCircle className="w-5 h-5 text-blue-500 fill-blue-50 dark:fill-blue-900/30" />
                 </div>
              )}
           </div>
 
-          <div className="text-center md:text-left w-full space-y-2">
-            <div className="flex items-center justify-center md:justify-start gap-1.5 text-slate-500 text-sm font-medium">
-              <MapPin className="w-4 h-4 text-slate-400" />
+          <div className="text-center md:text-left w-full space-y-3">
+            <div className="flex items-center justify-center md:justify-start gap-1.5 text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-wide">
+              <MapPin className="w-3.5 h-3.5" />
               <span>{tutor.location || 'Remote'}</span>
             </div>
 
             {tutor.hourly_rate && (
-              <div className="inline-flex items-center justify-center md:justify-start px-3 py-1 bg-slate-50 border border-slate-200 rounded-full text-sm font-semibold text-slate-900 w-full md:w-auto">
-                ${tutor.hourly_rate}/hr
+              <div className="flex flex-col items-center md:items-start">
+                 <span className="text-2xl font-bold text-slate-900 dark:text-white leading-none">
+                    ${tutor.hourly_rate}
+                 </span>
+                 <span className="text-xs text-slate-400 font-medium">per hour</span>
               </div>
             )}
           </div>
@@ -114,102 +125,82 @@ const TutorCard = ({ tutor, featured = false }) => {
 
         {/* Right Column: Main Info & Actions */}
         <div className="flex-grow flex flex-col min-w-0">
-          <div className="flex flex-wrap items-start justify-between gap-4 mb-3">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3">
              <div>
-                <div className="flex items-center gap-2 mb-1">
-                   <h3 className="text-2xl font-bold text-slate-900 hover:text-indigo-600 transition-colors cursor-pointer">
-                      <Link to={`/profile/${tutor.username}`}>{tutor.username || 'Anonymous Tutor'}</Link>
-                   </h3>
-                   {tutor.is_verified && (
-                     <span className="inline-flex items-center p-1 rounded-full bg-blue-50 text-blue-600" title="Verified Tutor">
-                        <CheckCircle className="w-4 h-4" />
-                     </span>
-                   )}
+                <Link
+                   to={`/profile/${tutor.username}`}
+                   className="text-xl font-bold text-slate-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-1"
+                >
+                   {tutor.username || 'Anonymous Tutor'}
+                </Link>
+                <div className="flex items-center gap-2 mt-1">
+                   <StarRating rating={tutor.average_rating || 0} count={tutor.review_count || 0} size={14} />
                 </div>
-                <div className="flex items-center gap-3">
-                   <StarRating rating={tutor.average_rating || 0} count={tutor.review_count || 0} size={16} />
-                </div>
-             </div>
-
-             <div className="hidden sm:block">
-                 {currentUserType === 'student' ? (
-                   <Link
-                      to={`/profile/${tutor.username}`}
-                      className="btn btn-primary px-6 py-2 rounded-full shadow-md shadow-indigo-200 hover:shadow-lg transition-all text-sm"
-                   >
-                      View Profile
-                   </Link>
-                 ) : (
-                    <Link
-                      to={`/profile/${tutor.username}`}
-                      className="btn btn-secondary px-6 py-2 rounded-full text-sm"
-                   >
-                      View Profile
-                   </Link>
-                 )}
              </div>
           </div>
 
           {/* Subjects Tags */}
           <div className="mb-4">
-             <div className="flex flex-wrap gap-2">
+             <div className="flex flex-wrap gap-1.5">
                 {tutor.subjects?.length > 0 ? (
-                  tutor.subjects.slice(0, 5).map((subject, i) => (
-                    <span key={i} className="px-3 py-1 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg border border-indigo-100">
+                  tutor.subjects.slice(0, 4).map((subject, i) => (
+                    <Badge key={i} variant="primary" icon={BookOpen}>
                       {subject}
-                    </span>
+                    </Badge>
                   ))
                 ) : (
                   <span className="text-sm text-slate-400 italic">No subjects listed</span>
                 )}
-                {tutor.subjects?.length > 5 && (
-                   <span className="px-3 py-1 text-xs font-semibold bg-slate-100 text-slate-600 rounded-lg border border-slate-200">
-                     +{tutor.subjects.length - 5}
-                   </span>
+                {tutor.subjects?.length > 4 && (
+                   <Badge variant="neutral">+{tutor.subjects.length - 4}</Badge>
                 )}
              </div>
           </div>
 
-          <p className="text-slate-600 text-sm leading-relaxed line-clamp-2 mb-6 flex-grow">
+          <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed line-clamp-3 mb-6 flex-grow">
             {tutor.bio || "This tutor hasn't added a bio yet, but they are verified and ready to teach!"}
           </p>
 
           {/* Contact & Mobile Action */}
-          <div className="mt-auto pt-6 border-t border-slate-100 flex flex-col sm:flex-row gap-4 items-center justify-between">
-              <div className="w-full sm:w-auto">
-                 {isUnlocked ? (
-                    <div className="flex flex-col sm:flex-row gap-3 text-sm">
-                       <div className="flex items-center gap-2 text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                          <Phone className="w-4 h-4 text-emerald-500" />
-                          <span className="font-medium select-all">{contactInfo.phone || 'N/A'}</span>
-                       </div>
-                       <div className="flex items-center gap-2 text-slate-700 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200">
-                          <Mail className="w-4 h-4 text-blue-500" />
-                          <span className="font-medium select-all">{contactInfo.email || 'N/A'}</span>
-                       </div>
-                    </div>
-                 ) : (
-                    <button
-                      onClick={handleUnlockContact}
-                      disabled={unlocking}
-                      className="group flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-indigo-600 transition-colors"
-                    >
-                       <div className="p-1.5 bg-slate-100 rounded-lg group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                          {unlocking ? <div className="animate-spin h-4 w-4 border-2 border-indigo-600 border-t-transparent rounded-full" /> : <Lock className="w-4 h-4" />}
-                       </div>
-                       <span>{unlocking ? 'Unlocking...' : 'Unlock Contact Info (1 Point)'}</span>
-                    </button>
-                 )}
-                 {error && <p className="text-xs text-rose-500 mt-2 font-medium bg-rose-50 px-2 py-1 rounded inline-block">{error}</p>}
-              </div>
+          <div className="mt-auto pt-6 border-t border-slate-100 dark:border-white/5 flex flex-col gap-4">
+              <div className="flex items-center justify-between gap-4">
+                  <div className="flex-1">
+                      {isUnlocked ? (
+                          <div className="flex flex-col gap-2">
+                             <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                                <div className="p-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400">
+                                   <Phone className="w-3.5 h-3.5" />
+                                </div>
+                                <span className="font-medium select-all">{contactInfo.phone || 'N/A'}</span>
+                             </div>
+                             <div className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                                <div className="p-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
+                                   <Mail className="w-3.5 h-3.5" />
+                                </div>
+                                <span className="font-medium select-all">{contactInfo.email || 'N/A'}</span>
+                             </div>
+                          </div>
+                       ) : (
+                          <Button
+                             variant="ghost"
+                             size="sm"
+                             className="text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 pl-0"
+                             onClick={handleUnlockContact}
+                             isLoading={unlocking}
+                             leftIcon={!unlocking && <Lock className="w-4 h-4" />}
+                             disabled={currentUserType !== 'student'}
+                          >
+                             {currentUserType === 'student' ? 'Unlock Contact (1 Pt)' : 'Students Only'}
+                          </Button>
+                       )}
+                       {error && <p className="text-xs text-rose-500 mt-1 font-medium">{error}</p>}
+                  </div>
 
-              <div className="sm:hidden w-full">
-                 <Link
-                    to={`/profile/${tutor.username}`}
-                    className="flex items-center justify-center w-full px-4 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-semibold shadow-md"
-                 >
-                    View Profile <ArrowRight className="w-4 h-4 ml-2" />
-                 </Link>
+                  <Link to={`/profile/${tutor.username}`}>
+                     <Button variant="primary" size="sm" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                        View Profile
+                     </Button>
+                  </Link>
               </div>
           </div>
         </div>
@@ -221,7 +212,7 @@ const TutorCard = ({ tutor, featured = false }) => {
         onBuyCredits={() => (window.location.href = '/buy-points')}
         message="You need more points to unlock contact information."
       />
-    </div>
+    </Card>
   );
 };
 
