@@ -1,173 +1,59 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Eye, EyeOff, X, AlertCircle } from 'lucide-react';
+// src/components/ui/Input.js
+import React, { forwardRef } from 'react';
 
-const Input = ({
-  type = 'text',
-  label = '',
-  placeholder = '',
-  value = '',
-  onChange,
-  onBlur,
-  error = '',
-  helperText = '',
-  icon: Icon = null,
-  iconPosition = 'left',
-  disabled = false,
-  required = false,
-  maxLength = null,
-  showCount = false,
-  variant = 'default',
+const Input = forwardRef(({
+  label,
+  error,
+  icon: Icon,
   className = '',
+  containerClassName = '',
+  id,
+  type = 'text',
   ...props
-}) => {
-  const [showPassword, setShowPassword] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-
-  const isPassword = type === 'password';
-  const isTextarea = type === 'textarea';
-  const currentType = isPassword ? (showPassword ? 'text' : 'password') : type;
-
-  // Variant styles - Purple Theme
-  const variantStyles = {
-    default: 'bg-white border-2 border-gray-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:shadow-md',
-    filled: 'bg-purple-50/50 border-2 border-purple-100 focus:border-purple-500 focus:bg-white focus:shadow-md',
-    outlined: 'bg-transparent border-2 border-gray-300 focus:border-purple-500 focus:bg-white',
-  };
-
-  // Base input styles
-  const baseInputStyles = `
-    w-full px-4 py-2.5 rounded-lg text-gray-900 placeholder-gray-400
-    transition-all duration-200 focus:outline-none
-    disabled:opacity-50 disabled:cursor-not-allowed
-    ${variantStyles[variant]}
-    ${error ? 'border-red-500 focus:border-red-500' : ''}
-    ${Icon && iconPosition === 'left' ? 'pl-11' : ''}
-    ${Icon && iconPosition === 'right' || showCount || isPassword ? 'pr-11' : ''}
-    ${className}
-  `;
-
-  const handleClear = () => {
-    if (onChange) {
-      onChange({ target: { value: '' } });
-    }
-  };
-
-  const InputElement = isTextarea ? 'textarea' : 'input';
+}, ref) => {
+  const inputId = id || props.name || Math.random().toString(36).substr(2, 9);
 
   return (
-    <div className="w-full">
-      {/* Label */}
+    <div className={`w-full ${containerClassName}`}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+        <label htmlFor={inputId} className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5 ml-1">
           {label}
-          {required && <span className="text-red-500 ml-1">*</span>}
         </label>
       )}
-
-      {/* Input Container */}
-      <div className="relative">
-        {/* Left Icon */}
-        {Icon && iconPosition === 'left' && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-            <Icon size={20} />
+      <div className="relative group">
+        {Icon && (
+          <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+            <Icon className={`h-5 w-5 text-slate-400 group-focus-within:text-primary-500 transition-colors ${error ? 'text-rose-400' : ''}`} />
           </div>
         )}
-
-        {/* Input Field */}
-        <InputElement
-          type={currentType}
-          value={value}
-          onChange={onChange}
-          onBlur={(e) => {
-            setIsFocused(false);
-            if (onBlur) onBlur(e);
-          }}
-          onFocus={() => setIsFocused(true)}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          maxLength={maxLength}
-          className={baseInputStyles}
-          rows={isTextarea ? 4 : undefined}
+        <input
+          ref={ref}
+          id={inputId}
+          type={type}
+          className={`
+            block w-full rounded-xl border bg-white dark:bg-dark-bg-secondary text-slate-900 dark:text-slate-100 placeholder-slate-400
+            transition-all duration-200
+            focus:outline-none focus:ring-2 focus:ring-offset-0
+            disabled:opacity-60 disabled:bg-slate-50 dark:disabled:bg-dark-bg-tertiary
+            ${Icon ? 'pl-11' : 'pl-4'} pr-4 py-3
+            ${error
+              ? 'border-rose-300 focus:border-rose-500 focus:ring-rose-500/20'
+              : 'border-slate-200 dark:border-dark-border focus:border-primary-500 dark:focus:border-primary-500 focus:ring-primary-500/20'
+            }
+            ${className}
+          `}
           {...props}
         />
-
-        {/* Right Icons/Actions */}
-        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-          {/* Error Icon */}
-          {error && (
-            <AlertCircle size={20} className="text-red-500" />
-          )}
-
-          {/* Clear Button */}
-          {value && !disabled && !isPassword && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X size={18} />
-            </button>
-          )}
-
-          {/* Password Toggle */}
-          {isPassword && (
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-            </button>
-          )}
-
-          {/* Right Icon */}
-          {Icon && iconPosition === 'right' && (
-            <div className="text-gray-400">
-              <Icon size={20} />
-            </div>
-          )}
-        </div>
       </div>
-
-      {/* Character Count */}
-      {showCount && maxLength && (
-        <div className="mt-1 text-xs text-right text-gray-500">
-          {value?.length || 0} / {maxLength}
-        </div>
-      )}
-
-      {/* Helper Text */}
-      {helperText && !error && (
-        <p className="mt-1 text-sm text-gray-500">{helperText}</p>
-      )}
-
-      {/* Error Message */}
       {error && (
-        <p className="mt-1 text-sm text-red-600 animate-slide-in">{error}</p>
+        <p className="mt-1.5 ml-1 text-sm text-rose-500 font-medium animate-in slide-in-from-top-1 fade-in duration-200">
+          {error}
+        </p>
       )}
     </div>
   );
-};
+});
 
-Input.propTypes = {
-  type: PropTypes.oneOf(['text', 'email', 'password', 'number', 'search', 'tel', 'url', 'textarea']),
-  label: PropTypes.string,
-  placeholder: PropTypes.string,
-  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  onChange: PropTypes.func,
-  onBlur: PropTypes.func,
-  error: PropTypes.string,
-  helperText: PropTypes.string,
-  icon: PropTypes.elementType,
-  iconPosition: PropTypes.oneOf(['left', 'right']),
-  disabled: PropTypes.bool,
-  required: PropTypes.bool,
-  maxLength: PropTypes.number,
-  showCount: PropTypes.bool,
-  variant: PropTypes.oneOf(['default', 'filled', 'outlined']),
-  className: PropTypes.string,
-};
+Input.displayName = 'Input';
 
 export default Input;
